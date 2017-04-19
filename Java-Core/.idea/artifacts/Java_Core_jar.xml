@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Java-Core:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Java_Core_jar</output-path>
+    <root id="archive" name="Java-Core.jar">
+      <element id="module-output" name="Java-Core" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/jinput.jar" path-in-jar="/" />
+      <element id="file-copy" path="$PROJECT_DIR$/lib/jinput.jar" />
+    </root>
+  </artifact>
+</component>
