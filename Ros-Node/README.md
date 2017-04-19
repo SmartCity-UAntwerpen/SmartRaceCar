@@ -1,4 +1,4 @@
-# SmartRacecar - Java-Core
+# SmartRacecar - Ros-Nodes
 
 
 ## Infrastructure
