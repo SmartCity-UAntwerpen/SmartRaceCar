@@ -18,7 +18,7 @@ public class TCPListener extends Thread{
      * than 1023 if we are not privileged users (root).
      */
         try {
-            echoServer = new ServerSocket(5006);
+            echoServer = new ServerSocket(5005);
         } catch (IOException e) {
             System.out.println(e);
         }
@@ -34,7 +34,7 @@ public class TCPListener extends Thread{
       /* As long as we receive data, echo that data back to the client. */
             while (true) {
                 line = is.readLine();
-                if(line != null)System.out.println(line);
+                if(line != null)System.out.println("[Sockets] [DEBUG] server received:" + line );
             }
         } catch (IOException e) {
             System.out.println(e);
