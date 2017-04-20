@@ -66,8 +66,6 @@ def callback(data):
 rospy.init_node('javalinker', anonymous=True)
 rospy.Subscriber('drive_parameters', drive_param, callback)
 
-rospy.spin()
-
 newthread = ServerThread(TCP_IP, TCP_PORT, BUFFER_SIZE)
 newthread.daemon = True
 newthread.start()
@@ -75,8 +73,7 @@ newthread.start()
 newthread2 = ClientThread(TCP_IP, TCP_PORT, BUFFER_SIZE)
 newthread2.daemon = True
 newthread2.start()
-newthread2.join()
-print "newthread2 finished"
 
-while True:
-    time.sleep(1)
+rospy.spin()
+
+print "newthread2 finished"
