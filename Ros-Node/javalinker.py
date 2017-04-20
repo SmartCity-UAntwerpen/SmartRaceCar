@@ -29,7 +29,8 @@ class ServerThread(Thread):
         (conn, (ip, port)) = self.server_socket.accept()
         while True:
             data = conn.recv(self._BUFFER_)
-            print "Server received data:", data
+            j = json.loads(data)
+            print "Server received data: " + str(j['foo'])
 
 
 class ClientThread(Thread):
@@ -49,8 +50,9 @@ class ClientThread(Thread):
 
         i = 0
         while i < 10:
-            message = str(i) + "th iteration"
-            self.client_socket.send(message)
+            jsonmessage = {'foo': i}
+            string = json.dumps(jsonmessage)
+            self.client_socket.send(string)
             i += 1
             time.sleep(0.001)
 
@@ -63,6 +65,9 @@ newthread2.daemon = True
 newthread2.start()
 newthread2.join()
 print "newthread2 finished"
+
+j = json.loads('{"one" : "1", "two" : "2", "three" : "3"}')
+print j['two']
 
 while True:
     time.sleep(1)
