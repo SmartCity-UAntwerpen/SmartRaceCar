@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 
 import socket
-from threading import Thread
 import time
 import json
+import rospy
+from threading import Thread
+from race.msg import drive_param
+
 
 TCP_IP = '127.0.0.1'
 TCP_PORT = 5005
@@ -55,6 +58,15 @@ class ClientThread(Thread):
             self.client_socket.send(string)
             i += 1
             time.sleep(0.001)
+
+
+def callback(data):
+    rospy.loginfo(data)
+
+rospy.init_node('javalinker', anonymous=True)
+rospy.Subscriber('drive_parameters', drive_param, callback)
+
+rospy.spin()
 
 newthread = ServerThread(TCP_IP, TCP_PORT, BUFFER_SIZE)
 newthread.daemon = True
