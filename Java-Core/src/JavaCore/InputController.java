@@ -160,9 +160,9 @@ public class InputController implements NativeKeyListener {
     }
 
     public static void main(String[] args) throws IOException {
-        LogManager.getLogManager().reset();
-        Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
-        logger.setLevel(Level.OFF);
+//        LogManager.getLogManager().reset();
+//        Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
+//        logger.setLevel(Level.OFF);
         try {
             GlobalScreen.registerNativeHook();
         }
