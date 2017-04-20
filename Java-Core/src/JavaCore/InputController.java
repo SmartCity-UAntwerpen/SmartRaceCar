@@ -88,19 +88,19 @@ public class InputController implements NativeKeyListener {
         }
         if(pressed.contains(44)){ // Z
             if(pressed.contains(16)){ //Z & Q
-                speed = 5;
-                rotation = -50;
+                speed = 1;
+                rotation = -20;
                 System.out.println("forward left");
             }else if(pressed.contains(32)){ //Z & D
-                speed = 5;
-                rotation = 50;
+                speed = 1;
+                rotation = 20;
                 System.out.println("forward right");
             }else if(pressed.contains(31)){ //Z & S
                 speed = 0;
                 rotation = 0;
                 System.out.println("forward backward");
             }else{ // only Z
-                speed = 10;
+                speed = 2;
                 rotation = 0;
                 System.out.println("forward");
             }
@@ -108,19 +108,19 @@ public class InputController implements NativeKeyListener {
 
         if(pressed.contains(31)){ // S
             if(pressed.contains(16)){ //S & Q
-                speed = -5;
-                rotation = -50;
+                speed = -1;
+                rotation = -20;
                 System.out.println("backward left");
             }else if(pressed.contains(32)){ //S & D
-                speed = -5;
-                rotation = 50;
+                speed = -1;
+                rotation = 20;
                 System.out.println("backward right");
             }else if(pressed.contains(44)){ //S & Z
                 speed = 0;
                 rotation = 0;
                 System.out.println("backward forward");
             }else{ // only S
-                speed = -10;
+                speed = -2;
                 rotation = 0;
                 System.out.println("backward");
             }
