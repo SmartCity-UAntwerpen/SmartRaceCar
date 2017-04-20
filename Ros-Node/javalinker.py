@@ -66,8 +66,5 @@ newthread2.start()
 newthread2.join()
 print "newthread2 finished"
 
-j = json.loads('{"one" : "1", "two" : "2", "three" : "3"}')
-print j['two']
-
 while True:
     time.sleep(1)
