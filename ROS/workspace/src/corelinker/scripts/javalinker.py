@@ -16,6 +16,7 @@ BUFFER_SIZE = 1024
 pub_drive_parameters = rospy.Publisher('drive_parameters', drive_param, queue_size=10)
 rospy.init_node('javalinker', anonymous=True)
 
+
 class ServerThread(Thread):
     def __init__(self, _IP_, _PORT_, _BUFFER_):
         print "[ ] Initializing serverthread"
@@ -38,17 +39,13 @@ class ServerThread(Thread):
             json_string = json.loads(data)
             print "Server received data: " + str(json_string['drive']['throttle'])
             self.publish(json_string)
-            # print json_string.keys()[0]
 
     def publish(self, json_string):
         if json_string.keys()[0] == 'drive':
             msg = drive_param()
-            # Set message parameters
             msg.angle = json_string['drive']['steer']
             msg.velocity = json_string['drive']['throttle']
-            rospy.loginfo(msg)
             pub_drive_parameters.publish(msg)
-
 
 
 class ClientThread(Thread):
