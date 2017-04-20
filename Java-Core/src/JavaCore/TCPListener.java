@@ -14,11 +14,11 @@ public class TCPListener extends Thread{
         Socket clientSocket;
 
     /*
-     * Open a server socket on port 2222. Note that we can't choose a port less
+     * Open a server socket on port 5006. Note that we can't choose a port less
      * than 1023 if we are not privileged users (root).
      */
         try {
-            echoServer = new ServerSocket(5005);
+            echoServer = new ServerSocket(5006);
         } catch (IOException e) {
             System.out.println(e);
         }
