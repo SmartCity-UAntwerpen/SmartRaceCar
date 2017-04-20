@@ -33,7 +33,7 @@ class ServerThread(Thread):
         while True:
             data = conn.recv(self._BUFFER_)
             j = json.loads(data)
-            print "Server received data: " + str(j['foo'])
+            print "Server received data: " + str(j['drive']['throttle'])
 
 
 class ClientThread(Thread):
@@ -53,7 +53,7 @@ class ClientThread(Thread):
 
         i = 0
         while i < 10:
-            jsonmessage = {'foo': i}
+            jsonmessage = {'drive': {'steer': i, 'throttle': (i * 2)}}
             string = json.dumps(jsonmessage)
             self.client_socket.send(string)
             i += 1
