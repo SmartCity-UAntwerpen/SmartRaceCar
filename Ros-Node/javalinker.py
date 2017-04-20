@@ -3,6 +3,11 @@
 import socket
 from threading import Thread
 import time
+import json
+
+TCP_IP = '127.0.0.1'
+TCP_PORT = 5005
+BUFFER_SIZE = 1024
 
 
 class ServerThread(Thread):
@@ -48,11 +53,6 @@ class ClientThread(Thread):
             self.client_socket.send(message)
             i += 1
             time.sleep(0.001)
-
-
-TCP_IP = '127.0.0.1'
-TCP_PORT = 5005
-BUFFER_SIZE = 1024
 
 newthread = ServerThread(TCP_IP, TCP_PORT, BUFFER_SIZE)
 newthread.daemon = True
