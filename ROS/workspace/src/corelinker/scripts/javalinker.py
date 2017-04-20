@@ -13,6 +13,8 @@ TCP_PORT_JAVA_PYTH = 5005
 TCP_PORT_PYTH_JAVA = 5006
 BUFFER_SIZE = 1024
 
+pub_drive_parameters = rospy.Publisher('drive_parameters', drive_param, queue_size=10)
+rospy.init_node('javalinker', anonymous=True)
 
 class ServerThread(Thread):
     def __init__(self, _IP_, _PORT_, _BUFFER_):
@@ -33,8 +35,20 @@ class ServerThread(Thread):
         (conn, (ip, port)) = self.server_socket.accept()
         while True:
             data = conn.recv(self._BUFFER_)
-            j = json.loads(data)
-            print "Server received data: " + str(j['drive']['throttle'])
+            json_string = json.loads(data)
+            print "Server received data: " + str(json_string['drive']['throttle'])
+            self.publish(json_string)
+            # print json_string.keys()[0]
+
+    def publish(self, json_string):
+        if json_string.keys()[0] == 'drive':
+            msg = drive_param()
+            # Set message parameters
+            msg.angle = json_string['drive']['steer']
+            msg.velocity = json_string['drive']['throttle']
+            rospy.loginfo(msg)
+            pub_drive_parameters.publish(msg)
+
 
 
 class ClientThread(Thread):
@@ -58,13 +72,12 @@ class ClientThread(Thread):
             string = json.dumps(jsonmessage)
             self.client_socket.send(string)
             i += 1
-            time.sleep(0.001)
+            time.sleep(0.01)
 
 
 def callback(data):
     rospy.loginfo(data)
 
-rospy.init_node('javalinker', anonymous=True)
 rospy.Subscriber('drive_parameters', drive_param, callback)
 
 newthread = ServerThread(TCP_IP, TCP_PORT_JAVA_PYTH, BUFFER_SIZE)
