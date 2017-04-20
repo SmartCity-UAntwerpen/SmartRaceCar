@@ -9,7 +9,8 @@ from race.msg import drive_param
 
 
 TCP_IP = '127.0.0.1'
-TCP_PORT = 5005
+TCP_PORT_JAVA_PYTH = 5005
+TCP_PORT_PYTH_JAVA = 5006
 BUFFER_SIZE = 1024
 
 
@@ -66,11 +67,11 @@ def callback(data):
 rospy.init_node('javalinker', anonymous=True)
 rospy.Subscriber('drive_parameters', drive_param, callback)
 
-newthread = ServerThread(TCP_IP, TCP_PORT, BUFFER_SIZE)
+newthread = ServerThread(TCP_IP, TCP_PORT_JAVA_PYTH, BUFFER_SIZE)
 newthread.daemon = True
 newthread.start()
 
-newthread2 = ClientThread(TCP_IP, TCP_PORT, BUFFER_SIZE)
+newthread2 = ClientThread(TCP_IP, TCP_PORT_PYTH_JAVA, BUFFER_SIZE)
 newthread2.daemon = True
 newthread2.start()
 
