@@ -9,5 +9,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="com.1stleg:jnativehook:2.1.0" level="project" />
     <orderEntry type="library" exported="" name="com.googlecode.json-simple:json-simple:1.1.1" level="project" />
+    <orderEntry type="library" exported="" name="gamepad4j-uberjar-0.2" level="project" />
   </component>
 </module>

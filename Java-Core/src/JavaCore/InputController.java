@@ -1,5 +1,6 @@
 package JavaCore;
 
+import org.gamepad4j.*;
 import org.jnativehook.GlobalScreen;
 import org.jnativehook.NativeHookException;
 import org.jnativehook.keyboard.NativeKeyEvent;
@@ -33,6 +34,7 @@ public class InputController implements NativeKeyListener {
             os.close();
             try {
                 clientSocket.close();
+                Controllers.shutdown();
             } catch (IOException e1) {
                 e1.printStackTrace();
             }
@@ -154,15 +156,26 @@ public class InputController implements NativeKeyListener {
         }
     }
 
+    public static void poll(){
+        while(true){
+            Controllers.checkControllers();
+            IController[] gamepads = Controllers.getControllers();
+            IButton jumpButton = gamepads[0].getButton(ButtonID.FACE_DOWN);
+            if(jumpButton.isPressed()) {
+                System.out.println("test");
+            }
+        }
+    }
+
     //action when key is typed in(virtual keyboards)
     public void nativeKeyTyped(NativeKeyEvent e) {
         System.out.println("Key Typed: " + e.getKeyText(e.getKeyCode()));
     }
 
     public static void main(String[] args) throws IOException {
-        LogManager.getLogManager().reset();
-        Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
-        logger.setLevel(Level.OFF);
+//        LogManager.getLogManager().reset();
+//        Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
+//        logger.setLevel(Level.OFF);
         try {
             GlobalScreen.registerNativeHook();
         }
@@ -182,6 +195,17 @@ public class InputController implements NativeKeyListener {
             System.err.println(e);
         }
 
+        Controllers.initialize();
+
+
         GlobalScreen.addNativeKeyListener(new InputController());
+        Thread t = new Thread() {
+            public void run() {
+                while(true){
+                    poll();
+                }
+            }
+        };
+        t.start();
     }
 }

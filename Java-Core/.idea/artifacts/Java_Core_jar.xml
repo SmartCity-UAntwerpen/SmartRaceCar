@@ -9,6 +9,7 @@
       <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/hamcrest/hamcrest-core/1.1/hamcrest-core-1.1.jar" path-in-jar="/" />
       <element id="library" level="project" name="com.1stleg:jnativehook:2.1.0" />
       <element id="library" level="project" name="com.googlecode.json-simple:json-simple:1.1.1" />
+      <element id="library" level="project" name="gamepad4j-uberjar-0.2" />
     </root>
   </artifact>
 </component>
