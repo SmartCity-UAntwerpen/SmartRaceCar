@@ -11,11 +11,10 @@ from race.msg import drive_param
 TCP_IP = '127.0.0.1'
 TCP_PORT_JAVA_PYTH = 5005
 TCP_PORT_PYTH_JAVA = 5006
-BUFFER_SIZE = 1024
+BUFFER_SIZE = 64
 
 pub_drive_parameters = rospy.Publisher('drive_parameters', drive_param, queue_size=10)
 rospy.init_node('javalinker', anonymous=True)
-
 
 class ServerThread(Thread):
     def __init__(self, _IP_, _PORT_, _BUFFER_):
@@ -33,19 +32,38 @@ class ServerThread(Thread):
     def run(self):
         print "Starting serverthread"
         self.server_socket.listen(4)
-        (conn, (ip, port)) = self.server_socket.accept()
+        
         while True:
-            data = conn.recv(self._BUFFER_)
-            json_string = json.loads(data)
-            print "Server received data: " + str(json_string['drive']['throttle'])
+            (conn, (ip, port)) = self.server_socket.accept()
+            data = self.readline(conn)
+            data_string = str("".join(data))
+            print "Server received data: " + data_string
+            #pis = ":".join("{:02x}".format(ord(c)) for c in str(data))
+            #print pis
+            json_string = json.loads(data_string)
             self.publish(json_string)
+            # print json_string.keys()[0]
 
     def publish(self, json_string):
         if json_string.keys()[0] == 'drive':
             msg = drive_param()
+            # Set message parameters
             msg.angle = json_string['drive']['steer']
             msg.velocity = json_string['drive']['throttle']
+            rospy.loginfo(msg)
             pub_drive_parameters.publish(msg)
+
+    def readline(self, sock, recv_buffer=4096, delim='\n'):
+        buffer = ''
+        data = True
+        while data:
+            data = sock.recv(recv_buffer)
+            buffer += data
+
+        while buffer.find(delim) != -1:
+            line, buffer = buffer.split('\n', 1)
+            yield line
+        return
 
 
 class ClientThread(Thread):
@@ -73,17 +91,17 @@ class ClientThread(Thread):
 
 
 def callback(data):
-    rospy.loginfo(data)
+    return
 
-rospy.Subscriber('drive_parameters', drive_param, callback)
+#rospy.Subscriber('drive_parameters', drive_param, callback)
 
 newthread = ServerThread(TCP_IP, TCP_PORT_JAVA_PYTH, BUFFER_SIZE)
 newthread.daemon = True
 newthread.start()
 
-newthread2 = ClientThread(TCP_IP, TCP_PORT_PYTH_JAVA, BUFFER_SIZE)
-newthread2.daemon = True
-newthread2.start()
+#newthread2 = ClientThread(TCP_IP, TCP_PORT_PYTH_JAVA, BUFFER_SIZE)
+#newthread2.daemon = True
+#newthread2.start()
 
 rospy.spin()
 
