@@ -29,17 +29,11 @@ public class MQTTUtils implements MqttCallback {
             client.connect(options);
             System.out.println("[MQTT] [DEBUG] Connected to " + BROKER_URL);
         } catch (MqttException e) {
-            e.printStackTrace();
+            System.err.println("[MQTT] [ERROR] Could not connect to " + BROKER_URL + "." + e);
         }
 
-        String myTopic = VEHICLE_ID + "/" + CLIENT_ID;
-
-        try {
-            int subQoS = 0;
-            client.subscribe(myTopic, subQoS);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        String topic = VEHICLE_ID + "/" + CLIENT_ID;
+        subscribeToTopic(topic);
     }
 
     @Override
@@ -55,6 +49,16 @@ public class MQTTUtils implements MqttCallback {
     @Override
     public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
             System.out.println("[MQTT] [DEBUG] Publish complete.");
+    }
+
+    public void subscribeToTopic(String topic){
+        try {
+            int subQoS = 0;
+            client.subscribe(topic, subQoS);
+            System.out.println("[MQTT] [DEBUG] Subscribed to topic:" + topic);
+        } catch (Exception e) {
+            System.err.println("[MQTT] [ERROR] Could not subscribe to topic:" + topic + "." + e);
+        }
     }
 
     public void publishMessage(String topic,String message){
