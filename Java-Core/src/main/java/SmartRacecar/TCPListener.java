@@ -1,4 +1,4 @@
-package JavaCore;
+package SmartRacecar;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -8,6 +8,7 @@ import java.net.Socket;
 public class TCPListener extends Thread{
 
     private MyListener listener;
+    Socket clientSocket;
 
     public void addListener(MyListener listener) {
         this.listener = listener;
@@ -18,7 +19,7 @@ public class TCPListener extends Thread{
         ServerSocket echoServer = null;
         String line;
         DataInputStream is;
-        Socket clientSocket;
+
         try {
             echoServer = new ServerSocket(5005);
         } catch (IOException e) {

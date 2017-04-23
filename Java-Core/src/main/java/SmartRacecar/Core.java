@@ -1,5 +1,6 @@
-package JavaCore;
+package SmartRacecar;
 
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.json.simple.JSONObject;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
@@ -20,9 +21,12 @@ public class Core implements MyListener {
     double rotation = 0;
     Socket clientSocket = null;
     DataInputStream inputLine = null;
+    MQTTUtils mqttUtils;
+    TCPListener tcpListener;
 
     public Core() throws InterruptedException {
-        TCPListener tcpListener = new TCPListener();
+        tcpListener = new TCPListener();
+        mqttUtils = new MQTTUtils();
         tcpListener.start();
         tcpListener.addListener(this);
 
@@ -88,14 +92,28 @@ public class Core implements MyListener {
                 System.out.println("[Sockets] [DEBUG] Data Send:" + data.toString());
                 os.close();
             } catch (UnknownHostException e) {
-                System.err.println("Trying to connect to unknown host: " + e);
+                System.err.println("[Sockets] [ERROR] Trying to connect to unknown host: " + e);
             } catch (IOException e) {
-                System.err.println("IOException:  " + e);
+                System.err.println("[Sockets] [ERROR] IOException:  " + e);
             }
         }
     }
 
+    public void exitCore(){
+
+        try {
+            tcpListener.clientSocket.close();
+            mqttUtils.client.disconnect();
+        } catch (MqttException e) {
+            System.err.println("[MQTT] [ERROR] MqttException:  " + e);
+        } catch (IOException e) {
+            System.err.println("[Sockets] [ERROR] IOException:  " + e);
+        }
+        System.exit(0);
+    }
+
     public void locationUpdate() {
-        System.out.println("LOCATION UPDATED");
+        System.out.println("[CORE] [DEBUG] LOCATION UPDATED");
+        mqttUtils.publishMessage(mqttUtils.VEHICLE_ID + "/" + mqttUtils.CLIENT_ID + "/location","right here!");
     }
 }
