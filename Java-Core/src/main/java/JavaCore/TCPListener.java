@@ -32,8 +32,7 @@ public class TCPListener extends Thread{
                 line = is.readLine();
                 if(line != null && JSONUtils.isJSONValid(line))if(line != null){
                     System.out.println("[Sockets] [DEBUG] server received:" + line );
-                    ;
-                    switch (JSONUtils.getFirstElement(line)) {
+                    switch (JSONUtils.getFirst(line)) {
                         case "location":
                             System.out.println("[JSON] [DEBUG] it was a location.");
                             listener.locationUpdate();

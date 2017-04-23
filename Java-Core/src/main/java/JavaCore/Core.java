@@ -10,11 +10,11 @@ import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-interface MyListener{
+interface MyListener {
     void locationUpdate();
 }
 
-public class Core implements MyListener{
+public class Core implements MyListener {
 
     double speed = 0;
     double rotation = 0;
@@ -26,7 +26,7 @@ public class Core implements MyListener{
         tcpListener.start();
         tcpListener.addListener(this);
 
-        while(true) {
+        while (true) {
             rotation = 20;
             sendWheelStates();
             Thread.sleep(1000);
@@ -46,23 +46,26 @@ public class Core implements MyListener{
         }
     }
 
-    public void sendWheelStates(){
+    public static void main(String[] args) throws IOException, InterruptedException {
+        new Core();
+    }
+
+    public void sendWheelStates() {
         JSONObject parentData = new JSONObject();
         JSONObject childData = new JSONObject();
-        childData.put("throttle",(int)speed);
-        childData.put("steer",(int)rotation);
-        parentData.put("location",childData);
+        childData.put("throttle", (int) speed);
+        childData.put("steer", (int) rotation);
+        parentData.put("location", childData);
         sendUpdate(parentData);
     }
 
-
-    public void sendUpdate(JSONObject data){
+    public void sendUpdate(JSONObject data) {
         inputLine = new DataInputStream(new ByteArrayInputStream(data.toString().getBytes(StandardCharsets.UTF_8)));
         byte[] bytes = new byte[100];
-        Arrays.fill(bytes,(byte)1);
+        Arrays.fill(bytes, (byte) 1);
 
         boolean connected = false;
-        while(!connected) {
+        while (!connected) {
             try {
                 clientSocket = new Socket("localhost", 5005);
 
@@ -92,11 +95,7 @@ public class Core implements MyListener{
         }
     }
 
-    public void locationUpdate(){
+    public void locationUpdate() {
         System.out.println("LOCATION UPDATED");
-    }
-
-    public static void main(String[] args) throws IOException, InterruptedException {
-        new Core();
     }
 }
