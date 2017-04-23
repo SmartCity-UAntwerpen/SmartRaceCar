@@ -1,153 +1,78 @@
-package JavaCore;
-
-import org.json.simple.JSONObject;
-import java.io.*;
-import java.net.Socket;
-import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-//import net.java.games.input.Component;
-//import net.java.games.input.Controller;
-//import net.java.games.input.ControllerEnvironment;
-//import net.java.games.input.Event;
-//import net.java.games.input.EventQueue;
-
-public class InputController{
-
-    private final Set<String> pressed = new HashSet<>(); // list of currently pressed buttons
-    double speed = 0; //speed of all wheels
-    double leftTrigger = 0;
-    double rightTrigger = 0;
-    double rotation = 0; //rotation of front wheels
-    boolean driving = false; // state of driving
-    Socket clientSocket = null;
-    DataInputStream inputLine = null;
-    public static String OS = null;
-
-    public InputController() throws InterruptedException {
-        TCPListener tcpListener = new TCPListener();
-        tcpListener.start();
-
-        //DeviceListener();
-        while(true) {
-            rotation = 20;
-            sendUpdate();
-            Thread.sleep(1000);
-            rotation = -20;
-            sendUpdate();
-            Thread.sleep(1000);
-            rotation = 0;
-            speed = 1;
-            sendUpdate();
-            Thread.sleep(1000);
-            speed = 2;
-            sendUpdate();
-            Thread.sleep(1000);
-            speed = 0;
-            sendUpdate();
-            Thread.sleep(1000);
-        }
-    }
-
-    //update status of wheels based on keylist
-    public void updateStatus() throws IOException {
-        if(!pressed.contains("Z") && !pressed.contains("S")) { // no Z or S
-            speed = 0;
-            rotation = 0;
-        }
-        if(pressed.contains("Z")){ // Z
-            if(pressed.contains("Q")){ //Z & Q
-                speed = 1;
-                rotation = -20;
-                System.out.println("forward left");
-            }else if(pressed.contains("D")){ //Z & D
-                speed = 1;
-                rotation = 20;
-                System.out.println("forward right");
-            }else if(pressed.contains("S")){ //Z & S
-                speed = 0;
-                rotation = 0;
-                System.out.println("forward backward");
-            }else{ // only Z
-                speed = 2;
-                rotation = 0;
-                System.out.println("forward");
-            }
-        }
-
-        if(pressed.contains("S")){ // S
-            if(pressed.contains("Q")){ //S & Q
-                speed = -1;
-                rotation = -20;
-                System.out.println("backward left");
-            }else if(pressed.contains("D")){ //S & D
-                speed = -1;
-                rotation = 20;
-                System.out.println("backward right");
-            }else if(pressed.contains("Z")){ //S & Z
-                speed = 0;
-                rotation = 0;
-                System.out.println("backward forward");
-            }else{ // only S
-                speed = -2;
-                rotation = 0;
-                System.out.println("backward");
-            }
-        }
-    }
-
-    public void sendUpdate() throws InterruptedException {
-        JSONObject parentData = new JSONObject();
-        JSONObject childData = new JSONObject();
-        childData.put("throttle",(int)speed);
-        childData.put("steer",(int)rotation);
-        parentData.put("drive",childData);
-        inputLine = new DataInputStream(new ByteArrayInputStream(parentData.toString().getBytes(StandardCharsets.UTF_8)));
-        byte[] bytes = new byte[100];
-        Arrays.fill(bytes,(byte)1);
-
-        boolean connected = false;
-        while(!connected) {
-            try {
-                clientSocket = new Socket("localhost", 5005);
-
-                connected = true;
-            } catch (UnknownHostException e) {
-                System.err.println("[Sockets] [ERROR] " + e + ". Trying again.");
-            } catch (IOException e) {
-                System.err.println("[Sockets] [ERROR] " + e + ". Trying again.");
-                Thread.sleep(2000);
-            }
-        }
-        if (clientSocket != null) {
-            try {
-
-        /*
-         * Keep on reading from/to the socket till we receive the "Ok" from the
-         * server, once we received that then we break.
-         */
-                PrintStream os = null;
-                os = new PrintStream(clientSocket.getOutputStream());
-                os.println(inputLine.readLine());
-                System.out.println("[Sockets] [DEBUG] Data Send:" + parentData.toString());
-                os.close();
-
-
-
-
-        /*
-         * Close the output stream, close the input stream, close the socket.
-         */
-            } catch (UnknownHostException e) {
-                System.err.println("Trying to connect to unknown host: " + e);
-            } catch (IOException e) {
-                System.err.println("IOException:  " + e);
-            }
-        }
-    }
-
+//package JavaCore;
+//
+//import net.java.games.input.*;
+//
+//import java.io.IOException;
+//import java.net.Socket;
+//import java.util.HashSet;
+//import java.util.Set;
+//
+///**
+// * Created by Wouter Jansen on 4/23/2017.
+// */
+//public class InputController {
+//
+//    private final Set<String> pressed = new HashSet<>(); // list of currently pressed buttons
+//    double speed = 0; //speed of all wheels
+//    double leftTrigger = 0;
+//    double rightTrigger = 0;
+//    double rotation = 0; //rotation of front wheels
+//    boolean driving = false; // state of driving
+//    Socket clientSocket = null;
+//    public static String OS = null;
+//
+//    public InputController() throws InterruptedException {
+//
+//        DeviceListener();
+//    }
+//
+//    //update status of wheels based on keylist
+//    public void updateStatus() throws IOException {
+//        if(!pressed.contains("Z") && !pressed.contains("S")) { // no Z or S
+//            speed = 0;
+//            rotation = 0;
+//        }
+//        if(pressed.contains("Z")){ // Z
+//            if(pressed.contains("Q")){ //Z & Q
+//                speed = 1;
+//                rotation = -20;
+//                System.out.println("forward left");
+//            }else if(pressed.contains("D")){ //Z & D
+//                speed = 1;
+//                rotation = 20;
+//                System.out.println("forward right");
+//            }else if(pressed.contains("S")){ //Z & S
+//                speed = 0;
+//                rotation = 0;
+//                System.out.println("forward backward");
+//            }else{ // only Z
+//                speed = 2;
+//                rotation = 0;
+//                System.out.println("forward");
+//            }
+//        }
+//
+//        if(pressed.contains("S")){ // S
+//            if(pressed.contains("Q")){ //S & Q
+//                speed = -1;
+//                rotation = -20;
+//                System.out.println("backward left");
+//            }else if(pressed.contains("D")){ //S & D
+//                speed = -1;
+//                rotation = 20;
+//                System.out.println("backward right");
+//            }else if(pressed.contains("Z")){ //S & Z
+//                speed = 0;
+//                rotation = 0;
+//                System.out.println("backward forward");
+//            }else{ // only S
+//                speed = -2;
+//                rotation = 0;
+//                System.out.println("backward");
+//            }
+//        }
+//    }
+//
 //    //Listener for input of devices
 //    public void DeviceListener(){
 //        System.out.println("[Controller] [DEBUG] Starting Driver...");
@@ -229,14 +154,12 @@ public class InputController{
 //                if(!driving){
 //                    speed = 0;
 //                    rotation = 0;
-//                    sendUpdate();
 //                }
 //            }
 //        }
 //        //Xbox Controller Triggers: forward/backwards speed.
 //        else if(comp.toString().equals("Z Axis")){
 //            speed = Math.round((value*-1) * 100.0)  / 33;
-//            sendUpdate();
 //        }
 //
 //        //Xbox Controller Right Analog Joystick: direction input
@@ -244,7 +167,7 @@ public class InputController{
 //            double temp = rotation;
 //            rotation = Math.round(value * 100.0) / 4;
 //            if(rotation >= -3 && rotation <= 3)rotation = 0;
-//            if(Math.round(temp) != 0)sendUpdate();
+//            if(Math.round(temp) != 0);
 //        }
 //    }
 //
@@ -255,7 +178,6 @@ public class InputController{
 //            if(!pressed.contains(comp.toString())){
 //                pressed.add(comp.toString()); //add key to keylist
 //                updateStatus();
-//                sendUpdate();
 //            }
 //        //Keyboard F12: exit
 //        if(comp.toString().equals("F12")){
@@ -274,7 +196,6 @@ public class InputController{
 //            if(!driving){
 //                speed = 0;
 //                rotation = 0;
-//                sendUpdate();
 //            }
 //        }
 //
@@ -284,7 +205,6 @@ public class InputController{
 //            double triggervalue = (roundedvalue+1)/2;
 //            leftTrigger = triggervalue;
 //            speed = rightTrigger - leftTrigger;
-//            sendUpdate();
 //        }
 //        //Xbox Controller Right Trigger
 //        else if(comp.toString().equals("z")){
@@ -292,18 +212,13 @@ public class InputController{
 //            double triggervalue = (roundedvalue+1)/2;
 //            rightTrigger = triggervalue;
 //            speed = rightTrigger - leftTrigger;
-//            sendUpdate();
 //        }
 //        //Xbox Controller Right Analog Joystick: direction input
 //        else if(comp.toString().equals("x")){
 //            double temp = rotation;
 //            rotation = Math.round(value * 100.0) / 4;
 //            if(rotation <= -3 && rotation <= 3)rotation = 0;
-//            if(Math.round(temp) != 0)sendUpdate();
+//            if(Math.round(temp) != 0);
 //        }
 //    }
-
-    public static void main(String[] args) throws IOException, InterruptedException {
-        new InputController();
-    }
-}
+//}

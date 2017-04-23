@@ -2,43 +2,53 @@ package JavaCore;
 
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.net.Socket;
 import java.net.ServerSocket;
+import java.net.Socket;
 
 public class TCPListener extends Thread{
+
+    private MyListener listener;
+
+    public void addListener(MyListener listener) {
+        this.listener = listener;
+    }
+
     public void run(){
 
         ServerSocket echoServer = null;
         String line;
         DataInputStream is;
         Socket clientSocket;
-
-    /*
-     * Open a server socket on port 5006. Note that we can't choose a port less
-     * than 1023 if we are not privileged users (root).
-     */
         try {
-            echoServer = new ServerSocket(5006);
+            echoServer = new ServerSocket(5005);
         } catch (IOException e) {
             System.out.println(e);
         }
-
-    /*
-     * Create a socket object from the ServerSocket to listen to and accept
-     * connections. Open input and output streams.
-     */
         try {
             clientSocket = echoServer.accept();
             is = new DataInputStream(clientSocket.getInputStream());
 
-      /* As long as we receive data, echo that data back to the client. */
             while (true) {
                 line = is.readLine();
-                if(line != null)System.out.println("[Sockets] [DEBUG] server received:" + line );
+                if(line != null && JSONUtils.isJSONValid(line))if(line != null){
+                    System.out.println("[Sockets] [DEBUG] server received:" + line );
+                    ;
+                    switch (JSONUtils.getFirstElement(line)) {
+                        case "location":
+                            System.out.println("[JSON] [DEBUG] it was a location.");
+                            listener.locationUpdate();
+                            break;
+                        case "stopped":
+                            System.out.println("[JSON] [DEBUG] it was a emergency stop.");
+                            break;
+                        default:
+                            System.err.println("[JSON] [ERROR] Invalid keyword in JSON");
+                            break;
+                    }
+                }
             }
         } catch (IOException e) {
             System.out.println(e);
         }
     }
-
 }

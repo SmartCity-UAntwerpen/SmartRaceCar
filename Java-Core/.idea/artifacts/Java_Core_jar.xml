@@ -1,12 +1,10 @@
 <component name="ArtifactManager">
-  <artifact name="Java-Core:jar">
+  <artifact type="jar" name="Java-Core:jar">
     <output-path>$PROJECT_DIR$/out/artifacts/Java_Core_jar</output-path>
-    <root id="root">
-      <element id="archive" name="Java-Core.jar">
-        <element id="module-output" name="Java-Core" />
-      </element>
-      <element id="library" level="project" name="com.googlecode.json-simple:json-simple:1.1.1" />
-      <element id="library" level="project" name="lib" />
+    <root id="archive" name="Java-Core.jar">
+      <element id="module-output" name="Java-Core" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/googlecode/json-simple/json-simple/1.1.1/json-simple-1.1.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.8.0/gson-2.8.0.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>
