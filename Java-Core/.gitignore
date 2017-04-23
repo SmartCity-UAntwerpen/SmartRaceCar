@@ -88,3 +88,7 @@ fabric.properties
 hs_err_pid*
 
 # End of https://www.gitignore.io/api/java,intellij
+Java-Core.iml
+src/main/resources/
+src/test/
+target/
