@@ -17,6 +17,7 @@ public final class JSONUtils {
             gson.fromJson(jsonInString, Object.class);
             return true;
         } catch(com.google.gson.JsonSyntaxException ex) {
+            System.err.println("[JSON] [ERROR] Not a valid JSON string." + jsonInString + "." + ex);
             return false;
         }
     }
