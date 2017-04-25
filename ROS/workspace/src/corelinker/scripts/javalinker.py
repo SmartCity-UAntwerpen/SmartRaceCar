@@ -13,8 +13,6 @@ TCP_PORT_JAVA_PYTH = 5005
 TCP_PORT_PYTH_JAVA = 5006
 BUFFER_SIZE = 64
 
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
 # pub_drive_parameters = rospy.Publisher('drive_parameters', drive_param, queue_size=10)
 rospy.init_node('javalinker', anonymous=True)
 
@@ -70,10 +68,11 @@ class ServerThread(Thread):
 
 def callback(data):
     print "kaka"
-    global TCP_IP, TCP_PORT_PYTH_JAVA, client_socket
+    global TCP_IP, TCP_PORT_PYTH_JAVA
 
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((TCP_IP, TCP_PORT_PYTH_JAVA))
-    print "[CLIENTSOCKET] Socket connected"
+    print "[CLIENTSOCKET] Socket created & connected"
 
     jsonmessage = {'location': {'steer': data.steer, 'throttle': data.throttle}}
     string = json.dumps(jsonmessage)
