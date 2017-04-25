@@ -14,6 +14,7 @@ TCP_PORT_PYTH_JAVA = 5006
 BUFFER_SIZE = 64
 
 pub_drive_parameters = rospy.Publisher('drive_parameters', drive_param, queue_size=10)
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 rospy.init_node('javalinker', anonymous=True)
 
 class ServerThread(Thread):
