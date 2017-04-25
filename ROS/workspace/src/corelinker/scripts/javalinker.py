@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import socket
-import time
 import json
 import rospy
 from threading import Thread
@@ -38,8 +37,6 @@ class ServerThread(Thread):
             data = self.readline(conn)
             data_string = str("".join(data))
             print "Server received data: " + data_string
-            #pis = ":".join("{:02x}".format(ord(c)) for c in str(data))
-            #print pis
             json_string = json.loads(data_string)
             self.publish(json_string)
             # print json_string.keys()[0]
@@ -47,7 +44,6 @@ class ServerThread(Thread):
     def publish(self, json_string):
         if json_string.keys()[0] == 'drive':
             msg = drive_param()
-            # Set message parameters
             msg.angle = json_string['drive']['steer']
             msg.velocity = json_string['drive']['throttle']
             rospy.loginfo(msg)
@@ -90,10 +86,6 @@ rospy.Subscriber('drive_parameters', drive_param, callback)
 newthread = ServerThread(TCP_IP, TCP_PORT_JAVA_PYTH, BUFFER_SIZE)
 newthread.daemon = True
 newthread.start()
-
-#newthread2 = ClientThread(TCP_IP, TCP_PORT_PYTH_JAVA, BUFFER_SIZE)
-#newthread2.daemon = True
-#newthread2.start()
 
 rospy.spin()
 
