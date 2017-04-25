@@ -15,6 +15,28 @@ BUFFER_SIZE = 64
 rospy.init_node('javalinker', anonymous=True)
 
 
+def publish_drive_param(json_string):
+    if json_string.keys()[0] == 'drive':
+        msg = drive_param()
+        msg.angle = json_string['drive']['steer']
+        msg.velocity = json_string['drive']['throttle']
+        rospy.loginfo(msg)
+        # pub_drive_parameters.publish(msg)
+
+
+def read_line(sock, recv_buffer=4096, delim='\n'):
+    line_buffer = ''
+    data = True
+    while data:
+        data = sock.recv(recv_buffer)
+        buffer += data
+
+    while line_buffer.find(delim) != -1:
+        line, line_buffer = buffer.split('\n', 1)
+        yield line
+    return
+
+
 class ServerThread(Thread):
     def __init__(self, _IP_, _PORT_, _BUFFER_):
         print "[ ] Initializing serverthread"
@@ -34,32 +56,12 @@ class ServerThread(Thread):
 
         while True:
             (conn, (ip, port)) = self.server_socket.accept()
-            data = self.read_line(conn)
+            data = read_line(conn)
             data_string = str("".join(data))
             print "Server received data: " + data_string
             json_string = json.loads(data_string)
-            self.publish(json_string)
+            publish_drive_param(json_string)
             # print json_string.keys()[0]
-
-    def publish(self, json_string):
-        if json_string.keys()[0] == 'drive':
-            msg = drive_param()
-            msg.angle = json_string['drive']['steer']
-            msg.velocity = json_string['drive']['throttle']
-            rospy.loginfo(msg)
-            # pub_drive_parameters.publish(msg)
-
-    def read_line(self, sock, recv_buffer=4096, delim='\n'):
-        line_buffer = ''
-        data = True
-        while data:
-            data = sock.recv(recv_buffer)
-            buffer += data
-
-        while line_buffer.find(delim) != -1:
-            line, line_buffer = buffer.split('\n', 1)
-            yield line
-        return
 
 
 def callback(data):
