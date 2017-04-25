@@ -68,32 +68,23 @@ class ServerThread(Thread):
         return
 
 
-class ClientThread(Thread):
-    def __init__(self, _IP_, _PORT_, _BUFFER_):
-        print "[ ] Initializing clientthread"
-        Thread.__init__(self)
-        self._IP_ = _IP_
-        self._PORT_ = _PORT_
-        self._BUFFER_ = _BUFFER_
-
-        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        print "[+] Initializing clientthread finished"
-
-    def run(self):
-        print "Starting clientthread"
-        self.client_socket.connect((self._IP_, self._PORT_))
-
-        i = 0
-        while i < 10:
-            jsonmessage = {'drive': {'steer': i, 'throttle': (i * 2)}}
-            string = json.dumps(jsonmessage)
-            self.client_socket.send(string)
-            i += 1
-            time.sleep(0.01)
-
-
 def callback(data):
-    return
+    print "kaka"
+    global TCP_IP, TCP_PORT_PYTH_JAVA, client_socket
+
+    client_socket.connect((TCP_IP, TCP_PORT_PYTH_JAVA))
+    print "[CLIENTSOCKET] Socket connected"
+
+    jsonmessage = {'location': {'steer': data.steer, 'throttle': data.throttle}}
+    string = json.dumps(jsonmessage)
+    print "[CLIENTSOCKET] Message composed"
+
+    client_socket.sendall(string)
+    print "[CLIENTSOCKET] String sent"
+
+    client_socket.close()
+    print "[CLIENTSOCKET] Socket closed"
+
 
 rospy.Subscriber('drive_parameters', drive_param, callback)
 
