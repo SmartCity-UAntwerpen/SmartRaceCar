@@ -21,7 +21,7 @@ public class TCPListener extends Thread{
         DataInputStream is;
 
         try {
-            echoServer = new ServerSocket(5005);
+            echoServer = new ServerSocket(5006);
         } catch (IOException e) {
             System.out.println(e);
         }
