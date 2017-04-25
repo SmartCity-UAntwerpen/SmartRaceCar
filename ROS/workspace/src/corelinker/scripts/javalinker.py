@@ -95,7 +95,7 @@ class ClientThread(Thread):
 def callback(data):
     return
 
-#rospy.Subscriber('drive_parameters', drive_param, callback)
+rospy.Subscriber('drive_parameters', drive_param, callback)
 
 newthread = ServerThread(TCP_IP, TCP_PORT_JAVA_PYTH, BUFFER_SIZE)
 newthread.daemon = True
