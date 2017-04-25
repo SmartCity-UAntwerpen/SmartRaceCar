@@ -53,7 +53,7 @@ class ServerThread(Thread):
             msg.angle = json_string['drive']['steer']
             msg.velocity = json_string['drive']['throttle']
             rospy.loginfo(msg)
-            pub_drive_parameters.publish(msg)
+            #pub_drive_parameters.publish(msg)
 
     def readline(self, sock, recv_buffer=4096, delim='\n'):
         buffer = ''
