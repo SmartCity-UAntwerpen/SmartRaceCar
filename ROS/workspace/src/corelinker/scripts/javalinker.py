@@ -6,7 +6,6 @@ import rospy
 from threading import Thread
 from race.msg import drive_param
 
-
 TCP_IP = '127.0.0.1'
 TCP_PORT_JAVA_PYTH = 5005
 TCP_PORT_PYTH_JAVA = 5006
@@ -14,6 +13,7 @@ BUFFER_SIZE = 64
 
 # pub_drive_parameters = rospy.Publisher('drive_parameters', drive_param, queue_size=10)
 rospy.init_node('javalinker', anonymous=True)
+
 
 class ServerThread(Thread):
     def __init__(self, _IP_, _PORT_, _BUFFER_):
@@ -31,10 +31,10 @@ class ServerThread(Thread):
     def run(self):
         print "Starting serverthread"
         self.server_socket.listen(4)
-        
+
         while True:
             (conn, (ip, port)) = self.server_socket.accept()
-            data = self.readline(conn)
+            data = self.read_line(conn)
             data_string = str("".join(data))
             print "Server received data: " + data_string
             json_string = json.loads(data_string)
@@ -47,17 +47,17 @@ class ServerThread(Thread):
             msg.angle = json_string['drive']['steer']
             msg.velocity = json_string['drive']['throttle']
             rospy.loginfo(msg)
-            #pub_drive_parameters.publish(msg)
+            # pub_drive_parameters.publish(msg)
 
-    def readline(self, sock, recv_buffer=4096, delim='\n'):
-        buffer = ''
+    def read_line(self, sock, recv_buffer=4096, delim='\n'):
+        line_buffer = ''
         data = True
         while data:
             data = sock.recv(recv_buffer)
             buffer += data
 
-        while buffer.find(delim) != -1:
-            line, buffer = buffer.split('\n', 1)
+        while line_buffer.find(delim) != -1:
+            line, line_buffer = buffer.split('\n', 1)
             yield line
         return
 
