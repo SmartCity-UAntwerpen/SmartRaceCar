@@ -60,11 +60,11 @@ public class Core implements MyListener {
         childData.put("throttle", (int) speed);
         childData.put("steer", (int) rotation);
         parentData.put("drive", childData);
-        sendUpdate(parentData);
+        sendUpdate(JSONUtils.JSONtoString(parentData));
     }
 
-    public void sendUpdate(JSONObject data) {
-        inputLine = new DataInputStream(new ByteArrayInputStream(data.toString().getBytes(StandardCharsets.UTF_8)));
+    public void sendUpdate(String data) {
+        inputLine = new DataInputStream(new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8)));
         byte[] bytes = new byte[100];
         Arrays.fill(bytes, (byte) 1);
 
