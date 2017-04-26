@@ -59,7 +59,7 @@ public class Core implements MyListener {
         JSONObject childData = new JSONObject();
         childData.put("throttle", (int) speed);
         childData.put("steer", (int) rotation);
-        parentData.put("location", childData);
+        parentData.put("drive", childData);
         sendUpdate(parentData);
     }
 

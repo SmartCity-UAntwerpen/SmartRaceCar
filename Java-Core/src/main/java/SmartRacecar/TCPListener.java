@@ -31,7 +31,8 @@ public class TCPListener extends Thread{
 
             while (true) {
                 line = is.readLine();
-                if(line != null && JSONUtils.isJSONValid(line))if(line != null){
+                System.out.println("[Sockets] [DEBUG] server received:" + line );
+                /*if(line != null && JSONUtils.isJSONValid(line))if(line != null){
                     System.out.println("[Sockets] [DEBUG] server received:" + line );
                     switch (JSONUtils.getFirst(line)) {
                         case "location":
@@ -45,7 +46,7 @@ public class TCPListener extends Thread{
                             System.err.println("[JSON] [ERROR] Invalid keyword in JSON");
                             break;
                     }
-                }
+                }*/
             }
         } catch (IOException e) {
             System.out.println(e);
