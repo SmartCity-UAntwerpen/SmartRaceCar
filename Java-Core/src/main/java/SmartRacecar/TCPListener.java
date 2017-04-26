@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class TCPListener extends Thread{
+public class TCPListener extends Thread {
 
     private MyListener listener;
     Socket clientSocket;
@@ -14,7 +14,7 @@ public class TCPListener extends Thread{
         this.listener = listener;
     }
 
-    public void run(){
+    public void run() {
 
         ServerSocket echoServer = null;
         String line;
@@ -25,14 +25,12 @@ public class TCPListener extends Thread{
         } catch (IOException e) {
             System.out.println(e);
         }
-        try {
-            clientSocket = echoServer.accept();
-            is = new DataInputStream(clientSocket.getInputStream());
-
-            while (true) {
+        while (true) {
+            try {
+                clientSocket = echoServer.accept();
+                is = new DataInputStream(clientSocket.getInputStream());
                 line = is.readLine();
-                System.out.println("[Sockets] [DEBUG] server received:" + line );
-                /*if(line != null && JSONUtils.isJSONValid(line))if(line != null){
+                if(line != null && JSONUtils.isJSONValid(line))if(line != null){
                     System.out.println("[Sockets] [DEBUG] server received:" + line );
                     switch (JSONUtils.getFirst(line)) {
                         case "location":
@@ -46,10 +44,11 @@ public class TCPListener extends Thread{
                             System.err.println("[JSON] [ERROR] Invalid keyword in JSON");
                             break;
                     }
-                }*/
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            System.out.println(e);
         }
     }
 }
