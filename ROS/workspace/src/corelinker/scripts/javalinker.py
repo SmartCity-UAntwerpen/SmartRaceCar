@@ -29,10 +29,10 @@ def read_line(sock, recv_buffer=4096, delim='\n'):
     data = True
     while data:
         data = sock.recv(recv_buffer)
-        buffer += data
+        line_buffer += data
 
     while line_buffer.find(delim) != -1:
-        line, line_buffer = buffer.split('\n', 1)
+        line, line_buffer = line_buffer.split('\n', 1)
         yield line
     return
 
