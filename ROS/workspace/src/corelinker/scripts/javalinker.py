@@ -72,7 +72,7 @@ def callback(data):
     client_socket.connect((TCP_IP, TCP_PORT_PYTH_JAVA))
     print "[CLIENTSOCKET] Socket created & connected"
 
-    jsonmessage = {'location': {'steer': data.angle, 'throttle': data.velocity}}
+    jsonmessage = {'drive': {'steer': data.angle, 'throttle': data.velocity}}
     string = json.dumps(jsonmessage)
     print "[CLIENTSOCKET] Message composed"
 
