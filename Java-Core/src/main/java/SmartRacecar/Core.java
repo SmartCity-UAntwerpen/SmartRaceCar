@@ -1,34 +1,49 @@
 package SmartRacecar;
 
-import org.eclipse.paho.client.mqttv3.MqttException;
 import org.json.simple.JSONObject;
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.net.Socket;
-import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
-interface MyListener {
-    void locationUpdate();
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Queue;
+
+interface eventListener {
+    void locationUpdate(float x,float y);
+    void jobRequest();
 }
 
-public class Core implements MyListener {
+public class Core implements eventListener {
+
+    //Hardcoded Settings
+    String mqttBrokerUrl = "tcp://broker.hivemq.com:1883";
+    String mqttUsername = "username";
+    String mqttPassword = "password";
+    int clientPort = 5005;
+    int serverPort = 5006;
+
+    MQTTUtils mqttUtils;
+    TCPUtils tcpUtils;
+
+    int ID; // ID given by SmartCity Core
+    ArrayList<Map> loadedMaps = new ArrayList<>(); // list of all loaded maps
+    HashMap <Integer, WayPoint> wayPoints = new HashMap<>();
+    Map currentMap = null; // current map being used in the city
+    int passengers = 0; // amount of passengers inside //TODO implement systems for passengers
+    Position currentLocation = new Position(0,0); // most recent position of the vehicle
+    Queue<WayPoint> currentRoute = new LinkedList<WayPoint>();// all waypoints to be handled in the current route
 
     double speed = 0;
     double rotation = 0;
-    Socket clientSocket = null;
-    DataInputStream inputLine = null;
-    MQTTUtils mqttUtils;
-    TCPListener tcpListener;
 
     public Core() throws InterruptedException {
-        tcpListener = new TCPListener();
-        mqttUtils = new MQTTUtils();
-        tcpListener.start();
-        tcpListener.addListener(this);
+        register();
+        loadedMaps = Map.loadMapsFromFolder("maps");
+        requestMap();
+        mqttUtils = new MQTTUtils(ID,mqttBrokerUrl,mqttUsername,mqttPassword);
+        tcpUtils = new TCPUtils(clientPort,serverPort);
+        tcpUtils.start();
+        tcpUtils.addListener(this);
 
         while (true) {
             rotation = 20;
@@ -54,66 +69,68 @@ public class Core implements MyListener {
         new Core();
     }
 
+    public void register(){
+        //TODO add rest call to get ID
+        ID = 0;
+    }
+
     public void sendWheelStates() {
         JSONObject parentData = new JSONObject();
         JSONObject childData = new JSONObject();
         childData.put("throttle", (int) speed);
         childData.put("steer", (int) rotation);
         parentData.put("drive", childData);
-        sendUpdate(JSONUtils.JSONtoString(parentData));
+        tcpUtils.sendUpdate(JSONUtils.JSONtoString(parentData));
     }
 
-    public void sendUpdate(String data) {
-        inputLine = new DataInputStream(new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8)));
-        byte[] bytes = new byte[100];
-        Arrays.fill(bytes, (byte) 1);
 
-        boolean connected = false;
-        while (!connected) {
-            try {
-                clientSocket = new Socket("localhost", 5005);
-
-                connected = true;
-            } catch (UnknownHostException e) {
-                System.err.println("[Sockets] [ERROR] " + e + ". Trying again.");
-            } catch (IOException e) {
-                System.err.println("[Sockets] [ERROR] " + e + ". Trying again.");
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e1) {
-                    e1.printStackTrace();
-                }
-            }
-        }
-        if (clientSocket != null) {
-            try {
-                PrintStream os = new PrintStream(clientSocket.getOutputStream());
-                os.println(inputLine.readLine());
-                System.out.println("[Sockets] [DEBUG] Data Send:" + data.toString());
-                os.close();
-            } catch (UnknownHostException e) {
-                System.err.println("[Sockets] [ERROR] Trying to connect to unknown host: " + e);
-            } catch (IOException e) {
-                System.err.println("[Sockets] [ERROR] IOException:  " + e);
-            }
-        }
-    }
 
     public void exitCore(){
-
-        try {
-            tcpListener.clientSocket.close();
-            mqttUtils.client.disconnect();
-        } catch (MqttException e) {
-            System.err.println("[MQTT] [ERROR] MqttException:  " + e);
-        } catch (IOException e) {
-            System.err.println("[Sockets] [ERROR] IOException:  " + e);
-        }
+        tcpUtils.run = false;
+        tcpUtils.closeTCP();
+        mqttUtils.closeMQTT();
         System.exit(0);
     }
 
-    public void locationUpdate() {
+    public void locationUpdate(float x,float y) {
         System.out.println("[CORE] [DEBUG] LOCATION UPDATED");
-        mqttUtils.publishMessage(mqttUtils.VEHICLE_ID + "/" + mqttUtils.CLIENT_ID + "/location","right here!");
+        currentLocation.setPosition(x,y);
+        mqttUtils.publishMessage(ID + "/location", x + "," + y);
+    }
+
+    public void requestMap(){
+        //TODO request map name through REST
+        String mapname = "V314";
+        boolean found = false;
+        for (Map map : loadedMaps) {
+            System.out.println("[Core] [DEBUG] Map '" + mapname + "' found. Setting as current map.");
+            if(map.getName().equals(mapname)){
+                currentMap = map;
+                found = true;
+            }
+            if(found)break;
+        }
+        if(!found){
+            //TODO download map from backbone
+            System.out.println("[Core] [DEBUG] Map '" + mapname + "' not found. Downloading...");
+            loadedMaps.add(Map.addMap("test",0,0, (float) 0.25));
+        }
+    }
+
+    public void requestWaypoints(){
+        //TODO request waypoints through REST
+        WayPoint A = new WayPoint(1,1,10,1);
+        WayPoint B = new WayPoint(1,2,11,2);
+        WayPoint C = new WayPoint(1,3,12,1);
+        WayPoint D = new WayPoint(1,4,13,2);
+        wayPoints.put(A.getID(),A);
+        wayPoints.put(B.getID(),B);
+        wayPoints.put(C.getID(),C);
+        wayPoints.put(D.getID(),D);
+    }
+
+    @Override
+    public void jobRequest() {
+
     }
 }

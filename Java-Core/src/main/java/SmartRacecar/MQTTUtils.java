@@ -7,32 +7,25 @@ public class MQTTUtils implements MqttCallback {
     MqttClient client;
     MqttConnectOptions options;
 
-    static final String BROKER_URL = "tcp://broker.hivemq.com:1883";
-    static final String CLIENT_ID = "ID";
-    static final String VEHICLE_ID = "smartracecar";
-    static final String USERNAME = "username";
-    static final String PASSWORD = "password";
-
-
-    public MQTTUtils(){
-        String clientID = CLIENT_ID;
+    public MQTTUtils(int ID,String brokerURL, String username, String password){
+        String clientID = String.valueOf(ID);
         options = new MqttConnectOptions();
 
         options.setCleanSession(true);
         options.setKeepAliveInterval(30);
-        //options.setUserName(USERNAME);
-        //options.setPassword(PASSWORD.toCharArray());
+        //options.setUserName(username);
+        //options.setPassword(password.toCharArray());
 
         try {
-            client = new MqttClient(BROKER_URL, clientID);
+            client = new MqttClient(brokerURL,clientID);
             client.setCallback(this);
             client.connect(options);
-            System.out.println("[MQTT] [DEBUG] Connected to " + BROKER_URL);
+            System.out.println("[MQTT] [DEBUG] Connected to " + brokerURL);
         } catch (MqttException e) {
-            System.err.println("[MQTT] [ERROR] Could not connect to " + BROKER_URL + "." + e);
+            System.err.println("[MQTT] [ERROR] Could not connect to " + brokerURL + "." + e);
         }
 
-        String topic = VEHICLE_ID + "/" + CLIENT_ID;
+        String topic = clientID;
         subscribeToTopic(topic);
     }
 
@@ -75,6 +68,14 @@ public class MQTTUtils implements MqttCallback {
             token.waitForCompletion();
         } catch (Exception e) {
             System.err.println("[MQTT] [ERROR] Could not Publish." + e);
+        }
+    }
+
+    public void closeMQTT(){
+        try {
+            client.disconnect();
+        } catch (MqttException e) {
+            System.err.println("[MQTT] [ERROR] MqttException:  " + e);
         }
     }
 }
