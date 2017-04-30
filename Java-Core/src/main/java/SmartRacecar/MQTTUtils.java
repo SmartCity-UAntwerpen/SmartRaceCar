@@ -2,13 +2,13 @@ package SmartRacecar;
 
 import org.eclipse.paho.client.mqttv3.*;
 
-public class MQTTUtils implements MqttCallback {
+class MQTTUtils implements MqttCallback {
 
-    MqttClient client;
-    MqttConnectOptions options;
-    eventListener listener;
+    private MqttClient client;
+    private MqttConnectOptions options;
+    private eventListener listener;
 
-    public MQTTUtils(int ID,String brokerURL, String username, String password,eventListener listener){
+    MQTTUtils(int ID,String brokerURL, String username, String password,eventListener listener){
         String clientID = String.valueOf(ID);
         options = new MqttConnectOptions();
         this.listener = listener;
@@ -19,7 +19,7 @@ public class MQTTUtils implements MqttCallback {
         //options.setPassword(password.toCharArray());
 
         try {
-            client = new MqttClient(brokerURL,client.generateClientId());
+            client = new MqttClient(brokerURL,clientID);
             client.setCallback(this);
             client.connect(options);
             System.out.println("[MQTT] [DEBUG] Connected to " + brokerURL);
@@ -27,8 +27,7 @@ public class MQTTUtils implements MqttCallback {
             System.err.println("[MQTT] [ERROR] Could not connect to " + brokerURL + "." + e);
         }
 
-        String topic = clientID;
-        subscribeToTopic(topic);
+        subscribeToTopic(clientID);
     }
 
     @Override
@@ -44,9 +43,9 @@ public class MQTTUtils implements MqttCallback {
         jobRequest();
     }
 
-    public void jobRequest(){
-        int[] waypointsTest = {1,2,3,4};
-        listener.jobRequest(waypointsTest);
+    private void jobRequest(){
+        int[] wayPoints = {1,2,3,4};
+        listener.jobRequest(wayPoints);
     }
 
     @Override
@@ -54,7 +53,7 @@ public class MQTTUtils implements MqttCallback {
             System.out.println("[MQTT] [DEBUG] Publish complete.");
     }
 
-    public void subscribeToTopic(String topic){
+    private void subscribeToTopic(String topic){
         try {
             int subQoS = 0;
             client.subscribe(topic, subQoS);
@@ -64,15 +63,15 @@ public class MQTTUtils implements MqttCallback {
         }
     }
 
-    public void publishMessage(String topic,String message){
+    void publishMessage(String topic,String message){
         MqttMessage mqttMessage = new MqttMessage(message.getBytes());
         int pubQoS = 0;
         mqttMessage.setQos(pubQoS);
         mqttMessage.setRetained(false);
 
-        System.out.println("[MQTT] [DEBUG] Publishing. Topic:" + topic + " | QoS " + pubQoS + " | Message:" + message.toString());
+        System.out.println("[MQTT] [DEBUG] Publishing. Topic:" + topic + " | QoS " + pubQoS + " | Message:" + message);
         MqttTopic mqttTopic = client.getTopic(topic);
-        MqttDeliveryToken token = null;
+        MqttDeliveryToken token;
         try {
             token = mqttTopic.publish(mqttMessage);
             token.waitForCompletion();
@@ -81,7 +80,7 @@ public class MQTTUtils implements MqttCallback {
         }
     }
 
-    public void closeMQTT(){
+    void closeMQTT(){
         try {
             client.disconnect();
         } catch (MqttException e) {

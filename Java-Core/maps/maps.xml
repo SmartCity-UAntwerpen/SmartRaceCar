@@ -1,21 +1,21 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <maps>
 	<map>
 		<name>V314</name>
-		<startPositionX>1</startPositionX>
-		<startPositionY>1</startPositionY>
+		<startPointX>1</startPointX>
+		<startPointY>1</startPointY>
 		<meterPerPixel>0.25</meterPerPixel>
 	</map>
-		<map>
+	<map>
 		<name>z164</name>
-		<startPositionX>1</startPositionX>
-		<startPositionY>1</startPositionY>
+		<startPointX>1</startPointX>
+		<startPointY>1</startPointY>
 		<meterPerPixel>0.25</meterPerPixel>
 	</map>
-		<map>
+	<map>
 		<name>zbuilding</name>
-		<startPositionX>1</startPositionX>
-		<startPositionY>1</startPositionY>
+		<startPointX>1</startPointX>
+		<startPointY>1</startPointY>
 		<meterPerPixel>0.25</meterPerPixel>
 	</map>
-</maps>  
+</maps>

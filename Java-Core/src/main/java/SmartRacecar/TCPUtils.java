@@ -10,15 +10,15 @@ import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-public class TCPUtils extends Thread {
+class TCPUtils extends Thread {
 
-    eventListener listener;
-    Socket serverSocket;
-    public boolean run;
-    int clientPort;
-    int serverPort;
+    private eventListener listener;
+    private Socket serverSocket;
+    boolean run;
+    private int clientPort;
+    private int serverPort;
 
-    public TCPUtils(int clientPort, int serverPort,eventListener listener){
+    TCPUtils(int clientPort, int serverPort,eventListener listener){
         this.clientPort = clientPort;
         this.serverPort = serverPort;
         this.listener = listener;
@@ -32,7 +32,7 @@ public class TCPUtils extends Thread {
         try {
             echoServer = new ServerSocket(serverPort);
         } catch (IOException e) {
-            System.out.println(e);
+            e.printStackTrace();
         }
         while (run) {
             try {
@@ -63,7 +63,7 @@ public class TCPUtils extends Thread {
         }
     }
 
-    public void sendUpdate(String data) {
+    void sendUpdate(String data) {
         Socket clientSocket = null;
         DataInputStream inputLine = new DataInputStream(new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8)));
         byte[] bytes = new byte[100];
@@ -78,7 +78,7 @@ public class TCPUtils extends Thread {
             } catch (UnknownHostException e) {
                 System.err.println("[Sockets] [ERROR] " + e + ". Trying again.");
             } catch (IOException e) {
-                System.err.println("[Sockets] [ERROR] " + e + ". Trying again.");
+                System.err.println("[Sockets] [ERROR] Cannot connect to Car to send   " + data + "   Trying again. Error:" + e);
                 try {
                     Thread.sleep(2000);
                 } catch (InterruptedException e1) {
@@ -90,7 +90,7 @@ public class TCPUtils extends Thread {
             try {
                 PrintStream os = new PrintStream(clientSocket.getOutputStream());
                 os.println(inputLine.readLine());
-                System.out.println("[Sockets] [DEBUG] Data Send:" + data.toString());
+                System.out.println("[Sockets] [DEBUG] Data Send:" + data);
                 os.close();
                 listener.updateRoute(); //TODO remove test code
             } catch (UnknownHostException e) {
@@ -101,7 +101,7 @@ public class TCPUtils extends Thread {
         }
     }
 
-    public void closeTCP(){
+    void closeTCP(){
         try {
             serverSocket.close();
         } catch (IOException e) {

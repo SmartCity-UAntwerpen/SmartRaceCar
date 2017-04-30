@@ -6,24 +6,24 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 
-public class RESTUtils {
+class RESTUtils {
 
-    static final String REST_URL = "http://localhost:8080/x";
+    private String REST_URL;
 
-    public void putJSON(String urlEnd,String json) {
+    RESTUtils(String REST_URL){
+        this.REST_URL = REST_URL;
+    }
+
+    void putJSON(String urlEnd,String json) {
         try {
-            URL url = null;
-            url = new URL(REST_URL + urlEnd);
-            URLConnection connection = null;
-            connection = url.openConnection();
-
+            URL url = new URL(REST_URL + urlEnd);
+            URLConnection connection = url.openConnection();
             connection.setDoOutput(true);
             connection.setRequestProperty("Content-Type", "application/json");
             connection.setConnectTimeout(5000);
             connection.setReadTimeout(5000);
 
-            OutputStreamWriter out = null;
-            out = new OutputStreamWriter(connection.getOutputStream());
+            OutputStreamWriter out = new OutputStreamWriter(connection.getOutputStream());
             out.write(json);
             out.close();
         } catch (MalformedURLException e) {

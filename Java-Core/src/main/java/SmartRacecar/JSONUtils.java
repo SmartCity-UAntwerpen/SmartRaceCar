@@ -9,12 +9,12 @@ import org.json.simple.JSONObject;
 import java.util.Map;
 import java.util.Set;
 
-public final class JSONUtils {
+final class JSONUtils {
     private static final Gson gson = new Gson();
 
     private JSONUtils(){}
 
-    public static boolean isJSONValid(String jsonInString) {
+    static boolean isJSONValid(String jsonInString) {
         try {
             gson.fromJson(jsonInString, Object.class);
             return true;
@@ -24,11 +24,11 @@ public final class JSONUtils {
         }
     }
 
-    public static String JSONtoString(JSONObject json){
+    static String JSONtoString(JSONObject json){
         return json.toString();
     }
 
-    public static String getFirst(String jsonInString) {
+    static String getFirst(String jsonInString) {
         JsonParser parser = new JsonParser();
         JsonElement element = parser.parse(jsonInString);
         JsonObject object = element.getAsJsonObject();
