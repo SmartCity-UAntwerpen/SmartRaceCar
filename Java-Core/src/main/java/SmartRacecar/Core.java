@@ -10,7 +10,8 @@ import java.util.Queue;
 
 interface eventListener {
     void locationUpdate(float x,float y);
-    void jobRequest();
+    void jobRequest(int[] wayPoints);
+    void updateRoute();
 }
 
 public class Core implements eventListener {
@@ -31,7 +32,7 @@ public class Core implements eventListener {
     Map currentMap = null; // current map being used in the city
     int passengers = 0; // amount of passengers inside //TODO implement systems for passengers
     Position currentLocation = new Position(0,0); // most recent position of the vehicle
-    Queue<WayPoint> currentRoute = new LinkedList<WayPoint>();// all waypoints to be handled in the current route
+    Queue<Integer> currentRoute = new LinkedList<>();// all waypoints to be handled in the current route
 
     double speed = 0;
     double rotation = 0;
@@ -40,33 +41,53 @@ public class Core implements eventListener {
         register();
         loadedMaps = Map.loadMapsFromFolder("maps");
         requestMap();
-        mqttUtils = new MQTTUtils(ID,mqttBrokerUrl,mqttUsername,mqttPassword);
-        tcpUtils = new TCPUtils(clientPort,serverPort);
+        requestWaypoints();
+        mqttUtils = new MQTTUtils(ID,mqttBrokerUrl,mqttUsername,mqttPassword,this);
+        tcpUtils = new TCPUtils(clientPort,serverPort,this);
         tcpUtils.start();
-        tcpUtils.addListener(this);
 
         while (true) {
-            rotation = 20;
-            sendWheelStates();
             Thread.sleep(1000);
-            rotation = -20;
-            sendWheelStates();
-            Thread.sleep(1000);
-            rotation = 0;
-            speed = 1;
-            sendWheelStates();
-            Thread.sleep(1000);
-            speed = 2;
-            sendWheelStates();
-            Thread.sleep(1000);
-            speed = 0;
-            sendWheelStates();
-            Thread.sleep(1000);
+//            rotation = 20;
+//            sendWheelStates();
+//            Thread.sleep(1000);
+//            rotation = -20;
+//            sendWheelStates();
+//            Thread.sleep(1000);
+//            rotation = 0;
+//            speed = 1;
+//            sendWheelStates();
+//            Thread.sleep(1000);
+//            speed = 2;
+//            sendWheelStates();
+//            Thread.sleep(1000);
+//            speed = 0;
+//            sendWheelStates();
+//            Thread.sleep(1000);
         }
     }
 
+    public void updateRoute(){
+        if(!currentRoute.isEmpty()){
+            WayPoint nextWayPoint = wayPoints.get(currentRoute.poll());
+            JSONObject parentData = new JSONObject();
+            JSONObject childData = new JSONObject();
+            childData.put("x", nextWayPoint.getX());
+            childData.put("y", nextWayPoint.getY());
+            parentData.put("nextWayPoint", childData);
+            tcpUtils.sendUpdate(JSONUtils.JSONtoString(parentData));
+        }else{
+            routeCompleted();
+        }
+    }
+
+    public void routeCompleted(){
+        System.out.println("[Core] [DEBUG] Route completed");
+        //TODO send message to backbone to complete route
+    }
+
     public static void main(String[] args) throws IOException, InterruptedException {
-        new Core();
+       new Core();
     }
 
     public void register(){
@@ -103,8 +124,8 @@ public class Core implements eventListener {
         String mapname = "V314";
         boolean found = false;
         for (Map map : loadedMaps) {
-            System.out.println("[Core] [DEBUG] Map '" + mapname + "' found. Setting as current map.");
             if(map.getName().equals(mapname)){
+                System.out.println("[Core] [DEBUG] Map '" + mapname + "' found. Setting as current map.");
                 currentMap = map;
                 found = true;
             }
@@ -119,18 +140,33 @@ public class Core implements eventListener {
 
     public void requestWaypoints(){
         //TODO request waypoints through REST
-        WayPoint A = new WayPoint(1,1,10,1);
-        WayPoint B = new WayPoint(1,2,11,2);
-        WayPoint C = new WayPoint(1,3,12,1);
-        WayPoint D = new WayPoint(1,4,13,2);
+        WayPoint A = new WayPoint(1,0,0,1);
+        WayPoint B = new WayPoint(2,1,0,1);
+        WayPoint C = new WayPoint(3,0,1,1);
+        WayPoint D = new WayPoint(4,1,1,1);
         wayPoints.put(A.getID(),A);
         wayPoints.put(B.getID(),B);
         wayPoints.put(C.getID(),C);
         wayPoints.put(D.getID(),D);
+        System.out.println("[Core] [DEBUG] All waypoints received.");
     }
 
     @Override
-    public void jobRequest() {
+    public void jobRequest(int[] wayPointIDs) {
+        if(currentRoute.isEmpty()){
+            for (int wayPointID : wayPointIDs) {
+                if(wayPoints.containsKey(wayPointID)) {
+                    currentRoute.add(wayPointID);
+                    System.out.println("[Core] [DEBUG] Added waypoint " + wayPointID + " at " + wayPoints.get(wayPointID).getX() + "," + wayPoints.get(wayPointID).getY() + ".");
+                }else{
+                    System.err.println("[Core] [ERROR] Waypoint with ID '" + wayPointID + "' not found.");
+                }
 
+            }
+            updateRoute();
+
+        }else{
+            System.err.println("[Core] [ERROR] Current Route not completed. Not adding waypoints.");
+        }
     }
 }

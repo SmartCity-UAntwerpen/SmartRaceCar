@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<maps>
+	<map>
+		<name>V314</name>
+		<startPositionX>1</startPositionX>
+		<startPositionY>1</startPositionY>
+		<meterPerPixel>0.25</meterPerPixel>
+	</map>
+		<map>
+		<name>z164</name>
+		<startPositionX>1</startPositionX>
+		<startPositionY>1</startPositionY>
+		<meterPerPixel>0.25</meterPerPixel>
+	</map>
+		<map>
+		<name>zbuilding</name>
+		<startPositionX>1</startPositionX>
+		<startPositionY>1</startPositionY>
+		<meterPerPixel>0.25</meterPerPixel>
+	</map>
+</maps>  

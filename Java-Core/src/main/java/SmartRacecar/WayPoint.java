@@ -8,7 +8,7 @@ public class WayPoint extends Position {
     int ID = 0;
     int weight = 0;
 
-    public WayPoint(float x, float y,int ID, int weight) {
+    public WayPoint(int ID,float x, float y, int weight) {
         super(x, y);
         this.ID = ID;
         this.weight = weight;

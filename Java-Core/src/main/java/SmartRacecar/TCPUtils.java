@@ -18,13 +18,10 @@ public class TCPUtils extends Thread {
     int clientPort;
     int serverPort;
 
-    public void addListener(eventListener listener) {
-        this.listener = listener;
-    }
-
-    public TCPUtils(int clientPort, int serverPort){
+    public TCPUtils(int clientPort, int serverPort,eventListener listener){
         this.clientPort = clientPort;
         this.serverPort = serverPort;
+        this.listener = listener;
     }
 
     public void run() {
@@ -42,18 +39,22 @@ public class TCPUtils extends Thread {
                 serverSocket = echoServer.accept();
                 is = new DataInputStream(serverSocket.getInputStream());
                 line = is.readLine();
-                if(line != null && JSONUtils.isJSONValid(line))if(line != null){
+                if(line != null && JSONUtils.isJSONValid(line))
                     System.out.println("[Sockets] [DEBUG] server received:" + line );
                     switch (JSONUtils.getFirst(line)) {
                         case "location":
                             listener.locationUpdate(0,0);
                             break;
-                        case "job":
-                            listener.jobRequest();
+                        case "nextWayPoint":
+                            listener.updateRoute();
+                            break;
+                        case "arrivedWaypoint":
+                            listener.updateRoute();
                             break;
                         default:
+                            System.err.println("[Sockets] [DEBUG] No matching keyword when parsing JSON.");
                             break;
-                    }
+
                 }
 
             } catch (IOException e) {
@@ -91,6 +92,7 @@ public class TCPUtils extends Thread {
                 os.println(inputLine.readLine());
                 System.out.println("[Sockets] [DEBUG] Data Send:" + data.toString());
                 os.close();
+                listener.updateRoute(); //TODO remove test code
             } catch (UnknownHostException e) {
                 System.err.println("[Sockets] [ERROR] Trying to connect to unknown host: " + e);
             } catch (IOException e) {

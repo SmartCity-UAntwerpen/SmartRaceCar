@@ -6,10 +6,12 @@ public class MQTTUtils implements MqttCallback {
 
     MqttClient client;
     MqttConnectOptions options;
+    eventListener listener;
 
-    public MQTTUtils(int ID,String brokerURL, String username, String password){
+    public MQTTUtils(int ID,String brokerURL, String username, String password,eventListener listener){
         String clientID = String.valueOf(ID);
         options = new MqttConnectOptions();
+        this.listener = listener;
 
         options.setCleanSession(true);
         options.setKeepAliveInterval(30);
@@ -17,7 +19,7 @@ public class MQTTUtils implements MqttCallback {
         //options.setPassword(password.toCharArray());
 
         try {
-            client = new MqttClient(brokerURL,clientID);
+            client = new MqttClient(brokerURL,client.generateClientId());
             client.setCallback(this);
             client.connect(options);
             System.out.println("[MQTT] [DEBUG] Connected to " + brokerURL);
@@ -31,12 +33,20 @@ public class MQTTUtils implements MqttCallback {
 
     @Override
     public void connectionLost(Throwable t) {
+        t.printStackTrace();
         System.err.println("[MQTT] [ERROR] Connection lost.");
     }
 
     @Override
     public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
         System.out.println("[MQTT] [DEBUG] message arrived. Topic:" + topic + " | Message:" + new String(mqttMessage.getPayload()));
+        //TODO Proper MQTT message handling
+        jobRequest();
+    }
+
+    public void jobRequest(){
+        int[] waypointsTest = {1,2,3,4};
+        listener.jobRequest(waypointsTest);
     }
 
     @Override
