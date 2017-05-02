@@ -13,7 +13,7 @@ TCP_PORT_JAVA_PYTH = 5005
 TCP_PORT_PYTH_JAVA = 5006
 BUFFER_SIZE = 64
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 # pub_drive_parameters = rospy.Publisher('drive_parameters', drive_param, queue_size=10)
 # rospy.init_node('javalinker', anonymous=True)
 
@@ -82,7 +82,6 @@ def set_next_waypoint(json_string):
     waypoint_reached()
 
 
-
 def waypoint_reached():
     stop()
     logging.info("waypoint " + str(nextwaypointx) + "," + str(nextwaypointy) + " reached.")
@@ -92,7 +91,7 @@ def waypoint_reached():
 
 
 def send_location():
-    logging.info("Sending location")
+    logging.info("Sending location.")
     jsonmessage = {'location': {'x': 0, 'y': 0}}
     json_string = json.dumps(jsonmessage)
     send_message(json_string)
