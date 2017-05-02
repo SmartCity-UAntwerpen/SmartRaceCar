@@ -9,26 +9,30 @@ import org.json.simple.JSONObject;
 import java.util.Map;
 import java.util.Set;
 
-final class JSONUtils {
+class JSONUtils {
+
+    private eventListener listener;
     private static final Gson gson = new Gson();
 
-    private JSONUtils(){}
+    JSONUtils(eventListener listener){
+        this.listener = listener;
+    }
 
-    static boolean isJSONValid(String jsonInString) {
+    boolean isJSONValid(String jsonInString) {
         try {
             gson.fromJson(jsonInString, Object.class);
             return true;
         } catch(com.google.gson.JsonSyntaxException ex) {
-            System.err.println("[JSON] [ERROR] Not a valid JSON string." + jsonInString + "." + ex);
+            listener.logWarning("JSON","Not a valid JSON string." + jsonInString + "." + ex);
             return false;
         }
     }
 
-    static String JSONtoString(JSONObject json){
+    String JSONtoString(JSONObject json){
         return json.toString();
     }
 
-    static String getFirst(String jsonInString) {
+    String getFirst(String jsonInString) {
         JsonParser parser = new JsonParser();
         JsonElement element = parser.parse(jsonInString);
         JsonObject object = element.getAsJsonObject();

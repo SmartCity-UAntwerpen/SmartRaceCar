@@ -17,11 +17,13 @@ class TCPUtils extends Thread {
     boolean run = true;
     private int clientPort;
     private int serverPort;
+    private JSONUtils jsonUtils;
 
     TCPUtils(int clientPort, int serverPort,eventListener listener){
         this.clientPort = clientPort;
         this.serverPort = serverPort;
         this.listener = listener;
+        jsonUtils = new JSONUtils(listener);
     }
 
     public void run() {
@@ -39,9 +41,9 @@ class TCPUtils extends Thread {
                 serverSocket = echoServer.accept();
                 is = new DataInputStream(serverSocket.getInputStream());
                 line = is.readLine();
-                if(line != null && JSONUtils.isJSONValid(line))
-                    System.out.println("[Sockets] [DEBUG] server received:" + line );
-                    switch (JSONUtils.getFirst(line)) {
+                if(line != null && jsonUtils.isJSONValid(line))
+                    listener.logConfig("SOCKETS","data received: " + line);
+                    switch (jsonUtils.getFirst(line)) {
                         case "location":
                             listener.locationUpdate(0,0);
                             break;
@@ -49,13 +51,13 @@ class TCPUtils extends Thread {
                             listener.updateRoute();
                             break;
                         default:
-                            System.err.println("[Sockets] [DEBUG] No matching keyword when parsing JSON.");
+                            listener.logWarning("SOCKETS","No matching keyword when parsing JSON. Data: " + line);
                             break;
 
                 }
 
             } catch (IOException e) {
-                System.err.println("[Sockets] [ERROR] Cannot receive data." + e);
+                listener.logSevere("SOCKETS","Cannot receive data." + e);
             }
         }
     }
@@ -73,9 +75,11 @@ class TCPUtils extends Thread {
 
                 connected = true;
             } catch (UnknownHostException e) {
-                System.err.println("[Sockets] [ERROR] " + e + ". Trying again.");
+                listener.logSevere("SOCKETS","Cannot connect to car. Trying again." + e);
+                connected = false;
             } catch (IOException e) {
-                System.err.println("[Sockets] [ERROR] Cannot connect to Car to send   " + data + "   Trying again. Error:" + e);
+                listener.logWarning("SOCKETS","Cannot connect to Car to send   " + data + "   Trying again. Error:" + e);
+                connected = false;
                 try {
                     Thread.sleep(2000);
                 } catch (InterruptedException e1) {
@@ -87,12 +91,12 @@ class TCPUtils extends Thread {
             try {
                 PrintStream os = new PrintStream(clientSocket.getOutputStream());
                 os.println(inputLine.readLine());
-                System.out.println("[Sockets] [DEBUG] Data Sent:" + data);
+                listener.logConfig("SOCKETS","Data Sent:" + data);
                 os.close();
             } catch (UnknownHostException e) {
-                System.err.println("[Sockets] [ERROR] Trying to connect to unknown host: " + e);
+                listener.logWarning("SOCKETS","Could not send. Trying to connect to unknown host: " + e);
             } catch (IOException e) {
-                System.err.println("[Sockets] [ERROR] IOException:  " + e);
+                listener.logSevere("SOCKETS","Could not send. IOException:  " + e);
             }
         }
     }
@@ -101,7 +105,7 @@ class TCPUtils extends Thread {
         try {
             serverSocket.close();
         } catch (IOException e) {
-            System.err.println("[Sockets] [ERROR] IOException:  " + e);
+            listener.logSevere("SOCKETS","Could not close Socket connection. IOException:  " + e);
         }
     }
 }

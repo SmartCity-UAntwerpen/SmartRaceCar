@@ -21,18 +21,29 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 interface eventListener {
     void locationUpdate(float x,float y);
     void jobRequest(int[] wayPoints);
     void updateRoute();
+    void logConfig(String category,String message);
+    void logInfo(String category,String message);
+    void logSevere(String category,String message);
+    void logWarning(String category,String message);
 }
 
 public class Core implements eventListener {
 
+    private Logger logging = Logger.getLogger(Core.class.getName());
+
     private RESTUtils restUtils;
     private MQTTUtils mqttUtils;
     private TCPUtils tcpUtils;
+    private JSONUtils jsonUtils;
     private int ID; // ID given by SmartCity Core
     private HashMap<String,Map> loadedMaps = new HashMap<>(); // list of all loaded maps
     private HashMap <Integer, WayPoint> wayPoints = new HashMap<>();
@@ -42,6 +53,8 @@ public class Core implements eventListener {
     private int passengers = 0; // amount of passengers inside //TODO implement systems for passengers
 
     public Core() throws InterruptedException {
+        setLogger(Level.INFO);
+        jsonUtils = new JSONUtils(this);
         mqttUtils = new MQTTUtils(ID,"tcp://broker.hivemq.com:1883","username","password",this);
         tcpUtils = new TCPUtils(5005,5006,this);
         tcpUtils.start();
@@ -58,6 +71,17 @@ public class Core implements eventListener {
         }
     }
 
+    private void setLogger(Level level){
+        Handler handlerObj = new ConsoleHandler();
+        handlerObj.setLevel(Level.ALL);
+        LogFormatter logFormatter = new LogFormatter();
+        handlerObj.setFormatter(logFormatter);
+        logging.addHandler(handlerObj);
+        logging.setLevel(Level.ALL);
+        logging.setUseParentHandlers(false);
+        logging.setLevel(level);
+    }
+
     public void updateRoute(){
         if(!currentRoute.isEmpty()){
             WayPoint nextWayPoint = wayPoints.get(currentRoute.poll());
@@ -66,14 +90,31 @@ public class Core implements eventListener {
             childData.put("x", nextWayPoint.getX());
             childData.put("y", nextWayPoint.getY());
             parentData.put("nextWayPoint", childData);
-            tcpUtils.sendUpdate(JSONUtils.JSONtoString(parentData));
+            tcpUtils.sendUpdate(jsonUtils.JSONtoString(parentData));
+            logInfo("CORE","Waypoint reached. Sending next one: " + nextWayPoint.getX() + "," + nextWayPoint.getY());
         }else{
             routeCompleted();
         }
     }
 
+    public void logInfo(String category,String message){
+        logging.info("[" + category + "] " + message);
+    }
+
+    public void logWarning(String category,String message){
+        logging.warning("[" + category + "] " + message);
+    }
+
+    public void logSevere(String category,String message){
+        logging.severe("[" + category + "] " + message);
+    }
+
+    public void logConfig(String category,String message){
+        logging.config("[" + category + "] " + message);
+    }
+
     private void routeCompleted(){
-        System.out.println("[Core] [DEBUG] Route completed");
+        logInfo("CORE","Waypoint reached. Route Completed.");
         //TODO send message to backbone to complete route
     }
 
@@ -92,7 +133,7 @@ public class Core implements eventListener {
         childData.put("throttle", throttle);
         childData.put("steer", steer);
         parentData.put("drive", childData);
-        tcpUtils.sendUpdate(JSONUtils.JSONtoString(parentData));
+        tcpUtils.sendUpdate(jsonUtils.JSONtoString(parentData));
     }
 
     private void exitCore(){
@@ -104,7 +145,7 @@ public class Core implements eventListener {
     }
 
     public void locationUpdate(float x,float y) {
-        System.out.println("[CORE] [DEBUG] LOCATION UPDATED");
+        logInfo("CORE","Location Updated.");
         currentLocation.setPoint(x,y);
         mqttUtils.publishMessage(ID + "/location", x + "," + y);
     }
@@ -113,13 +154,13 @@ public class Core implements eventListener {
         //TODO request map name through REST
         String mapName = "V314";
         if(loadedMaps.containsKey(mapName)){
-            System.out.println("[Core] [DEBUG] Map '" + mapName + "' found. Setting as current map.");
+            logInfo("CORE","Map '" + mapName + "' found. Setting as current map.");
             sendCurrentMap(mapName);
         }else{
             //TODO download map from backbone
-            System.out.println("[Core] [DEBUG] Map '" + mapName + "' not found. Downloading...");
+            logConfig("CORE","Map '" + mapName + "' not found. Downloading...");
             addMap("test",0,0, (float) 0.25);
-            System.out.println("[Core] [DEBUG] Map '" + mapName + "' downloaded. Setting as current map.");
+            logInfo("CORE","Map '" + mapName + "' downloaded. Setting as current map.");
             sendCurrentMap(mapName);
         }
     }
@@ -132,7 +173,7 @@ public class Core implements eventListener {
         childData.put("startPointY", loadedMaps.get(mapName).getStartPoint().getY());
         childData.put("meterPerPixel", loadedMaps.get(mapName).getMeterPerPixel());
         parentData.put("currentMap", childData);
-        tcpUtils.sendUpdate(JSONUtils.JSONtoString(parentData));
+        tcpUtils.sendUpdate(jsonUtils.JSONtoString(parentData));
     }
 
     private void requestWaypoints(){
@@ -145,7 +186,7 @@ public class Core implements eventListener {
         wayPoints.put(B.getID(),B);
         wayPoints.put(C.getID(),C);
         wayPoints.put(D.getID(),D);
-        System.out.println("[Core] [DEBUG] All waypoints received.");
+        logInfo("CORE","All waypoints received.");
     }
 
     @Override
@@ -154,16 +195,16 @@ public class Core implements eventListener {
             for (int wayPointID : wayPointIDs) {
                 if(wayPoints.containsKey(wayPointID)) {
                     currentRoute.add(wayPointID);
-                    System.out.println("[Core] [DEBUG] Added waypoint " + wayPointID + " at " + wayPoints.get(wayPointID).getX() + "," + wayPoints.get(wayPointID).getY() + ".");
+                    logInfo("CORE","Added waypoint " + wayPointID + " at " + wayPoints.get(wayPointID).getX() + "," + wayPoints.get(wayPointID).getY() + ".");
                 }else{
-                    System.err.println("[Core] [ERROR] Waypoint with ID '" + wayPointID + "' not found.");
+                    logWarning("CORE","[Core] [ERROR] Waypoint with ID '" + wayPointID + "' not found.");
                 }
 
             }
             updateRoute();
 
         }else{
-            System.err.println("[Core] [ERROR] Current Route not completed. Not adding waypoints.");
+            logWarning("CORE","Current Route not completed. Not adding waypoints.");
         }
     }
 
@@ -194,6 +235,7 @@ public class Core implements eventListener {
                     float y = Float.parseFloat(eElement.getElementsByTagName("startPointY").item(0).getTextContent());
                     float meterPerPixel = Float.parseFloat(eElement.getElementsByTagName("meterPerPixel").item(0).getTextContent());
                     loadedMaps.put(name,new Map(name, new Point(x, y), meterPerPixel));
+                    logConfig("CORE","Added map: " + name + ".");
                 }
             }
         } catch (Exception e) {
@@ -243,6 +285,7 @@ public class Core implements eventListener {
             e.printStackTrace();
         }
         loadedMaps.put(name,map);
+        logConfig("CORE","Added downloaded map : " + name + ".");
 
     }
 }

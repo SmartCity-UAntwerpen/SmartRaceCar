@@ -22,9 +22,9 @@ class MQTTUtils implements MqttCallback {
             client = new MqttClient(brokerURL,clientID);
             client.setCallback(this);
             client.connect(options);
-            System.out.println("[MQTT] [DEBUG] Connected to " + brokerURL);
+            listener.logConfig("MQTT","Connected to '" + brokerURL + "'.");
         } catch (MqttException e) {
-            System.err.println("[MQTT] [ERROR] Could not connect to " + brokerURL + "." + e);
+            listener.logSevere("MQTT","Could not connect to '" + brokerURL + "'." + e);
         }
 
         subscribeToTopic(clientID);
@@ -32,13 +32,13 @@ class MQTTUtils implements MqttCallback {
 
     @Override
     public void connectionLost(Throwable t) {
+        listener.logSevere("MQTT","Connection lost.");
         t.printStackTrace();
-        System.err.println("[MQTT] [ERROR] Connection lost.");
     }
 
     @Override
     public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
-        System.out.println("[MQTT] [DEBUG] message arrived. Topic:" + topic + " | Message:" + new String(mqttMessage.getPayload()));
+        listener.logConfig("MQTT","message arrived. Topic:" + topic + " | Message:" + new String(mqttMessage.getPayload()));
         //TODO Proper MQTT message handling
         jobRequest();
     }
@@ -50,16 +50,16 @@ class MQTTUtils implements MqttCallback {
 
     @Override
     public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
-            System.out.println("[MQTT] [DEBUG] Publish complete.");
+        listener.logConfig("MQTT","Publish complete.");
     }
 
     private void subscribeToTopic(String topic){
         try {
             int subQoS = 0;
             client.subscribe(topic, subQoS);
-            System.out.println("[MQTT] [DEBUG] Subscribed to topic:" + topic);
+            listener.logConfig("MQTT","Subscribed to topic:" + topic + ".");
         } catch (Exception e) {
-            System.err.println("[MQTT] [ERROR] Could not subscribe to topic:" + topic + "." + e);
+            listener.logSevere("MQTT","Could not subscribe to topic:" + topic + "." + e);
         }
     }
 
@@ -68,15 +68,14 @@ class MQTTUtils implements MqttCallback {
         int pubQoS = 0;
         mqttMessage.setQos(pubQoS);
         mqttMessage.setRetained(false);
-
-        System.out.println("[MQTT] [DEBUG] Publishing. Topic:" + topic + " | QoS " + pubQoS + " | Message:" + message);
+        listener.logConfig("MQTT","Publishing. Topic:" + topic + " | QoS " + pubQoS + " | Message:" + message);
         MqttTopic mqttTopic = client.getTopic(topic);
         MqttDeliveryToken token;
         try {
             token = mqttTopic.publish(mqttMessage);
             token.waitForCompletion();
         } catch (Exception e) {
-            System.err.println("[MQTT] [ERROR] Could not Publish." + e);
+            listener.logSevere("MQTT","Could not Publish." + e);
         }
     }
 
@@ -84,7 +83,7 @@ class MQTTUtils implements MqttCallback {
         try {
             client.disconnect();
         } catch (MqttException e) {
-            System.err.println("[MQTT] [ERROR] MqttException:  " + e);
+            listener.logSevere("MQTT","Could not close MQTT connection. MqttException:  " + e);
         }
     }
 }
