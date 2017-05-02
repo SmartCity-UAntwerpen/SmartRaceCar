@@ -14,7 +14,7 @@ class TCPUtils extends Thread {
 
     private eventListener listener;
     private Socket serverSocket;
-    boolean run;
+    boolean run = true;
     private int clientPort;
     private int serverPort;
 
@@ -44,9 +44,6 @@ class TCPUtils extends Thread {
                     switch (JSONUtils.getFirst(line)) {
                         case "location":
                             listener.locationUpdate(0,0);
-                            break;
-                        case "nextWayPoint":
-                            listener.updateRoute();
                             break;
                         case "arrivedWaypoint":
                             listener.updateRoute();
@@ -90,9 +87,8 @@ class TCPUtils extends Thread {
             try {
                 PrintStream os = new PrintStream(clientSocket.getOutputStream());
                 os.println(inputLine.readLine());
-                System.out.println("[Sockets] [DEBUG] Data Send:" + data);
+                System.out.println("[Sockets] [DEBUG] Data Sent:" + data);
                 os.close();
-                listener.updateRoute(); //TODO remove test code
             } catch (UnknownHostException e) {
                 System.err.println("[Sockets] [ERROR] Trying to connect to unknown host: " + e);
             } catch (IOException e) {

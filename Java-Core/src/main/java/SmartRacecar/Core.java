@@ -55,15 +55,6 @@ public class Core implements eventListener {
 
         while (true) {
               Thread.sleep(1000);
-//            sendWheelStates(0,20);
-//            Thread.sleep(1000);
-//            sendWheelStates(0,-20);
-//            Thread.sleep(1000);
-//            sendWheelStates(1,0);
-//            Thread.sleep(1000);
-//            sendWheelStates(2,0);
-//            Thread.sleep(1000);
-//            sendWheelStates(0,0);
         }
     }
 
