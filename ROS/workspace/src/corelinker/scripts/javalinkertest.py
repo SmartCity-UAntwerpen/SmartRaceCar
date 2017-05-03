@@ -21,9 +21,18 @@ connected = False
 currentmap = 'default'
 startpointx = 0
 startpointy = 0
+startpointz = 0
+startpointw = 0
 meterperpixel = 0
 nextwaypointx = 0
 nextwaypointy = 0
+nextwaypointz = 0
+nextwaypointw = 0
+currentx = 0
+currenty = 0
+currentz = 0
+currentw = 0
+
 
 def publish_drive_param(json_string):
     # msg = drive_param()
@@ -68,34 +77,40 @@ def get_type(json_string):
 
 
 def set_current_map(json_string):
-    global startpointx,startpointy,currentmap,meterperpixel
+    global startpointx,startpointy,startpointz,startpointw,meterperpixel
     startpointy = json_string['currentMap']['startPointY']
     startpointx =json_string['currentMap']['startPointX']
+    startpointz = json_string['currentMap']['startPointZ']
+    startpointw = json_string['currentMap']['startPointW']
     currentmap = json_string['currentMap']['name']
     meterperpixel = json_string['currentMap']['meterPerPixel']
-    logging.info("Current map set: " + currentmap + " | startPoint: " + str(startpointx) + "," + str(startpointy) + " | MetersPerPixel: " + str(meterperpixel))
+    logging.info("Current map set: " + currentmap + " | startPoint: " + str(startpointx) + "," + str(startpointy) + "," + str(startpointz) + "," + str(startpointw) + " | MetersPerPixel: " + str(meterperpixel))
 
 
 def set_next_waypoint(json_string):
-    global nextwaypointx,nextwaypointy
+    global nextwaypointx,nextwaypointy,nextwaypointz,nextwaypointw
     nextwaypointx = json_string['nextWayPoint']['x']
     nextwaypointy =json_string['nextWayPoint']['y']
-    logging.info("Setting next waypoint: " + str(nextwaypointx) + "," + str(nextwaypointy))
+    nextwaypointy = json_string['nextWayPoint']['z']
+    nextwaypointy = json_string['nextWayPoint']['w']
+    logging.info("Setting next waypoint: " + str(nextwaypointx) + "," + str(nextwaypointy) + "," + str(nextwaypointz) + "," + str(nextwaypointw))
     time.sleep(3)
     waypoint_reached()
 
 
 def waypoint_reached():
     stop()
-    logging.info("waypoint " + str(nextwaypointx) + "," + str(nextwaypointy) + " reached.")
-    jsonmessage = {'arrivedWaypoint': {'x': 0, 'y': 0}}
+    global nextwaypointx,nextwaypointy,nextwaypointz,nextwaypointw
+    logging.info("waypoint " + str(nextwaypointx) + "," + str(nextwaypointy) + "," + str(nextwaypointz) + "," + str(nextwaypointw) + " reached.")
+    jsonmessage = {'arrivedWaypoint': {'x': nextwaypointx, 'y': nextwaypointy,'z': nextwaypointz, 'w': nextwaypointw}}
     json_string = json.dumps(jsonmessage)
     send_message(json_string)
 
 
 def send_location():
-    logging.info("Sending location.")
-    jsonmessage = {'location': {'x': 0, 'y': 0}}
+    global currentx, currenty, currentz, currentw
+    logging.info("Sending location: " + str(currentx) + "," + str(currenty) + "," + str(currentz) + "," + str(currentw))
+    jsonmessage = {'location': {'x': currentx, 'y': currenty,'z':currentz,'w':currentw}}
     json_string = json.dumps(jsonmessage)
     send_message(json_string)
 
