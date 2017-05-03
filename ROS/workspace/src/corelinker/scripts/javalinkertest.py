@@ -17,6 +17,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(me
 # pub_drive_parameters = rospy.Publisher('drive_parameters', drive_param, queue_size=10)
 # rospy.init_node('javalinker', anonymous=True)
 
+connected = False
 currentmap = 'default'
 startpointx = 0
 startpointy = 0
@@ -62,6 +63,8 @@ def get_type(json_string):
         set_current_map(json_string)
     elif json_string.keys()[0] == 'nextWayPoint':
         set_next_waypoint(json_string)
+    elif json_string.keys()[0] ==  'connect':
+        connect()
 
 
 def set_current_map(json_string):
@@ -101,7 +104,15 @@ def send_message(json_string):
     global TCP_IP, TCP_PORT_PYTH_JAVA
 
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect((TCP_IP, TCP_PORT_PYTH_JAVA))
+    connected = False;
+    while not connected:
+        try:
+            client_socket.connect((TCP_IP, TCP_PORT_PYTH_JAVA))
+            connected = True;
+        except socket.error, exc:
+            logging.warning("[CLIENTSOCKET] Cannot send data:  " + json_string + "   Trying again." + str(exc))
+            connected = False
+            time.sleep(1)
     logging.debug("[CLIENTSOCKET] Socket created & connected")
 
     client_socket.sendall(json_string)
@@ -109,6 +120,14 @@ def send_message(json_string):
 
     client_socket.close()
     logging.debug("[CLIENTSOCKET] Socket closed")
+
+def connect():
+    jsonmessage = {'connect': {'x': 0, 'y': 0}}
+    json_string = json.dumps(jsonmessage)
+    send_message(json_string)
+    logging.info("Connected to Core.")
+    global connected
+    connected = True
 
 
 class ServerThread(Thread):
@@ -156,6 +175,8 @@ newthread = ServerThread(TCP_IP, TCP_PORT_JAVA_PYTH, BUFFER_SIZE)
 newthread.daemon = True
 newthread.start()
 # rospy.spin()
+while not connected:
+    time.sleep(1)
 while True:
     time.sleep(5)
     send_location()
