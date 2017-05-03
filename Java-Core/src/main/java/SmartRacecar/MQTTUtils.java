@@ -6,9 +6,9 @@ class MQTTUtils implements MqttCallback {
 
     private MqttClient client;
     private MqttConnectOptions options;
-    private eventListener listener;
+    private CoreEvents listener;
 
-    MQTTUtils(int ID,String brokerURL, String username, String password,eventListener listener){
+    MQTTUtils(int ID, String brokerURL, String username, String password, CoreEvents listener){
         String clientID = String.valueOf(ID);
         options = new MqttConnectOptions();
         this.listener = listener;

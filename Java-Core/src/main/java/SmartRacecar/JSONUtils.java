@@ -11,10 +11,10 @@ import java.util.Set;
 
 class JSONUtils {
 
-    private eventListener listener;
+    private CoreEvents listener;
     private static final Gson gson = new Gson();
 
-    JSONUtils(eventListener listener){
+    JSONUtils(CoreEvents listener){
         this.listener = listener;
     }
 

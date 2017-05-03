@@ -26,7 +26,7 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-interface eventListener {
+interface CoreEvents {
     void locationUpdate(float x,float y);
     void jobRequest(int[] wayPoints);
     void updateRoute();
@@ -36,7 +36,7 @@ interface eventListener {
     void logWarning(String category,String message);
 }
 
-public class Core implements eventListener {
+public class Core implements CoreEvents {
 
     private Logger logging = Logger.getLogger(Core.class.getName());
 

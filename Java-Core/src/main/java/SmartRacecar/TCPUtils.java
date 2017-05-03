@@ -12,14 +12,14 @@ import java.util.Arrays;
 
 class TCPUtils extends Thread {
 
-    private eventListener listener;
+    private CoreEvents listener;
     private Socket serverSocket;
     boolean run = true;
     private int clientPort;
     private int serverPort;
     private JSONUtils jsonUtils;
 
-    TCPUtils(int clientPort, int serverPort,eventListener listener){
+    TCPUtils(int clientPort, int serverPort, CoreEvents listener){
         this.clientPort = clientPort;
         this.serverPort = serverPort;
         this.listener = listener;
