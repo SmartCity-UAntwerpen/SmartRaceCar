@@ -50,6 +50,9 @@ class TCPUtils extends Thread {
                         case "arrivedWaypoint":
                             listener.updateRoute();
                             break;
+                        case "connect":
+                            listener.connectReceive();
+                            break;
                         default:
                             listener.logWarning("SOCKETS","No matching keyword when parsing JSON. Data: " + line);
                             break;
@@ -81,7 +84,7 @@ class TCPUtils extends Thread {
                 listener.logWarning("SOCKETS","Cannot connect to Car to send   " + data + "   Trying again. Error:" + e);
                 connected = false;
                 try {
-                    Thread.sleep(2000);
+                    Thread.sleep(1000);
                 } catch (InterruptedException e1) {
                     e1.printStackTrace();
                 }

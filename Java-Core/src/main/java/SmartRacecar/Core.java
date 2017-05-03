@@ -6,7 +6,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -34,6 +33,7 @@ interface CoreEvents {
     void logInfo(String category,String message);
     void logSevere(String category,String message);
     void logWarning(String category,String message);
+    void connectReceive();
 }
 
 public class Core implements CoreEvents {
@@ -51,6 +51,7 @@ public class Core implements CoreEvents {
     private Queue<Integer> currentRoute = new LinkedList<>();// all waypoints to be handled in the current route
     private String mapFolder = "maps";
     private int passengers = 0; // amount of passengers inside //TODO implement systems for passengers
+    private boolean connected = false;
 
     public Core() throws InterruptedException {
         setLogger(Level.INFO);
@@ -59,7 +60,11 @@ public class Core implements CoreEvents {
         tcpUtils = new TCPUtils(5005,5006,this);
         tcpUtils.start();
         restUtils = new RESTUtils("http://localhost:8080/x");
+        connectSend();
 
+        while(!connected){
+            Thread.sleep(1);
+        }
         register();
         loadMapsFromFolder();
         requestMap();
@@ -80,6 +85,19 @@ public class Core implements CoreEvents {
         logging.setLevel(Level.ALL);
         logging.setUseParentHandlers(false);
         logging.setLevel(level);
+    }
+
+    private void connectSend(){
+        JSONObject parentData = new JSONObject();
+        JSONObject childData = new JSONObject();
+        parentData.put("connect", childData);
+        tcpUtils.sendUpdate(jsonUtils.JSONtoString(parentData));
+    }
+
+    public void connectReceive(){
+        connected = true;
+        logInfo("CORE","Connected to car.");
+
     }
 
     public void updateRoute(){
