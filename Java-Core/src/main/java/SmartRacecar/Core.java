@@ -18,6 +18,7 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.logging.ConsoleHandler;
@@ -47,14 +48,16 @@ public class Core implements CoreEvents {
     private int ID; // ID given by SmartCity Core
     private HashMap<String,Map> loadedMaps = new HashMap<>(); // list of all loaded maps
     private HashMap <Integer, WayPoint> wayPoints = new HashMap<>();
-    private Point currentLocation = new Point(0,0); // most recent position of the vehicle
+    private Point currentLocation = new Point(0,0,0,0); // most recent position of the vehicle
     private Queue<Integer> currentRoute = new LinkedList<>();// all waypoints to be handled in the current route
     private String mapFolder = "maps";
     private int passengers = 0; // amount of passengers inside //TODO implement systems for passengers
     private boolean connected = false;
+    private static int startPoint = 0;
 
     public Core() throws InterruptedException {
         setLogger(Level.INFO);
+        logInfo("CORE","Starting point: " + startPoint);
         jsonUtils = new JSONUtils(this);
         mqttUtils = new MQTTUtils(ID,"tcp://broker.hivemq.com:1883","username","password",this);
         tcpUtils = new TCPUtils(5005,5006,this);
@@ -66,14 +69,20 @@ public class Core implements CoreEvents {
             Thread.sleep(1);
         }
         register();
+        requestWaypoints();
         loadMapsFromFolder();
         requestMap();
-        requestWaypoints();
+
 
 
         while (true) {
               Thread.sleep(1000);
         }
+    }
+
+    public static void main(String[] args) throws IOException, InterruptedException {
+        startPoint = Integer.parseInt(args[0]);
+        new Core();
     }
 
     private void setLogger(Level level){
@@ -107,6 +116,8 @@ public class Core implements CoreEvents {
             JSONObject childData = new JSONObject();
             childData.put("x", nextWayPoint.getX());
             childData.put("y", nextWayPoint.getY());
+            childData.put("z", nextWayPoint.getZ());
+            childData.put("w", nextWayPoint.getW());
             parentData.put("nextWayPoint", childData);
             tcpUtils.sendUpdate(jsonUtils.JSONtoString(parentData));
             logInfo("CORE","Waypoint reached. Sending next one: " + nextWayPoint.getX() + "," + nextWayPoint.getY());
@@ -134,10 +145,6 @@ public class Core implements CoreEvents {
     private void routeCompleted(){
         logInfo("CORE","Waypoint reached. Route Completed.");
         //TODO send message to backbone to complete route
-    }
-
-    public static void main(String[] args) throws IOException, InterruptedException {
-       new Core();
     }
 
     private void register(){
@@ -170,14 +177,14 @@ public class Core implements CoreEvents {
 
     private void requestMap(){
         //TODO request map name through REST
-        String mapName = "V314";
+        String mapName = "zbuilding";
         if(loadedMaps.containsKey(mapName)){
             logInfo("CORE","Map '" + mapName + "' found. Setting as current map.");
             sendCurrentMap(mapName);
         }else{
             //TODO download map from backbone
             logConfig("CORE","Map '" + mapName + "' not found. Downloading...");
-            addMap("test",0,0, (float) 0.25);
+            addMap("test", (float) 0.05);
             logInfo("CORE","Map '" + mapName + "' downloaded. Setting as current map.");
             sendCurrentMap(mapName);
         }
@@ -187,8 +194,10 @@ public class Core implements CoreEvents {
         JSONObject parentData = new JSONObject();
         JSONObject childData = new JSONObject();
         childData.put("name", mapName);
-        childData.put("startPointX", loadedMaps.get(mapName).getStartPoint().getX());
-        childData.put("startPointY", loadedMaps.get(mapName).getStartPoint().getY());
+        childData.put("startPointX", wayPoints.get(startPoint).getX());
+        childData.put("startPointY", wayPoints.get(startPoint).getY());
+        childData.put("startPointZ", wayPoints.get(startPoint).getZ());
+        childData.put("startPointW", wayPoints.get(startPoint).getW());
         childData.put("meterPerPixel", loadedMaps.get(mapName).getMeterPerPixel());
         parentData.put("currentMap", childData);
         tcpUtils.sendUpdate(jsonUtils.JSONtoString(parentData));
@@ -196,14 +205,18 @@ public class Core implements CoreEvents {
 
     private void requestWaypoints(){
         //TODO request waypoints through REST
-        WayPoint A = new WayPoint(1,0,0,1);
-        WayPoint B = new WayPoint(2,1,0,1);
-        WayPoint C = new WayPoint(3,0,1,1);
-        WayPoint D = new WayPoint(4,1,1,1);
+        WayPoint A = new WayPoint(1,(float)0.5,0,-1,(float)0.02,1);
+        WayPoint B = new WayPoint(2,(float)-13.4,(float)-0.53,(float)0.71,(float)0.71,1);
+        WayPoint C = new WayPoint(3,(float)-27.14,(float)-1.11,(float)-0.3,(float)0.95,1);
+        WayPoint D = new WayPoint(4,(float)-28.25,(float)-9.19,(float)-0.71,(float)0.71,1);
         wayPoints.put(A.getID(),A);
         wayPoints.put(B.getID(),B);
         wayPoints.put(C.getID(),C);
         wayPoints.put(D.getID(),D);
+        for (WayPoint wayPoint : wayPoints.values()) {
+            logConfig("CORE","Waypoint " + wayPoint.getID() + " added: " + wayPoint.getX() + "," + wayPoint.getY() + "," + wayPoint.getZ() + "," + wayPoint.getW());
+        }
+
         logInfo("CORE","All waypoints received.");
     }
 
@@ -249,10 +262,8 @@ public class Core implements CoreEvents {
 
                     Element eElement = (Element) nNode;
                     String name = eElement.getElementsByTagName("name").item(0).getTextContent();
-                    float x = Float.parseFloat(eElement.getElementsByTagName("startPointX").item(0).getTextContent());
-                    float y = Float.parseFloat(eElement.getElementsByTagName("startPointY").item(0).getTextContent());
                     float meterPerPixel = Float.parseFloat(eElement.getElementsByTagName("meterPerPixel").item(0).getTextContent());
-                    loadedMaps.put(name,new Map(name, new Point(x, y), meterPerPixel));
+                    loadedMaps.put(name,new Map(name, meterPerPixel));
                     logConfig("CORE","Added map: " + name + ".");
                 }
             }
@@ -261,8 +272,8 @@ public class Core implements CoreEvents {
         }
     }
 
-    private void addMap(String name, float x, float y, float meterPerPixel) {
-        Map map = new Map(name, new Point(x, y), meterPerPixel);
+    private void addMap(String name, float meterPerPixel) {
+        Map map = new Map(name, meterPerPixel);
         try {
             DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
@@ -275,14 +286,6 @@ public class Core implements CoreEvents {
             Element newName = document.createElement("name");
             newName.appendChild(document.createTextNode(name));
             newMap.appendChild(newName);
-
-            Element newStartPointX = document.createElement("startPointX");
-            newStartPointX.appendChild(document.createTextNode(Float.toString(x)));
-            newMap.appendChild(newStartPointX);
-
-            Element newStartPointY = document.createElement("startPointY");
-            newStartPointY.appendChild(document.createTextNode(Float.toString(y)));
-            newMap.appendChild(newStartPointY);
 
             Element newMeterPerPixel = document.createElement("meterPerPixel");
             newMeterPerPixel.appendChild(document.createTextNode(Float.toString(meterPerPixel)));

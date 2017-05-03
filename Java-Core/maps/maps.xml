@@ -2,20 +2,14 @@
 <maps>
 	<map>
 		<name>V314</name>
-		<startPointX>1</startPointX>
-		<startPointY>1</startPointY>
 		<meterPerPixel>0.25</meterPerPixel>
 	</map>
 	<map>
 		<name>z164</name>
-		<startPointX>1</startPointX>
-		<startPointY>1</startPointY>
 		<meterPerPixel>0.25</meterPerPixel>
 	</map>
 	<map>
 		<name>zbuilding</name>
-		<startPointX>1</startPointX>
-		<startPointY>1</startPointY>
-		<meterPerPixel>0.25</meterPerPixel>
+		<meterPerPixel>0.05</meterPerPixel>
 	</map>
 </maps>
