@@ -44,7 +44,7 @@ class MQTTUtils implements MqttCallback {
     }
 
     private void jobRequest(){
-        int[] wayPoints = {1,2,3,4};
+        int[] wayPoints = {4};
         listener.jobRequest(wayPoints);
     }
 
