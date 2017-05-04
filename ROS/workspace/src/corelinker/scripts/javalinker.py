@@ -61,6 +61,26 @@ def stop():
         rospy.loginfo(msg)
         pub_drive_parameters.publish(msg)
     return
+
+
+def publish_initialpose(posx, posy, posz, orx, ory, orz, orw):
+    if not DEBUG:
+        pose = PoseWithCovarianceStamped()
+        pose.header.seq = 3
+        pose.header.stamp = rospy.Time.now()
+        pose.header.frame_id = "map"
+        pose.pose.pose.position.x = 0
+        pose.pose.pose.position.y = 0
+        pose.pose.pose.position.z = 0
+        pose.pose.covariance = [0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                0.06853891945200942]
+        pose.pose.pose.orientation.x = 0
+        pose.pose.pose.orientation.y = 0
+        pose.pose.pose.orientation.z = -1
+        pose.pose.pose.orientation.w = 0.05
+        rospy.loginfo(pose)
+        pub_initial_pose.publish(pose)
     return
 
 
@@ -201,6 +221,8 @@ def callback(data):
 newthread = ServerThread(TCP_IP, TCP_PORT_JAVA_PYTH, BUFFER_SIZE)
 newthread.daemon = True
 newthread.start()
+publish_initialpose(2, 5, 6, 0, 0, -1, 0)
+
 if not DEBUG:
     rospy.spin()
 
