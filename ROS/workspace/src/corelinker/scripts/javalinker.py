@@ -81,6 +81,7 @@ def publish_initialpose(posx, posy, posz, orx, ory, orz, orw):
         pose.pose.pose.orientation.w = 0.05
         rospy.loginfo(pose)
         pub_initial_pose.publish(pose)
+        logging.info("Initial pose published!")
     return
 
 
@@ -124,6 +125,7 @@ def set_startpoint(json_string):
     startpointz = json_string['startPoint']['z']
     startpointw = json_string['startPoint']['w']
     logging.info("Current startPoint set: " + str(startpointx) + "," + str(startpointy) + "," + str(startpointz) + "," + str(startpointw))
+    pub_initial_pose(startpointx, startpointy, 0.0, 0.0, 0.0, startpointz, startpointw)
 
 
 def set_next_waypoint(json_string):
