@@ -152,7 +152,7 @@ public class Core implements CoreEvents {
     public void locationUpdate(float x,float y) {
         logInfo("CORE","Location Updated.");
         currentLocation.setPoint(x,y);
-        mqttUtils.publishMessage(ID + "/location", x + "," + y);
+        //mqttUtils.publishMessage(ID + "/location", x + "," + y);
     }
 
     private void requestMap(){
