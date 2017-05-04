@@ -24,7 +24,7 @@ TCP_PORT_JAVA_PYTH = 5005
 TCP_PORT_PYTH_JAVA = 5006
 BUFFER_SIZE = 64
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s [%(levelname)s] %(message)s')
 
 connected = False
 currentmap = 'default'
@@ -106,17 +106,24 @@ def get_type(json_string):
         set_next_waypoint(json_string)
     elif json_string.keys()[0] ==  'connect':
         connect()
+    elif json_string.keys()[0] == 'startPoint':
+        set_startpoint(json_string)
 
 
 def set_current_map(json_string):
-    global startpointx,startpointy,startpointz,startpointw,meterperpixel
-    startpointy = json_string['currentMap']['startPointY']
-    startpointx =json_string['currentMap']['startPointX']
-    startpointz = json_string['currentMap']['startPointZ']
-    startpointw = json_string['currentMap']['startPointW']
+    global currentmap,meterperpixel
     currentmap = json_string['currentMap']['name']
     meterperpixel = json_string['currentMap']['meterPerPixel']
-    logging.info("Current map set: " + currentmap + " | startPoint: " + str(startpointx) + "," + str(startpointy) + "," + str(startpointz) + "," + str(startpointw) + " | MetersPerPixel: " + str(meterperpixel))
+    logging.info("Current map set: " + currentmap + " | MetersPerPixel: " + str(meterperpixel))
+
+
+def set_startpoint(json_string):
+    global startpointx, startpointy, startpointz, startpointw
+    startpointx = json_string['startPoint']['x']
+    startpointy = json_string['startPoint']['y']
+    startpointz = json_string['startPoint']['z']
+    startpointw = json_string['startPoint']['w']
+    logging.info("Current startPoint set: " + str(startpointx) + "," + str(startpointy) + "," + str(startpointz) + "," + str(startpointw))
 
 
 def set_next_waypoint(json_string):
