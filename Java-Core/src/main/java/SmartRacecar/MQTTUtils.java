@@ -27,7 +27,7 @@ class MQTTUtils implements MqttCallback {
             Core.logSevere("MQTT","Could not connect to '" + brokerURL + "'." + e);
         }
 
-        subscribeToTopic(clientID);
+        subscribeToTopic("ludotest");
     }
 
     @Override
@@ -44,7 +44,7 @@ class MQTTUtils implements MqttCallback {
     }
 
     private void jobRequest(){
-        int[] wayPoints = {4};
+        int[] wayPoints = {3};
         listener.jobRequest(wayPoints);
     }
 
