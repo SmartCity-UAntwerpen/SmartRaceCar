@@ -2,7 +2,7 @@
 
 # Set this variable to False when using the Ros-system
 # The code bypasses all Ros functions when set to True
-DEBUG = True
+DEBUG = False
 
 import socket
 import json
@@ -26,7 +26,7 @@ TCP_PORT_JAVA_PYTH = 5005
 TCP_PORT_PYTH_JAVA = 5006
 BUFFER_SIZE = 64
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s [%(levelname)s] %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 
 connected = False
 currentmap = 'default'
@@ -94,10 +94,10 @@ def publish_movebase_goal(posx, posy, posz, orx, ory, orz, orw):
         pose.pose.pose.position.x = posx
         pose.pose.pose.position.y = posy
         pose.pose.pose.position.z = posx
-        pose.pose.pose.orientation.x = posx
-        pose.pose.pose.orientation.y = posy
-        pose.pose.pose.orientation.z = posz
-        pose.pose.pose.orientation.w = posw
+        pose.pose.pose.orientation.x = orx
+        pose.pose.pose.orientation.y = ory
+        pose.pose.pose.orientation.z = orz
+        pose.pose.pose.orientation.w = orw
 
         rospy.loginfo(pose)
         pub_move_base_goal.publish(pose)
@@ -144,7 +144,7 @@ def set_startpoint(json_string):
     startpointz = json_string['startPoint']['z']
     startpointw = json_string['startPoint']['w']
     logging.info("Current startPoint set: " + str(startpointx) + "," + str(startpointy) + "," + str(startpointz) + "," + str(startpointw))
-    pub_initial_pose(startpointx, startpointy, 0.0, 0.0, 0.0, startpointz, startpointw)
+    publish_initialpose(startpointx, startpointy, 0.0, 0.0, 0.0, startpointz, startpointw)
 
 
 def set_next_waypoint(json_string):
@@ -154,7 +154,7 @@ def set_next_waypoint(json_string):
     nextwaypointz = json_string['nextWayPoint']['z']
     nextwaypointw = json_string['nextWayPoint']['w']
     logging.info("Setting next waypoint: " + str(nextwaypointx) + "," + str(nextwaypointy) + "," + str(nextwaypointz) + "," + str(nextwaypointw))
-    pub_move_base_goal(nextwaypointx, nextwaypointy, 0.0, 0.0, 0.0, nextwaypointz, nextwaypointw)
+    publish_movebase_goal(nextwaypointx, nextwaypointy, 0.0, 0.0, 0.0, nextwaypointz, nextwaypointw)
     time.sleep(3)
     waypoint_reached()
 
