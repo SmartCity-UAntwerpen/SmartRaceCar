@@ -262,3 +262,6 @@ while not connected:
 #    send_location()
 if not DEBUG:
     rospy.spin()
+else:
+    while True:
+        time.sleep(1)
