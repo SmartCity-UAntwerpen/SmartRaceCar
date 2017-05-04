@@ -1,21 +1,32 @@
 #!/usr/bin/env python
 
+# Set this variable to False when using the Ros-system
+# The code bypasses all Ros functions when set to True
+DEBUG = True
+
 import socket
 import json
 import logging
-# import rospy
 from threading import Thread
 import time
-#from race.msg import drive_param
+
+if not DEBUG:
+    import rospy
+    from race.msg import drive_param
+    from geometry_msgs.msg import PoseWithCovarianceStamped
+    from geometry_msgs.msg import PoseStamped
+
+    pub_drive_parameters = rospy.Publisher('drive_parameters', drive_param, queue_size=10)
+    pub_initial_pose = rospy.Publisher('initialpose', PoseWithCovarianceStamped, queue_size=10)
+    pub_move_base_goal = rospy.Publisher('move_base_simple/goal', PoseStamped, queue_size=10)
+    rospy.init_node('javalinker', anonymous=True)
 
 TCP_IP = '127.0.0.1'
 TCP_PORT_JAVA_PYTH = 5005
 TCP_PORT_PYTH_JAVA = 5006
 BUFFER_SIZE = 64
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
-# pub_drive_parameters = rospy.Publisher('drive_parameters', drive_param, queue_size=10)
-# rospy.init_node('javalinker', anonymous=True)
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s [%(levelname)s] %(message)s')
 
 connected = False
 currentmap = 'default'
@@ -35,22 +46,63 @@ currentw = 0
 
 
 def publish_drive_param(json_string):
-    # msg = drive_param()
-    # msg.angle = json_string['drive']['steer']
-    # msg.velocity = json_string['drive']['throttle']
-    # rospy.loginfo(msg)
-    # pub_drive_parameters.publish(msg)
+    if not DEBUG:
+        msg = drive_param()
+        msg.steer = json_string['drive']['steer']
+        msg.throttle = json_string['drive']['throttle']
+        rospy.loginfo(msg)
+        pub_drive_parameters.publish(msg)
     return
 
 
 def stop():
-    # msg = drive_param()
-    # msg.angle = 0
-    # msg.velocity = 0
-    # rospy.loginfo(msg)
-    # pub_drive_parameters.publish(msg)
+    if not DEBUG:
+        msg = drive_param()
+        msg.steer = 0
+        msg.throttle = 0
+        rospy.loginfo(msg)
+        pub_drive_parameters.publish(msg)
     return
 
+
+def publish_initialpose(posx, posy, posz, orx, ory, orz, orw):
+    if not DEBUG:
+        pose = PoseWithCovarianceStamped()
+        pose.header.stamp = rospy.Time.now()
+        pose.header.frame_id = "map"
+        pose.pose.pose.position.x = posx
+        pose.pose.pose.position.y = posy
+        pose.pose.pose.position.z = posz
+        pose.pose.covariance = [0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                0.06853891945200942]
+        pose.pose.pose.orientation.x = orx
+        pose.pose.pose.orientation.y = ory
+        pose.pose.pose.orientation.z = orz
+        pose.pose.pose.orientation.w = orw
+
+        rospy.loginfo(pose)
+        pub_initial_pose.publish(pose)
+        logging.info("Initial pose published!")
+    return
+
+def publish_movebase_goal(posx, posy, posz, orx, ory, orz, orw):
+    if not DEBUG:
+        pose = PoseStamped()
+        pose.header.stamp = rospy.Time.now()
+        pose.header.frame_id = "map"
+        pose.pose.pose.position.x = posx
+        pose.pose.pose.position.y = posy
+        pose.pose.pose.position.z = posx
+        pose.pose.pose.orientation.x = posx
+        pose.pose.pose.orientation.y = posy
+        pose.pose.pose.orientation.z = posz
+        pose.pose.pose.orientation.w = posw
+
+        rospy.loginfo(pose)
+        pub_move_base_goal.publish(pose)
+        logging.info("Goal published!")
+    return
 
 def read_line(sock, recv_buffer=4096, delim='\n'):
     line_buffer = ''
@@ -74,26 +126,35 @@ def get_type(json_string):
         set_next_waypoint(json_string)
     elif json_string.keys()[0] ==  'connect':
         connect()
+    elif json_string.keys()[0] == 'startPoint':
+        set_startpoint(json_string)
 
 
 def set_current_map(json_string):
-    global startpointx,startpointy,startpointz,startpointw,meterperpixel
-    startpointy = json_string['currentMap']['startPointY']
-    startpointx =json_string['currentMap']['startPointX']
-    startpointz = json_string['currentMap']['startPointZ']
-    startpointw = json_string['currentMap']['startPointW']
+    global currentmap,meterperpixel
     currentmap = json_string['currentMap']['name']
     meterperpixel = json_string['currentMap']['meterPerPixel']
-    logging.info("Current map set: " + currentmap + " | startPoint: " + str(startpointx) + "," + str(startpointy) + "," + str(startpointz) + "," + str(startpointw) + " | MetersPerPixel: " + str(meterperpixel))
+    logging.info("Current map set: " + currentmap + " | MetersPerPixel: " + str(meterperpixel))
+
+
+def set_startpoint(json_string):
+    global startpointx, startpointy, startpointz, startpointw
+    startpointx = json_string['startPoint']['x']
+    startpointy = json_string['startPoint']['y']
+    startpointz = json_string['startPoint']['z']
+    startpointw = json_string['startPoint']['w']
+    logging.info("Current startPoint set: " + str(startpointx) + "," + str(startpointy) + "," + str(startpointz) + "," + str(startpointw))
+    pub_initial_pose(startpointx, startpointy, 0.0, 0.0, 0.0, startpointz, startpointw)
 
 
 def set_next_waypoint(json_string):
     global nextwaypointx,nextwaypointy,nextwaypointz,nextwaypointw
     nextwaypointx = json_string['nextWayPoint']['x']
     nextwaypointy =json_string['nextWayPoint']['y']
-    nextwaypointy = json_string['nextWayPoint']['z']
-    nextwaypointy = json_string['nextWayPoint']['w']
+    nextwaypointz = json_string['nextWayPoint']['z']
+    nextwaypointw = json_string['nextWayPoint']['w']
     logging.info("Setting next waypoint: " + str(nextwaypointx) + "," + str(nextwaypointy) + "," + str(nextwaypointz) + "," + str(nextwaypointw))
+    pub_move_base_goal(nextwaypointx, nextwaypointy, 0.0, 0.0, 0.0, nextwaypointz, nextwaypointw)
     time.sleep(3)
     waypoint_reached()
 
@@ -189,7 +250,11 @@ def callback(data):
 newthread = ServerThread(TCP_IP, TCP_PORT_JAVA_PYTH, BUFFER_SIZE)
 newthread.daemon = True
 newthread.start()
-# rospy.spin()
+publish_initialpose(2, 5, 6, 0, 0, -1, 0)
+
+if not DEBUG:
+    rospy.spin()
+
 while not connected:
     time.sleep(1)
 while True:
