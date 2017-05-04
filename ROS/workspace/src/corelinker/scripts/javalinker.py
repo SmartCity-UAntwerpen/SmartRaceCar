@@ -1,12 +1,23 @@
 #!/usr/bin/env python
 
+# Set this variable to False when using the Ros-system
+# The code bypasses all Ros functions when set to True
+DEBUG = True
+
 import socket
 import json
 import logging
-# import rospy
 from threading import Thread
 import time
-#from race.msg import drive_param
+
+if not DEBUG:
+    import rospy
+    from race.msg import drive_param
+    from geometry_msgs.msg import PoseWithCovarianceStamped
+
+    pub_drive_parameters = rospy.Publisher('drive_parameters', drive_param, queue_size=10)
+    pub_initial_pose = rospy.Publisher('initialpose', PoseWithCovarianceStamped, queue_size=10)
+    rospy.init_node('javalinker', anonymous=True)
 
 TCP_IP = '127.0.0.1'
 TCP_PORT_JAVA_PYTH = 5005
@@ -14,8 +25,6 @@ TCP_PORT_PYTH_JAVA = 5006
 BUFFER_SIZE = 64
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
-# pub_drive_parameters = rospy.Publisher('drive_parameters', drive_param, queue_size=10)
-# rospy.init_node('javalinker', anonymous=True)
 
 connected = False
 currentmap = 'default'
@@ -35,20 +44,23 @@ currentw = 0
 
 
 def publish_drive_param(json_string):
-    # msg = drive_param()
-    # msg.angle = json_string['drive']['steer']
-    # msg.velocity = json_string['drive']['throttle']
-    # rospy.loginfo(msg)
-    # pub_drive_parameters.publish(msg)
+    if not DEBUG:
+        msg = drive_param()
+        msg.steer = json_string['drive']['steer']
+        msg.throttle = json_string['drive']['throttle']
+        rospy.loginfo(msg)
+        pub_drive_parameters.publish(msg)
     return
 
 
 def stop():
-    # msg = drive_param()
-    # msg.angle = 0
-    # msg.velocity = 0
-    # rospy.loginfo(msg)
-    # pub_drive_parameters.publish(msg)
+    if not DEBUG:
+        msg = drive_param()
+        msg.steer = 0
+        msg.throttle = 0
+        rospy.loginfo(msg)
+        pub_drive_parameters.publish(msg)
+    return
     return
 
 
@@ -189,7 +201,9 @@ def callback(data):
 newthread = ServerThread(TCP_IP, TCP_PORT_JAVA_PYTH, BUFFER_SIZE)
 newthread.daemon = True
 newthread.start()
-# rospy.spin()
+if not DEBUG:
+    rospy.spin()
+
 while not connected:
     time.sleep(1)
 while True:
