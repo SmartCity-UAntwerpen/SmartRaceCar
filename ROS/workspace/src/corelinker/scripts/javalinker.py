@@ -14,9 +14,11 @@ if not DEBUG:
     import rospy
     from race.msg import drive_param
     from geometry_msgs.msg import PoseWithCovarianceStamped
+    from geometry_msgs.msg import PoseStamped
 
     pub_drive_parameters = rospy.Publisher('drive_parameters', drive_param, queue_size=10)
     pub_initial_pose = rospy.Publisher('initialpose', PoseWithCovarianceStamped, queue_size=10)
+    pub_move_base_goal = rospy.Publisher('move_base_simple/goal', PoseStamped, queue_size=10)
     rospy.init_node('javalinker', anonymous=True)
 
 TCP_IP = '127.0.0.1'
@@ -84,6 +86,23 @@ def publish_initialpose(posx, posy, posz, orx, ory, orz, orw):
         logging.info("Initial pose published!")
     return
 
+def publish_movebase_goal(posx, posy, posz, orx, ory, orz, orw):
+    if not DEBUG:
+        pose = PoseStamped()
+        pose.header.stamp = rospy.Time.now()
+        pose.header.frame_id = "map"
+        pose.pose.pose.position.x = posx
+        pose.pose.pose.position.y = posy
+        pose.pose.pose.position.z = posx
+        pose.pose.pose.orientation.x = posx
+        pose.pose.pose.orientation.y = posy
+        pose.pose.pose.orientation.z = posz
+        pose.pose.pose.orientation.w = posw
+
+        rospy.loginfo(pose)
+        pub_move_base_goal.publish(pose)
+        logging.info("Goal published!")
+    return
 
 def read_line(sock, recv_buffer=4096, delim='\n'):
     line_buffer = ''
@@ -135,6 +154,7 @@ def set_next_waypoint(json_string):
     nextwaypointy = json_string['nextWayPoint']['z']
     nextwaypointy = json_string['nextWayPoint']['w']
     logging.info("Setting next waypoint: " + str(nextwaypointx) + "," + str(nextwaypointy) + "," + str(nextwaypointz) + "," + str(nextwaypointw))
+    pub_move_base_goal(nextwaypointx, nextwaypointy, 0.0, 0.0, 0.0, nextwaypointz, nextwaypointw)
     time.sleep(3)
     waypoint_reached()
 
