@@ -1,6 +1,5 @@
 package SmartRacecar;
 
-import org.json.simple.JSONObject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -18,15 +17,12 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import static SmartRacecar.Core.logInfo;
 
 interface CoreEvents {
     void locationUpdate(float x,float y);
@@ -69,6 +65,7 @@ public class Core implements CoreEvents {
         register();
         requestWaypoints();
         loadMapsFromFolder();
+        sendStartPoint();
         requestMap();
 
 
@@ -95,10 +92,7 @@ public class Core implements CoreEvents {
     }
 
     private void connectSend(){
-        JSONObject parentData = new JSONObject();
-        JSONObject childData = new JSONObject();
-        parentData.put("connect", childData);
-        tcpUtils.sendUpdate(jsonUtils.JSONtoString(parentData));
+        tcpUtils.sendUpdate(jsonUtils.keywordToJSONString("connect"));
     }
 
     public void connectReceive(){
@@ -110,15 +104,8 @@ public class Core implements CoreEvents {
     public void updateRoute(){
         if(!currentRoute.isEmpty()){
             WayPoint nextWayPoint = wayPoints.get(currentRoute.poll());
-            JSONObject parentData = new JSONObject();
-            JSONObject childData = new JSONObject();
-            childData.put("x", nextWayPoint.getX());
-            childData.put("y", nextWayPoint.getY());
-            childData.put("z", nextWayPoint.getZ());
-            childData.put("w", nextWayPoint.getW());
-            parentData.put("nextWayPoint", childData);
-            tcpUtils.sendUpdate(jsonUtils.JSONtoString(parentData));
-            logInfo("CORE","Waypoint reached. Sending next one: " + nextWayPoint.getX() + "," + nextWayPoint.getY());
+            tcpUtils.sendUpdate(jsonUtils.objectToJSONString("nextWayPoint",nextWayPoint));
+            logInfo("CORE","Waypoint reached. Sending next one: " + nextWayPoint.getX() + "," + nextWayPoint.getY() + "," + nextWayPoint.getZ() + "," + nextWayPoint.getW());
         }else{
             routeCompleted();
         }
@@ -151,12 +138,7 @@ public class Core implements CoreEvents {
     }
 
     private void sendWheelStates(float throttle, float steer) {
-        JSONObject parentData = new JSONObject();
-        JSONObject childData = new JSONObject();
-        childData.put("throttle", throttle);
-        childData.put("steer", steer);
-        parentData.put("drive", childData);
-        tcpUtils.sendUpdate(jsonUtils.JSONtoString(parentData));
+        tcpUtils.sendUpdate(jsonUtils.objectToJSONString("drive",new Drive(steer,throttle)));
     }
 
     private void exitCore(){
@@ -185,20 +167,16 @@ public class Core implements CoreEvents {
             addMap("test", (float) 0.05);
             logInfo("CORE","Map '" + mapName + "' downloaded. Setting as current map.");
             sendCurrentMap(mapName);
+            sendStartPoint();
         }
     }
 
     private void sendCurrentMap(String mapName){
-        JSONObject parentData = new JSONObject();
-        JSONObject childData = new JSONObject();
-        childData.put("name", mapName);
-        childData.put("startPointX", wayPoints.get(startPoint).getX());
-        childData.put("startPointY", wayPoints.get(startPoint).getY());
-        childData.put("startPointZ", wayPoints.get(startPoint).getZ());
-        childData.put("startPointW", wayPoints.get(startPoint).getW());
-        childData.put("meterPerPixel", loadedMaps.get(mapName).getMeterPerPixel());
-        parentData.put("currentMap", childData);
-        tcpUtils.sendUpdate(jsonUtils.JSONtoString(parentData));
+        tcpUtils.sendUpdate(jsonUtils.objectToJSONString("currentMap",loadedMaps.get(mapName)));
+    }
+
+    private void sendStartPoint(){
+        tcpUtils.sendUpdate(jsonUtils.objectToJSONString("startPoint",wayPoints.get(startPoint)));
     }
 
     private void requestWaypoints(){
@@ -224,12 +202,14 @@ public class Core implements CoreEvents {
             for (int wayPointID : wayPointIDs) {
                 if(wayPoints.containsKey(wayPointID)) {
                     currentRoute.add(wayPointID);
-                    logInfo("CORE","Added waypoint " + wayPointID + " at " + wayPoints.get(wayPointID).getX() + "," + wayPoints.get(wayPointID).getY() + ".");
+                    logInfo("CORE","Added waypoint " + wayPointID + " at " + wayPoints.get(wayPointID).getX() + "," + wayPoints.get(wayPointID).getY() + "," + wayPoints.get(wayPointID).getZ() + "," + wayPoints.get(wayPointID).getW() + " to route.");
                 }else{
                     logWarning("CORE","[Core] [ERROR] Waypoint with ID '" + wayPointID + "' not found.");
                 }
 
             }
+            logInfo("CORE","sending car first waypoint: " + wayPoints.get(currentRoute.peek()).getX() + "," + wayPoints.get(currentRoute.peek()).getX() + "," + wayPoints.get(currentRoute.peek()).getZ() + "," + wayPoints.get(currentRoute.peek()).getW() + " to route.");
+
             updateRoute();
 
         }else{

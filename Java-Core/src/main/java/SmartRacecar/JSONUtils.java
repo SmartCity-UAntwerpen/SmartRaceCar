@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.json.simple.JSONObject;
 
 import java.util.Map;
 import java.util.Set;
@@ -26,10 +25,6 @@ class JSONUtils {
         }
     }
 
-    String JSONtoString(JSONObject json){
-        return json.toString();
-    }
-
     static String getFirst(String jsonInString) {
         JsonParser parser = new JsonParser();
         JsonElement element = parser.parse(jsonInString);
@@ -39,5 +34,19 @@ class JSONUtils {
             return entry.getKey();
         }
         return jsonInString;
+    }
+
+    static String objectToJSONString(String keyword,Object object){
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.add(keyword,gson.toJsonTree(object));
+        Core.logConfig("JSON",gson.toJson(object));
+        return jsonObject.toString();
+    }
+
+    static String keywordToJSONString(String keyword){
+        JsonObject parentData = new JsonObject();
+        JsonObject childData = new JsonObject();
+        parentData.add(keyword, childData);
+        return parentData.toString();
     }
 }
