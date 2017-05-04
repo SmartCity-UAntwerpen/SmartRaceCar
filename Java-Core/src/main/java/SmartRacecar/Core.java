@@ -26,20 +26,18 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static SmartRacecar.Core.logInfo;
+
 interface CoreEvents {
     void locationUpdate(float x,float y);
     void jobRequest(int[] wayPoints);
     void updateRoute();
-    void logConfig(String category,String message);
-    void logInfo(String category,String message);
-    void logSevere(String category,String message);
-    void logWarning(String category,String message);
     void connectReceive();
 }
 
 public class Core implements CoreEvents {
 
-    private Logger logging = Logger.getLogger(Core.class.getName());
+    private static Logger logging = Logger.getLogger(Core.class.getName());
 
     private RESTUtils restUtils;
     private MQTTUtils mqttUtils;
@@ -58,7 +56,7 @@ public class Core implements CoreEvents {
     public Core() throws InterruptedException {
         setLogger(Level.INFO);
         logInfo("CORE","Starting point: " + startPoint);
-        jsonUtils = new JSONUtils(this);
+        jsonUtils = new JSONUtils();
         mqttUtils = new MQTTUtils(ID,"tcp://broker.hivemq.com:1883","username","password",this);
         tcpUtils = new TCPUtils(5005,5006,this);
         tcpUtils.start();
@@ -126,19 +124,19 @@ public class Core implements CoreEvents {
         }
     }
 
-    public void logInfo(String category,String message){
+    public static void logInfo(String category,String message){
         logging.info("[" + category + "] " + message);
     }
 
-    public void logWarning(String category,String message){
+    public static void logWarning(String category, String message){
         logging.warning("[" + category + "] " + message);
     }
 
-    public void logSevere(String category,String message){
+    public static void logSevere(String category, String message){
         logging.severe("[" + category + "] " + message);
     }
 
-    public void logConfig(String category,String message){
+    public static void logConfig(String category, String message){
         logging.config("[" + category + "] " + message);
     }
 

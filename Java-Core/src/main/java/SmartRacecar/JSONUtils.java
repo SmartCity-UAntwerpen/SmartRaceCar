@@ -11,19 +11,17 @@ import java.util.Set;
 
 class JSONUtils {
 
-    private CoreEvents listener;
     private static final Gson gson = new Gson();
 
-    JSONUtils(CoreEvents listener){
-        this.listener = listener;
+    JSONUtils(){
     }
 
-    boolean isJSONValid(String jsonInString) {
+    static boolean isJSONValid(String jsonInString) {
         try {
             gson.fromJson(jsonInString, Object.class);
             return true;
         } catch(com.google.gson.JsonSyntaxException ex) {
-            listener.logWarning("JSON","Not a valid JSON string." + jsonInString + "." + ex);
+            Core.logWarning("JSON","Not a valid JSON string." + jsonInString + "." + ex);
             return false;
         }
     }
@@ -32,7 +30,7 @@ class JSONUtils {
         return json.toString();
     }
 
-    String getFirst(String jsonInString) {
+    static String getFirst(String jsonInString) {
         JsonParser parser = new JsonParser();
         JsonElement element = parser.parse(jsonInString);
         JsonObject object = element.getAsJsonObject();

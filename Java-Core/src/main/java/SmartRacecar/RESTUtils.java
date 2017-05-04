@@ -27,9 +27,10 @@ class RESTUtils {
             out.write(json);
             out.close();
         } catch (MalformedURLException e) {
+            Core.logSevere("REST","Not a valid URL." + e);
             System.err.println("[REST] [ERROR] Not a valid URL." + e);
         } catch (IOException e) {
-            System.err.println("[REST] [ERROR] Could not send JSON." + e);
+            Core.logSevere("REST","Could not send JSON." + e);
         }
     }
 }
