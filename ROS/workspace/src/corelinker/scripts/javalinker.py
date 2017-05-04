@@ -151,8 +151,8 @@ def set_next_waypoint(json_string):
     global nextwaypointx,nextwaypointy,nextwaypointz,nextwaypointw
     nextwaypointx = json_string['nextWayPoint']['x']
     nextwaypointy =json_string['nextWayPoint']['y']
-    nextwaypointy = json_string['nextWayPoint']['z']
-    nextwaypointy = json_string['nextWayPoint']['w']
+    nextwaypointz = json_string['nextWayPoint']['z']
+    nextwaypointw = json_string['nextWayPoint']['w']
     logging.info("Setting next waypoint: " + str(nextwaypointx) + "," + str(nextwaypointy) + "," + str(nextwaypointz) + "," + str(nextwaypointw))
     pub_move_base_goal(nextwaypointx, nextwaypointy, 0.0, 0.0, 0.0, nextwaypointz, nextwaypointw)
     time.sleep(3)
