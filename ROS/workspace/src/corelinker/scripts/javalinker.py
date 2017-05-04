@@ -68,19 +68,19 @@ def stop():
 def publish_initialpose(posx, posy, posz, orx, ory, orz, orw):
     if not DEBUG:
         pose = PoseWithCovarianceStamped()
-        pose.header.seq = 3
         pose.header.stamp = rospy.Time.now()
         pose.header.frame_id = "map"
-        pose.pose.pose.position.x = 0
-        pose.pose.pose.position.y = 0
-        pose.pose.pose.position.z = 0
+        pose.pose.pose.position.x = posx
+        pose.pose.pose.position.y = posy
+        pose.pose.pose.position.z = posz
         pose.pose.covariance = [0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                                 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                                 0.06853891945200942]
-        pose.pose.pose.orientation.x = 0
-        pose.pose.pose.orientation.y = 0
-        pose.pose.pose.orientation.z = -1
-        pose.pose.pose.orientation.w = 0.05
+        pose.pose.pose.orientation.x = orx
+        pose.pose.pose.orientation.y = ory
+        pose.pose.pose.orientation.z = orz
+        pose.pose.pose.orientation.w = orw
+
         rospy.loginfo(pose)
         pub_initial_pose.publish(pose)
         logging.info("Initial pose published!")
