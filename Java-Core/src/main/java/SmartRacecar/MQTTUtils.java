@@ -5,12 +5,11 @@ import org.eclipse.paho.client.mqttv3.*;
 class MQTTUtils implements MqttCallback {
 
     private MqttClient client;
-    private MqttConnectOptions options;
     private CoreEvents listener;
 
     MQTTUtils(int ID, String brokerURL, String username, String password, CoreEvents listener){
         String clientID = String.valueOf(ID);
-        options = new MqttConnectOptions();
+        MqttConnectOptions options = new MqttConnectOptions();
         this.listener = listener;
 
         options.setCleanSession(true);
@@ -27,7 +26,7 @@ class MQTTUtils implements MqttCallback {
             Core.logSevere("MQTT","Could not connect to '" + brokerURL + "'." + e);
         }
 
-        subscribeToTopic("ludotest");
+        subscribeToTopic("racecar/" + clientID);
     }
 
     @Override
@@ -44,7 +43,7 @@ class MQTTUtils implements MqttCallback {
     }
 
     private void jobRequest(){
-        int[] wayPoints = listener.getTestEndPoint();
+        int[] wayPoints = {2};
         listener.jobRequest(wayPoints);
     }
 

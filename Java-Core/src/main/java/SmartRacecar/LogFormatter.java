@@ -8,9 +8,6 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
-/**
- * Created by Wouter Jansen on 5/2/2017.
- */
 class LogFormatter extends Formatter {
     // Create a DateFormat to format the logger timestamp.
     private static final DateFormat df = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
@@ -35,4 +32,6 @@ class LogFormatter extends Formatter {
     public String getTail(Handler h) {
         return super.getTail(h);
     }
+
+
 }

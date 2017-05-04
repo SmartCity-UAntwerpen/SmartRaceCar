@@ -12,20 +12,4 @@ class Drive {
         this.steer = steer;
         this.throttle = throttle;
     }
-
-    public float getSteer() {
-        return steer;
-    }
-
-    public void setSteer(float steer) {
-        this.steer = steer;
-    }
-
-    public float getThrottle() {
-        return throttle;
-    }
-
-    public void setThrottle(float throttle) {
-        this.throttle = throttle;
-    }
 }

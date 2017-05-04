@@ -36,17 +36,19 @@ class TCPUtils extends Thread {
         }
         while (run) {
             try {
-                serverSocket = echoServer.accept();
+                if (echoServer != null) {
+                    serverSocket = echoServer.accept();
+                }
                 is = new DataInputStream(serverSocket.getInputStream());
                 line = is.readLine();
                 if(line != null && JSONUtils.isJSONValid(line))
                     Core.logConfig("SOCKETS","data received: " + line);
                     switch (JSONUtils.getFirst(line)) {
                         case "location":
-                            listener.locationUpdate(0,0);
+                            listener.locationUpdate(0,0,0,0);
                             break;
                         case "arrivedWaypoint":
-                            listener.updateRoute();
+                            listener.wayPointReached();
                             break;
                         case "connect":
                             listener.connectReceive();
@@ -88,17 +90,15 @@ class TCPUtils extends Thread {
                 }
             }
         }
-        if (clientSocket != null) {
-            try {
-                PrintStream os = new PrintStream(clientSocket.getOutputStream());
-                os.println(inputLine.readLine());
-                Core.logConfig("SOCKETS","Data Sent:" + data);
-                os.close();
-            } catch (UnknownHostException e) {
-                Core.logWarning("SOCKETS","Could not send. Trying to connect to unknown host: " + e);
-            } catch (IOException e) {
-                Core.logSevere("SOCKETS","Could not send. IOException:  " + e);
-            }
+        try {
+            PrintStream os = new PrintStream(clientSocket.getOutputStream());
+            os.println(inputLine.readLine());
+            Core.logConfig("SOCKETS","Data Sent:" + data);
+            os.close();
+        } catch (UnknownHostException e) {
+            Core.logWarning("SOCKETS","Could not send. Trying to connect to unknown host: " + e);
+        } catch (IOException e) {
+            Core.logSevere("SOCKETS","Could not send. IOException:  " + e);
         }
     }
 

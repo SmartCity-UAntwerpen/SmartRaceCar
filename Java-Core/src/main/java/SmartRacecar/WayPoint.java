@@ -11,21 +11,7 @@ class WayPoint extends Point {
         this.weight = weight;
     }
 
-
-
     int getID() {
         return ID;
-    }
-
-    void setID(int ID) {
-        this.ID = ID;
-    }
-
-    int getWeight() {
-        return weight;
-    }
-
-    void setWeight(int weight) {
-        this.weight = weight;
     }
 }

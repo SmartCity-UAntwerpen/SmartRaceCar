@@ -18,36 +18,24 @@ class Point {
         return x;
     }
 
-    void setX(float x) {
-        this.x = x;
-    }
-
     float getY() {
         return y;
-    }
-
-    void setY(float y) {
-        this.y = y;
     }
 
     public float getW() {
         return w;
     }
 
-    public void setW(float w) {
-        this.w = w;
-    }
 
     public float getZ() {
         return z;
     }
 
-    public void setZ(float z) {
-        this.z = z;
-    }
 
-    void setPoint(float x,float y){
+    void setPoint(float x,float y, float z, float w){
         this.x = x;
         this.y = y;
+        this.z = z;
+        this.w = w;
     }
 }
