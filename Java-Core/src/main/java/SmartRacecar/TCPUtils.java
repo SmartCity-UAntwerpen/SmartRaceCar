@@ -45,7 +45,7 @@ class TCPUtils extends Thread {
                     Core.logConfig("SOCKETS","data received: " + line);
                     switch (JSONUtils.getFirst(line)) {
                         case "location":
-                            listener.locationUpdate(0,0,0,0);
+                            listener.locationUpdate((Point) JSONUtils.getObject(line,Point.class));
                             break;
                         case "arrivedWaypoint":
                             listener.wayPointReached();

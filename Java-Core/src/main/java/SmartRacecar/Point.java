@@ -22,20 +22,11 @@ class Point {
         return y;
     }
 
-    public float getW() {
+    float getW() {
         return w;
     }
 
-
-    public float getZ() {
+    float getZ() {
         return z;
-    }
-
-
-    void setPoint(float x,float y, float z, float w){
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        this.w = w;
     }
 }

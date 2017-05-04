@@ -1,10 +1,7 @@
 package SmartRacecar;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
+import com.google.gson.*;
+import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,6 +31,17 @@ class JSONUtils {
             return entry.getKey();
         }
         return jsonInString;
+    }
+
+    static Object getObject(String jsonInString,Type t){
+        JsonParser parser = new JsonParser();
+        JsonElement element = parser.parse(jsonInString);
+        JsonObject object = element.getAsJsonObject();
+        Set<Map.Entry<String, JsonElement>> entries = object.entrySet();
+        for (Map.Entry<String, JsonElement> entry : entries) {
+            return gson.fromJson(entry.getValue(), t);
+        }
+        return null;
     }
 
     static String objectToJSONString(String keyword,Object object){

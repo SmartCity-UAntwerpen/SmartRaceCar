@@ -25,7 +25,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 interface CoreEvents {
-    void locationUpdate(float x, float y, float z, float w);
+    void locationUpdate(Point location);
     void jobRequest(int[] wayPoints);
     void wayPointReached();
     void connectReceive();
@@ -230,10 +230,10 @@ public class Core implements CoreEvents {
 
 
 
-    public void locationUpdate(float x,float y,float z, float w) {
+    public void locationUpdate(Point location) {
+        currentLocation = location;
         logInfo("CORE","Location Updated.");
-        currentLocation.setPoint(x,y,z,w);
-        //mqttUtils.publishMessage(ID + "/location", x + "," + y);
+        mqttUtils.publishMessage("racecar/" + ID + "/location", currentLocation.getX() + " " + currentLocation.getY() + " " + currentLocation.getZ() + " " + currentLocation.getW());
     }
 
     public void jobRequest(int[] wayPointIDs) {
