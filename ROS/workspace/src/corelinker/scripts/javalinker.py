@@ -2,7 +2,7 @@
 
 # Set this variable to False when using the Ros-system
 # The code bypasses all Ros functions when set to True
-DEBUG = False
+DEBUG = True
 
 import socket
 import json
@@ -39,10 +39,10 @@ nextwaypointx = 0
 nextwaypointy = 0
 nextwaypointz = 0
 nextwaypointw = 0
-currentx = 0
-currenty = 0
-currentz = 0
-currentw = 0
+currentx = 1
+currenty = 2
+currentz = 3
+currentw = 4
 
 
 def publish_drive_param(json_string):
@@ -166,7 +166,7 @@ def waypoint_reached():
     stop()
     global nextwaypointx,nextwaypointy,nextwaypointz,nextwaypointw
     logging.info("waypoint " + str(nextwaypointx) + "," + str(nextwaypointy) + "," + str(nextwaypointz) + "," + str(nextwaypointw) + " reached.")
-    jsonmessage = {'arrivedWaypoint': {'x': nextwaypointx, 'y': nextwaypointy,'z': nextwaypointz, 'w': nextwaypointw}}
+    jsonmessage = {'arrivedWaypoint': {'x': nextwaypointx, 'y': nextwaypointy, 'z': nextwaypointz, 'w': nextwaypointw}}
     json_string = json.dumps(jsonmessage)
     send_message(json_string)
 
@@ -174,7 +174,7 @@ def waypoint_reached():
 def send_location():
     global currentx, currenty, currentz, currentw
     logging.info("Sending location: " + str(currentx) + "," + str(currenty) + "," + str(currentz) + "," + str(currentw))
-    jsonmessage = {'location': {'x': currentx, 'y': currenty,'z':currentz,'w':currentw}}
+    jsonmessage = {'location': {'x': currentx, 'y': currenty, 'z': currentz, 'w': currentw}}
     json_string = json.dumps(jsonmessage)
     send_message(json_string)
 
@@ -264,4 +264,5 @@ if not DEBUG:
     rospy.spin()
 else:
     while True:
-        time.sleep(1)
+        time.sleep(5)
+        send_location()
