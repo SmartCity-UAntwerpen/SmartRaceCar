@@ -4,7 +4,6 @@ class Point {
 
     private float x = 0;
     private float y = 0;
-
     private float w = 0;
     private float z = 0;
 
