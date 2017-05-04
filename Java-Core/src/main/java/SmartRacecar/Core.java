@@ -29,6 +29,7 @@ interface CoreEvents {
     void jobRequest(int[] wayPoints);
     void updateRoute();
     void connectReceive();
+    int[] getTestEndPoint();
 }
 
 public class Core implements CoreEvents {
@@ -47,7 +48,8 @@ public class Core implements CoreEvents {
     private String mapFolder = "maps";
     private int passengers = 0; // amount of passengers inside //TODO implement systems for passengers
     private boolean connected = false;
-    private static int startPoint = 0;
+    private static int startPoint = 1;
+    private static int[] testEndPoint = {2};
 
     public Core() throws InterruptedException {
         setLogger(Level.INFO);
@@ -77,7 +79,12 @@ public class Core implements CoreEvents {
 
     public static void main(String[] args) throws IOException, InterruptedException {
         startPoint = Integer.parseInt(args[0]);
+        testEndPoint[0] = Integer.parseInt(args[1]);
         new Core();
+    }
+
+    public int[] getTestEndPoint(){
+        return testEndPoint;
     }
 
     private void setLogger(Level level){
