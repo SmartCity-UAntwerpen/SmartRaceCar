@@ -91,13 +91,13 @@ def publish_movebase_goal(posx, posy, posz, orx, ory, orz, orw):
         pose = PoseStamped()
         pose.header.stamp = rospy.Time.now()
         pose.header.frame_id = "map"
-        pose.pose.pose.position.x = posx
-        pose.pose.pose.position.y = posy
-        pose.pose.pose.position.z = posx
-        pose.pose.pose.orientation.x = orx
-        pose.pose.pose.orientation.y = ory
-        pose.pose.pose.orientation.z = orz
-        pose.pose.pose.orientation.w = orw
+        pose.pose.position.x = posx
+        pose.pose.position.y = posy
+        pose.pose.position.z = posx
+        pose.pose.orientation.x = orx
+        pose.pose.orientation.y = ory
+        pose.pose.orientation.z = orz
+        pose.pose.orientation.w = orw
 
         rospy.loginfo(pose)
         pub_move_base_goal.publish(pose)
@@ -250,13 +250,12 @@ def callback(data):
 newthread = ServerThread(TCP_IP, TCP_PORT_JAVA_PYTH, BUFFER_SIZE)
 newthread.daemon = True
 newthread.start()
-publish_initialpose(2, 5, 6, 0, 0, -1, 0)
-
-if not DEBUG:
-    rospy.spin()
+# publish_initialpose(2, 5, 6, 0, 0, -1, 0)
 
 while not connected:
     time.sleep(1)
-while True:
-    time.sleep(5)
-    send_location()
+#while True:
+#    time.sleep(5)
+#    send_location()
+if not DEBUG:
+    rospy.spin()
