@@ -26,7 +26,7 @@ class MQTTUtils implements MqttCallback {
             Core.logSevere("MQTT","Could not connect to '" + brokerURL + "'." + e);
         }
 
-        subscribeToTopic("racecar/" + clientID);
+        subscribeToTopic("racecar/" + clientID +"/#");
     }
 
     @Override
@@ -37,14 +37,16 @@ class MQTTUtils implements MqttCallback {
 
     @Override
     public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
-        Core.logConfig("MQTT","message arrived. Topic:" + topic + " | Message:" + new String(mqttMessage.getPayload()));
-        //TODO Proper MQTT message handling
-        jobRequest();
-    }
-
-    private void jobRequest(){
-        int[] wayPoints = {2};
-        listener.jobRequest(wayPoints);
+        String message = new String(mqttMessage.getPayload());
+        Core.logConfig("MQTT","message arrived. Topic:" + topic + " | Message:" + message);
+        if(topic.equals("racecar/" + client.getClientId() + "/job")){
+            String[] waypointStringValues = message.split(" ");
+            int[] waypointValues = new int[waypointStringValues.length];
+            for (int index = 0; index < waypointStringValues.length; index++) {
+                waypointValues[index] = Integer.parseInt(waypointStringValues[index]);
+            }
+            listener.jobRequest(waypointValues);
+        }
     }
 
     @Override
@@ -56,9 +58,9 @@ class MQTTUtils implements MqttCallback {
         try {
             int subQoS = 0;
             client.subscribe(topic, subQoS);
-            Core.logConfig("MQTT","Subscribed to topic:" + topic + ".");
+            Core.logConfig("MQTT","Subscribed to topic '" + topic + "'.");
         } catch (Exception e) {
-            Core.logSevere("MQTT","Could not subscribe to topic:" + topic + "." + e);
+            Core.logSevere("MQTT","Could not subscribe to topic '" + topic + "'." + e);
         }
     }
 

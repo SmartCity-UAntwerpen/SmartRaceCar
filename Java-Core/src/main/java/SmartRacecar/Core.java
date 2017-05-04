@@ -201,7 +201,7 @@ public class Core implements CoreEvents {
         if(!currentRoute.isEmpty()){
             WayPoint nextWayPoint = wayPoints.get(currentRoute.poll());
             tcpUtils.sendUpdate(JSONUtils.objectToJSONString("nextWayPoint",nextWayPoint));
-            logInfo("CORE","Sending next waypoint with ID " + nextWayPoint.getID() + " ("+ (currentRoute.size()+1) + "/" + routeSize + ").");
+            logInfo("CORE","Sending next waypoint with ID " + nextWayPoint.getID() + " ("+ (routeSize - currentRoute.size()) + "/" + routeSize + ")");
 
         }else{
             routeCompleted();
