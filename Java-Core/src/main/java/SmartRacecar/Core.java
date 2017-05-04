@@ -102,10 +102,11 @@ public class Core implements CoreEvents {
     }
 
     public void updateRoute(){
+        logInfo("CORE","Waypoint reached.");
         if(!currentRoute.isEmpty()){
             WayPoint nextWayPoint = wayPoints.get(currentRoute.poll());
             tcpUtils.sendUpdate(jsonUtils.objectToJSONString("nextWayPoint",nextWayPoint));
-            logInfo("CORE","Waypoint reached. Sending next one: " + nextWayPoint.getX() + "," + nextWayPoint.getY() + "," + nextWayPoint.getZ() + "," + nextWayPoint.getW());
+            logInfo("CORE","Sending next waypoint: " + nextWayPoint.getX() + "," + nextWayPoint.getY() + "," + nextWayPoint.getZ() + "," + nextWayPoint.getW());
         }else{
             routeCompleted();
         }
@@ -128,7 +129,7 @@ public class Core implements CoreEvents {
     }
 
     private void routeCompleted(){
-        logInfo("CORE","Waypoint reached. Route Completed.");
+        logInfo("CORE","Route Completed.");
         //TODO send message to backbone to complete route
     }
 
@@ -208,8 +209,6 @@ public class Core implements CoreEvents {
                 }
 
             }
-            logInfo("CORE","sending car first waypoint: " + wayPoints.get(currentRoute.peek()).getX() + "," + wayPoints.get(currentRoute.peek()).getX() + "," + wayPoints.get(currentRoute.peek()).getZ() + "," + wayPoints.get(currentRoute.peek()).getW() + " to route.");
-
             updateRoute();
 
         }else{
