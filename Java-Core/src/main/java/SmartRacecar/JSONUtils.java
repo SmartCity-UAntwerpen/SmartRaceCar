@@ -6,11 +6,11 @@ import java.util.Map;
 import java.util.Set;
 
 //Help functions to deal with JSON messages. Uses Google GSON library.
-class JSONUtils {
+public class JSONUtils {
 
     private static final Gson gson = new Gson();
 
-    JSONUtils(){
+    public JSONUtils(){
     }
 
     //Method to verify if string is a valid JSON string.
