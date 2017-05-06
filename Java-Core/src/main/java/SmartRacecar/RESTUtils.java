@@ -6,6 +6,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 
+//All REST function calls
 class RESTUtils {
 
     private String REST_URL;
@@ -13,6 +14,7 @@ class RESTUtils {
     RESTUtils(String REST_URL){
         this.REST_URL = REST_URL;
     }
+
 
     void putJSON(String urlEnd,String json) {
         try {

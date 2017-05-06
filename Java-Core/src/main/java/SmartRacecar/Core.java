@@ -24,6 +24,7 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+//interface to trigger certain events from other objects such as TCP Sockets or MQTT.
 interface CoreEvents {
     void locationUpdate(Point location);
     void jobRequest(int[] wayPoints);
@@ -33,6 +34,7 @@ interface CoreEvents {
 
 public class Core implements CoreEvents {
 
+    //Hardcoded elements.
     private final static Logger logging = Logger.getLogger(Core.class.getName());
     private final static Level logLevel = Level.INFO;
     private final String mqttBroker = "tcp://broker.hivemq.com:1883";
@@ -47,15 +49,15 @@ public class Core implements CoreEvents {
     private TCPUtils tcpUtils;
     private JSONUtils jsonUtils;
 
-    private int ID; // ID given by SmartCity Core
-    private HashMap<String,Map> loadedMaps = new HashMap<>(); // list of all loaded maps
-    private HashMap <Integer, WayPoint> wayPoints = new HashMap<>();
-    private Point currentLocation = new Point(0,0,0,0); // most recent position of the vehicle
-    private Queue<Integer> currentRoute = new LinkedList<>();// all waypoints to be handled in the current route
-    private int routeSize = 0;
-    private boolean connected = false;
-    private static int startPoint = 1;
-    private boolean occupied = false;
+    private int ID; // ID given by RaceCarManager.
+    private HashMap<String,Map> loadedMaps = new HashMap<>(); // Map of all loaded maps.
+    private HashMap <Integer, WayPoint> wayPoints = new HashMap<>(); // Map of all loaded waypoints.
+    private Point currentLocation = new Point(0,0,0,0); // Most recent position of the vehicle.
+    private Queue<Integer> currentRoute = new LinkedList<>();// All waypoint IDs to be handled in the current route.
+    private int routeSize = 0; // Current route's size.
+    private boolean connected = false; // To verify socket connection to vehicle.
+    private static int startPoint; // Starting position on map. Given by main argument.
+    private boolean occupied = false; // To verify if racecar is currently occupied by a route job.
 
     public Core() throws InterruptedException {
         jsonUtils = new JSONUtils();
@@ -74,21 +76,25 @@ public class Core implements CoreEvents {
         requestMap();
     }
 
+    //Send connection check over sockets
     private void connectSend(){
         tcpUtils.sendUpdate(JSONUtils.keywordToJSONString("connect"));
     }
 
+    //Event to be called when connection to car has been made
     public void connectReceive(){
         connected = true;
         logInfo("CORE","Connected to car.");
 
     }
 
+    //Register vehicle with RaceCarManager
     private void register(){
         //TODO add rest call to get ID
         ID = 0;
     }
 
+    //Request all possible waypoints from RaceCarManager
     private void requestWaypoints(){
         //TODO request waypoints through REST
         WayPoint A = new WayPoint(1,(float)0.5,0,-1,(float)0.02,1);
@@ -106,14 +112,14 @@ public class Core implements CoreEvents {
         logInfo("CORE","All possible waypoints(" + wayPoints.size() + ") received.");
     }
 
+    //Set the starting point for the vehicle. Sending it over the socket connection.
     private void sendStartPoint(){
         tcpUtils.sendUpdate(JSONUtils.objectToJSONString("startPoint",wayPoints.get(startPoint)));
     }
 
+    //Load all current available offline maps from the /mapFolder folder. It reads and maps.xml file with all the necessary information.
     private void loadMaps() {
-
         try {
-
             File fXmlFile = new File(mapFolder + "/maps.xml");
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
@@ -140,6 +146,9 @@ public class Core implements CoreEvents {
         }
     }
 
+    //REST call to RaceCarManager to request the name of the current map. If this map is not found in the offline available maps, it does another
+    //REST download call to download the map and store it in it's /mapFolder and add it to the maps.xml file.
+    //After that it sends this information to the vehicle to be used over the socket connection.
     private void requestMap(){
         //TODO request map name through REST
         String mapName = "zbuilding";
@@ -155,6 +164,7 @@ public class Core implements CoreEvents {
         }
     }
 
+    //Add a new map to the /mapFolder folder and update the maps.xml file.
     private void addMap(String name, float meterPerPixel) {
         Map map = new Map(name, meterPerPixel);
         try {
@@ -193,10 +203,13 @@ public class Core implements CoreEvents {
 
     }
 
+    //Send the name and other information of the current map to the vehicle over the socket connection.
     private void sendCurrentMap(String mapName){
         tcpUtils.sendUpdate(JSONUtils.objectToJSONString("currentMap",loadedMaps.get(mapName)));
     }
 
+    //Tto be used when when a new waypoint has to be send to the vehicle or to check if route is completed.
+    //Sends information of the next waypoint over the socket connection to the vehicle.
     private void updateRoute(){
         if(!currentRoute.isEmpty()){
             WayPoint nextWayPoint = wayPoints.get(currentRoute.poll());
@@ -208,34 +221,34 @@ public class Core implements CoreEvents {
         }
     }
 
+    //Event call over interface to be used when socket connection received message that waypoint has been reached.
     public void wayPointReached(){
-        if(currentRoute.isEmpty()){
-            occupied = false;
-        }
         logInfo("CORE","Waypoint reached.");
         updateRoute();
     }
 
-
-
+    //When all waypoints have been completed the vehicle becomes available again.
     private void routeCompleted(){
         logInfo("CORE","Route Completed.");
+        occupied = false;
         //TODO send message to backbone to complete route
     }
 
-
+    //Send wheel states to the vehicle over the socket connection. useful for emergency stops and other requests.
     private void sendWheelStates(float throttle, float steer) {
         tcpUtils.sendUpdate(JSONUtils.objectToJSONString("drive",new Drive(steer,throttle)));
+        logInfo("CORE","Sending wheel state Throttle:" + throttle +", Steer:" + steer + ".");
     }
 
-
-
+    //Event call over interface for when the socket connection receives location update. Publishes this to the RaceCarManager over MQTT.
     public void locationUpdate(Point location) {
         currentLocation = location;
         logInfo("CORE","Location Updated.");
         mqttUtils.publishMessage("racecar/" + ID + "/location", currentLocation.getX() + " " + currentLocation.getY() + " " + currentLocation.getZ() + " " + currentLocation.getW());
     }
 
+    //Event call over interface for when MQTT connection receives new route job requests. Adds all requested waypoints to route queue one by one.
+    //Sets the vehicle to occupied. Ignores the request if vehicle is already occupied.
     public void jobRequest(int[] wayPointIDs) {
         logInfo("CORE","Route request received.");
         if(!occupied){
@@ -261,50 +274,31 @@ public class Core implements CoreEvents {
     public static void main(String[] args) throws IOException, InterruptedException {
         setLogger(logLevel);
 
-        if(args.length == 0)
-        {
-            logSevere("CORE","Need at least 1 argument to run. Possible arguments: startpoint(int)");
+        if (args.length == 0) {
+            logSevere("CORE", "Need at least 1 argument to run. Possible arguments: startpoint(int)");
             System.exit(0);
-        }else if(args.length == 1){
-            if(!args[0].isEmpty()) startPoint = Integer.parseInt(args[0]);
-            logInfo("CORE","Starting point set as waypoint with ID " + startPoint + ".");
+        } else if (args.length == 1) {
+            if (!args[0].isEmpty()) startPoint = Integer.parseInt(args[0]);
+            logInfo("CORE", "Starting point set as waypoint with ID " + startPoint + ".");
         }
 
         final Core core = new Core();
-
-        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-            public void run() {
-                logInfo("CORE","Shutting down safely...");
-                core.sendWheelStates(0,0);
-                core.tcpUtils.run = false;
-                core.tcpUtils.closeTCP();
-                core.mqttUtils.closeMQTT();
-                System.exit(0);
-            }
-        }, "Shutdown-thread"));
-        while(true){
-            Thread.sleep(1000);
-        }
-
-
+//    }
     }
 
+    //Logging functionality for debugging and information printing. 
     static void logInfo(String category, String message){
         logging.info("[" + category + "] " + message);
     }
-
     static void logWarning(String category, String message){
         logging.warning("[" + category + "] " + message);
     }
-
     static void logSevere(String category, String message){
         logging.severe("[" + category + "] " + message);
     }
-
     static void logConfig(String category, String message){
         logging.config("[" + category + "] " + message);
     }
-
     private static void setLogger(Level level){
         Handler handlerObj = new ConsoleHandler();
         handlerObj.setLevel(Level.ALL);

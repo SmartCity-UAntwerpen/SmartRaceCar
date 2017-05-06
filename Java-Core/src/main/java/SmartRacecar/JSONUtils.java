@@ -5,6 +5,7 @@ import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Set;
 
+//Help functions to deal with JSON messages. Uses Google GSON library.
 class JSONUtils {
 
     private static final Gson gson = new Gson();
@@ -12,6 +13,7 @@ class JSONUtils {
     JSONUtils(){
     }
 
+    //Method to verify if string is a valid JSON string.
     static boolean isJSONValid(String jsonInString) {
         try {
             gson.fromJson(jsonInString, Object.class);
@@ -22,6 +24,7 @@ class JSONUtils {
         }
     }
 
+    //Get the first word of the JSON object. In this case this is always the keyword used in the message.
     static String getFirst(String jsonInString) {
         JsonParser parser = new JsonParser();
         JsonElement element = parser.parse(jsonInString);
@@ -33,6 +36,8 @@ class JSONUtils {
         return jsonInString;
     }
 
+    //Get the object after the keyword of the JSON object. This is always the package of the message.
+    //Converts it to the correct requested Java Object type.
     static Object getObject(String jsonInString,Type t){
         JsonParser parser = new JsonParser();
         JsonElement element = parser.parse(jsonInString);
@@ -44,13 +49,14 @@ class JSONUtils {
         return null;
     }
 
+    //Converts a Java object of a specific type to a JSON string with a keyword as first element.
     static String objectToJSONString(String keyword,Object object){
         JsonObject jsonObject = new JsonObject();
         jsonObject.add(keyword,gson.toJsonTree(object));
-        Core.logConfig("JSON",gson.toJson(object));
         return jsonObject.toString();
     }
 
+    //Converts only a keyword to a JSON string.
     static String keywordToJSONString(String keyword){
         JsonObject parentData = new JsonObject();
         JsonObject childData = new JsonObject();

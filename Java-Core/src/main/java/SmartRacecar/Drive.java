@@ -1,12 +1,10 @@
 package SmartRacecar;
 
-/**
- * Created by Wouter on 4/05/2017.
- */
+//Model of drive parameters.
 class Drive {
 
-    private float steer;
-    private float throttle;
+    private float steer; //Rotation of the wheels.
+    private float throttle; //speed of the vehicle's wheels.
 
     Drive(float steer,float throttle){
         this.steer = steer;

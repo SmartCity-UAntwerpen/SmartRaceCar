@@ -2,6 +2,7 @@ package SmartRacecar;
 
 import org.eclipse.paho.client.mqttv3.*;
 
+//All MQTT functionality
 class MQTTUtils implements MqttCallback {
 
     private MqttClient client;
@@ -36,6 +37,7 @@ class MQTTUtils implements MqttCallback {
     }
 
     @Override
+    //Parses the topic to make the right method call.
     public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
         String message = new String(mqttMessage.getPayload());
         Core.logConfig("MQTT","message arrived. Topic:" + topic + " | Message:" + message);
@@ -77,14 +79,6 @@ class MQTTUtils implements MqttCallback {
             token.waitForCompletion();
         } catch (Exception e) {
             Core.logSevere("MQTT","Could not Publish." + e);
-        }
-    }
-
-    void closeMQTT(){
-        try {
-            client.disconnect();
-        } catch (MqttException e) {
-            Core.logSevere("MQTT","Could not close MQTT connection. MqttException:  " + e);
         }
     }
 }
