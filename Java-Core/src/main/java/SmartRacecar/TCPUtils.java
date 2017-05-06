@@ -10,6 +10,7 @@ import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
+// Creates listener over sockets to listen to vehicle messages and sends back over other socket.
 class TCPUtils extends Thread {
 
     private CoreEvents listener;
@@ -24,6 +25,7 @@ class TCPUtils extends Thread {
         this.listener = listener;
     }
 
+    //Listener thread
     public void run() {
 
         ServerSocket echoServer = null;
@@ -43,6 +45,7 @@ class TCPUtils extends Thread {
                 line = is.readLine();
                 if(line != null && JSONUtils.isJSONValid(line))
                     Core.logConfig("SOCKETS","data received: " + line);
+                    //parses keyword to do the correct function call.
                     switch (JSONUtils.getFirst(line)) {
                         case "location":
                             listener.locationUpdate((Point) JSONUtils.getObject(line,Point.class));
@@ -63,8 +66,10 @@ class TCPUtils extends Thread {
                 Core.logSevere("SOCKETS","Cannot receive data." + e);
             }
         }
+        closeTCP();
     }
 
+    //sends message over clientSocket to vehicle
     void sendUpdate(String data) {
         Socket clientSocket = null;
         DataInputStream inputLine = new DataInputStream(new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8)));
@@ -72,6 +77,7 @@ class TCPUtils extends Thread {
         Arrays.fill(bytes, (byte) 1);
 
         boolean connected = false;
+        //if connection to socket can not be made, it waits until it can.
         while (!connected) {
             try {
                 clientSocket = new Socket("localhost", clientPort);
