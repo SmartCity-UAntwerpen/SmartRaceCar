@@ -1,7 +1,6 @@
 package be.uantwerpen.fti.ds.smartracecar.manager;
 
-import be.uantwerpen.fti.ds.smartracecar.model.Log;
-
+import be.uantwerpen.fti.ds.smartracecar.model.*;
 import java.util.logging.Level;
 
 public class Manager {
