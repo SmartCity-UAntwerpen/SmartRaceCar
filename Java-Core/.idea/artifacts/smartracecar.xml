@@ -1,0 +1,14 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="smartracecar">
+    <output-path>$PROJECT_DIR$/out/artifacts/smartracecar</output-path>
+    <root id="archive" name="smartracecar.jar">
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$PROJECT_DIR$/src/main/resources/smartracecar-jar/META-INF/MANIFEST.MF" />
+      </element>
+      <element id="module-output" name="SmartRacecar" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/w3c/dom/2.3.0-jaxb-1.0.6/dom-2.3.0-jaxb-1.0.6.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/eclipse/paho/org.eclipse.paho.client.mqttv3/1.0.2/org.eclipse.paho.client.mqttv3-1.0.2.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.8.0/gson-2.8.0.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
