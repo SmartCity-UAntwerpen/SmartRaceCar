@@ -1,17 +1,18 @@
-SmartRacecar - Java-Core
+SmartRacecar - Java modules
 ================
-The high level module that will send control messages to the underlying ROS system of the RaceCar. This module will communicate with the RacecarManager systems as well.
+The high level modules that will handle all high level functions of the smartracecar vehicle category. 
 
-## Functionality
- - Connects to vehicle over Socket connection. Connects to RacecarManager over MQTT and REST interfaces. 
- - Handles initial vehicle startup to set the correct offline map parameters, get all waypoint information and register the vehicle.
- - Handles route requests.
+## Modules
+ - Core: Java-module that runs on the racecar itself. In charge of passing on messages to the vehicles ROS nodes. Communicates with the Manager module to register, receive route job requests and handles these to give instructions to the ROS nodes. 
+ - Manager : Java-module that runs on the backend servers. Registers all racecars and manages them. Receives job requests from backend SmartCity and processes these to the vehicles. Also deals with the simulated vehicles. 
+ 
  
 ## How to use
  - Build and constructed as Intelij IDEA project with Maven.
  - Compiled on Java 1.8.
  - Requires maps folder with all available offline maps and a maps.xml file.
- - Requires startup parameter of the startlocation (number ID).
+ - Has two build .jar's for the Core and Manager modules.
+ - Requires startup parameter of the startlocation (number ID) for the Core. 
 
 ## Developed by
 
