@@ -1,4 +1,4 @@
-package SmartRacecar;
+package be.uantwerpen.fti.ds.model;
 
 //Extended model of a Point which is used for waypoints. Supers the coordinates from the Point class.
 public class WayPoint extends Point {
@@ -12,7 +12,7 @@ public class WayPoint extends Point {
         this.weight = weight;
     }
 
-    int getID() {
+    public int getID() {
         return ID;
     }
 }

@@ -1,10 +1,12 @@
-package SmartRacecar;
+package be.uantwerpen.fti.ds.smartracecar;
 
+import be.uantwerpen.fti.ds.model.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -19,10 +21,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Handler;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 //interface to trigger certain events from other objects such as TCP Sockets or MQTT.
 interface CoreEvents {
@@ -35,8 +34,7 @@ interface CoreEvents {
 public class Core implements CoreEvents {
 
     //Hardcoded elements.
-    private final static Logger logging = Logger.getLogger(Core.class.getName());
-    private final static Level logLevel = Level.INFO;
+    private Log log;
     private final String mqttBroker = "tcp://broker.hivemq.com:1883";
     private final String mqqtUsername = "username";
     private final String mqttPassword = "password";
@@ -60,6 +58,7 @@ public class Core implements CoreEvents {
     private boolean occupied = false; // To verify if racecar is currently occupied by a route job.
 
     public Core() throws InterruptedException {
+        log = new Log(this.getClass(),Level.INFO);
         jsonUtils = new JSONUtils();
         mqttUtils = new MQTTUtils(ID,mqttBroker,mqqtUsername,mqttPassword,this);
         tcpUtils = new TCPUtils(serverPort,clientPort,this);
@@ -84,7 +83,7 @@ public class Core implements CoreEvents {
     //Event to be called when connection to car has been made
     public void connectReceive(){
         connected = true;
-        logInfo("CORE","Connected to car.");
+        log.logInfo("CORE","Connected to car.");
 
     }
 
@@ -106,14 +105,15 @@ public class Core implements CoreEvents {
         wayPoints.put(C.getID(),C);
         wayPoints.put(D.getID(),D);
         for (WayPoint wayPoint : wayPoints.values()) {
-            logConfig("CORE","Waypoint " + wayPoint.getID() + " added: " + wayPoint.getX() + "," + wayPoint.getY() + "," + wayPoint.getZ() + "," + wayPoint.getW());
+            log.logConfig("CORE","Waypoint " + wayPoint.getID() + " added: " + wayPoint.getX() + "," + wayPoint.getY() + "," + wayPoint.getZ() + "," + wayPoint.getW());
         }
 
-        logInfo("CORE","All possible waypoints(" + wayPoints.size() + ") received.");
+        log.logInfo("CORE","All possible waypoints(" + wayPoints.size() + ") received.");
     }
 
     //Set the starting point for the vehicle. Sending it over the socket connection.
     private void sendStartPoint(){
+        log.logInfo("CORE","Starting point set as waypoint with ID " + startPoint + ".");
         tcpUtils.sendUpdate(JSONUtils.objectToJSONString("startPoint",wayPoints.get(startPoint)));
     }
 
@@ -138,11 +138,11 @@ public class Core implements CoreEvents {
                     String name = eElement.getElementsByTagName("name").item(0).getTextContent();
                     float meterPerPixel = Float.parseFloat(eElement.getElementsByTagName("meterPerPixel").item(0).getTextContent());
                     loadedMaps.put(name,new Map(name, meterPerPixel));
-                    logConfig("CORE","Added map: " + name + ".");
+                    log.logConfig("CORE","Added map: " + name + ".");
                 }
             }
         } catch (Exception e) {
-            logSevere("CORE","Could not correctly load XML of maps." + e);
+            log.logSevere("CORE","Could not correctly load XML of maps." + e);
         }
     }
 
@@ -153,13 +153,13 @@ public class Core implements CoreEvents {
         //TODO request map name through REST
         String mapName = "zbuilding";
         if(loadedMaps.containsKey(mapName)){
-            logInfo("CORE","Current map '" + mapName + "' found.");
+            log.logInfo("CORE","Current map '" + mapName + "' found.");
             sendCurrentMap(mapName);
         }else{
             //TODO download map from backbone
-            logConfig("CORE","Current map '" + mapName + "' not found. Downloading...");
+            log.logConfig("CORE","Current map '" + mapName + "' not found. Downloading...");
             addMap("test", (float) 0.05);
-            logInfo("CORE","Current map '" + mapName + "' downloaded.");
+            log.logInfo("CORE","Current map '" + mapName + "' downloaded.");
             sendCurrentMap(mapName);
         }
     }
@@ -196,10 +196,10 @@ public class Core implements CoreEvents {
             transformer.transform(source, result);
 
         } catch (ParserConfigurationException | SAXException | IOException | TransformerException e) {
-            logSevere("CORE","Could not add map to XML of maps." + e);
+            log.logSevere("CORE","Could not add map to XML of maps." + e);
         }
         loadedMaps.put(name,map);
-        logConfig("CORE","Added downloaded map : " + name + ".");
+        log.logConfig("CORE","Added downloaded map : " + name + ".");
 
     }
 
@@ -214,7 +214,7 @@ public class Core implements CoreEvents {
         if(!currentRoute.isEmpty()){
             WayPoint nextWayPoint = wayPoints.get(currentRoute.poll());
             tcpUtils.sendUpdate(JSONUtils.objectToJSONString("nextWayPoint",nextWayPoint));
-            logInfo("CORE","Sending next waypoint with ID " + nextWayPoint.getID() + " ("+ (routeSize - currentRoute.size()) + "/" + routeSize + ")");
+            log.logInfo("CORE","Sending next waypoint with ID " + nextWayPoint.getID() + " ("+ (routeSize - currentRoute.size()) + "/" + routeSize + ")");
 
         }else{
             routeCompleted();
@@ -223,13 +223,13 @@ public class Core implements CoreEvents {
 
     //Event call over interface to be used when socket connection received message that waypoint has been reached.
     public void wayPointReached(){
-        logInfo("CORE","Waypoint reached.");
+        log.logInfo("CORE","Waypoint reached.");
         updateRoute();
     }
 
     //When all waypoints have been completed the vehicle becomes available again.
     private void routeCompleted(){
-        logInfo("CORE","Route Completed.");
+        log.logInfo("CORE","Route Completed.");
         occupied = false;
         //TODO send message to backbone to complete route
     }
@@ -237,76 +237,50 @@ public class Core implements CoreEvents {
     //Send wheel states to the vehicle over the socket connection. useful for emergency stops and other requests.
     private void sendWheelStates(float throttle, float steer) {
         tcpUtils.sendUpdate(JSONUtils.objectToJSONString("drive",new Drive(steer,throttle)));
-        logInfo("CORE","Sending wheel state Throttle:" + throttle +", Steer:" + steer + ".");
+        log.logInfo("CORE","Sending wheel state Throttle:" + throttle +", Steer:" + steer + ".");
     }
 
     //Event call over interface for when the socket connection receives location update. Publishes this to the RaceCarManager over MQTT.
     public void locationUpdate(Point location) {
         currentLocation = location;
-        logInfo("CORE","Location Updated.");
+        log.logInfo("CORE","Location Updated.");
         mqttUtils.publishMessage("racecar/" + ID + "/location", currentLocation.getX() + " " + currentLocation.getY() + " " + currentLocation.getZ() + " " + currentLocation.getW());
     }
 
     //Event call over interface for when MQTT connection receives new route job requests. Adds all requested waypoints to route queue one by one.
     //Sets the vehicle to occupied. Ignores the request if vehicle is already occupied.
     public void jobRequest(int[] wayPointIDs) {
-        logInfo("CORE","Route request received.");
+        log.logInfo("CORE","Route request received.");
         if(!occupied){
             occupied = true;
             for (int wayPointID : wayPointIDs) {
                 if(wayPoints.containsKey(wayPointID)) {
                     currentRoute.add(wayPointID);
-                    logInfo("CORE","Added waypoint with ID " + wayPointID + " to route.");
+                    log.logInfo("CORE","Added waypoint with ID " + wayPointID + " to route.");
                 }else{
-                    logWarning("CORE","Waypoint with ID '" + wayPointID + "' not found.");
+                    log.logWarning("CORE","Waypoint with ID '" + wayPointID + "' not found.");
                 }
 
             }
             routeSize = currentRoute.size();
-            logInfo("CORE","All waypoints(" + routeSize + ") of route added. Starting route.");
+            log.logInfo("CORE","All waypoints(" + routeSize + ") of route added. Starting route.");
             updateRoute();
 
         }else{
-            logWarning("CORE","Current Route not completed. Not adding waypoints.");
+            log.logWarning("CORE","Current Route not completed. Not adding waypoints.");
         }
     }
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        setLogger(logLevel);
 
         if (args.length == 0) {
-            logSevere("CORE", "Need at least 1 argument to run. Possible arguments: startpoint(int)");
+            System.out.println("Need at least 1 argument to run. Possible arguments: startpoint(int)");
             System.exit(0);
         } else if (args.length == 1) {
             if (!args[0].isEmpty()) startPoint = Integer.parseInt(args[0]);
-            logInfo("CORE", "Starting point set as waypoint with ID " + startPoint + ".");
         }
 
         final Core core = new Core();
 //    }
-    }
-
-    //Logging functionality for debugging and information printing. 
-    static void logInfo(String category, String message){
-        logging.info("[" + category + "] " + message);
-    }
-    static void logWarning(String category, String message){
-        logging.warning("[" + category + "] " + message);
-    }
-    static void logSevere(String category, String message){
-        logging.severe("[" + category + "] " + message);
-    }
-    static void logConfig(String category, String message){
-        logging.config("[" + category + "] " + message);
-    }
-    private static void setLogger(Level level){
-        Handler handlerObj = new ConsoleHandler();
-        handlerObj.setLevel(Level.ALL);
-        LogFormatter logFormatter = new LogFormatter();
-        handlerObj.setFormatter(logFormatter);
-        logging.addHandler(handlerObj);
-        logging.setLevel(Level.ALL);
-        logging.setUseParentHandlers(false);
-        logging.setLevel(level);
     }
 }

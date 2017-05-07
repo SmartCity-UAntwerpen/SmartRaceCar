@@ -1,5 +1,6 @@
-package SmartRacecar;
+package be.uantwerpen.fti.ds.smartracecar;
 
+import be.uantwerpen.fti.ds.model.Log;
 import com.google.gson.*;
 import java.lang.reflect.Type;
 import java.util.Map;
@@ -19,7 +20,7 @@ public class JSONUtils {
             gson.fromJson(jsonInString, Object.class);
             return true;
         } catch(com.google.gson.JsonSyntaxException ex) {
-            Core.logWarning("JSON","Not a valid JSON string." + jsonInString + "." + ex);
+            Log.logWarning("JSON","Not a valid JSON string." + jsonInString + "." + ex);
             return false;
         }
     }

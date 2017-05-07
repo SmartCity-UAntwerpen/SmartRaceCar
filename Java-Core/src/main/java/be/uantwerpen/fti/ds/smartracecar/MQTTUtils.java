@@ -1,5 +1,6 @@
-package SmartRacecar;
+package be.uantwerpen.fti.ds.smartracecar;
 
+import be.uantwerpen.fti.ds.model.Log;
 import org.eclipse.paho.client.mqttv3.*;
 
 //All MQTT functionality
@@ -22,9 +23,9 @@ class MQTTUtils implements MqttCallback {
             client = new MqttClient(brokerURL,clientID);
             client.setCallback(this);
             client.connect(options);
-            Core.logConfig("MQTT","Connected to '" + brokerURL + "'.");
+            Log.logConfig("MQTT","Connected to '" + brokerURL + "'.");
         } catch (MqttException e) {
-            Core.logSevere("MQTT","Could not connect to '" + brokerURL + "'." + e);
+            Log.logSevere("MQTT","Could not connect to '" + brokerURL + "'." + e);
         }
 
         subscribeToTopic("racecar/" + clientID +"/#");
@@ -32,7 +33,7 @@ class MQTTUtils implements MqttCallback {
 
     @Override
     public void connectionLost(Throwable t) {
-        Core.logSevere("MQTT","Connection lost.");
+        Log.logSevere("MQTT","Connection lost.");
         t.printStackTrace();
     }
 
@@ -40,7 +41,7 @@ class MQTTUtils implements MqttCallback {
     //Parses the topic to make the right method call.
     public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
         String message = new String(mqttMessage.getPayload());
-        Core.logConfig("MQTT","message arrived. Topic:" + topic + " | Message:" + message);
+        Log.logConfig("MQTT","message arrived. Topic:" + topic + " | Message:" + message);
         if(topic.equals("racecar/" + client.getClientId() + "/job")){
             String[] waypointStringValues = message.split(" ");
             int[] waypointValues = new int[waypointStringValues.length];
@@ -53,16 +54,16 @@ class MQTTUtils implements MqttCallback {
 
     @Override
     public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
-        Core.logConfig("MQTT","Publish complete.");
+        Log.logConfig("MQTT","Publish complete.");
     }
 
     private void subscribeToTopic(String topic){
         try {
             int subQoS = 0;
             client.subscribe(topic, subQoS);
-            Core.logConfig("MQTT","Subscribed to topic '" + topic + "'.");
+            Log.logConfig("MQTT","Subscribed to topic '" + topic + "'.");
         } catch (Exception e) {
-            Core.logSevere("MQTT","Could not subscribe to topic '" + topic + "'." + e);
+            Log.logSevere("MQTT","Could not subscribe to topic '" + topic + "'." + e);
         }
     }
 
@@ -71,14 +72,14 @@ class MQTTUtils implements MqttCallback {
         int pubQoS = 0;
         mqttMessage.setQos(pubQoS);
         mqttMessage.setRetained(false);
-        Core.logConfig("MQTT","Publishing. Topic:" + topic + " | QoS " + pubQoS + " | Message:" + message);
+        Log.logConfig("MQTT","Publishing. Topic:" + topic + " | QoS " + pubQoS + " | Message:" + message);
         MqttTopic mqttTopic = client.getTopic(topic);
         MqttDeliveryToken token;
         try {
             token = mqttTopic.publish(mqttMessage);
             token.waitForCompletion();
         } catch (Exception e) {
-            Core.logSevere("MQTT","Could not Publish." + e);
+            Log.logSevere("MQTT","Could not Publish." + e);
         }
     }
 }

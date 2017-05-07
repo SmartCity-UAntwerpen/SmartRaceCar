@@ -1,4 +1,6 @@
-package SmartRacecar;
+package be.uantwerpen.fti.ds.smartracecar;
+
+import be.uantwerpen.fti.ds.model.Log;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -29,10 +31,10 @@ class RESTUtils {
             out.write(json);
             out.close();
         } catch (MalformedURLException e) {
-            Core.logSevere("REST","Not a valid URL." + e);
+            Log.logSevere("REST","Not a valid URL." + e);
             System.err.println("[REST] [ERROR] Not a valid URL." + e);
         } catch (IOException e) {
-            Core.logSevere("REST","Could not send JSON." + e);
+            Log.logSevere("REST","Could not send JSON." + e);
         }
     }
 }

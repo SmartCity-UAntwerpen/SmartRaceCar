@@ -1,5 +1,7 @@
-package SmartRacecar;
+package be.uantwerpen.fti.ds.smartracecar;
 
+import be.uantwerpen.fti.ds.model.Log;
+import be.uantwerpen.fti.ds.model.Point;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -44,7 +46,7 @@ class TCPUtils extends Thread {
                 is = new DataInputStream(serverSocket.getInputStream());
                 line = is.readLine();
                 if(line != null && JSONUtils.isJSONValid(line))
-                    Core.logConfig("SOCKETS","data received: " + line);
+                    Log.logConfig("SOCKETS","data received: " + line);
                     //parses keyword to do the correct function call.
                     switch (JSONUtils.getFirst(line)) {
                         case "location":
@@ -57,13 +59,13 @@ class TCPUtils extends Thread {
                             listener.connectReceive();
                             break;
                         default:
-                            Core.logWarning("SOCKETS","No matching keyword when parsing JSON. Data: " + line);
+                            Log.logWarning("SOCKETS","No matching keyword when parsing JSON. Data: " + line);
                             break;
 
                 }
 
             } catch (IOException e) {
-                Core.logSevere("SOCKETS","Cannot receive data." + e);
+                Log.logSevere("SOCKETS","Cannot receive data." + e);
             }
         }
         closeTCP();
@@ -84,10 +86,10 @@ class TCPUtils extends Thread {
 
                 connected = true;
             } catch (UnknownHostException e) {
-                Core.logSevere("SOCKETS","Cannot connect to car. Trying again." + e);
+                Log.logSevere("SOCKETS","Cannot connect to car. Trying again." + e);
                 connected = false;
             } catch (IOException e) {
-                Core.logWarning("SOCKETS","Cannot connect to Car to send   " + data + "   Trying again. Error:" + e);
+                Log.logWarning("SOCKETS","Cannot connect to Car to send   " + data + "   Trying again. Error:" + e);
                 connected = false;
                 try {
                     Thread.sleep(1000);
@@ -99,12 +101,12 @@ class TCPUtils extends Thread {
         try {
             PrintStream os = new PrintStream(clientSocket.getOutputStream());
             os.println(inputLine.readLine());
-            Core.logConfig("SOCKETS","Data Sent:" + data);
+            Log.logConfig("SOCKETS","Data Sent:" + data);
             os.close();
         } catch (UnknownHostException e) {
-            Core.logWarning("SOCKETS","Could not send. Trying to connect to unknown host: " + e);
+            Log.logWarning("SOCKETS","Could not send. Trying to connect to unknown host: " + e);
         } catch (IOException e) {
-            Core.logSevere("SOCKETS","Could not send. IOException:  " + e);
+            Log.logSevere("SOCKETS","Could not send. IOException:  " + e);
         }
     }
 
@@ -112,7 +114,7 @@ class TCPUtils extends Thread {
         try {
             serverSocket.close();
         } catch (IOException e) {
-            Core.logSevere("SOCKETS","Could not close Socket connection. IOException:  " + e);
+            Log.logSevere("SOCKETS","Could not close Socket connection. IOException:  " + e);
         }
     }
 }

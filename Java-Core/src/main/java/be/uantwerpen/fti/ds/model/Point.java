@@ -1,6 +1,6 @@
-package SmartRacecar;
+package be.uantwerpen.fti.ds.model;
 /*
-Model for coordinate on a map. Uses quaternion for angles.
+model for coordinate on a map. Uses quaternion for angles.
 Y
 ^
 |
@@ -23,19 +23,19 @@ public class Point {
         this.z = z;
     }
 
-    float getX() {
+    public float getX() {
         return x;
     }
 
-    float getY() {
+    public float getY() {
         return y;
     }
 
-    float getW() {
+    public float getW() {
         return w;
     }
 
-    float getZ() {
+    public float getZ() {
         return z;
     }
 }
