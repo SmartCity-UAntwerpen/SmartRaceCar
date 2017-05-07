@@ -1,6 +1,6 @@
-package be.uantwerpen.fti.ds.smartracecar;
+package be.uantwerpen.fti.ds.smartracecar.core;
 
-import be.uantwerpen.fti.ds.model.Log;
+import be.uantwerpen.fti.ds.smartracecar.model.Log;
 import org.eclipse.paho.client.mqttv3.*;
 
 //All MQTT functionality

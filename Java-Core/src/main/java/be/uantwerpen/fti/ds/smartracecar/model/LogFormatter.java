@@ -1,4 +1,4 @@
-package be.uantwerpen.fti.ds.model;
+package be.uantwerpen.fti.ds.smartracecar.model;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;

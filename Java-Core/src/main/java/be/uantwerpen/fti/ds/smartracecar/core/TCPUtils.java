@@ -1,7 +1,7 @@
-package be.uantwerpen.fti.ds.smartracecar;
+package be.uantwerpen.fti.ds.smartracecar.core;
 
-import be.uantwerpen.fti.ds.model.Log;
-import be.uantwerpen.fti.ds.model.Point;
+import be.uantwerpen.fti.ds.smartracecar.model.Log;
+import be.uantwerpen.fti.ds.smartracecar.model.Point;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;

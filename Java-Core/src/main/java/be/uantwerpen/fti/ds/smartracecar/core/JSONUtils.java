@@ -1,6 +1,6 @@
-package be.uantwerpen.fti.ds.smartracecar;
+package be.uantwerpen.fti.ds.smartracecar.core;
 
-import be.uantwerpen.fti.ds.model.Log;
+import be.uantwerpen.fti.ds.smartracecar.model.Log;
 import com.google.gson.*;
 import java.lang.reflect.Type;
 import java.util.Map;

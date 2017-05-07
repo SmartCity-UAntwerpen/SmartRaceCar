@@ -1,6 +1,6 @@
-package be.uantwerpen.fti.ds.smartracecarmanager;
+package be.uantwerpen.fti.ds.smartracecar.manager;
 
-import be.uantwerpen.fti.ds.model.Log;
+import be.uantwerpen.fti.ds.smartracecar.model.Log;
 
 import java.util.logging.Level;
 

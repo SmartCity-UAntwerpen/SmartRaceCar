@@ -1,4 +1,4 @@
-package be.uantwerpen.fti.ds.model;
+package be.uantwerpen.fti.ds.smartracecar.model;
 
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;

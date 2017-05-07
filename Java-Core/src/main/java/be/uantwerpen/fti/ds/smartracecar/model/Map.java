@@ -1,4 +1,4 @@
-package be.uantwerpen.fti.ds.model;
+package be.uantwerpen.fti.ds.smartracecar.model;
 
 //model of a offline kept map.
 public class Map {

@@ -1,4 +1,4 @@
-package be.uantwerpen.fti.ds.model;
+package be.uantwerpen.fti.ds.smartracecar.model;
 /*
 model for coordinate on a map. Uses quaternion for angles.
 Y

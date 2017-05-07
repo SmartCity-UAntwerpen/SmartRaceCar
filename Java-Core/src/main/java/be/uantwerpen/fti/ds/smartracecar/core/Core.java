@@ -1,6 +1,6 @@
-package be.uantwerpen.fti.ds.smartracecar;
+package be.uantwerpen.fti.ds.smartracecar.core;
 
-import be.uantwerpen.fti.ds.model.*;
+import be.uantwerpen.fti.ds.smartracecar.model.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
