@@ -69,10 +69,8 @@ class MQTTUtils implements MqttCallback {
 
     void publishMessage(String topic,String message){
         MqttMessage mqttMessage = new MqttMessage(message.getBytes());
-        int pubQoS = 0;
-        mqttMessage.setQos(pubQoS);
         mqttMessage.setRetained(false);
-        Log.logConfig("MQTT","Publishing. Topic:" + topic + " | QoS " + pubQoS + " | Message:" + message);
+        Log.logConfig("MQTT","Publishing. Topic:" + topic + " | Message:" + message);
         MqttTopic mqttTopic = client.getTopic(topic);
         MqttDeliveryToken token;
         try {
