@@ -3,6 +3,7 @@
 # Set this variable to False when using the Ros-system
 # The code bypasses all Ros functions when set to True
 DEBUG_WITHOUT_ROS = False
+DEBUG_WITHOUT_JAVA = True
 
 import socket
 import json
@@ -250,9 +251,6 @@ def callback(data):
     logging.debug("[CLIENTSOCKET] Socket closed")
 
 
-newthread = ServerThread(TCP_IP, TCP_PORT_JAVA_PYTH, BUFFER_SIZE)
-newthread.daemon = True
-newthread.start()
 def cb_movebase_status(data):
     status_list = data.status_list
     print "Length of list: %d" % (len(status_list))
@@ -267,12 +265,19 @@ def cb_amcl_pose(data):
     print "Orientation: X: %f, Y: %f, Z: %f, W: %f" % (pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w)
 
 
+if not DEBUG_WITHOUT_JAVA:
+    newthread = ServerThread(TCP_IP, TCP_PORT_JAVA_PYTH, BUFFER_SIZE)
+    newthread.daemon = True
+    newthread.start()
+
 if not DEBUG_WITHOUT_ROS:
     rospy.Subscriber('move_base/status', GoalStatusArray, cb_movebase_status)
     rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, cb_amcl_pose)
 
-while not connected:
-    time.sleep(1)
+if not DEBUG_WITHOUT_JAVA:
+    while not connected:
+        time.sleep(1)
+
 #while True:
 #    time.sleep(5)
 #    send_location()
