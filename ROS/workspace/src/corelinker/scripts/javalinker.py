@@ -259,12 +259,12 @@ def cb_movebase_status(data):
         print "[STATUS] Status: %d" % (status_list[len(status_list) - 1].status)
 
 
-def cb_amcl_pose(data):
-    pose = data.pose.pose
-
-    print "[AMCL] Position: X: %f, Y: %f, Z: %f" % (pose.position.x, pose.position.y, pose.position.z)
-    print "[AMCL] Orientation: X: %f, Y: %f, Z: %f, W: %f" % (pose.orientation.x, pose.orientation.y, pose.orientation.z
-                                                              , pose.orientation.w)
+# def cb_amcl_pose(data):
+#     pose = data.pose.pose
+#
+#     print "[AMCL] Position: X: %f, Y: %f, Z: %f" % (pose.position.x, pose.position.y, pose.position.z)
+#     print "[AMCL] Orientation: X: %f, Y: %f, Z: %f, W: %f" % (pose.orientation.x, pose.orientation.y, pose.orientation.z
+#                                                               , pose.orientation.w)
 
 
 def cb_movebase_feedback(data):
