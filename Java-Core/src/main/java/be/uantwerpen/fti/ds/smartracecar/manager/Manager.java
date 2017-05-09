@@ -55,6 +55,13 @@ public class Manager implements MQTTListener{
     }
 
     @GET
+    @Path("getmapname")
+    @Produces("text/plain")
+    public String getMapName(){
+        return currentMap;
+    }
+
+    @GET
     @Path("getmap/{mapname}")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response getMap(@PathParam("mapname") final String mapname){
