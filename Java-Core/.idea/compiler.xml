@@ -28,7 +28,7 @@
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="Java-Core" target="1.7" />
-      <module name="SmartRacecar" target="1.7" />
+      <module name="SmartRacecar" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>
