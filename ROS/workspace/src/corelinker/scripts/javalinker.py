@@ -250,11 +250,9 @@ def callback(data):
     logging.debug("[CLIENTSOCKET] Socket closed")
 
 
-# rospy.Subscriber('drive_parameters', drive_param, callback)
 newthread = ServerThread(TCP_IP, TCP_PORT_JAVA_PYTH, BUFFER_SIZE)
 newthread.daemon = True
 newthread.start()
-# publish_initialpose(2, 5, 6, 0, 0, -1, 0)
 def cb_movebase_status(data):
     status_list = data.status_list
     print "Length of list: %d" % (len(status_list))
