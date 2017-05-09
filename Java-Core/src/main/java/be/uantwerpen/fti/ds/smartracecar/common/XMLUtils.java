@@ -44,5 +44,40 @@ public class XMLUtils {
         return loadedMaps;
     }
 
+    public static HashMap<Integer,WayPoint> loadWaypoints(String mapFolder) {
+        HashMap<Integer,WayPoint> loadedMaps = new HashMap<>();
+
+        try {
+            File fXmlFile = new File(mapFolder + "/waypoints.xml");
+            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+            Document doc = dBuilder.parse(fXmlFile);
+            doc.getDocumentElement().normalize();
+
+            NodeList nList = doc.getElementsByTagName("waypoint");
+
+            for (int temp = 0; temp < nList.getLength(); temp++) {
+
+                Node nNode = nList.item(temp);
+
+                if (nNode.getNodeType() == Node.ELEMENT_NODE) {
+
+                    Element eElement = (Element) nNode;
+                    int id  = Integer.parseInt(eElement.getElementsByTagName("id").item(0).getTextContent());
+                    float x = Float.parseFloat(eElement.getElementsByTagName("x").item(0).getTextContent());
+                    float y = Float.parseFloat(eElement.getElementsByTagName("y").item(0).getTextContent());
+                    float z = Float.parseFloat(eElement.getElementsByTagName("z").item(0).getTextContent());
+                    float w = Float.parseFloat(eElement.getElementsByTagName("w").item(0).getTextContent());
+                    int weight  = Integer.parseInt(eElement.getElementsByTagName("weight").item(0).getTextContent());
+                    loadedMaps.put(id,new WayPoint(id,x,y,z,w,weight));
+                    Log.logConfig("CORE","Added wayPoint: " + id + " and coordinates " + x +"," + y +"," + z +"," + w +" and weight " + weight + ".");
+                }
+            }
+        } catch (Exception e) {
+            Log.logSevere("CORE","Could not correctly load XML of waypoints." + e);
+        }
+        return loadedMaps;
+    }
+
 
 }

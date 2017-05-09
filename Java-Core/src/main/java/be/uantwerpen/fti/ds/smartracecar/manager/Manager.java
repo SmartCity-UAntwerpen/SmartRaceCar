@@ -16,28 +16,35 @@ import java.util.logging.Level;
 public class Manager implements MQTTListener{
 
     private Log log;
-    private Level level = Level.INFO; //Debug level
+    private Level level = Level.CONFIG; //Debug level
     private final String mqttBroker = "tcp://broker.hivemq.com:1883";
     private final String mqqtUsername = "username";
     private final String mqttPassword = "password";
     private final String mapFolder = "maps";
+    private final String wayPointFolder = "waypoints";
 
     private RESTUtils restUtils;
     private MQTTUtils mqttUtils;
     private JSONUtils jsonUtils;
 
-    private HashMap<Integer,Vehicle> vehicles; // ArrayList of all vehicles mapped by ID.
+    private HashMap<Integer,WayPoint> waypoints = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
+    private HashMap<Integer,Vehicle> vehicles = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
     private HashMap<String,Map> loadedMaps = new HashMap<>(); // Map of all loaded maps.
     private static String currentMap;
     private int counter = 0;
 
-    public Manager() throws InterruptedException {
-        vehicles = new HashMap<>();
+    public Manager(){
+
+    }
+
+    public Manager(String currentmap){
+        this.currentMap = currentmap;
         log = new Log(this.getClass(),level);
         jsonUtils = new JSONUtils();
         mqttUtils = new MQTTUtils(mqttBroker,mqqtUsername,mqttPassword,this);
         mqttUtils.subscribeToTopic("racecar/#");
         loadedMaps = XMLUtils.loadMaps(mapFolder);
+        waypoints = XMLUtils.loadWaypoints(wayPointFolder);
     }
 
     @Override
@@ -59,6 +66,13 @@ public class Manager implements MQTTListener{
     @Produces("text/plain")
     public String getMapName(){
         return currentMap;
+    }
+
+    @GET
+    @Path("getwaypoints")
+    @Produces("application/json")
+    public String getWayPoints(){
+        return jsonUtils.objectToJSONString("waypoints",waypoints);
     }
 
     @GET
@@ -95,9 +109,11 @@ public class Manager implements MQTTListener{
             System.out.println("Need at least 1 argument to run. Possible arguments: currentMap(String)");
             System.exit(0);
         } else if (args.length == 1) {
-            if (!args[0].isEmpty()) currentMap = args[0];
+            if (!args[0].isEmpty()) {
+                //currentMap = args[0];
+            }
         }
-        final Manager manager = new Manager();
+        final Manager manager = new Manager(args[0]);
         new TomCatLauncher().start();
 
 
