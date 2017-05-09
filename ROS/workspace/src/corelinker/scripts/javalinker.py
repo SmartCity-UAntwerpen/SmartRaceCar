@@ -275,7 +275,7 @@ def cb_movebase_status(data):
 
 
 def cb_movebase_feedback(data):
-    global cb_movebase_feedback_secs
+    global cb_movebase_feedback_secs, currentx, currenty, currentz, currentw
     header = data.header
     if header.stamp.secs - cb_movebase_feedback_secs >= 1:
         cb_movebase_feedback_secs = header.stamp.secs
@@ -284,6 +284,12 @@ def cb_movebase_feedback(data):
         print "[FEEDBACK] Position: X: %f, Y: %f, Z: %f" % (pose.position.x, pose.position.y, pose.position.z)
         print "[FEEDBACK] Orientation: X: %f, Y: %f, Z: %f, W: %f" % (pose.orientation.x, pose.orientation.y,
                                                                       pose.orientation.z, pose.orientation.w)
+        currentx = pose.position.x
+        currenty = pose.position.y
+        currentz = pose.orientation.z
+        currentw = pose.orientation.w
+
+        send_location()
 
 
 if not DEBUG_WITHOUT_JAVA:
