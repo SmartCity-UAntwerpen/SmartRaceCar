@@ -1,16 +1,13 @@
-package be.uantwerpen.fti.ds.smartracecar.core;
+package be.uantwerpen.fti.ds.smartracecar.common;
 
-import be.uantwerpen.fti.ds.smartracecar.model.Log;
 import org.eclipse.paho.client.mqttv3.*;
 
-//All MQTT functionality
-class MQTTUtils implements MqttCallback {
+public class MQTTUtils implements MqttCallback{
 
     private MqttClient client;
-    private CoreEvents listener;
+    private MQTTListener listener;
 
-    MQTTUtils(int ID, String brokerURL, String username, String password, CoreEvents listener){
-        String clientID = String.valueOf(ID);
+    public MQTTUtils(String brokerURL, String username, String password, MQTTListener listener){
         MqttConnectOptions options = new MqttConnectOptions();
         this.listener = listener;
 
@@ -20,15 +17,32 @@ class MQTTUtils implements MqttCallback {
         //options.setPassword(password.toCharArray());
 
         try {
-            client = new MqttClient(brokerURL,clientID);
+            client = new MqttClient(brokerURL,client.generateClientId());
             client.setCallback(this);
             client.connect(options);
             Log.logConfig("MQTT","Connected to '" + brokerURL + "'.");
         } catch (MqttException e) {
             Log.logSevere("MQTT","Could not connect to '" + brokerURL + "'." + e);
         }
+    }
 
-        subscribeToTopic("racecar/" + clientID +"/#");
+    public MQTTUtils(int ID, String brokerURL, String username, String password, MQTTListener listener){
+        MqttConnectOptions options = new MqttConnectOptions();
+        this.listener = listener;
+
+        options.setCleanSession(true);
+        options.setKeepAliveInterval(30);
+        //options.setUserName(username);
+        //options.setPassword(password.toCharArray());
+
+        try {
+            client = new MqttClient(brokerURL,String.valueOf(ID));
+            client.setCallback(this);
+            client.connect(options);
+            Log.logConfig("MQTT","Connected to '" + brokerURL + "'.");
+        } catch (MqttException e) {
+            Log.logSevere("MQTT","Could not connect to '" + brokerURL + "'." + e);
+        }
     }
 
     @Override
@@ -38,18 +52,10 @@ class MQTTUtils implements MqttCallback {
     }
 
     @Override
-    //Parses the topic to make the right method call.
     public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
         String message = new String(mqttMessage.getPayload());
         Log.logConfig("MQTT","message arrived. Topic:" + topic + " | Message:" + message);
-        if(topic.equals("racecar/" + client.getClientId() + "/job")){
-            String[] waypointStringValues = message.split(" ");
-            int[] waypointValues = new int[waypointStringValues.length];
-            for (int index = 0; index < waypointStringValues.length; index++) {
-                waypointValues[index] = Integer.parseInt(waypointStringValues[index]);
-            }
-            listener.jobRequest(waypointValues);
-        }
+        listener.parseMQTT(topic,message);
     }
 
     @Override
@@ -57,7 +63,7 @@ class MQTTUtils implements MqttCallback {
         Log.logConfig("MQTT","Publish complete.");
     }
 
-    private void subscribeToTopic(String topic){
+    public void subscribeToTopic(String topic){
         try {
             int subQoS = 0;
             client.subscribe(topic, subQoS);
@@ -67,7 +73,7 @@ class MQTTUtils implements MqttCallback {
         }
     }
 
-    void publishMessage(String topic,String message){
+    public void publishMessage(String topic, String message){
         MqttMessage mqttMessage = new MqttMessage(message.getBytes());
         mqttMessage.setRetained(false);
         Log.logConfig("MQTT","Publishing. Topic:" + topic + " | Message:" + message);

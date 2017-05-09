@@ -1,6 +1,6 @@
-package be.uantwerpen.fti.ds.smartracecar.model;
+package be.uantwerpen.fti.ds.smartracecar.core;
 
-//model of drive parameters.
+//common of drive parameters.
 public class Drive {
 
     private float steer; //Rotation of the wheels.

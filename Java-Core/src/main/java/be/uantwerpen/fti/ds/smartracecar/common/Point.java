@@ -1,6 +1,6 @@
-package be.uantwerpen.fti.ds.smartracecar.model;
+package be.uantwerpen.fti.ds.smartracecar.common;
 /*
-model for coordinate on a map. Uses quaternion for angles.
+common for coordinate on a map. Uses quaternion for angles.
 Y
 ^
 |

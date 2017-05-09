@@ -1,7 +1,8 @@
 package be.uantwerpen.fti.ds.smartracecar.core;
 
-import be.uantwerpen.fti.ds.smartracecar.model.Log;
-import be.uantwerpen.fti.ds.smartracecar.model.Point;
+import be.uantwerpen.fti.ds.smartracecar.common.JSONUtils;
+import be.uantwerpen.fti.ds.smartracecar.common.Log;
+import be.uantwerpen.fti.ds.smartracecar.common.Point;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -15,13 +16,13 @@ import java.util.Arrays;
 // Creates listener over sockets to listen to vehicle messages and sends back over other socket.
 class TCPUtils extends Thread {
 
-    private CoreEvents listener;
+    private CoreListener listener;
     private Socket serverSocket;
     boolean run = true;
     private int clientPort;
     private int serverPort;
 
-    TCPUtils(int clientPort, int serverPort, CoreEvents listener){
+    TCPUtils(int clientPort, int serverPort, CoreListener listener){
         this.clientPort = clientPort;
         this.serverPort = serverPort;
         this.listener = listener;

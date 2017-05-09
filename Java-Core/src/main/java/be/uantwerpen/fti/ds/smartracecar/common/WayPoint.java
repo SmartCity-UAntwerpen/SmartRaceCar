@@ -1,6 +1,6 @@
-package be.uantwerpen.fti.ds.smartracecar.model;
+package be.uantwerpen.fti.ds.smartracecar.common;
 
-//Extended model of a Point which is used for waypoints. Supers the coordinates from the Point class.
+//Extended common of a Point which is used for waypoints. Supers the coordinates from the Point class.
 public class WayPoint extends Point {
 
     private int ID = 0; // waypoint ID given by RaceCarManager.

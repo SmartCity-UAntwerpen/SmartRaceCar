@@ -1,6 +1,4 @@
-package be.uantwerpen.fti.ds.smartracecar.core;
-
-import be.uantwerpen.fti.ds.smartracecar.model.Log;
+package be.uantwerpen.fti.ds.smartracecar.common;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -9,11 +7,11 @@ import java.net.URL;
 import java.net.URLConnection;
 
 //All REST function calls
-class RESTUtils {
+public class RESTUtils {
 
     private String REST_URL;
 
-    RESTUtils(String REST_URL){
+    public RESTUtils(String REST_URL){
         this.REST_URL = REST_URL;
     }
 

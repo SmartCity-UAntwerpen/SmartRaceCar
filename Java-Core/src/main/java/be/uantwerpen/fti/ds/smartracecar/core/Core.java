@@ -1,6 +1,6 @@
 package be.uantwerpen.fti.ds.smartracecar.core;
 
-import be.uantwerpen.fti.ds.smartracecar.model.*;
+import be.uantwerpen.fti.ds.smartracecar.common.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -24,17 +24,13 @@ import java.util.Queue;
 import java.util.logging.Level;
 
 //interface to trigger certain events from other objects such as TCP Sockets or MQTT.
-interface CoreEvents {
-    void locationUpdate(Point location);
-    void jobRequest(int[] wayPoints);
-    void wayPointReached();
-    void connectReceive();
-}
 
-public class Core implements CoreEvents {
+
+public class Core implements CoreListener,MQTTListener {
 
     //Hardcoded elements.
     private Log log;
+    private Level level = Level.CONFIG; //Debug level
     private final String mqttBroker = "tcp://broker.hivemq.com:1883";
     private final String mqqtUsername = "username";
     private final String mqttPassword = "password";
@@ -58,9 +54,10 @@ public class Core implements CoreEvents {
     private boolean occupied = false; // To verify if racecar is currently occupied by a route job.
 
     public Core() throws InterruptedException {
-        log = new Log(this.getClass(),Level.INFO);
+        log = new Log(this.getClass(),level);
         jsonUtils = new JSONUtils();
         mqttUtils = new MQTTUtils(ID,mqttBroker,mqqtUsername,mqttPassword,this);
+        mqttUtils.subscribeToTopic("racecar/" + ID +"/#");
         tcpUtils = new TCPUtils(serverPort,clientPort,this);
         tcpUtils.start();
         restUtils = new RESTUtils("http://localhost:8080/x");
@@ -247,9 +244,20 @@ public class Core implements CoreEvents {
         mqttUtils.publishMessage("racecar/" + ID + "/location", currentLocation.getX() + " " + currentLocation.getY() + " " + currentLocation.getZ() + " " + currentLocation.getW());
     }
 
+    public void parseMQTT(String topic, String message){
+        if(topic.equals("racecar/" + ID + "/job")){
+            String[] waypointStringValues = message.split(" ");
+            int[] waypointValues = new int[waypointStringValues.length];
+            for (int index = 0; index < waypointStringValues.length; index++) {
+                waypointValues[index] = Integer.parseInt(waypointStringValues[index]);
+            }
+            jobRequest(waypointValues);
+        }
+    };
+
     //Event call over interface for when MQTT connection receives new route job requests. Adds all requested waypoints to route queue one by one.
     //Sets the vehicle to occupied. Ignores the request if vehicle is already occupied.
-    public void jobRequest(int[] wayPointIDs) {
+   void jobRequest(int[] wayPointIDs) {
         log.logInfo("CORE","Route request received.");
         if(!occupied){
             occupied = true;

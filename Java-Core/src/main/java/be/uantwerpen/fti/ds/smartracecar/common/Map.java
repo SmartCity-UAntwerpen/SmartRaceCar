@@ -1,6 +1,6 @@
-package be.uantwerpen.fti.ds.smartracecar.model;
+package be.uantwerpen.fti.ds.smartracecar.common;
 
-//model of a offline kept map.
+//common of a offline kept map.
 public class Map {
 
     private String name = ""; //Name of the mapfile.
