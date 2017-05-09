@@ -17,6 +17,7 @@ if not DEBUG_WITHOUT_ROS:
     from geometry_msgs.msg import PoseWithCovarianceStamped
     from geometry_msgs.msg import PoseStamped
     from actionlib_msgs.msg import GoalStatusArray
+    from move_base_msgs.msg import MoveBaseActionFeedback
 
     pub_drive_parameters = rospy.Publisher('drive_parameters', drive_param, queue_size=10)
     pub_initial_pose = rospy.Publisher('initialpose', PoseWithCovarianceStamped, queue_size=10)
@@ -46,6 +47,7 @@ currenty = 2
 currentz = 3
 currentw = 4
 
+cb_movebase_feedback_secs = 0
 
 def publish_drive_param(json_string):
     if not DEBUG_WITHOUT_ROS:
@@ -266,11 +268,15 @@ def cb_amcl_pose(data):
 
 
 def cb_movebase_feedback(data):
-    pose = data.feedback.base_position.pose
-
-    print "[FEEDBACK] Position: X: %f, Y: %f, Z: %f" % (pose.position.x, pose.position.y, pose.position.z)
-    print "[FEEDBACK] Orientation: X: %f, Y: %f, Z: %f, W: %f" % (pose.orientation.x, pose.orientation.y,
-                                                                  pose.orientation.z, pose.orientation.w)
+    global cb_movebase_feedback_secs
+    header = data.header
+    if header.stamp.secs - cb_movebase_feedback_secs >= 1:
+        cb_movebase_feedback_secs = header.stamp.secs
+        pose = data.feedback.base_position.pose
+        print "[FEEDBACK] Secs: %d" % (header.stamp.secs)
+        print "[FEEDBACK] Position: X: %f, Y: %f, Z: %f" % (pose.position.x, pose.position.y, pose.position.z)
+        print "[FEEDBACK] Orientation: X: %f, Y: %f, Z: %f, W: %f" % (pose.orientation.x, pose.orientation.y,
+                                                                      pose.orientation.z, pose.orientation.w)
 
 
 if not DEBUG_WITHOUT_JAVA:
