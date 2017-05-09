@@ -15,6 +15,7 @@ if not DEBUG:
     from race.msg import drive_param
     from geometry_msgs.msg import PoseWithCovarianceStamped
     from geometry_msgs.msg import PoseStamped
+    from actionlib_msgs.msg import GoalStatusArray
 
     pub_drive_parameters = rospy.Publisher('drive_parameters', drive_param, queue_size=10)
     pub_initial_pose = rospy.Publisher('initialpose', PoseWithCovarianceStamped, queue_size=10)
@@ -254,6 +255,23 @@ newthread = ServerThread(TCP_IP, TCP_PORT_JAVA_PYTH, BUFFER_SIZE)
 newthread.daemon = True
 newthread.start()
 # publish_initialpose(2, 5, 6, 0, 0, -1, 0)
+def cb_movebase_status(data):
+    status_list = data.status_list
+    print "Length of list: %d" % (len(status_list))
+    if len(status_list) != 0:
+        print "Status: %d" % (status_list[len(status_list) - 1].status)
+
+
+def cb_amcl_pose(data):
+    pose = data.pose.pose
+
+    print "Position: X: %f, Y: %f, Z: %f" % (pose.position.x, pose.position.y, pose.position.z)
+    print "Orientation: X: %f, Y: %f, Z: %f, W: %f" % (pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w)
+
+
+if not DEBUG:
+    rospy.Subscriber('move_base/status', GoalStatusArray, cb_movebase_status)
+    rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, cb_amcl_pose)
 
 while not connected:
     time.sleep(1)
