@@ -253,16 +253,24 @@ def callback(data):
 
 def cb_movebase_status(data):
     status_list = data.status_list
-    print "Length of list: %d" % (len(status_list))
     if len(status_list) != 0:
-        print "Status: %d" % (status_list[len(status_list) - 1].status)
+        print "[STATUS] Status: %d" % (status_list[len(status_list) - 1].status)
 
 
 def cb_amcl_pose(data):
     pose = data.pose.pose
 
-    print "Position: X: %f, Y: %f, Z: %f" % (pose.position.x, pose.position.y, pose.position.z)
-    print "Orientation: X: %f, Y: %f, Z: %f, W: %f" % (pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w)
+    print "[AMCL] Position: X: %f, Y: %f, Z: %f" % (pose.position.x, pose.position.y, pose.position.z)
+    print "[AMCL] Orientation: X: %f, Y: %f, Z: %f, W: %f" % (pose.orientation.x, pose.orientation.y, pose.orientation.z
+                                                              , pose.orientation.w)
+
+
+def cb_movebase_feedback(data):
+    pose = data.feedback.base_position.pose
+
+    print "[FEEDBACK] Position: X: %f, Y: %f, Z: %f" % (pose.position.x, pose.position.y, pose.position.z)
+    print "[FEEDBACK] Orientation: X: %f, Y: %f, Z: %f, W: %f" % (pose.orientation.x, pose.orientation.y,
+                                                                  pose.orientation.z, pose.orientation.w)
 
 
 if not DEBUG_WITHOUT_JAVA:
