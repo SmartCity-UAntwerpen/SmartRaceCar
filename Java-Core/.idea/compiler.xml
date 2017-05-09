@@ -23,10 +23,12 @@
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="true" />
         <module name="Java-Core" />
+        <module name="SmartRacecar" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="Java-Core" target="1.7" />
+      <module name="SmartRacecar" target="1.7" />
     </bytecodeTargetLevel>
   </component>
 </project>

@@ -1,7 +1,6 @@
 package be.uantwerpen.fti.ds.smartracecar.manager;
 
 import be.uantwerpen.fti.ds.smartracecar.common.*;
-
 import java.util.HashMap;
 import java.util.logging.Level;
 
