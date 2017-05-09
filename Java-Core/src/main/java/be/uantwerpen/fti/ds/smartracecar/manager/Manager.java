@@ -9,13 +9,14 @@ import javax.ws.rs.core.StreamingOutput;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
 
 @Path("carmanager")
 public class Manager implements MQTTListener{
 
-    private Log log;
+    private static Log log;
     private Level level = Level.CONFIG; //Debug level
     private final String mqttBroker = "tcp://broker.hivemq.com:1883";
     private final String mqqtUsername = "username";
@@ -23,15 +24,13 @@ public class Manager implements MQTTListener{
     private final String mapFolder = "maps";
     private final String wayPointFolder = "waypoints";
 
-    private RESTUtils restUtils;
     private MQTTUtils mqttUtils;
     private JSONUtils jsonUtils;
 
-    private HashMap<Integer,WayPoint> waypoints = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
-    private HashMap<Integer,Vehicle> vehicles = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
-    private HashMap<String,Map> loadedMaps = new HashMap<>(); // Map of all loaded maps.
+    private static HashMap<Integer,WayPoint> waypoints = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
+    private static ArrayList<Vehicle> vehicles = new ArrayList<>(); // ArrayList of all vehicles mapped by ID.
+    private static HashMap<String,Map> loadedMaps = new HashMap<>(); // Map of all loaded maps.
     private static String currentMap;
-    private int counter = 0;
 
     public Manager(){
 
@@ -56,9 +55,8 @@ public class Manager implements MQTTListener{
     @Path("register")
     @Produces("text/plain")
     public int registerREST(@DefaultValue("0") @QueryParam("x") float x,@DefaultValue("0") @QueryParam("y") float y,@DefaultValue("0") @QueryParam("z") float z,@DefaultValue("0") @QueryParam("w") float w) {
-        counter++;
-        log.logInfo("MANAGER",x + ","+ y + "," + z + "," + w + "=" + counter);
-        return counter;
+        vehicles.add(new Vehicle(vehicles.size(),false,new Point(x,y,z,w)));
+        return vehicles.size()-1;
     }
 
     @GET
