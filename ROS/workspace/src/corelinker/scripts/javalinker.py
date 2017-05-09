@@ -2,7 +2,7 @@
 
 # Set this variable to False when using the Ros-system
 # The code bypasses all Ros functions when set to True
-DEBUG = True
+DEBUG_WITHOUT_ROS = False
 
 import socket
 import json
@@ -10,7 +10,7 @@ import logging
 from threading import Thread
 import time
 
-if not DEBUG:
+if not DEBUG_WITHOUT_ROS:
     import rospy
     from race.msg import drive_param
     from geometry_msgs.msg import PoseWithCovarianceStamped
@@ -47,7 +47,7 @@ currentw = 4
 
 
 def publish_drive_param(json_string):
-    if not DEBUG:
+    if not DEBUG_WITHOUT_ROS:
         msg = drive_param()
         msg.steer = json_string['drive']['steer']
         msg.throttle = json_string['drive']['throttle']
@@ -57,7 +57,7 @@ def publish_drive_param(json_string):
 
 
 def stop():
-    if not DEBUG:
+    if not DEBUG_WITHOUT_ROS:
         msg = drive_param()
         msg.steer = 0
         msg.throttle = 0
@@ -67,7 +67,7 @@ def stop():
 
 
 def publish_initialpose(posx, posy, posz, orx, ory, orz, orw):
-    if not DEBUG:
+    if not DEBUG_WITHOUT_ROS:
         i = 0
         while i < 3:
             pose = PoseWithCovarianceStamped()
@@ -91,7 +91,7 @@ def publish_initialpose(posx, posy, posz, orx, ory, orz, orw):
     return
 
 def publish_movebase_goal(posx, posy, posz, orx, ory, orz, orw):
-    if not DEBUG:
+    if not DEBUG_WITHOUT_ROS:
         pose = PoseStamped()
         pose.header.stamp = rospy.Time.now()
         pose.header.frame_id = "map"
@@ -267,7 +267,7 @@ def cb_amcl_pose(data):
     print "Orientation: X: %f, Y: %f, Z: %f, W: %f" % (pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w)
 
 
-if not DEBUG:
+if not DEBUG_WITHOUT_ROS:
     rospy.Subscriber('move_base/status', GoalStatusArray, cb_movebase_status)
     rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, cb_amcl_pose)
 
@@ -276,7 +276,7 @@ while not connected:
 #while True:
 #    time.sleep(5)
 #    send_location()
-if not DEBUG:
+if not DEBUG_WITHOUT_ROS:
     rospy.spin()
 else:
     while True:
