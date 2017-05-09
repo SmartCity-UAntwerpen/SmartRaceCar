@@ -3,8 +3,6 @@ package be.uantwerpen.fti.ds.smartracecar.core;
 import be.uantwerpen.fti.ds.smartracecar.common.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -16,7 +14,6 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -68,7 +65,7 @@ public class Core implements CoreListener,MQTTListener {
         register();
         requestWaypoints();
         sendStartPoint();
-        loadMaps();
+        loadedMaps = XMLUtils.loadMaps(mapFolder);
         requestMap();
     }
 
@@ -114,34 +111,7 @@ public class Core implements CoreListener,MQTTListener {
         tcpUtils.sendUpdate(JSONUtils.objectToJSONString("startPoint",wayPoints.get(startPoint)));
     }
 
-    //Load all current available offline maps from the /mapFolder folder. It reads and maps.xml file with all the necessary information.
-    private void loadMaps() {
-        try {
-            File fXmlFile = new File(mapFolder + "/maps.xml");
-            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-            Document doc = dBuilder.parse(fXmlFile);
-            doc.getDocumentElement().normalize();
 
-            NodeList nList = doc.getElementsByTagName("map");
-
-            for (int temp = 0; temp < nList.getLength(); temp++) {
-
-                Node nNode = nList.item(temp);
-
-                if (nNode.getNodeType() == Node.ELEMENT_NODE) {
-
-                    Element eElement = (Element) nNode;
-                    String name = eElement.getElementsByTagName("name").item(0).getTextContent();
-                    float meterPerPixel = Float.parseFloat(eElement.getElementsByTagName("meterPerPixel").item(0).getTextContent());
-                    loadedMaps.put(name,new Map(name, meterPerPixel));
-                    log.logConfig("CORE","Added map: " + name + ".");
-                }
-            }
-        } catch (Exception e) {
-            log.logSevere("CORE","Could not correctly load XML of maps." + e);
-        }
-    }
 
     //REST call to RaceCarManager to request the name of the current map. If this map is not found in the offline available maps, it does another
     //REST download call to download the map and store it in it's /mapFolder and add it to the maps.xml file.
@@ -289,6 +259,6 @@ public class Core implements CoreListener,MQTTListener {
         }
 
         final Core core = new Core();
-//    }
     }
+
 }
