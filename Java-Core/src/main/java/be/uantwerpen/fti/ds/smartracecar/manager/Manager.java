@@ -54,7 +54,7 @@ public class Manager implements MQTTListener{
     @GET
     @Path("register")
     @Produces("text/plain")
-    public int registerREST(@DefaultValue("0") @QueryParam("x") float x,@DefaultValue("0") @QueryParam("y") float y,@DefaultValue("0") @QueryParam("z") float z,@DefaultValue("0") @QueryParam("w") float w) {
+    public int registerREST(@DefaultValue("0") @QueryParam("x") float x, @DefaultValue("0") @QueryParam("y") float y, @DefaultValue("0") @QueryParam("z") float z, @DefaultValue("0") @QueryParam("w") float w) {
         vehicles.add(new Vehicle(vehicles.size(),false,new Point(x,y,z,w)));
         return vehicles.size()-1;
     }
@@ -108,12 +108,9 @@ public class Manager implements MQTTListener{
             System.exit(0);
         } else if (args.length == 1) {
             if (!args[0].isEmpty()) {
-                //currentMap = args[0];
+                final Manager manager = new Manager(args[0]);
+                new TomCatLauncher().start();
             }
         }
-        final Manager manager = new Manager(args[0]);
-        new TomCatLauncher().start();
-
-
     }
 }
