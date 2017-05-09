@@ -273,6 +273,7 @@ if not DEBUG_WITHOUT_JAVA:
 if not DEBUG_WITHOUT_ROS:
     rospy.Subscriber('move_base/status', GoalStatusArray, cb_movebase_status)
     rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, cb_amcl_pose)
+    rospy.Subscriber('move_base/feedback', PoseStamped, cb_movebase_feedback)
 
 if not DEBUG_WITHOUT_JAVA:
     while not connected:
