@@ -73,10 +73,11 @@ public class Manager implements MQTTListener{
         return jsonUtils.objectToJSONString("waypoints",waypoints);
     }
 
+
     @GET
-    @Path("getmap/{mapname}")
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Response getMap(@PathParam("mapname") final String mapname){
+    @Path("getmappgm/{mapname}")
+    @Produces("application/octet-stream")
+    public Response getMapPGM(@PathParam("mapname") final String mapname){
 
         StreamingOutput fileStream =  new StreamingOutput()
         {
@@ -101,6 +102,38 @@ public class Manager implements MQTTListener{
                 .header("content-disposition","attachment; filename = " + mapname + ".pgm")
                 .build();
     }
+
+    @GET
+    @Path("getmapyaml/{mapname}")
+    @Produces("application/octet-stream")
+    public Response getMapYAML(@PathParam("mapname") final String mapname){
+
+        StreamingOutput fileStream =  new StreamingOutput()
+        {
+            @Override
+            public void write(java.io.OutputStream output) throws IOException, WebApplicationException
+            {
+                try
+                {
+                    java.nio.file.Path path = Paths.get("maps/" + mapname + ".yaml");
+                    byte[] data = Files.readAllBytes(path);
+                    output.write(data);
+                    output.flush();
+                }
+                catch (Exception e)
+                {
+                    throw new WebApplicationException("File Not Found !!");
+                }
+            }
+        };
+        return Response
+                .ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
+                .header("content-disposition","attachment; filename = " + mapname + ".yaml")
+                .build();
+    }
+
+
+
 
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {

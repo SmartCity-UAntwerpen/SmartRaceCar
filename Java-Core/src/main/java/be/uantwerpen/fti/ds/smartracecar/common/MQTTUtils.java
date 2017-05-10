@@ -26,7 +26,7 @@ public class MQTTUtils implements MqttCallback{
         }
     }
 
-    public MQTTUtils(int ID, String brokerURL, String username, String password, MQTTListener listener){
+    public MQTTUtils(long ID, String brokerURL, String username, String password, MQTTListener listener){
         MqttConnectOptions options = new MqttConnectOptions();
         this.listener = listener;
 

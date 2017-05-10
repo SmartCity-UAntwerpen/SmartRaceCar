@@ -2,14 +2,11 @@
 <maps>
 	<map>
 		<name>V314</name>
-		<meterPerPixel>0.25</meterPerPixel>
 	</map>
 	<map>
 		<name>z164</name>
-		<meterPerPixel>0.25</meterPerPixel>
 	</map>
-	<map>
-		<name>zbuilding</name>
-		<meterPerPixel>0.05</meterPerPixel>
-	</map>
+<map>
+    <name>zbuilding</name>
+  </map>
 </maps>

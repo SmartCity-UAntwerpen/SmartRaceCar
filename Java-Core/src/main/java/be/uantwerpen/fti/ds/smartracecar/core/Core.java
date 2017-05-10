@@ -1,10 +1,16 @@
 package be.uantwerpen.fti.ds.smartracecar.core;
 
 import be.uantwerpen.fti.ds.smartracecar.common.*;
+import com.google.gson.reflect.TypeToken;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -15,6 +21,11 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Type;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -26,8 +37,11 @@ import java.util.logging.Level;
 public class Core implements CoreListener,MQTTListener {
 
     //Hardcoded elements.
+    private boolean debugWithoutRos = true; // debug parameter to stop attempts to send over sockets when ROS-Node is active.
     private Log log;
     private Level level = Level.CONFIG; //Debug level
+    Client client = ClientBuilder.newClient();
+    WebTarget webTarget = client.target("http://localhost:8080/carmanager");
     private final String mqttBroker = "tcp://broker.hivemq.com:1883";
     private final String mqqtUsername = "username";
     private final String mqttPassword = "password";
@@ -40,7 +54,7 @@ public class Core implements CoreListener,MQTTListener {
     private TCPUtils tcpUtils;
     private JSONUtils jsonUtils;
 
-    private int ID; // ID given by RaceCarManager.
+    private long ID; // ID given by RaceCarManager.
     private HashMap<String,Map> loadedMaps = new HashMap<>(); // Map of all loaded maps.
     private HashMap <Integer, WayPoint> wayPoints = new HashMap<>(); // Map of all loaded waypoints.
     private Point currentLocation = new Point(0,0,0,0); // Most recent position of the vehicle.
@@ -50,19 +64,23 @@ public class Core implements CoreListener,MQTTListener {
     private static int startPoint; // Starting position on map. Given by main argument.
     private boolean occupied = false; // To verify if racecar is currently occupied by a route job.
 
-    public Core() throws InterruptedException {
+    public Core() throws InterruptedException, IOException {
         log = new Log(this.getClass(),level);
         jsonUtils = new JSONUtils();
+        register();
         mqttUtils = new MQTTUtils(ID,mqttBroker,mqqtUsername,mqttPassword,this);
         mqttUtils.subscribeToTopic("racecar/" + ID +"/#");
         tcpUtils = new TCPUtils(serverPort,clientPort,this);
         tcpUtils.start();
         restUtils = new RESTUtils("http://localhost:8080/x");
-        connectSend();
-        while(!connected){
-            Thread.sleep(1);
+        if(!debugWithoutRos){
+            connectSend();
+            while(!connected){
+                Thread.sleep(1);
+            }
+        }else{
+            connected = true;
         }
-        register();
         requestWaypoints();
         sendStartPoint();
         loadedMaps = XMLUtils.loadMaps(mapFolder);
@@ -83,32 +101,30 @@ public class Core implements CoreListener,MQTTListener {
 
     //Register vehicle with RaceCarManager
     private void register(){
-        //TODO add rest call to get ID
-        ID = 0;
+        WebTarget resourceWebTarget = webTarget.path("register");
+        Invocation.Builder invocationBuilder = resourceWebTarget.request("text/plain");
+        Response response = invocationBuilder.get();
+        ID = Long.parseLong(response.readEntity(String.class), 10);
+        log.logInfo("CORE","Vehicle received ID " + ID + ".");
     }
 
     //Request all possible waypoints from RaceCarManager
     private void requestWaypoints(){
-        //TODO request waypoints through REST
-        WayPoint A = new WayPoint(1,(float)0.5,0,-1,(float)0.02,1);
-        WayPoint B = new WayPoint(2,(float)-13.4,(float)-0.53,(float)0.71,(float)0.71,1);
-        WayPoint C = new WayPoint(3,(float)-27.14,(float)-1.11,(float)-0.3,(float)0.95,1);
-        WayPoint D = new WayPoint(4,(float)-28.25,(float)-9.19,(float)-0.71,(float)0.71,1);
-        wayPoints.put(A.getID(),A);
-        wayPoints.put(B.getID(),B);
-        wayPoints.put(C.getID(),C);
-        wayPoints.put(D.getID(),D);
+        WebTarget resourceWebTarget = webTarget.path("getwaypoints");
+        Invocation.Builder invocationBuilder = resourceWebTarget.request("application/json");
+        Response response = invocationBuilder.get();
+        Type typeOfHashMap=new TypeToken<HashMap<Integer,WayPoint>>(){}.getType();
+        wayPoints  = (HashMap<Integer, WayPoint>) JSONUtils.getObject(response.readEntity(String.class),typeOfHashMap);
         for (WayPoint wayPoint : wayPoints.values()) {
             log.logConfig("CORE","Waypoint " + wayPoint.getID() + " added: " + wayPoint.getX() + "," + wayPoint.getY() + "," + wayPoint.getZ() + "," + wayPoint.getW());
         }
-
         log.logInfo("CORE","All possible waypoints(" + wayPoints.size() + ") received.");
     }
 
     //Set the starting point for the vehicle. Sending it over the socket connection.
     private void sendStartPoint(){
         log.logInfo("CORE","Starting point set as waypoint with ID " + startPoint + ".");
-        tcpUtils.sendUpdate(JSONUtils.objectToJSONString("startPoint",wayPoints.get(startPoint)));
+        if(!debugWithoutRos)tcpUtils.sendUpdate(JSONUtils.objectToJSONString("startPoint",wayPoints.get(startPoint)));
     }
 
 
@@ -116,16 +132,32 @@ public class Core implements CoreListener,MQTTListener {
     //REST call to RaceCarManager to request the name of the current map. If this map is not found in the offline available maps, it does another
     //REST download call to download the map and store it in it's /mapFolder and add it to the maps.xml file.
     //After that it sends this information to the vehicle to be used over the socket connection.
-    private void requestMap(){
-        //TODO request map name through REST
-        String mapName = "zbuilding";
+    private void requestMap() throws IOException {
+        WebTarget resourceWebTarget = webTarget.path("getmapname");
+        Invocation.Builder invocationBuilder = resourceWebTarget.request("text/plain");
+        Response response = invocationBuilder.get();
+        String mapName = response.readEntity(String.class);
+        //String mapName = "zbuilding";
         if(loadedMaps.containsKey(mapName)){
             log.logInfo("CORE","Current map '" + mapName + "' found.");
             sendCurrentMap(mapName);
         }else{
-            //TODO download map from backbone
+            java.nio.file.Path out = Paths.get("maps/" + mapName + ".pgm");
+            resourceWebTarget = webTarget.path("getmappgm/" + mapName);
+            invocationBuilder = resourceWebTarget.request("application/octet-stream");
+            response = invocationBuilder.get();
+            InputStream in = response.readEntity(InputStream.class);
+            Files.copy(in, out, StandardCopyOption.REPLACE_EXISTING);
+            in.close();
+            java.nio.file.Path out2 = Paths.get("maps/" + mapName + ".yaml");
+            resourceWebTarget = webTarget.path("getmapyaml/" + mapName);
+            invocationBuilder = resourceWebTarget.request("application/octet-stream");
+            response = invocationBuilder.get();
+            InputStream in2 = response.readEntity(InputStream.class);
+            Files.copy(in2, out2, StandardCopyOption.REPLACE_EXISTING);
+            in2.close();
             log.logConfig("CORE","Current map '" + mapName + "' not found. Downloading...");
-            addMap("test", (float) 0.05);
+            addMap(mapName, (float) 0.05);
             log.logInfo("CORE","Current map '" + mapName + "' downloaded.");
             sendCurrentMap(mapName);
         }
@@ -133,7 +165,7 @@ public class Core implements CoreListener,MQTTListener {
 
     //Add a new map to the /mapFolder folder and update the maps.xml file.
     private void addMap(String name, float meterPerPixel) {
-        Map map = new Map(name, meterPerPixel);
+        Map map = new Map(name);
         try {
             DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
@@ -146,10 +178,6 @@ public class Core implements CoreListener,MQTTListener {
             Element newName = document.createElement("name");
             newName.appendChild(document.createTextNode(name));
             newMap.appendChild(newName);
-
-            Element newMeterPerPixel = document.createElement("meterPerPixel");
-            newMeterPerPixel.appendChild(document.createTextNode(Float.toString(meterPerPixel)));
-            newMap.appendChild(newMeterPerPixel);
 
             root.appendChild(newMap);
 
@@ -172,7 +200,7 @@ public class Core implements CoreListener,MQTTListener {
 
     //Send the name and other information of the current map to the vehicle over the socket connection.
     private void sendCurrentMap(String mapName){
-        tcpUtils.sendUpdate(JSONUtils.objectToJSONString("currentMap",loadedMaps.get(mapName)));
+        if(!debugWithoutRos)tcpUtils.sendUpdate(JSONUtils.objectToJSONString("currentMap",loadedMaps.get(mapName)));
     }
 
     //Tto be used when when a new waypoint has to be send to the vehicle or to check if route is completed.
@@ -180,7 +208,7 @@ public class Core implements CoreListener,MQTTListener {
     private void updateRoute(){
         if(!currentRoute.isEmpty()){
             WayPoint nextWayPoint = wayPoints.get(currentRoute.poll());
-            tcpUtils.sendUpdate(JSONUtils.objectToJSONString("nextWayPoint",nextWayPoint));
+            if(!debugWithoutRos)tcpUtils.sendUpdate(JSONUtils.objectToJSONString("nextWayPoint",nextWayPoint));
             log.logInfo("CORE","Sending next waypoint with ID " + nextWayPoint.getID() + " ("+ (routeSize - currentRoute.size()) + "/" + routeSize + ")");
 
         }else{
@@ -203,7 +231,7 @@ public class Core implements CoreListener,MQTTListener {
 
     //Send wheel states to the vehicle over the socket connection. useful for emergency stops and other requests.
     private void sendWheelStates(float throttle, float steer) {
-        tcpUtils.sendUpdate(JSONUtils.objectToJSONString("drive",new Drive(steer,throttle)));
+        if(!debugWithoutRos)tcpUtils.sendUpdate(JSONUtils.objectToJSONString("drive",new Drive(steer,throttle)));
         log.logInfo("CORE","Sending wheel state Throttle:" + throttle +", Steer:" + steer + ".");
     }
 

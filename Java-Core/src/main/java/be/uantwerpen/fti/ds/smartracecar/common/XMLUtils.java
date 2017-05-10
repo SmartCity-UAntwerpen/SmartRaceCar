@@ -33,13 +33,12 @@ public class XMLUtils {
 
                     Element eElement = (Element) nNode;
                     String name = eElement.getElementsByTagName("name").item(0).getTextContent();
-                    float meterPerPixel = Float.parseFloat(eElement.getElementsByTagName("meterPerPixel").item(0).getTextContent());
-                    loadedMaps.put(name,new Map(name, meterPerPixel));
-                    Log.logConfig("CORE","Added map: " + name + ".");
+                    loadedMaps.put(name,new Map(name));
+                    Log.logConfig("XML","Added map: " + name + ".");
                 }
             }
         } catch (Exception e) {
-            Log.logSevere("CORE","Could not correctly load XML of maps." + e);
+            Log.logSevere("XML","Could not correctly load XML of maps." + e);
         }
         return loadedMaps;
     }
@@ -70,11 +69,11 @@ public class XMLUtils {
                     float w = Float.parseFloat(eElement.getElementsByTagName("w").item(0).getTextContent());
                     int weight  = Integer.parseInt(eElement.getElementsByTagName("weight").item(0).getTextContent());
                     loadedMaps.put(id,new WayPoint(id,x,y,z,w,weight));
-                    Log.logConfig("CORE","Added wayPoint: " + id + " and coordinates " + x +"," + y +"," + z +"," + w +" and weight " + weight + ".");
+                    Log.logConfig("XML","Added wayPoint: " + id + " and coordinates " + x +"," + y +"," + z +"," + w +" and weight " + weight + ".");
                 }
             }
         } catch (Exception e) {
-            Log.logSevere("CORE","Could not correctly load XML of waypoints." + e);
+            Log.logSevere("XML","Could not correctly load XML of waypoints." + e);
         }
         return loadedMaps;
     }
