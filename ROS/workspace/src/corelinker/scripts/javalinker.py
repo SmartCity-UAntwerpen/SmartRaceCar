@@ -60,7 +60,7 @@ def read_line(sock, recv_buffer=4096, delim='\n'):
 
 def get_type(json_string):
     if json_string.keys()[0] == 'drive':
-        publish_drive_param(json_string)
+        rosmodule.publish_drive_param(json_string)
     elif json_string.keys()[0] == 'currentMap':
         set_current_map(json_string)
     elif json_string.keys()[0] == 'nextWayPoint':
