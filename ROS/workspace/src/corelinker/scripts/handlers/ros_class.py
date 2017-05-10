@@ -32,6 +32,7 @@ cb_movebase_feedback_secs = 0
 
 
 def publish_drive_param(json_string):
+    global pub_drive_parameters
     msg = drive_param()
     msg.steer = json_string['drive']['steer']
     msg.throttle = json_string['drive']['throttle']
@@ -41,6 +42,7 @@ def publish_drive_param(json_string):
 
 
 def stop():
+    global pub_drive_parameters
     msg = drive_param()
     msg.steer = 0
     msg.throttle = 0
@@ -49,22 +51,24 @@ def stop():
     return
 
 
-def publish_initialpose(posx, posy, posz, orx, ory, orz, orw):
+def publish_initialpose(location):
+    global pub_initial_pose, logger
+
     i = 0
     while i < 3:
         pose = PoseWithCovarianceStamped()
         pose.header.stamp = rospy.Time.now()
         pose.header.frame_id = "map"
-        pose.pose.pose.position.x = posx
-        pose.pose.pose.position.y = posy
-        pose.pose.pose.position.z = posz
+        pose.pose.pose.position.x = location.posx
+        pose.pose.pose.position.y = location.posy
+        pose.pose.pose.position.z = location.posz
         pose.pose.covariance = [0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                                 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                                 0.0, 0.0, 0.06853891945200942]
-        pose.pose.pose.orientation.x = orx
-        pose.pose.pose.orientation.y = ory
-        pose.pose.pose.orientation.z = orz
-        pose.pose.pose.orientation.w = orw
+        pose.pose.pose.orientation.x = location.orx
+        pose.pose.pose.orientation.y = location.ory
+        pose.pose.pose.orientation.z = location.orz
+        pose.pose.pose.orientation.w = location.orw
 
         rospy.loginfo(pose)
         pub_initial_pose.publish(pose)
@@ -74,6 +78,7 @@ def publish_initialpose(posx, posy, posz, orx, ory, orz, orw):
 
 
 def publish_movebase_goal(posx, posy, posz, orx, ory, orz, orw):
+    global pub_movebase_goal
     pose = PoseStamped()
     pose.header.stamp = rospy.Time.now()
     pose.header.frame_id = "map"
@@ -121,3 +126,7 @@ def init_ros():
 
     rospy.Subscriber('move_base/status', GoalStatusArray, cb_movebase_status)
     rospy.Subscriber('move_base/feedback', MoveBaseActionFeedback, cb_movebase_feedback)
+
+
+def rospy_spin():
+    rospy.spin()
