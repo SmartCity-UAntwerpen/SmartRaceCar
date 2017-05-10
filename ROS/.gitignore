@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+workspace/devel
+workspace/src/CMakeLists.txt
+
 # Distribution / packaging
 .Python
 env/
