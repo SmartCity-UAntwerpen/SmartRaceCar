@@ -11,7 +11,7 @@ import logging
 from threading import Thread
 import time
 import handlers.ros_class as rosmodule
-from handlers.location import Location as
+from handlers.location import Location
 
 if not DEBUG_WITHOUT_ROS:
     rosmodule.init_ros()
