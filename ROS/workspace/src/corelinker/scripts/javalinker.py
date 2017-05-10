@@ -10,6 +10,8 @@ import json
 import logging
 from threading import Thread
 import time
+import handlers.ros_class as rosmodule
+from handlers.location import Location as
 
 if not DEBUG_WITHOUT_ROS:
     import rospy
