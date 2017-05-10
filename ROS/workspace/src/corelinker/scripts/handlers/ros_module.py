@@ -1,5 +1,4 @@
 from location import Location
-import logger
 
 import rospy
 from race.msg import drive_param
