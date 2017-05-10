@@ -73,29 +73,29 @@ cb_movebase_feedback_secs = 0
 #     return
 
 
-def publish_initialpose(posx, posy, posz, orx, ory, orz, orw):
-    if not DEBUG_WITHOUT_ROS:
-        i = 0
-        while i < 3:
-            pose = PoseWithCovarianceStamped()
-            pose.header.stamp = rospy.Time.now()
-            pose.header.frame_id = "map"
-            pose.pose.pose.position.x = posx
-            pose.pose.pose.position.y = posy
-            pose.pose.pose.position.z = posz
-            pose.pose.covariance = [0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                                    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                                    0.0, 0.0, 0.06853891945200942]
-            pose.pose.pose.orientation.x = orx
-            pose.pose.pose.orientation.y = ory
-            pose.pose.pose.orientation.z = orz
-            pose.pose.pose.orientation.w = orw
-
-            rospy.loginfo(pose)
-            pub_initial_pose.publish(pose)
-            i += 1
-        logging.info("Initial pose published!")
-    return
+# def publish_initialpose(posx, posy, posz, orx, ory, orz, orw):
+#     if not DEBUG_WITHOUT_ROS:
+#         i = 0
+#         while i < 3:
+#             pose = PoseWithCovarianceStamped()
+#             pose.header.stamp = rospy.Time.now()
+#             pose.header.frame_id = "map"
+#             pose.pose.pose.position.x = posx
+#             pose.pose.pose.position.y = posy
+#             pose.pose.pose.position.z = posz
+#             pose.pose.covariance = [0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+#                                     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+#                                     0.0, 0.0, 0.06853891945200942]
+#             pose.pose.pose.orientation.x = orx
+#             pose.pose.pose.orientation.y = ory
+#             pose.pose.pose.orientation.z = orz
+#             pose.pose.pose.orientation.w = orw
+#
+#             rospy.loginfo(pose)
+#             pub_initial_pose.publish(pose)
+#             i += 1
+#         logging.info("Initial pose published!")
+#     return
 
 
 def publish_movebase_goal(posx, posy, posz, orx, ory, orz, orw):
