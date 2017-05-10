@@ -7,14 +7,13 @@ DEBUG_WITHOUT_JAVA = True
 
 import socket
 import json
-import handlers.logger as logger
-import logging
+import handlers.logger as logmodule
 from threading import Thread
 import time
-import handlers.ros_class as rosmodule
+import handlers.ros_module as rosmodule
 from handlers.location import Location
 
-logger = logger.Logger()
+logger = logmodule.Logger()
 
 if not DEBUG_WITHOUT_ROS:
     rosmodule.init_ros(logger)
@@ -76,31 +75,31 @@ def get_type(json_string):
 
 
 def set_current_map(json_string):
-    global currentmap, meterperpixel
+    global currentmap, meterperpixel, logger
     currentmap = json_string['currentMap']['name']
     meterperpixel = json_string['currentMap']['meterPerPixel']
-    logging.info("Current map set: " + currentmap + " | MetersPerPixel: " + str(meterperpixel))
+    logger.log_info("Current map set: " + currentmap + " | MetersPerPixel: " + str(meterperpixel))
 
 
 def set_startpoint(json_string):
-    global startpointx, startpointy, startpointz, startpointw
+    global startpointx, startpointy, startpointz, startpointw, logger
     startpointx = json_string['startPoint']['x']
     startpointy = json_string['startPoint']['y']
     startpointz = json_string['startPoint']['z']
     startpointw = json_string['startPoint']['w']
-    logging.info("Current startPoint set: " + str(startpointx) + "," + str(startpointy) + "," + str(startpointz) + ","
+    logger.log_info("Current startPoint set: " + str(startpointx) + "," + str(startpointy) + "," + str(startpointz) + ","
                  + str(startpointw))
     rosmodule.publish_initialpose(startpointx, startpointy, 0.0, 0.0, 0.0, startpointz, startpointw)
 
 
 def set_next_waypoint(json_string):
-    global nextwaypointx, nextwaypointy, nextwaypointz, nextwaypointw
+    global nextwaypointx, nextwaypointy, nextwaypointz, nextwaypointw, logger
     nextwaypointx = json_string['nextWayPoint']['x']
     nextwaypointy = json_string['nextWayPoint']['y']
     nextwaypointz = json_string['nextWayPoint']['z']
     nextwaypointw = json_string['nextWayPoint']['w']
-    logging.info("Setting next waypoint: " + str(nextwaypointx) + "," + str(nextwaypointy) + "," + str(nextwaypointz) +
-                 "," + str(nextwaypointw))
+    logger.log_info("Setting next waypoint: " + str(nextwaypointx) + "," + str(nextwaypointy) + "," + str(nextwaypointz) +
+                    "," + str(nextwaypointw))
     rosmodule.publish_movebase_goal(nextwaypointx, nextwaypointy, 0.0, 0.0, 0.0, nextwaypointz, nextwaypointw)
     time.sleep(3)
     waypoint_reached()
@@ -109,7 +108,7 @@ def set_next_waypoint(json_string):
 def waypoint_reached():
     rosmodule.stop()
     global nextwaypointx, nextwaypointy, nextwaypointz, nextwaypointw
-    logging.info("waypoint " + str(nextwaypointx) + "," + str(nextwaypointy) + "," + str(nextwaypointz) + "," +
+    logger.log_info("waypoint " + str(nextwaypointx) + "," + str(nextwaypointy) + "," + str(nextwaypointz) + "," +
                  str(nextwaypointw) + " reached.")
     jsonmessage = {'arrivedWaypoint': {'x': nextwaypointx, 'y': nextwaypointy, 'z': nextwaypointz, 'w': nextwaypointw}}
     json_string = json.dumps(jsonmessage)
@@ -117,7 +116,7 @@ def waypoint_reached():
 
 
 def send_location(location):
-    logging.info("Sending location: posx: " + str(location.posx) + ", posy: " + str(location.posy) + ", orz: " +
+    logger.log_info("Sending location: posx: " + str(location.posx) + ", posy: " + str(location.posy) + ", orz: " +
                  str(location.orz) + ", orw: " + str(location.orw))
     jsonmessage = {'location': {'x': location.posx, 'y': location.posy, 'z': location.orz, 'w': location.orw}}
     json_string = json.dumps(jsonmessage)
@@ -134,23 +133,23 @@ def send_message(json_string):
             client_socket.connect((TCP_IP, TCP_PORT_PYTH_JAVA))
             connected = True
         except socket.error, exc:
-            logging.warning("[CLIENTSOCKET] Cannot send data:  " + json_string + "   Trying again." + str(exc))
+            logger.log_warning("[CLIENTSOCKET] Cannot send data:  " + json_string + "   Trying again." + str(exc))
             connected = False
             time.sleep(1)
-    logging.debug("[CLIENTSOCKET] Socket created & connected")
+    logger.log_debug("[CLIENTSOCKET] Socket created & connected")
 
     client_socket.sendall(json_string)
-    logging.debug("[CLIENTSOCKET] data sent: " + json_string)
+    logger.log_debug("[CLIENTSOCKET] data sent: " + json_string)
 
     client_socket.close()
-    logging.debug("[CLIENTSOCKET] Socket closed")
+    logger.log_debug("[CLIENTSOCKET] Socket closed")
 
 
 def connect():
     jsonmessage = {'connect': {'x': 0, 'y': 0}}
     json_string = json.dumps(jsonmessage)
     send_message(json_string)
-    logging.info("Connected to Core.")
+    logger.log_info("Connected to Core.")
     global connected
     connected = True
 
@@ -175,24 +174,6 @@ class ServerThread(Thread):
             logging.debug("[SERVERSOCKET] Server received data: " + data_string)
             json_string = json.loads(data_string)
             get_type(json_string)
-            # print json_string.keys()[0]
-
-
-def callback(data):
-    global TCP_IP, TCP_PORT_PYTH_JAVA
-
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect((TCP_IP, TCP_PORT_PYTH_JAVA))
-    logging.debug("[CLIENTSOCKET] Socket created & connected")
-
-    jsonmessage = {'drive': {'steer': data.angle, 'throttle': data.velocity}}
-    string = json.dumps(jsonmessage)
-
-    client_socket.sendall(string)
-    logging.debug("[CLIENTSOCKET] data sent: " + string)
-
-    client_socket.close()
-    logging.debug("[CLIENTSOCKET] Socket closed")
 
 
 if not DEBUG_WITHOUT_JAVA:
@@ -209,4 +190,4 @@ if not DEBUG_WITHOUT_ROS:
 else:
     while True:
         time.sleep(5)
-        send_location()
+        # send_location()
