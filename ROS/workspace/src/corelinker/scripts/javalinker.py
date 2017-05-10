@@ -14,17 +14,18 @@ import handlers.ros_class as rosmodule
 from handlers.location import Location as
 
 if not DEBUG_WITHOUT_ROS:
-    import rospy
-    from race.msg import drive_param
-    from geometry_msgs.msg import PoseWithCovarianceStamped
-    from geometry_msgs.msg import PoseStamped
-    from actionlib_msgs.msg import GoalStatusArray
-    from move_base_msgs.msg import MoveBaseActionFeedback
-
-    pub_drive_parameters = rospy.Publisher('drive_parameters', drive_param, queue_size=10)
-    pub_initial_pose = rospy.Publisher('initialpose', PoseWithCovarianceStamped, queue_size=10)
-    pub_move_base_goal = rospy.Publisher('move_base_simple/goal', PoseStamped, queue_size=10)
-    rospy.init_node('javalinker', anonymous=True)
+    rosmodule.init_ros()
+    # import rospy
+    # from race.msg import drive_param
+    # from geometry_msgs.msg import PoseWithCovarianceStamped
+    # from geometry_msgs.msg import PoseStamped
+    # from actionlib_msgs.msg import GoalStatusArray
+    # from move_base_msgs.msg import MoveBaseActionFeedback
+    #
+    # pub_drive_parameters = rospy.Publisher('drive_parameters', drive_param, queue_size=10)
+    # pub_initial_pose = rospy.Publisher('initialpose', PoseWithCovarianceStamped, queue_size=10)
+    # pub_move_base_goal = rospy.Publisher('move_base_simple/goal', PoseStamped, queue_size=10)
+    # rospy.init_node('javalinker', anonymous=True)
 
 TCP_IP = '127.0.0.1'
 TCP_PORT_JAVA_PYTH = 5005
