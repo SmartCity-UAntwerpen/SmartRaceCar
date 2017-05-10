@@ -59,11 +59,10 @@ def publish_initialpose(location):
         pose.pose.pose.orientation.z = location.orz
         pose.pose.pose.orientation.w = location.orw
 
-        logger.log_info(pose)
         pub_initial_pose.publish(pose)
         i += 1
 
-    logger.log_info("Initial pose published!")
+    logger.log_debug("Initial pose published three times")
     return
 
 
@@ -82,7 +81,7 @@ def publish_movebase_goal(posx, posy, posz, orx, ory, orz, orw):
 
     rospy.loginfo(pose)
     pub_movebase_goal.publish(pose)
-    logger.log_info("Goal published!")
+    logger.log_debug("Goal published")
     return
 
 
