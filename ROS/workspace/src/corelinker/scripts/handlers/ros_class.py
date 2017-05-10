@@ -128,4 +128,5 @@ def init_ros(logger_argument):
 
 
 def rospy_spin():
+    logger.log_debug("[ROSMODULE] rospy.spin() activated")
     rospy.spin()
