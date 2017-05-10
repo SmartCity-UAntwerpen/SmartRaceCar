@@ -31,6 +31,15 @@ pub_movebase_goal = None
 cb_movebase_feedback_secs = 0
 
 
+def publish_drive_param(json_string):
+    msg = drive_param()
+    msg.steer = json_string['drive']['steer']
+    msg.throttle = json_string['drive']['throttle']
+    rospy.loginfo(msg)
+    pub_drive_parameters.publish(msg)
+    return
+
+
 def cb_movebase_status(data):
     status_list = data.status_list
     if len(status_list) != 0:
