@@ -43,6 +43,10 @@ currentw = 4
 
 cb_movebase_feedback_secs = 0
 
+time.sleep(3)
+location = Location(2, 3, 0, 0, 0, 4, 4)
+rosmodule.publish_initialpose(location)
+rosmodule.stop()
 
 
 def read_line(sock, recv_buffer=4096, delim='\n'):
