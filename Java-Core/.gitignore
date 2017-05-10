@@ -92,3 +92,7 @@ src/test/
 target/
 ID-tcpbrokerhivemqcom1883/
 RACECAR-tcpbrokerhivemqcom1883/
+/.idea/markdown-navigator.xml
+/.idea/markdown-navigator/
+.idea/inspectionProfiles/
+src/main/resources/
