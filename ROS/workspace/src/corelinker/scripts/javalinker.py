@@ -99,23 +99,23 @@ cb_movebase_feedback_secs = 0
 #     return
 
 
-def publish_movebase_goal(posx, posy, posz, orx, ory, orz, orw):
-    if not DEBUG_WITHOUT_ROS:
-        pose = PoseStamped()
-        pose.header.stamp = rospy.Time.now()
-        pose.header.frame_id = "map"
-        pose.pose.position.x = posx
-        pose.pose.position.y = posy
-        pose.pose.position.z = posz
-        pose.pose.orientation.x = orx
-        pose.pose.orientation.y = ory
-        pose.pose.orientation.z = orz
-        pose.pose.orientation.w = orw
-
-        rospy.loginfo(pose)
-        pub_move_base_goal.publish(pose)
-        logging.info("Goal published!")
-    return
+# def publish_movebase_goal(posx, posy, posz, orx, ory, orz, orw):
+#     if not DEBUG_WITHOUT_ROS:
+#         pose = PoseStamped()
+#         pose.header.stamp = rospy.Time.now()
+#         pose.header.frame_id = "map"
+#         pose.pose.position.x = posx
+#         pose.pose.position.y = posy
+#         pose.pose.position.z = posz
+#         pose.pose.orientation.x = orx
+#         pose.pose.orientation.y = ory
+#         pose.pose.orientation.z = orz
+#         pose.pose.orientation.w = orw
+#
+#         rospy.loginfo(pose)
+#         pub_move_base_goal.publish(pose)
+#         logging.info("Goal published!")
+#     return
 
 
 def read_line(sock, recv_buffer=4096, delim='\n'):

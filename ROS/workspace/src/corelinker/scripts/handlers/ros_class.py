@@ -73,6 +73,24 @@ def publish_initialpose(posx, posy, posz, orx, ory, orz, orw):
     return
 
 
+def publish_movebase_goal(posx, posy, posz, orx, ory, orz, orw):
+    pose = PoseStamped()
+    pose.header.stamp = rospy.Time.now()
+    pose.header.frame_id = "map"
+    pose.pose.position.x = posx
+    pose.pose.position.y = posy
+    pose.pose.position.z = posz
+    pose.pose.orientation.x = orx
+    pose.pose.orientation.y = ory
+    pose.pose.orientation.z = orz
+    pose.pose.orientation.w = orw
+
+    rospy.loginfo(pose)
+    pub_move_base_goal.publish(pose)
+    logging.info("Goal published!")
+    return
+
+
 def cb_movebase_status(data):
     status_list = data.status_list
     if len(status_list) != 0:
