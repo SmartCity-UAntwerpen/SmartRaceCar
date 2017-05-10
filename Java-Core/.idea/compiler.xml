@@ -26,8 +26,7 @@
         <module name="SmartRacecar" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="Java-Core" target="1.7" />
+    <bytecodeTargetLevel target="1.8">
       <module name="SmartRacecar" target="1.8" />
     </bytecodeTargetLevel>
   </component>

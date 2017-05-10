@@ -28,7 +28,7 @@
             <configuration>
               <transformers>
                 <transformer>
-                  <mainClass>be.uantwerpen.fti.ds.smartracecar.manager.Manager</mainClass>
+                  <mainClass>be.uantwerpen.fti.ds.sc.smartracecar.manager.Manager</mainClass>
                 </transformer>
               </transformers>
             </configuration>

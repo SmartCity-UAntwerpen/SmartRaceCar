@@ -1,3 +1,0 @@
-Manifest-Version: 1.0
-Main-Class: be.uantwerpen.fti.ds.smartracecar.core.Core
-
