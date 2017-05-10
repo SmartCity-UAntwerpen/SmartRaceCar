@@ -86,7 +86,7 @@ def set_startpoint(json_string):
     startpointw = json_string['startPoint']['w']
     logging.info("Current startPoint set: " + str(startpointx) + "," + str(startpointy) + "," + str(startpointz) + ","
                  + str(startpointw))
-    publish_initialpose(startpointx, startpointy, 0.0, 0.0, 0.0, startpointz, startpointw)
+    rosmodule.publish_initialpose(startpointx, startpointy, 0.0, 0.0, 0.0, startpointz, startpointw)
 
 
 def set_next_waypoint(json_string):
@@ -97,13 +97,13 @@ def set_next_waypoint(json_string):
     nextwaypointw = json_string['nextWayPoint']['w']
     logging.info("Setting next waypoint: " + str(nextwaypointx) + "," + str(nextwaypointy) + "," + str(nextwaypointz) +
                  "," + str(nextwaypointw))
-    publish_movebase_goal(nextwaypointx, nextwaypointy, 0.0, 0.0, 0.0, nextwaypointz, nextwaypointw)
+    rosmodule.publish_movebase_goal(nextwaypointx, nextwaypointy, 0.0, 0.0, 0.0, nextwaypointz, nextwaypointw)
     time.sleep(3)
     waypoint_reached()
 
 
 def waypoint_reached():
-    stop()
+    rosmodule.stop()
     global nextwaypointx, nextwaypointy, nextwaypointz, nextwaypointw
     logging.info("waypoint " + str(nextwaypointx) + "," + str(nextwaypointy) + "," + str(nextwaypointz) + "," +
                  str(nextwaypointw) + " reached.")
@@ -191,39 +191,10 @@ def callback(data):
     logging.debug("[CLIENTSOCKET] Socket closed")
 
 
-def cb_movebase_status(data):
-    status_list = data.status_list
-    if len(status_list) != 0:
-        print "[STATUS] Status: %d" % (status_list[len(status_list) - 1].status)
-
-
-def cb_movebase_feedback(data):
-    global cb_movebase_feedback_secs, currentx, currenty, currentz, currentw
-    header = data.header
-    if header.stamp.secs - cb_movebase_feedback_secs >= 1:
-        cb_movebase_feedback_secs = header.stamp.secs
-        pose = data.feedback.base_position.pose
-        print "[FEEDBACK] Secs: %d" % (header.stamp.secs)
-        print "[FEEDBACK] Position: X: %f, Y: %f, Z: %f" % (pose.position.x, pose.position.y, pose.position.z)
-        print "[FEEDBACK] Orientation: X: %f, Y: %f, Z: %f, W: %f" % (pose.orientation.x, pose.orientation.y,
-                                                                      pose.orientation.z, pose.orientation.w)
-        currentx = pose.position.x
-        currenty = pose.position.y
-        currentz = pose.orientation.z
-        currentw = pose.orientation.w
-
-        send_location()
-
-
 if not DEBUG_WITHOUT_JAVA:
     newthread = ServerThread(TCP_IP, TCP_PORT_JAVA_PYTH, BUFFER_SIZE)
     newthread.daemon = True
     newthread.start()
-
-if not DEBUG_WITHOUT_ROS:
-    rospy.Subscriber('move_base/status', GoalStatusArray, cb_movebase_status)
-    # rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, cb_amcl_pose)
-    rospy.Subscriber('move_base/feedback', MoveBaseActionFeedback, cb_movebase_feedback)
 
 if not DEBUG_WITHOUT_JAVA:
     while not connected:
