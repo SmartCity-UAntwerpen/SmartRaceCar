@@ -9,22 +9,6 @@ from actionlib_msgs.msg import GoalStatusArray
 from move_base_msgs.msg import MoveBaseActionFeedback
 
 
-# class RosClass:
-#     def __init__(self):
-#         self.pub_drive_parameters = rospy.Publisher('drive_parameters', drive_param, queue_size=10)
-#         self.pub_initial_pose = rospy.Publisher('initialpose', PoseWithCovarianceStamped, queue_size=10)
-#         self.pub_move_base_goal = rospy.Publisher('move_base_simple/goal', PoseStamped, queue_size=10)
-#         rospy.init_node('javalinker', anonymous=True)
-#
-#         rospy.Subscriber('move_base/status', GoalStatusArray, self.cb_movebase_status)
-#         rospy.Subscriber('move_base/feedback', MoveBaseActionFeedback, self.cb_movebase_feedback)
-#
-#     def cb_movebase_status(self):
-#         status_list = data.status_list
-#         if len(status_list) != 0:
-#             print "[STATUS] Status: %d" % status_list[len(status_list) - 1].status
-#
-
 '''
 Global variable 'logger' is made in the function 'init_ros()'
 '''
