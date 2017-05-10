@@ -26,8 +26,8 @@ def publish_drive_param(json_string):
     msg = drive_param()
     msg.steer = json_string['drive']['steer']
     msg.throttle = json_string['drive']['throttle']
-    rospy.loginfo(msg)
     pub_drive_parameters.publish(msg)
+    logger.log_debug("drive_param message sent")
     return
 
 
@@ -36,14 +36,12 @@ def stop():
     msg = drive_param()
     msg.steer = 0
     msg.throttle = 0
-    rospy.loginfo(msg)
     pub_drive_parameters.publish(msg)
+    logger.log_info("Stop signal sent")
     return
 
 
 def publish_initialpose(location):
-    global pub_initial_pose, logger
-
     i = 0
     while i < 3:
         pose = PoseWithCovarianceStamped()
@@ -68,7 +66,6 @@ def publish_initialpose(location):
 
 
 def publish_movebase_goal(posx, posy, posz, orx, ory, orz, orw):
-    global pub_movebase_goal
     pose = PoseStamped()
     pose.header.stamp = rospy.Time.now()
     pose.header.frame_id = "map"
@@ -128,6 +125,8 @@ def init_ros(logger_argument):
 
     rospy.Subscriber('move_base/status', GoalStatusArray, cb_movebase_status)
     rospy.Subscriber('move_base/feedback', MoveBaseActionFeedback, cb_movebase_feedback)
+
+    logger.log_info("ROS initialised")
 
 
 def rospy_spin():
