@@ -7,6 +7,7 @@ DEBUG_WITHOUT_JAVA = True
 
 import socket
 import json
+import handlers.logger as logger
 import logging
 from threading import Thread
 import time
