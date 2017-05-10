@@ -184,10 +184,10 @@ def waypoint_reached():
     send_message(json_string)
 
 
-def send_location():
-    global currentx, currenty, currentz, currentw
-    logging.info("Sending location: " + str(currentx) + "," + str(currenty) + "," + str(currentz) + "," + str(currentw))
-    jsonmessage = {'location': {'x': currentx, 'y': currenty, 'z': currentz, 'w': currentw}}
+def send_location(location):
+    logging.info("Sending location: posx: " + str(location.posx) + ", posy: " + str(location.posy) + ", orz: " +
+                 str(location.orz) + ", orw: " + str(location.orw))
+    jsonmessage = {'location': {'x': location.posx, 'y': location.posy, 'z': location.orz, 'w': location.orw}}
     json_string = json.dumps(jsonmessage)
     send_message(json_string)
 
