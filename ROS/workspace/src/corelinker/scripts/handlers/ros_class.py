@@ -22,22 +22,20 @@ cb_movebase_feedback_secs = 0
 
 
 def publish_drive_param(json_string):
-    global pub_drive_parameters
     msg = drive_param()
     msg.steer = json_string['drive']['steer']
     msg.throttle = json_string['drive']['throttle']
     pub_drive_parameters.publish(msg)
-    logger.log_debug("drive_param message sent")
+    logger.log_debug("[ROSMODULE] drive_param message sent")
     return
 
 
 def stop():
-    global pub_drive_parameters
     msg = drive_param()
     msg.steer = 0
     msg.throttle = 0
     pub_drive_parameters.publish(msg)
-    logger.log_info("Stop signal sent")
+    logger.log_info("[ROSMODULE] Stop signal sent")
     return
 
 
@@ -61,7 +59,7 @@ def publish_initialpose(location):
         pub_initial_pose.publish(pose)
         i += 1
 
-    logger.log_debug("Initial pose published three times")
+    logger.log_debug("[ROSMODULE] Initial pose published three times")
     return
 
 
@@ -78,7 +76,7 @@ def publish_movebase_goal(posx, posy, posz, orx, ory, orz, orw):
     pose.pose.orientation.w = orw
 
     pub_movebase_goal.publish(pose)
-    logger.log_debug("Goal published")
+    logger.log_debug("[ROSMODULE] Goal published")
     return
 
 
@@ -94,7 +92,7 @@ def cb_movebase_feedback(data):
     if header.stamp.secs - cb_movebase_feedback_secs >= 1:
         cb_movebase_feedback_secs = header.stamp.secs
         pose = data.feedback.base_position.pose
-        print "[FEEDBACK] Secs: %d" % (header.stamp.secs)
+        print "[FEEDBACK] Secs: %d" % header.stamp.secs
         print "[FEEDBACK] Position: X: %f, Y: %f, Z: %f" % (pose.position.x, pose.position.y, pose.position.z)
         print "[FEEDBACK] Orientation: X: %f, Y: %f, Z: %f, W: %f" % (pose.orientation.x, pose.orientation.y,
                                                                       pose.orientation.z, pose.orientation.w)
@@ -126,7 +124,7 @@ def init_ros(logger_argument):
     rospy.Subscriber('move_base/status', GoalStatusArray, cb_movebase_status)
     rospy.Subscriber('move_base/feedback', MoveBaseActionFeedback, cb_movebase_feedback)
 
-    logger.log_info("ROS initialised")
+    logger.log_info("[ROSMODULE] ROS initialised")
 
 
 def rospy_spin():
