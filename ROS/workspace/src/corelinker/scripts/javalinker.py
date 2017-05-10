@@ -33,7 +33,8 @@ TCP_PORT_JAVA_PYTH = 5005
 TCP_PORT_PYTH_JAVA = 5006
 BUFFER_SIZE = 64
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
+logger.init_logger()
+logger.log_info("Javalinker started!")
 
 connected = False
 currentmap = 'default'
