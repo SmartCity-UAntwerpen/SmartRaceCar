@@ -1,5 +1,6 @@
 from location import Location
-from .. import javalinker
+import logger
+
 import rospy
 from race.msg import drive_param
 from geometry_msgs.msg import PoseWithCovarianceStamped
@@ -23,6 +24,10 @@ from move_base_msgs.msg import MoveBaseActionFeedback
 #         if len(status_list) != 0:
 #             print "[STATUS] Status: %d" % status_list[len(status_list) - 1].status
 #
+
+'''
+Global variable 'logger' is made in the function 'init_ros()'
+'''
 
 pub_drive_parameters = None
 pub_initial_pose = None
@@ -70,10 +75,11 @@ def publish_initialpose(location):
         pose.pose.pose.orientation.z = location.orz
         pose.pose.pose.orientation.w = location.orw
 
-        rospy.loginfo(pose)
+        logger.log_info(pose)
         pub_initial_pose.publish(pose)
         i += 1
-    javalinker.logging.info("Initial pose published!")
+
+    logger.log_info("Initial pose published!")
     return
 
 
@@ -91,8 +97,8 @@ def publish_movebase_goal(posx, posy, posz, orx, ory, orz, orw):
     pose.pose.orientation.w = orw
 
     rospy.loginfo(pose)
-    pub_move_base_goal.publish(pose)
-    logging.info("Goal published!")
+    pub_movebase_goal.publish(pose)
+    logger.log_info("Goal published!")
     return
 
 
@@ -113,16 +119,29 @@ def cb_movebase_feedback(data):
         print "[FEEDBACK] Orientation: X: %f, Y: %f, Z: %f, W: %f" % (pose.orientation.x, pose.orientation.y,
                                                                       pose.orientation.z, pose.orientation.w)
         location = Location(pose.position.x, pose.position.y, 0, 0, 0, pose.orientation.z, pose.orientation.w)
+
+        from .. import javalinker
         javalinker.send_location(location)
 
 
-def init_ros():
-    global pub_drive_parameters, pub_initial_pose, pub_movebase_goal
+def init_ros(logger_argument):
+    global pub_drive_parameters, pub_initial_pose, pub_movebase_goal, logger
+
+    logger = logger_argument
+
     pub_drive_parameters = rospy.Publisher('drive_parameters', drive_param, queue_size=10)
     pub_initial_pose = rospy.Publisher('initialpose', PoseWithCovarianceStamped, queue_size=10)
     pub_movebase_goal = rospy.Publisher('move_base_simple/goal', PoseStamped, queue_size=10)
 
-    rospy.init_node('javalinker', anonymous=True)
+    logging_level = logger.logging_level
+    if logging_level == 1:
+        rospy.init_node('javalinker', log_level=rospy.DEBUG, anonymous=True)
+    elif logging_level == 2:
+        rospy.init_node('javalinker', log_level=rospy.INFO, anonymous=True)
+    elif logging_level == 3:
+        rospy.init_node('javalinker', log_level=rospy.WARN, anonymous=True)
+    elif logging_level == 4:
+        rospy.init_node('javalinker', log_level=rospy.ERROR, anonymous=True)
 
     rospy.Subscriber('move_base/status', GoalStatusArray, cb_movebase_status)
     rospy.Subscriber('move_base/feedback', MoveBaseActionFeedback, cb_movebase_feedback)
