@@ -14,8 +14,11 @@ import time
 import handlers.ros_class as rosmodule
 from handlers.location import Location
 
+logger = logger.Logger()
+
 if not DEBUG_WITHOUT_ROS:
-    rosmodule.init_ros()
+    rosmodule.init_ros(logger)
+    logger.log_debug("[JAVALINKER] Debug with ros!")
     # import rospy
     # from race.msg import drive_param
     # from geometry_msgs.msg import PoseWithCovarianceStamped
@@ -32,9 +35,6 @@ TCP_IP = '127.0.0.1'
 TCP_PORT_JAVA_PYTH = 5005
 TCP_PORT_PYTH_JAVA = 5006
 BUFFER_SIZE = 64
-
-logger.init_logger()
-logger.log_info("Javalinker started!")
 
 connected = False
 currentmap = 'default'
@@ -311,11 +311,8 @@ if not DEBUG_WITHOUT_JAVA:
     while not connected:
         time.sleep(1)
 
-# while True:
-#    time.sleep(5)
-#    send_location()
 if not DEBUG_WITHOUT_ROS:
-    rospy.spin()
+    rosmodule.rospy_spin()
 else:
     while True:
         time.sleep(5)
