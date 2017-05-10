@@ -40,6 +40,15 @@ def publish_drive_param(json_string):
     return
 
 
+def stop():
+    msg = drive_param()
+    msg.steer = 0
+    msg.throttle = 0
+    rospy.loginfo(msg)
+    pub_drive_parameters.publish(msg)
+    return
+
+
 def cb_movebase_status(data):
     status_list = data.status_list
     if len(status_list) != 0:

@@ -63,14 +63,14 @@ cb_movebase_feedback_secs = 0
 #     return
 #
 
-def stop():
-    if not DEBUG_WITHOUT_ROS:
-        msg = drive_param()
-        msg.steer = 0
-        msg.throttle = 0
-        rospy.loginfo(msg)
-        pub_drive_parameters.publish(msg)
-    return
+# def stop():
+#     if not DEBUG_WITHOUT_ROS:
+#         msg = drive_param()
+#         msg.steer = 0
+#         msg.throttle = 0
+#         rospy.loginfo(msg)
+#         pub_drive_parameters.publish(msg)
+#     return
 
 
 def publish_initialpose(posx, posy, posz, orx, ory, orz, orw):
