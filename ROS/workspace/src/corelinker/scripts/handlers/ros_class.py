@@ -11,11 +11,12 @@ from move_base_msgs.msg import MoveBaseActionFeedback
 
 '''
 Global variable 'logger' is made in the function 'init_ros()'
+Global variables are made in 'init_ros()':
+    logger
+    pub_drive_parameters
+    pub_initial_pose
+    pub_movebase_goal
 '''
-
-pub_drive_parameters = None
-pub_initial_pose = None
-pub_movebase_goal = None
 
 cb_movebase_feedback_secs = 0
 
@@ -79,7 +80,6 @@ def publish_movebase_goal(posx, posy, posz, orx, ory, orz, orw):
     pose.pose.orientation.z = orz
     pose.pose.orientation.w = orw
 
-    rospy.loginfo(pose)
     pub_movebase_goal.publish(pose)
     logger.log_debug("Goal published")
     return
