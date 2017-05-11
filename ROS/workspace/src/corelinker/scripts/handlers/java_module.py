@@ -50,7 +50,7 @@ def connect():
     jsonmessage = {'connect': {'x': 0, 'y': 0}}
     json_string = json.dumps(jsonmessage)
     send_message(json_string)
-    logger.log_info("Connected to Core.")
+    logger.log_info("[JAVAMODULE] Connected to Core")
     global connected
     connected = True
 
