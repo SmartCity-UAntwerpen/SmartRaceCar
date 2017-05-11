@@ -13,16 +13,25 @@ public class MQTTUtils implements MqttCallback{
 
         options.setCleanSession(true);
         options.setKeepAliveInterval(30);
-        options.setUserName(username);
-        options.setPassword(password.toCharArray());
+        //options.setUserName(username);
+        //options.setPassword(password.toCharArray());
 
         try {
             client = new MqttClient(brokerURL, MqttClient.generateClientId());
             client.setCallback(this);
-            client.connect(options);
+            IMqttToken token = client.connectWithResult(options);
+            token.waitForCompletion(10000);
+            if (token.isComplete())
+            {
+                if (token.getException() != null)
+                {
+                    Log.logWarning("MQTT","Could not connect to '" + brokerURL + "'. Retrying..." + token.getException());
+                }
+            }
             Log.logConfig("MQTT","Connected to '" + brokerURL + "'.");
         } catch (MqttException e) {
             Log.logSevere("MQTT","Could not connect to '" + brokerURL + "'." + e);
+            System.exit(0);
         }
     }
 
@@ -32,16 +41,25 @@ public class MQTTUtils implements MqttCallback{
 
         options.setCleanSession(true);
         options.setKeepAliveInterval(30);
-        options.setUserName(username);
-        options.setPassword(password.toCharArray());
+        //options.setUserName(username);
+        //options.setPassword(password.toCharArray());
 
         try {
             client = new MqttClient(brokerURL,String.valueOf(ID));
             client.setCallback(this);
-            client.connect(options);
+            IMqttToken token = client.connectWithResult(options);
+            token.waitForCompletion(10000);
+            if (token.isComplete())
+            {
+                if (token.getException() != null)
+                {
+                    Log.logWarning("MQTT","Could not connect to '" + brokerURL + "'. Retrying..." + token.getException());
+                }
+            }
             Log.logConfig("MQTT","Connected to '" + brokerURL + "'.");
         } catch (MqttException e) {
             Log.logSevere("MQTT","Could not connect to '" + brokerURL + "'." + e);
+            System.exit(0);
         }
     }
 
@@ -49,6 +67,7 @@ public class MQTTUtils implements MqttCallback{
     public void connectionLost(Throwable t) {
         Log.logSevere("MQTT","Connection lost.");
         t.printStackTrace();
+        System.exit(0);
     }
 
     @Override
@@ -65,7 +84,7 @@ public class MQTTUtils implements MqttCallback{
 
     public void subscribeToTopic(String topic){
         try {
-            int subQoS = 0;
+            int subQoS = 2;
             client.subscribe(topic, subQoS);
             Log.logConfig("MQTT","Subscribed to topic '" + topic + "'.");
         } catch (Exception e) {
@@ -76,9 +95,10 @@ public class MQTTUtils implements MqttCallback{
     public void publishMessage(String topic, String message){
         MqttMessage mqttMessage = new MqttMessage(message.getBytes());
         mqttMessage.setRetained(false);
-        mqttMessage.setQos(0);
+        mqttMessage.setQos(2);
         Log.logConfig("MQTT","Publishing. Topic:" + topic + " | Message:" + message);
         MqttTopic mqttTopic = client.getTopic(topic);
+
         try {
             mqttTopic.publish(mqttMessage);
         } catch (Exception e) {

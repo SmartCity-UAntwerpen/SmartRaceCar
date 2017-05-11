@@ -24,5 +24,11 @@ public class Vehicle {
     }
 
 
+    public Point getLocation() {
+        return location;
+    }
 
+    public boolean getOccupied() {
+        return occupied;
+    }
 }
