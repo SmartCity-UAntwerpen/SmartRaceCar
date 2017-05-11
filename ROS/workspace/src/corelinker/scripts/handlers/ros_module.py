@@ -82,7 +82,7 @@ def publish_movebase_goal(posx, posy, posz, orx, ory, orz, orw):
 def cb_movebase_status(data):
     status_list = data.status_list
     if len(status_list) != 0:
-        print "[STATUS] Status: %d" % status_list[len(status_list) - 1].status
+        logger.log_debug("[STATUS] Status: " + status_list[len(status_list) - 1].status)
 
 
 def cb_movebase_feedback(data):
@@ -91,10 +91,14 @@ def cb_movebase_feedback(data):
     if header.stamp.secs - cb_movebase_feedback_secs >= 1:
         cb_movebase_feedback_secs = header.stamp.secs
         pose = data.feedback.base_position.pose
-        print "[FEEDBACK] Secs: %d" % header.stamp.secs
-        print "[FEEDBACK] Position: X: %f, Y: %f, Z: %f" % (pose.position.x, pose.position.y, pose.position.z)
-        print "[FEEDBACK] Orientation: X: %f, Y: %f, Z: %f, W: %f" % (pose.orientation.x, pose.orientation.y,
-                                                                      pose.orientation.z, pose.orientation.w)
+        logger.log_debug("[FEEDBACK] Secs: " + header.stamp.secs)
+        logger.log_debug("[FEEDBACK] Position: X: " + pose.position.x +
+                         ", Y: " + pose.position.y +
+                         ", Z: " + pose.position.z)
+        logger.log_debug("[FEEDBACK] Orientation: X: " + pose.orientation.x +
+                         ", Y: " + pose.orientation.y +
+                         ", Z: " + pose.orientation.z +
+                         ", W: " + pose.orientation.w)
         location = Location(pose.position.x, pose.position.y, 0, 0, 0, pose.orientation.z, pose.orientation.w)
 
         from .. import javalinker
