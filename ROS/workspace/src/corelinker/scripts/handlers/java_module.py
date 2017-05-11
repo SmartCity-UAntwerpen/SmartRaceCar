@@ -74,7 +74,9 @@ class ServerThread(Thread):
             data_string = str("".join(data))
             logger.log_debug("[SERVERSOCKET] Server received data: " + data_string)
             json_string = json.loads(data_string)
-            get_type(json_string)
+
+            from .. import javalinker
+            javalinker.get_type(json_string)
 
 
 def start_thread():
