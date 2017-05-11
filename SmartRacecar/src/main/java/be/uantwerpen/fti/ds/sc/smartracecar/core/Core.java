@@ -41,9 +41,9 @@ public class Core implements CoreListener,MQTTListener {
     private Level level = Level.INFO; //Debug level
     Client client = ClientBuilder.newClient();
     WebTarget webTarget = client.target("http://localhost:8080/carmanager");
-    private final String mqttBroker = "tcp://broker.hivemq.com:1883";
-    private final String mqqtUsername = "username";
-    private final String mqttPassword = "password";
+    private final String mqttBroker = "tcp://smartcity-ua.ddns.net:1883";
+    private final String mqqtUsername = "root";
+    private final String mqttPassword = "smartcity";
     private final int serverPort = 5005;
     private final int clientPort = 5006;
     private final String mapFolder = "maps";

@@ -18,9 +18,9 @@ public class Manager implements MQTTListener{
 
     private static Log log;
     private Level level = Level.INFO; //Debug level
-    private final String mqttBroker = "tcp://broker.hivemq.com:1883";
-    private final String mqqtUsername = "username";
-    private final String mqttPassword = "password";
+    private final String mqttBroker = "tcp://smartcity-ua.ddns.net:1883";
+    private final String mqqtUsername = "root";
+    private final String mqttPassword = "smartcity";
     private final String mapFolder = "maps";
     private final String wayPointFolder = "waypoints";
 
