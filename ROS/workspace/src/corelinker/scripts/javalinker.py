@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
-import workspace.src.corelinker.scripts.handlers.logger as logmodule
+import handlers.logger as logmodule
 import socket
 import json
 import time
-from handlers import java_module as javamodule
-from handlers import ros_module as rosmodule
-from handlers import location as Location
+import handlers.java_module as javamodule
+import handlers.ros_module as rosmodule
+from handlers.location import Location
 import socket
 from threading import Thread
 
