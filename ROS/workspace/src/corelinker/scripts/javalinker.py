@@ -84,9 +84,13 @@ def set_startpoint(json_string):
 
 
 def set_next_waypoint(json_string):
-    logger.log_info("Setting next waypoint: " + str(nextwaypointx) + "," + str(nextwaypointy) + "," + str(nextwaypointz)
-                    + "," + str(nextwaypointw))
-    rosmodule.publish_movebase_goal(nextwaypointx, nextwaypointy, 0.0, 0.0, 0.0, nextwaypointz, nextwaypointw)
+    print json_string
+    next_waypoint = Location(json_string['nextWayPoint']['x'], json_string['nextWayPoint']['y'], 0.0, 0.0, 0.0,
+                             json_string['nextWayPoint']['z'], json_string['nextWayPoint']['w'])
+    logger.log_info("Setting next waypoint: " + str(next_waypoint.posx) + "," + str(next_waypoint.posy) + "," +
+                    str(next_waypoint.orz) + "," + str(next_waypoint.orw))
+    rosmodule.publish_movebase_goal(next_waypoint.posx, next_waypoint.posy, 0.0, 0.0, 0.0, next_waypoint.orz,
+                                    next_waypoint.orw)
     time.sleep(3)
     waypoint_reached()
 
