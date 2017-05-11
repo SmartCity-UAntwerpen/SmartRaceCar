@@ -30,10 +30,11 @@ public class Core implements CoreListener, MQTTListener {
     //Hardcoded elements.
     private boolean debugWithoutRos = true; // debug parameter to stop attempts to send over sockets when ROS-Node is active.
     private Log log;
-    private Level level = Level.CONFIG; //Debug level
+    private Level level = Level.INFO; //Debug level
     private final String mqttBroker = "tcp://broker.hivemq.com:1883";
     private final String mqqtUsername = "root";
     private final String mqttPassword = "smartcity";
+    private final String restURL = "http://localhost:8080/carmanager";
     private final int serverPort = 5005;
     private final int clientPort = 5006;
     private final String mapFolder = "maps";
@@ -53,7 +54,7 @@ public class Core implements CoreListener, MQTTListener {
 
     public Core() throws InterruptedException, IOException {
         log = new Log(this.getClass(), level);
-        restUtils = new RESTUtils("http://localhost:8080/carmanager");
+        restUtils = new RESTUtils(restURL);
         requestWaypoints();
         register();
         mqttUtils = new MQTTUtils(ID, mqttBroker, mqqtUsername, mqttPassword, this);
