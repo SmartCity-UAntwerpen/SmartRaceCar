@@ -13,7 +13,7 @@ Logging level:
     3: WARNING
     4: CRITICAL
 '''
-logging_level = 2
+logging_level = 1
 
 
 class Logger:
