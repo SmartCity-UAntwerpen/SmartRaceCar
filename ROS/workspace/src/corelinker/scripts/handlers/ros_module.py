@@ -9,7 +9,6 @@ from move_base_msgs.msg import MoveBaseActionFeedback
 
 
 '''
-Global variable 'logger' is made in the function 'init_ros()'
 Global variables are made in 'init_ros()':
     logger
     pub_drive_parameters
