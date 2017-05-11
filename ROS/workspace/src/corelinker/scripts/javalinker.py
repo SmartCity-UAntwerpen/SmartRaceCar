@@ -5,10 +5,10 @@
 DEBUG_WITHOUT_ROS = False
 DEBUG_WITHOUT_JAVA = True
 
-import socket
+# import socket
 import json
 import handlers.logger as logmodule
-from threading import Thread
+# from threading import Thread
 import time
 import handlers.ros_module as rosmodule
 from handlers.location import Location
@@ -19,10 +19,10 @@ if not DEBUG_WITHOUT_ROS:
     rosmodule.init_ros(logger)
     logger.log_debug("[JAVALINKER] Debug with ros!")
 
-TCP_IP = '127.0.0.1'
-TCP_PORT_JAVA_PYTH = 5005
-TCP_PORT_PYTH_JAVA = 5006
-BUFFER_SIZE = 64
+# TCP_IP = '127.0.0.1'
+# TCP_PORT_JAVA_PYTH = 5005
+# TCP_PORT_PYTH_JAVA = 5006
+# BUFFER_SIZE = 64
 
 connected = False
 currentmap = 'default'
@@ -48,17 +48,17 @@ rosmodule.publish_initialpose(location)
 rosmodule.stop()
 
 
-def read_line(sock, recv_buffer=4096, delim='\n'):
-    line_buffer = ''
-    data = True
-    while data:
-        data = sock.recv(recv_buffer)
-        line_buffer += data
-
-    while line_buffer.find(delim) != -1:
-        line, line_buffer = line_buffer.split('\n', 1)
-        yield line
-    return
+# def read_line(sock, recv_buffer=4096, delim='\n'):
+#     line_buffer = ''
+#     data = True
+#     while data:
+#         data = sock.recv(recv_buffer)
+#         line_buffer += data
+#
+#     while line_buffer.find(delim) != -1:
+#         line, line_buffer = line_buffer.split('\n', 1)
+#         yield line
+#     return
 
 
 def get_type(json_string):
@@ -123,67 +123,68 @@ def send_location(location):
     send_message(json_string)
 
 
-def send_message(json_string):
-    global TCP_IP, TCP_PORT_PYTH_JAVA, connected
-
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    connected = False
-    while not connected:
-        try:
-            client_socket.connect((TCP_IP, TCP_PORT_PYTH_JAVA))
-            connected = True
-        except socket.error, exc:
-            logger.log_warning("[CLIENTSOCKET] Cannot send data:  " + json_string + "   Trying again." + str(exc))
-            connected = False
-            time.sleep(1)
-    logger.log_debug("[CLIENTSOCKET] Socket created & connected")
-
-    client_socket.sendall(json_string)
-    logger.log_debug("[CLIENTSOCKET] data sent: " + json_string)
-
-    client_socket.close()
-    logger.log_debug("[CLIENTSOCKET] Socket closed")
-
-
-def connect():
-    jsonmessage = {'connect': {'x': 0, 'y': 0}}
-    json_string = json.dumps(jsonmessage)
-    send_message(json_string)
-    logger.log_info("Connected to Core.")
-    global connected
-    connected = True
+# def send_message(json_string):
+#     global TCP_IP, TCP_PORT_PYTH_JAVA, connected
+#
+#     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#     connected = False
+#     while not connected:
+#         try:
+#             client_socket.connect((TCP_IP, TCP_PORT_PYTH_JAVA))
+#             connected = True
+#         except socket.error, exc:
+#             logger.log_warning("[CLIENTSOCKET] Cannot send data:  " + json_string + "   Trying again." + str(exc))
+#             connected = False
+#             time.sleep(1)
+#     logger.log_debug("[CLIENTSOCKET] Socket created & connected")
+#
+#     client_socket.sendall(json_string)
+#     logger.log_debug("[CLIENTSOCKET] data sent: " + json_string)
+#
+#     client_socket.close()
+#     logger.log_debug("[CLIENTSOCKET] Socket closed")
 
 
-class ServerThread(Thread):
-    def __init__(self, _IP_, _PORT_, _BUFFER_):
-        Thread.__init__(self)
-        self._IP_ = _IP_
-        self._PORT_ = _PORT_
-        self._BUFFER_ = _BUFFER_
-
-        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.server_socket.bind((self._IP_, self._PORT_))
-
-    def run(self):
-        self.server_socket.listen(4)
-        while True:
-            (conn, (ip, port)) = self.server_socket.accept()
-            data = read_line(conn)
-            data_string = str("".join(data))
-            logging.debug("[SERVERSOCKET] Server received data: " + data_string)
-            json_string = json.loads(data_string)
-            get_type(json_string)
+# def connect():
+#     jsonmessage = {'connect': {'x': 0, 'y': 0}}
+#     json_string = json.dumps(jsonmessage)
+#     send_message(json_string)
+#     logger.log_info("Connected to Core.")
+#     global connected
+#     connected = True
 
 
-if not DEBUG_WITHOUT_JAVA:
-    newthread = ServerThread(TCP_IP, TCP_PORT_JAVA_PYTH, BUFFER_SIZE)
-    newthread.daemon = True
-    newthread.start()
+# class ServerThread(Thread):
+#     def __init__(self, _IP_, _PORT_, _BUFFER_):
+#         Thread.__init__(self)
+#         self._IP_ = _IP_
+#         self._PORT_ = _PORT_
+#         self._BUFFER_ = _BUFFER_
+#
+#         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+#         self.server_socket.bind((self._IP_, self._PORT_))
+#
+#     def run(self):
+#         self.server_socket.listen(4)
+#         while True:
+#             (conn, (ip, port)) = self.server_socket.accept()
+#             data = read_line(conn)
+#             data_string = str("".join(data))
+#             logging.debug("[SERVERSOCKET] Server received data: " + data_string)
+#             json_string = json.loads(data_string)
+#             get_type(json_string)
+
 
 if not DEBUG_WITHOUT_JAVA:
-    while not connected:
-        time.sleep(1)
+    # newthread = ServerThread(TCP_IP, TCP_PORT_JAVA_PYTH, BUFFER_SIZE)
+    # newthread.daemon = True
+    # newthread.start()
+    logger.log_info("Debug without java: False")
+
+# if not DEBUG_WITHOUT_JAVA:
+#     while not connected:
+#         time.sleep(1)
 
 if not DEBUG_WITHOUT_ROS:
     rosmodule.rospy_spin()
