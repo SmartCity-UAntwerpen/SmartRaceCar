@@ -2,7 +2,8 @@
 
 # Set this variable to False when using the Ros-system
 # The code bypasses all Ros functions when set to True
-DEBUG = True
+DEBUG_WITHOUT_ROS = False
+DEBUG_WITHOUT_JAVA = True
 
 import socket
 import json
@@ -10,11 +11,13 @@ import logging
 from threading import Thread
 import time
 
-if not DEBUG:
+if not DEBUG_WITHOUT_ROS:
     import rospy
     from race.msg import drive_param
     from geometry_msgs.msg import PoseWithCovarianceStamped
     from geometry_msgs.msg import PoseStamped
+    from actionlib_msgs.msg import GoalStatusArray
+    from move_base_msgs.msg import MoveBaseActionFeedback
 
     pub_drive_parameters = rospy.Publisher('drive_parameters', drive_param, queue_size=10)
     pub_initial_pose = rospy.Publisher('initialpose', PoseWithCovarianceStamped, queue_size=10)
@@ -44,9 +47,11 @@ currenty = 2
 currentz = 3
 currentw = 4
 
+cb_movebase_feedback_secs = 0
+
 
 def publish_drive_param(json_string):
-    if not DEBUG:
+    if not DEBUG_WITHOUT_ROS:
         msg = drive_param()
         msg.steer = json_string['drive']['steer']
         msg.throttle = json_string['drive']['throttle']
@@ -56,7 +61,7 @@ def publish_drive_param(json_string):
 
 
 def stop():
-    if not DEBUG:
+    if not DEBUG_WITHOUT_ROS:
         msg = drive_param()
         msg.steer = 0
         msg.throttle = 0
@@ -66,7 +71,7 @@ def stop():
 
 
 def publish_initialpose(posx, posy, posz, orx, ory, orz, orw):
-    if not DEBUG:
+    if not DEBUG_WITHOUT_ROS:
         i = 0
         while i < 3:
             pose = PoseWithCovarianceStamped()
@@ -75,9 +80,9 @@ def publish_initialpose(posx, posy, posz, orx, ory, orz, orw):
             pose.pose.pose.position.x = posx
             pose.pose.pose.position.y = posy
             pose.pose.pose.position.z = posz
-            pose.pose.covariance = [0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                                0.06853891945200942]
+            pose.pose.covariance = [0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                    0.0, 0.0, 0.06853891945200942]
             pose.pose.pose.orientation.x = orx
             pose.pose.pose.orientation.y = ory
             pose.pose.pose.orientation.z = orz
@@ -89,14 +94,15 @@ def publish_initialpose(posx, posy, posz, orx, ory, orz, orw):
         logging.info("Initial pose published!")
     return
 
+
 def publish_movebase_goal(posx, posy, posz, orx, ory, orz, orw):
-    if not DEBUG:
+    if not DEBUG_WITHOUT_ROS:
         pose = PoseStamped()
         pose.header.stamp = rospy.Time.now()
         pose.header.frame_id = "map"
         pose.pose.position.x = posx
         pose.pose.position.y = posy
-        pose.pose.position.z = posx
+        pose.pose.position.z = posz
         pose.pose.orientation.x = orx
         pose.pose.orientation.y = ory
         pose.pose.orientation.z = orz
@@ -106,6 +112,7 @@ def publish_movebase_goal(posx, posy, posz, orx, ory, orz, orw):
         pub_move_base_goal.publish(pose)
         logging.info("Goal published!")
     return
+
 
 def read_line(sock, recv_buffer=4096, delim='\n'):
     line_buffer = ''
@@ -127,14 +134,14 @@ def get_type(json_string):
         set_current_map(json_string)
     elif json_string.keys()[0] == 'nextWayPoint':
         set_next_waypoint(json_string)
-    elif json_string.keys()[0] ==  'connect':
+    elif json_string.keys()[0] == 'connect':
         connect()
     elif json_string.keys()[0] == 'startPoint':
         set_startpoint(json_string)
 
 
 def set_current_map(json_string):
-    global currentmap,meterperpixel
+    global currentmap, meterperpixel
     currentmap = json_string['currentMap']['name']
     meterperpixel = json_string['currentMap']['meterPerPixel']
     logging.info("Current map set: " + currentmap + " | MetersPerPixel: " + str(meterperpixel))
@@ -146,17 +153,19 @@ def set_startpoint(json_string):
     startpointy = json_string['startPoint']['y']
     startpointz = json_string['startPoint']['z']
     startpointw = json_string['startPoint']['w']
-    logging.info("Current startPoint set: " + str(startpointx) + "," + str(startpointy) + "," + str(startpointz) + "," + str(startpointw))
+    logging.info("Current startPoint set: " + str(startpointx) + "," + str(startpointy) + "," + str(startpointz) + ","
+                 + str(startpointw))
     publish_initialpose(startpointx, startpointy, 0.0, 0.0, 0.0, startpointz, startpointw)
 
 
 def set_next_waypoint(json_string):
-    global nextwaypointx,nextwaypointy,nextwaypointz,nextwaypointw
+    global nextwaypointx, nextwaypointy, nextwaypointz, nextwaypointw
     nextwaypointx = json_string['nextWayPoint']['x']
-    nextwaypointy =json_string['nextWayPoint']['y']
+    nextwaypointy = json_string['nextWayPoint']['y']
     nextwaypointz = json_string['nextWayPoint']['z']
     nextwaypointw = json_string['nextWayPoint']['w']
-    logging.info("Setting next waypoint: " + str(nextwaypointx) + "," + str(nextwaypointy) + "," + str(nextwaypointz) + "," + str(nextwaypointw))
+    logging.info("Setting next waypoint: " + str(nextwaypointx) + "," + str(nextwaypointy) + "," + str(nextwaypointz) +
+                 "," + str(nextwaypointw))
     publish_movebase_goal(nextwaypointx, nextwaypointy, 0.0, 0.0, 0.0, nextwaypointz, nextwaypointw)
     time.sleep(3)
     waypoint_reached()
@@ -164,8 +173,9 @@ def set_next_waypoint(json_string):
 
 def waypoint_reached():
     stop()
-    global nextwaypointx,nextwaypointy,nextwaypointz,nextwaypointw
-    logging.info("waypoint " + str(nextwaypointx) + "," + str(nextwaypointy) + "," + str(nextwaypointz) + "," + str(nextwaypointw) + " reached.")
+    global nextwaypointx, nextwaypointy, nextwaypointz, nextwaypointw
+    logging.info("waypoint " + str(nextwaypointx) + "," + str(nextwaypointy) + "," + str(nextwaypointz) + "," +
+                 str(nextwaypointw) + " reached.")
     jsonmessage = {'arrivedWaypoint': {'x': nextwaypointx, 'y': nextwaypointy, 'z': nextwaypointz, 'w': nextwaypointw}}
     json_string = json.dumps(jsonmessage)
     send_message(json_string)
@@ -180,14 +190,14 @@ def send_location():
 
 
 def send_message(json_string):
-    global TCP_IP, TCP_PORT_PYTH_JAVA
+    global TCP_IP, TCP_PORT_PYTH_JAVA, connected
 
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    connected = False;
+    connected = False
     while not connected:
         try:
             client_socket.connect((TCP_IP, TCP_PORT_PYTH_JAVA))
-            connected = True;
+            connected = True
         except socket.error, exc:
             logging.warning("[CLIENTSOCKET] Cannot send data:  " + json_string + "   Trying again." + str(exc))
             connected = False
@@ -199,6 +209,7 @@ def send_message(json_string):
 
     client_socket.close()
     logging.debug("[CLIENTSOCKET] Socket closed")
+
 
 def connect():
     jsonmessage = {'connect': {'x': 0, 'y': 0}}
@@ -249,18 +260,56 @@ def callback(data):
     logging.debug("[CLIENTSOCKET] Socket closed")
 
 
-# rospy.Subscriber('drive_parameters', drive_param, callback)
-newthread = ServerThread(TCP_IP, TCP_PORT_JAVA_PYTH, BUFFER_SIZE)
-newthread.daemon = True
-newthread.start()
-# publish_initialpose(2, 5, 6, 0, 0, -1, 0)
+def cb_movebase_status(data):
+    status_list = data.status_list
+    if len(status_list) != 0:
+        print "[STATUS] Status: %d" % (status_list[len(status_list) - 1].status)
 
-while not connected:
-    time.sleep(1)
-#while True:
+
+# def cb_amcl_pose(data):
+#     pose = data.pose.pose
+#
+#     print "[AMCL] Position: X: %f, Y: %f, Z: %f" % (pose.position.x, pose.position.y, pose.position.z)
+#     print "[AMCL] Orientation: X: %f, Y: %f, Z: %f, W: %f" % (pose.orientation.x, pose.orientation.y, pose.orientation.z
+#                                                               , pose.orientation.w)
+
+
+def cb_movebase_feedback(data):
+    global cb_movebase_feedback_secs, currentx, currenty, currentz, currentw
+    header = data.header
+    if header.stamp.secs - cb_movebase_feedback_secs >= 1:
+        cb_movebase_feedback_secs = header.stamp.secs
+        pose = data.feedback.base_position.pose
+        print "[FEEDBACK] Secs: %d" % (header.stamp.secs)
+        print "[FEEDBACK] Position: X: %f, Y: %f, Z: %f" % (pose.position.x, pose.position.y, pose.position.z)
+        print "[FEEDBACK] Orientation: X: %f, Y: %f, Z: %f, W: %f" % (pose.orientation.x, pose.orientation.y,
+                                                                      pose.orientation.z, pose.orientation.w)
+        currentx = pose.position.x
+        currenty = pose.position.y
+        currentz = pose.orientation.z
+        currentw = pose.orientation.w
+
+        send_location()
+
+
+if not DEBUG_WITHOUT_JAVA:
+    newthread = ServerThread(TCP_IP, TCP_PORT_JAVA_PYTH, BUFFER_SIZE)
+    newthread.daemon = True
+    newthread.start()
+
+if not DEBUG_WITHOUT_ROS:
+    rospy.Subscriber('move_base/status', GoalStatusArray, cb_movebase_status)
+    # rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, cb_amcl_pose)
+    rospy.Subscriber('move_base/feedback', MoveBaseActionFeedback, cb_movebase_feedback)
+
+if not DEBUG_WITHOUT_JAVA:
+    while not connected:
+        time.sleep(1)
+
+# while True:
 #    time.sleep(5)
 #    send_location()
-if not DEBUG:
+if not DEBUG_WITHOUT_ROS:
     rospy.spin()
 else:
     while True:
