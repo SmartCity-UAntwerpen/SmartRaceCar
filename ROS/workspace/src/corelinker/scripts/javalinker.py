@@ -64,14 +64,19 @@ rosmodule.stop()
 
 def get_type(json_string):
     if json_string.keys()[0] == 'drive':
+        logger.log_debug("[JAVALINKER] json_string key = drive")
         rosmodule.publish_drive_param(json_string)
     elif json_string.keys()[0] == 'currentMap':
+        logger.log_debug("[JAVALINKER] json_string key = currentMap")
         set_current_map(json_string)
     elif json_string.keys()[0] == 'nextWayPoint':
+        logger.log_debug("[JAVALINKER] json_string key = nextWayPoint")
         set_next_waypoint(json_string)
     elif json_string.keys()[0] == 'connect':
+        logger.log_debug("[JAVALINKER] json_string key = connect")
         javamodule.connect()
     elif json_string.keys()[0] == 'startPoint':
+        logger.log_debug("[JAVALINKER] json_string key = startPoint")
         set_startpoint(json_string)
 
 
@@ -181,6 +186,7 @@ if not DEBUG_WITHOUT_JAVA:
     # newthread = ServerThread(TCP_IP, TCP_PORT_JAVA_PYTH, BUFFER_SIZE)
     # newthread.daemon = True
     # newthread.start()
+    javamodule.start_thread()
     logger.log_info("Debug without java: False")
 
 # if not DEBUG_WITHOUT_JAVA:
