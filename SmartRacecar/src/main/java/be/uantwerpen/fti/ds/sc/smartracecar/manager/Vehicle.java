@@ -14,4 +14,15 @@ public class Vehicle {
         this.simulated = simulated;
         this.location = startingLocation;
     }
+
+    public void setPoint(Point p){
+        this.location = p;
+    }
+
+    public void setOccupied(boolean state){
+        occupied = state;
+    }
+
+
+
 }

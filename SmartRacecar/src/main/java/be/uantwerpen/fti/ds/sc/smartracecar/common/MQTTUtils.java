@@ -17,7 +17,7 @@ public class MQTTUtils implements MqttCallback{
         //options.setPassword(password.toCharArray());
 
         try {
-            client = new MqttClient(brokerURL,client.generateClientId());
+            client = new MqttClient(brokerURL, MqttClient.generateClientId());
             client.setCallback(this);
             client.connect(options);
             Log.logConfig("MQTT","Connected to '" + brokerURL + "'.");
@@ -76,12 +76,11 @@ public class MQTTUtils implements MqttCallback{
     public void publishMessage(String topic, String message){
         MqttMessage mqttMessage = new MqttMessage(message.getBytes());
         mqttMessage.setRetained(false);
+        mqttMessage.setQos(0);
         Log.logConfig("MQTT","Publishing. Topic:" + topic + " | Message:" + message);
         MqttTopic mqttTopic = client.getTopic(topic);
-        MqttDeliveryToken token;
         try {
-            token = mqttTopic.publish(mqttMessage);
-            token.waitForCompletion();
+            mqttTopic.publish(mqttMessage);
         } catch (Exception e) {
             Log.logSevere("MQTT","Could not Publish." + e);
         }

@@ -31,7 +31,7 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <outputFile>target/Manager.jar</outputFile>
+                            <outputFile>release/Manager/Manager.jar</outputFile>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>be.uantwerpen.fti.ds.sc.smartracecar.manager.Manager</mainClass>
@@ -56,7 +56,7 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <outputFile>target/Core.jar</outputFile>
+                            <outputFile>release/Core/Core.jar</outputFile>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>be.uantwerpen.fti.ds.sc.smartracecar.core.Core</mainClass>

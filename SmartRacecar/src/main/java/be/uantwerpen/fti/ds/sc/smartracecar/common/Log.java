@@ -13,7 +13,7 @@ public class Log {
         setLogger(level);
     }
 
-    public void logInfo(String category, String message){
+    public static void logInfo(String category, String message){
         logging.info("[" + category + "] " + message);
     }
     public static void logWarning(String category, String message){
