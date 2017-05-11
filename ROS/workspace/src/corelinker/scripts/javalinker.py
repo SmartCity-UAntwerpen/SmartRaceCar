@@ -85,10 +85,10 @@ def get_type(json_string):
 
 
 def set_current_map(json_string):
-    global currentmap, meterperpixel, logger
+    global currentmap, logger
     currentmap = json_string['currentMap']['name']
-    meterperpixel = json_string['currentMap']['meterPerPixel']
-    logger.log_info("Current map set: " + currentmap + " | MetersPerPixel: " + str(meterperpixel))
+    # meterperpixel = json_string['currentMap']['meterPerPixel']
+    logger.log_info("Current map set: " + currentmap)
 
 
 def set_startpoint(json_string):
