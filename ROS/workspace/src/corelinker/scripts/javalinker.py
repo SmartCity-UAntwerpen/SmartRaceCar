@@ -3,7 +3,7 @@
 # Set this variable to False when using the Ros-system
 # The code bypasses all Ros functions when set to True
 DEBUG_WITHOUT_ROS = False
-DEBUG_WITHOUT_JAVA = True
+DEBUG_WITHOUT_JAVA = False
 
 # import socket
 import json
@@ -15,6 +15,9 @@ import handlers.java_module as javamodule
 from handlers.location import Location
 
 logger = logmodule.Logger()
+
+if not DEBUG_WITHOUT_JAVA:
+    javamodule.set_logger(logger)
 
 if not DEBUG_WITHOUT_ROS:
     rosmodule.init_ros(logger)
@@ -45,8 +48,8 @@ cb_movebase_feedback_secs = 0
 
 time.sleep(3)
 location = Location(2, 3, 0, 0, 0, 4, 4)
-rosmodule.publish_initialpose(location)
-rosmodule.stop()
+# rosmodule.publish_initialpose(location)
+# rosmodule.stop()
 
 
 # def read_line(sock, recv_buffer=4096, delim='\n'):
