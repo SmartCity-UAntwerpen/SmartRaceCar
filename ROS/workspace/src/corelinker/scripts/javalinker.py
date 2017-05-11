@@ -1,32 +1,27 @@
 #!/usr/bin/env python
 
+import workspace.src.corelinker.scripts.handlers.logger as logmodule
+import socket
+import json
+import time
+from handlers import java_module as javamodule
+from handlers import ros_module as rosmodule
+from handlers import location as Location
+import socket
+from threading import Thread
+
+logger = logmodule.Logger()
+
+# if __name__ == "__main__":
 # Set this variable to False when using the Ros-system
 # The code bypasses all Ros functions when set to True
 DEBUG_WITHOUT_ROS = False
 DEBUG_WITHOUT_JAVA = False
 
-# import socket
-import json
-import handlers.logger as logmodule
-# from threading import Thread
-import time
-import handlers.ros_module as rosmodule
-import handlers.java_module as javamodule
-from handlers.location import Location
-
-logger = logmodule.Logger()
-
-if not DEBUG_WITHOUT_JAVA:
-    javamodule.set_logger(logger)
-
-if not DEBUG_WITHOUT_ROS:
-    rosmodule.init_ros(logger)
-    logger.log_debug("[JAVALINKER] Debug with ros!")
-
-# TCP_IP = '127.0.0.1'
-# TCP_PORT_JAVA_PYTH = 5005
-# TCP_PORT_PYTH_JAVA = 5006
-# BUFFER_SIZE = 64
+TCP_IP = '127.0.0.1'
+TCP_PORT_JAVA_PYTH = 5005
+TCP_PORT_PYTH_JAVA = 5006
+BUFFER_SIZE = 64
 
 connected = False
 currentmap = 'default'
@@ -46,8 +41,14 @@ currentw = 4
 
 cb_movebase_feedback_secs = 0
 
-time.sleep(3)
+time.sleep(1)
 location = Location(2, 3, 0, 0, 0, 4, 4)
+
+
+# if not DEBUG_WITHOUT_JAVA:
+#     while not connected:
+#         time.sleep(1)
+
 # rosmodule.publish_initialpose(location)
 # rosmodule.stop()
 
@@ -184,21 +185,48 @@ def send_location(location):
 #             json_string = json.loads(data_string)
 #             get_type(json_string)
 
+def start_thread():
+    newthread = ServerThread(TCP_IP, TCP_PORT_JAVA_PYTH, BUFFER_SIZE)
+    newthread.daemon = True
+    newthread.start()
 
-if not DEBUG_WITHOUT_JAVA:
-    # newthread = ServerThread(TCP_IP, TCP_PORT_JAVA_PYTH, BUFFER_SIZE)
-    # newthread.daemon = True
-    # newthread.start()
-    javamodule.start_thread()
-    logger.log_info("Debug without java: False")
 
-# if not DEBUG_WITHOUT_JAVA:
-#     while not connected:
-#         time.sleep(1)
+class ServerThread(Thread):
+    def __init__(self, _IP_, _PORT_, _BUFFER_):
+        Thread.__init__(self)
+        self._IP_ = _IP_
+        self._PORT_ = _PORT_
+        self._BUFFER_ = _BUFFER_
 
-if not DEBUG_WITHOUT_ROS:
-    rosmodule.rospy_spin()
-else:
-    while True:
-        time.sleep(5)
-        # send_location()
+        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.server_socket.bind((self._IP_, self._PORT_))
+
+    def run(self):
+        self.server_socket.listen(4)
+        while True:
+            (conn, (ip, port)) = self.server_socket.accept()
+            data = javamodule.read_line(conn)
+            data_string = str("".join(data))
+            logger.log_debug("[SERVERSOCKET] Server received data: " + data_string)
+            json_string = json.loads(data_string)
+
+            get_type(json_string)
+            logger.log_info(__name__)
+
+if __name__ == "__main__":
+    if not DEBUG_WITHOUT_JAVA:
+        javamodule.set_logger(logger)
+        # newthread = ServerThread(TCP_IP, TCP_PORT_JAVA_PYTH, BUFFER_SIZE)
+        # newthread.daemon = True
+        # newthread.start()
+        start_thread()
+        logger.log_info("Debug without java: False")
+
+    if not DEBUG_WITHOUT_ROS:
+        rosmodule.init_ros(logger)
+        logger.log_debug("[JAVALINKER] Debug with ros!")
+        rosmodule.rospy_spin()
+    else:
+        while True:
+            time.sleep(5)
