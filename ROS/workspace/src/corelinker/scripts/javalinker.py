@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import handlers.logger as logmodule
-import socket
 import json
 import time
 import handlers.java_module as javamodule
@@ -12,7 +11,6 @@ from threading import Thread
 
 logger = logmodule.Logger()
 
-# if __name__ == "__main__":
 # Set this variable to False when using the Ros-system
 # The code bypasses all Ros functions when set to True
 DEBUG_WITHOUT_ROS = False
@@ -45,25 +43,11 @@ time.sleep(1)
 location = Location(2, 3, 0, 0, 0, 4, 4)
 
 
-# if not DEBUG_WITHOUT_JAVA:
-#     while not connected:
-#         time.sleep(1)
-
-# rosmodule.publish_initialpose(location)
-# rosmodule.stop()
-
-
-# def read_line(sock, recv_buffer=4096, delim='\n'):
-#     line_buffer = ''
-#     data = True
-#     while data:
-#         data = sock.recv(recv_buffer)
-#         line_buffer += data
-#
-#     while line_buffer.find(delim) != -1:
-#         line, line_buffer = line_buffer.split('\n', 1)
-#         yield line
-#     return
+"""
+############################
+##  Delegation functions  ##
+############################
+"""
 
 
 def get_type(json_string):
@@ -87,17 +71,10 @@ def get_type(json_string):
 def set_current_map(json_string):
     global currentmap, logger
     currentmap = json_string['currentMap']['name']
-    # meterperpixel = json_string['currentMap']['meterPerPixel']
     logger.log_info("Current map set: " + currentmap)
 
 
 def set_startpoint(json_string):
-    global startpointx, startpointy, startpointz, startpointw, logger
-    startpointx = json_string['startPoint']['x']
-    startpointy = json_string['startPoint']['y']
-    startpointz = json_string['startPoint']['z']
-    startpointw = json_string['startPoint']['w']
-
     start_location = Location(json_string['startPoint']['x'], json_string['startPoint']['y'], 0.0, 0.0, 0.0,
                               json_string['startPoint']['z'], json_string['startPoint']['w'])
 
@@ -107,13 +84,8 @@ def set_startpoint(json_string):
 
 
 def set_next_waypoint(json_string):
-    global nextwaypointx, nextwaypointy, nextwaypointz, nextwaypointw, logger
-    nextwaypointx = json_string['nextWayPoint']['x']
-    nextwaypointy = json_string['nextWayPoint']['y']
-    nextwaypointz = json_string['nextWayPoint']['z']
-    nextwaypointw = json_string['nextWayPoint']['w']
-    logger.log_info("Setting next waypoint: " + str(nextwaypointx) + "," + str(nextwaypointy) + "," + str(nextwaypointz) +
-                    "," + str(nextwaypointw))
+    logger.log_info("Setting next waypoint: " + str(nextwaypointx) + "," + str(nextwaypointy) + "," + str(nextwaypointz)
+                    + "," + str(nextwaypointw))
     rosmodule.publish_movebase_goal(nextwaypointx, nextwaypointy, 0.0, 0.0, 0.0, nextwaypointz, nextwaypointw)
     time.sleep(3)
     waypoint_reached()
@@ -123,7 +95,7 @@ def waypoint_reached():
     rosmodule.stop()
     global nextwaypointx, nextwaypointy, nextwaypointz, nextwaypointw
     logger.log_info("waypoint " + str(nextwaypointx) + "," + str(nextwaypointy) + "," + str(nextwaypointz) + "," +
-                 str(nextwaypointw) + " reached.")
+                    str(nextwaypointw) + " reached.")
     jsonmessage = {'arrivedWaypoint': {'x': nextwaypointx, 'y': nextwaypointy, 'z': nextwaypointz, 'w': nextwaypointw}}
     json_string = json.dumps(jsonmessage)
     javamodule.send_message(json_string)
@@ -131,63 +103,17 @@ def waypoint_reached():
 
 def send_location(location):
     logger.log_info("Sending location: posx: " + str(location.posx) + ", posy: " + str(location.posy) + ", orz: " +
-                 str(location.orz) + ", orw: " + str(location.orw))
+                    str(location.orz) + ", orw: " + str(location.orw))
     jsonmessage = {'location': {'x': location.posx, 'y': location.posy, 'z': location.orz, 'w': location.orw}}
     json_string = json.dumps(jsonmessage)
     javamodule.send_message(json_string)
 
+"""
+#############################
+##  Incoming TCP-requests  ##
+#############################
+"""
 
-# def send_message(json_string):
-#     global TCP_IP, TCP_PORT_PYTH_JAVA, connected
-#
-#     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#     connected = False
-#     while not connected:
-#         try:
-#             client_socket.connect((TCP_IP, TCP_PORT_PYTH_JAVA))
-#             connected = True
-#         except socket.error, exc:
-#             logger.log_warning("[CLIENTSOCKET] Cannot send data:  " + json_string + "   Trying again." + str(exc))
-#             connected = False
-#             time.sleep(1)
-#     logger.log_debug("[CLIENTSOCKET] Socket created & connected")
-#
-#     client_socket.sendall(json_string)
-#     logger.log_debug("[CLIENTSOCKET] data sent: " + json_string)
-#
-#     client_socket.close()
-#     logger.log_debug("[CLIENTSOCKET] Socket closed")
-
-
-# def connect():
-#     jsonmessage = {'connect': {'x': 0, 'y': 0}}
-#     json_string = json.dumps(jsonmessage)
-#     send_message(json_string)
-#     logger.log_info("Connected to Core.")
-#     global connected
-#     connected = True
-
-
-# class ServerThread(Thread):
-#     def __init__(self, _IP_, _PORT_, _BUFFER_):
-#         Thread.__init__(self)
-#         self._IP_ = _IP_
-#         self._PORT_ = _PORT_
-#         self._BUFFER_ = _BUFFER_
-#
-#         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-#         self.server_socket.bind((self._IP_, self._PORT_))
-#
-#     def run(self):
-#         self.server_socket.listen(4)
-#         while True:
-#             (conn, (ip, port)) = self.server_socket.accept()
-#             data = read_line(conn)
-#             data_string = str("".join(data))
-#             logging.debug("[SERVERSOCKET] Server received data: " + data_string)
-#             json_string = json.loads(data_string)
-#             get_type(json_string)
 
 def start_thread():
     newthread = ServerThread(TCP_IP, TCP_PORT_JAVA_PYTH, BUFFER_SIZE)
@@ -216,12 +142,45 @@ class ServerThread(Thread):
             json_string = json.loads(data_string)
             get_type(json_string)
 
+"""
+##############################
+##  ROS Callback functions  ##
+##############################
+"""
+
+
+def cb_movebase_status(data):
+    status_list = data.status_list
+    if len(status_list) != 0:
+        logger.log_debug("[STATUS] Status: " + status_list[len(status_list) - 1].status)
+
+
+def cb_movebase_feedback(data):
+    global cb_movebase_feedback_secs
+    header = data.header
+    if header.stamp.secs - cb_movebase_feedback_secs >= 1:
+        cb_movebase_feedback_secs = header.stamp.secs
+        pose = data.feedback.base_position.pose
+        logger.log_debug("[FEEDBACK] Secs: " + header.stamp.secs)
+        logger.log_debug("[FEEDBACK] Position: X: " + pose.position.x +
+                         ", Y: " + pose.position.y +
+                         ", Z: " + pose.position.z)
+        logger.log_debug("[FEEDBACK] Orientation: X: " + pose.orientation.x +
+                         ", Y: " + pose.orientation.y +
+                         ", Z: " + pose.orientation.z +
+                         ", W: " + pose.orientation.w)
+        current_location = Location(pose.position.x, pose.position.y, 0, 0, 0, pose.orientation.z, pose.orientation.w)
+        send_location(current_location)
+
+"""
+######################
+##  Main functions  ##
+######################
+"""
+
 if __name__ == "__main__":
     if not DEBUG_WITHOUT_JAVA:
         javamodule.set_logger(logger)
-        # newthread = ServerThread(TCP_IP, TCP_PORT_JAVA_PYTH, BUFFER_SIZE)
-        # newthread.daemon = True
-        # newthread.start()
         start_thread()
         logger.log_info("Debug without java: False")
 
@@ -229,6 +188,14 @@ if __name__ == "__main__":
         rosmodule.init_ros(logger)
         logger.log_debug("[JAVALINKER] Debug with ros!")
         rosmodule.rospy_spin()
+
+        import rospy
+        from actionlib_msgs.msg import GoalStatusArray
+        from move_base_msgs.msg import MoveBaseActionFeedback
+
+        rospy.Subscriber('move_base/status', GoalStatusArray, cb_movebase_status)
+        rospy.Subscriber('move_base/feedback', MoveBaseActionFeedback, cb_movebase_feedback)
+
     else:
         while True:
             time.sleep(5)
