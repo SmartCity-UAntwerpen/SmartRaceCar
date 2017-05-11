@@ -97,9 +97,13 @@ def set_startpoint(json_string):
     startpointy = json_string['startPoint']['y']
     startpointz = json_string['startPoint']['z']
     startpointw = json_string['startPoint']['w']
-    logger.log_info("Current startPoint set: " + str(startpointx) + "," + str(startpointy) + "," + str(startpointz) + ","
-                 + str(startpointw))
-    rosmodule.publish_initialpose(startpointx, startpointy, 0.0, 0.0, 0.0, startpointz, startpointw)
+
+    start_location = Location(json_string['startPoint']['x'], json_string['startPoint']['y'], 0.0, 0.0, 0.0,
+                              json_string['startPoint']['z'], json_string['startPoint']['w'])
+
+    logger.log_info("Current startPoint set: " + str(start_location.posx) + "," + str(start_location.posy) + "," +
+                    str(start_location.orz) + "," + str(start_location.orw))
+    rosmodule.publish_initialpose(start_location)
 
 
 def set_next_waypoint(json_string):
@@ -210,9 +214,7 @@ class ServerThread(Thread):
             data_string = str("".join(data))
             logger.log_debug("[SERVERSOCKET] Server received data: " + data_string)
             json_string = json.loads(data_string)
-
             get_type(json_string)
-            logger.log_info(__name__)
 
 if __name__ == "__main__":
     if not DEBUG_WITHOUT_JAVA:
