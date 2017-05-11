@@ -38,6 +38,7 @@ currentz = 3
 currentw = 4
 
 cb_movebase_feedback_secs = 0
+cb_movebase_status_previous = 0
 
 time.sleep(1)
 location = Location(2, 3, 0, 0, 0, 4, 4)
@@ -91,18 +92,20 @@ def set_next_waypoint(json_string):
                     str(next_waypoint.orz) + "," + str(next_waypoint.orw))
     rosmodule.publish_movebase_goal(next_waypoint.posx, next_waypoint.posy, 0.0, 0.0, 0.0, next_waypoint.orz,
                                     next_waypoint.orw)
-    time.sleep(3)
-    waypoint_reached()
+    # time.sleep(3)
+    # waypoint_reached()
 
 
 def waypoint_reached():
     rosmodule.stop()
-    global nextwaypointx, nextwaypointy, nextwaypointz, nextwaypointw
-    logger.log_info("waypoint " + str(nextwaypointx) + "," + str(nextwaypointy) + "," + str(nextwaypointz) + "," +
-                    str(nextwaypointw) + " reached.")
-    jsonmessage = {'arrivedWaypoint': {'x': nextwaypointx, 'y': nextwaypointy, 'z': nextwaypointz, 'w': nextwaypointw}}
+    # logger.log_info("waypoint " + str(nextwaypointx) + "," + str(nextwaypointy) + "," + str(nextwaypointz) + "," +
+    #                 str(nextwaypointw) + " reached.")
+
+    # Coordinates from arrived waypoint pure for stuffing
+    jsonmessage = {'arrivedWaypoint': {'x': 0, 'y': 0, 'z': 0, 'w': 0}}
     json_string = json.dumps(jsonmessage)
     javamodule.send_message(json_string)
+    logger.log_debug("[JAVALINKER] Waypoint_reached sent")
 
 
 def send_location(location):
@@ -156,7 +159,13 @@ class ServerThread(Thread):
 def cb_movebase_status(data):
     status_list = data.status_list
     if len(status_list) != 0:
+        status = status_list[len(status_list) - 1].status
         logger.log_debug("[STATUS] Status: " + status_list[len(status_list) - 1].status)
+
+        if status != cb_movebase_status_previous:
+            if status == 3:
+                logger.log_debug("[JAVALINKER] Waypoint reached")
+                waypoint_reached()
 
 
 def cb_movebase_feedback(data):
