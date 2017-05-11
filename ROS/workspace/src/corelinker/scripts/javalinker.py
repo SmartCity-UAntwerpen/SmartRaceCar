@@ -11,6 +11,7 @@ import handlers.logger as logmodule
 # from threading import Thread
 import time
 import handlers.ros_module as rosmodule
+import handlers.java_module as javamodule
 from handlers.location import Location
 
 logger = logmodule.Logger()
@@ -69,7 +70,7 @@ def get_type(json_string):
     elif json_string.keys()[0] == 'nextWayPoint':
         set_next_waypoint(json_string)
     elif json_string.keys()[0] == 'connect':
-        connect()
+        javamodule.connect()
     elif json_string.keys()[0] == 'startPoint':
         set_startpoint(json_string)
 
@@ -112,7 +113,7 @@ def waypoint_reached():
                  str(nextwaypointw) + " reached.")
     jsonmessage = {'arrivedWaypoint': {'x': nextwaypointx, 'y': nextwaypointy, 'z': nextwaypointz, 'w': nextwaypointw}}
     json_string = json.dumps(jsonmessage)
-    send_message(json_string)
+    javamodule.send_message(json_string)
 
 
 def send_location(location):
@@ -120,7 +121,7 @@ def send_location(location):
                  str(location.orz) + ", orw: " + str(location.orw))
     jsonmessage = {'location': {'x': location.posx, 'y': location.posy, 'z': location.orz, 'w': location.orw}}
     json_string = json.dumps(jsonmessage)
-    send_message(json_string)
+    javamodule.send_message(json_string)
 
 
 # def send_message(json_string):
