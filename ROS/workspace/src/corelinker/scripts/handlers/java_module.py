@@ -72,7 +72,7 @@ class ServerThread(Thread):
             (conn, (ip, port)) = self.server_socket.accept()
             data = read_line(conn)
             data_string = str("".join(data))
-            logging.debug("[SERVERSOCKET] Server received data: " + data_string)
+            logger.log_debug("[SERVERSOCKET] Server received data: " + data_string)
             json_string = json.loads(data_string)
             get_type(json_string)
 
