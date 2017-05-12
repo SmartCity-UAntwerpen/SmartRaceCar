@@ -187,7 +187,7 @@ public class Manager implements MQTTListener {
     @GET
     @Path("calcWeight/{start}/to/{stop}")
     @Produces("application/json")
-    public Response calculateCostsRequest(@PathParam("start") final int startId, @PathParam("start") final int endId, @Context HttpServletResponse response) throws IOException {
+    public Response calculateCostsRequest(@PathParam("start") final int startId, @PathParam("stop") final int endId, @Context HttpServletResponse response) throws IOException {
         if (!waypoints.containsKey(startId) || !waypoints.containsKey(endId)) {
             response.sendError(response.SC_NOT_FOUND, "start or end waypoint not found");
         } else if (vehicles.isEmpty()) {
