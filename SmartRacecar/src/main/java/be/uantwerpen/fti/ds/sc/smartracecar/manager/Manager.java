@@ -3,7 +3,6 @@ package be.uantwerpen.fti.ds.sc.smartracecar.manager;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.google.gson.reflect.TypeToken;
 import org.eclipse.paho.client.mqttv3.MqttException;
-
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
