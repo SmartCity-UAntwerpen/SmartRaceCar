@@ -1,11 +1,9 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.common;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -42,7 +40,7 @@ public class JSONUtils {
 
     //Get the object after the keyword of the JSON object. This is always the package of the message.
     //Converts it to the correct requested Java Object type.
-    public static Object getObject(String jsonInString, Type t){
+    public static Object getObjectWithKeyWord(String jsonInString, Type t){
         JsonParser parser = new JsonParser();
         JsonElement element = parser.parse(jsonInString);
         JsonObject object = element.getAsJsonObject();
@@ -53,11 +51,26 @@ public class JSONUtils {
         return null;
     }
 
+    public static Object getObject(String jsonInString,Type t){
+        return gson.fromJson(jsonInString, t);
+    }
+
     //Converts a Java object of a specific type to a JSON string with a keyword as first element.
-    public static String objectToJSONString(String keyword, Object object){
+    public static String objectToJSONStringWithKeyWord(String keyword, Object object){
         JsonObject jsonObject = new JsonObject();
         jsonObject.add(keyword,gson.toJsonTree(object));
         return jsonObject.toString();
+    }
+
+    //Converts a Java object of a specific type to a JSON string with a keyword as first element.
+    public static String objectToJSONString(Object object){
+        String data = gson.toJson(object);
+        return data;
+    }
+
+    public static String arrayToJSONString(List<?> arrayList){
+        String data = gson.toJson(arrayList);
+        return data;
     }
 
     //Converts only a keyword to a JSON string.

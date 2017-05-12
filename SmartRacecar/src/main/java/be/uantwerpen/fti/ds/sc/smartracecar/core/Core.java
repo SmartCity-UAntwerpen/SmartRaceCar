@@ -90,10 +90,7 @@ public class Core implements CoreListener, MQTTListener {
     //Register vehicle with RaceCarManager
     private void register() {
         HashMap<String, String> queryParams = new HashMap<>();
-        queryParams.put("x", Float.toString(wayPoints.get(startPoint).getX()));
-        queryParams.put("y", Float.toString(wayPoints.get(startPoint).getY()));
-        queryParams.put("z", Float.toString(wayPoints.get(startPoint).getZ()));
-        queryParams.put("w", Float.toString(wayPoints.get(startPoint).getW()));
+        queryParams.put("startwaypoint", Integer.toString(startPoint));
         String id = restUtils.getTextPlain("register", queryParams);
         ID = Long.parseLong(id, 10);
         Log.logInfo("CORE", "Vehicle received ID " + ID + ".");
@@ -103,7 +100,7 @@ public class Core implements CoreListener, MQTTListener {
     private void requestWaypoints() {
         Type typeOfHashMap = new TypeToken<HashMap<Integer, WayPoint>>() {
         }.getType();
-        wayPoints = (HashMap<Integer, WayPoint>) JSONUtils.getObject(restUtils.getJSON("getwaypoints"), typeOfHashMap);
+        wayPoints = (HashMap<Integer, WayPoint>) JSONUtils.getObjectWithKeyWord(restUtils.getJSON("getwaypoints"), typeOfHashMap);
         assert wayPoints != null;
         for (WayPoint wayPoint : wayPoints.values()) {
             Log.logConfig("CORE", "Waypoint " + wayPoint.getID() + " added: " + wayPoint.getX() + "," + wayPoint.getY() + "," + wayPoint.getZ() + "," + wayPoint.getW());
@@ -115,7 +112,7 @@ public class Core implements CoreListener, MQTTListener {
     private void sendStartPoint() {
         Log.logInfo("CORE", "Starting point set as waypoint with ID " + startPoint + ".");
         if (!debugWithoutRos)
-            tcpUtils.sendUpdate(JSONUtils.objectToJSONString("startPoint", wayPoints.get(startPoint)));
+            tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("startPoint", wayPoints.get(startPoint)));
     }
 
 
@@ -175,7 +172,7 @@ public class Core implements CoreListener, MQTTListener {
 
     //Send the name and other information of the current map to the vehicle over the socket connection.
     private void sendCurrentMap(String mapName) {
-        if (!debugWithoutRos) tcpUtils.sendUpdate(JSONUtils.objectToJSONString("currentMap", loadedMaps.get(mapName)));
+        if (!debugWithoutRos) tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", loadedMaps.get(mapName)));
 
     }
 
@@ -183,10 +180,16 @@ public class Core implements CoreListener, MQTTListener {
     //Sends information of the next waypoint over the socket connection to the vehicle.
     private void updateRoute() {
         if (!currentRoute.isEmpty()) {
+            mqttUtils.publishMessage("racecar/" + ID + "/waypoint", String.valueOf(currentRoute.peek()));
             WayPoint nextWayPoint = wayPoints.get(currentRoute.poll());
-            if (!debugWithoutRos) tcpUtils.sendUpdate(JSONUtils.objectToJSONString("nextWayPoint", nextWayPoint));
+            if (!debugWithoutRos) tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("nextWayPoint", nextWayPoint));
             Log.logInfo("CORE", "Sending next waypoint with ID " + nextWayPoint.getID() + " (" + (routeSize - currentRoute.size()) + "/" + routeSize + ")");
             if(debugWithoutRos){
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 wayPointReached();
             }
 
@@ -205,30 +208,30 @@ public class Core implements CoreListener, MQTTListener {
     private void routeCompleted() {
         Log.logInfo("CORE", "Route Completed.");
         occupied = false;
-        mqttUtils.publishMessage("racecar/" + ID + "/routecomplete", "done");
+        mqttUtils.publishMessage("racecar/" + ID + "/route", "done");
     }
 
     private void routeError() {
         Log.logInfo("CORE", "Route error.");
         occupied = false;
-        mqttUtils.publishMessage("racecar/" + ID + "/routecomplete", "error");
+        mqttUtils.publishMessage("racecar/" + ID + "/route", "error");
     }
 
     private void routeNotComplete() {
         occupied = false;
-        mqttUtils.publishMessage("racecar/" + ID + "/routecomplete", "notcomplete");
+        mqttUtils.publishMessage("racecar/" + ID + "/route", "notcomplete");
     }
 
     //Send wheel states to the vehicle over the socket connection. useful for emergency stops and other requests.
     private void sendWheelStates(float throttle, float steer) {
-        if (!debugWithoutRos) tcpUtils.sendUpdate(JSONUtils.objectToJSONString("drive", new Drive(steer, throttle)));
+        if (!debugWithoutRos) tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("drive", new Drive(steer, throttle)));
         Log.logInfo("CORE", "Sending wheel state Throttle:" + throttle + ", Steer:" + steer + ".");
     }
 
     //Event call over interface for when the socket connection receives location update. Publishes this to the RaceCarManager over MQTT.
     public void locationUpdate(Point location) {
         Log.logInfo("CORE", "Location Updated.");
-        mqttUtils.publishMessage("racecar/" + ID + "/location", location.getX() + " " + location.getY() + " " + location.getZ() + " " + location.getW());
+        mqttUtils.publishMessage("racecar/" + ID + "/location", JSONUtils.objectToJSONString(location));
     }
 
     public void parseMQTT(String topic, String message) {

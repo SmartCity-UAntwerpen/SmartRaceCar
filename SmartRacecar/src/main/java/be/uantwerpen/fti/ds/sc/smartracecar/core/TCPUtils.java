@@ -51,7 +51,7 @@ class TCPUtils extends Thread {
                     //parses keyword to do the correct function call.
                     switch (JSONUtils.getFirst(line)) {
                         case "location":
-                            listener.locationUpdate((Point) JSONUtils.getObject(line,Point.class));
+                            listener.locationUpdate((Point) JSONUtils.getObjectWithKeyWord(line,Point.class));
                             break;
                         case "arrivedWaypoint":
                             listener.wayPointReached();
