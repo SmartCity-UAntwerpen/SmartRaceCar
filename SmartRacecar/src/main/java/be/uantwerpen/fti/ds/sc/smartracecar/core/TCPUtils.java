@@ -18,7 +18,6 @@ class TCPUtils extends Thread {
 
     private CoreListener listener;
     private Socket serverSocket;
-    boolean run = true;
     private int clientPort;
     private int serverPort;
 
@@ -39,6 +38,7 @@ class TCPUtils extends Thread {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        boolean run = true;
         while (run) {
             try {
                 if (echoServer != null) {
@@ -111,7 +111,7 @@ class TCPUtils extends Thread {
         }
     }
 
-    void closeTCP(){
+    private void closeTCP(){
         try {
             serverSocket.close();
         } catch (IOException e) {

@@ -10,7 +10,7 @@ import java.util.logging.LogRecord;
 
 
 //Helper class to format the logging messages to a specific format of YEAR-MONTH-DAY HOUR:MINUTES:SECONDS:MILISECONDS [LEVEL] [TYPE] Message (+ errorprinttrace)
-public class LogFormatter extends Formatter {
+class LogFormatter extends Formatter {
     // Create a DateFormat to format the logger timestamp.
     private static final DateFormat df = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
 

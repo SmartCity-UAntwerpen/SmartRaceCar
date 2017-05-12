@@ -16,16 +16,20 @@ public class Log {
     public static void logInfo(String category, String message){
         logging.info("[" + category + "] " + message);
     }
+
     public static void logWarning(String category, String message){
         logging.warning("[" + category + "] " + message);
     }
+
     public static void logSevere(String category, String message){
         logging.severe("[" + category + "] " + message);
     }
+
     public static void logConfig(String category, String message){
         logging.config("[" + category + "] " + message);
     }
-    public void setLogger(Level level){
+
+    private void setLogger(Level level){
         Handler handlerObj = new ConsoleHandler();
         handlerObj.setLevel(Level.ALL);
         LogFormatter logFormatter = new LogFormatter();

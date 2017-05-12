@@ -25,12 +25,10 @@ public class Manager implements MQTTListener {
 
     private boolean debugWithoutBackEnd = true; // debug parameter to stop attempts to send or recieve messages from backbone.
     private static Log log;
-    private Level level = Level.INFO; //Debug level
     private final String mqttBroker = "tcp://broker.hivemq.com:1883";
     private final String mqqtUsername = "root";
     private final String mqttPassword = "smartcity";
-    private final String mapFolder = "maps";
-    private final String wayPointFolder = "waypoints";
+    private final String wayPointFolder = "wayPoints";
     private final String restURLMAAS = "http://localhost:8080/";
     private final String restURLBackBone = "http://localhost:8080/";
 
@@ -38,9 +36,8 @@ public class Manager implements MQTTListener {
     private RESTUtils restUtilsMAAS;
     private RESTUtils restUtilsBackBone;
 
-    private static HashMap<Integer, WayPoint> waypoints = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
+    private static HashMap<Integer, WayPoint> wayPoints = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
     private static HashMap<Long, Vehicle> vehicles = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
-    private static HashMap<String, Map> loadedMaps = new HashMap<>(); // Map of all loaded maps.
     private static String currentMap;
 
     public Manager() {
@@ -48,14 +45,14 @@ public class Manager implements MQTTListener {
     }
 
     public Manager(String currentMap) throws MqttException {
+        Level level = Level.INFO;
         log = new Log(this.getClass(), level);
         Manager.currentMap = currentMap;
         restUtilsMAAS = new RESTUtils(restURLMAAS);
         restUtilsBackBone = new RESTUtils(restURLBackBone);
         mqttUtils = new MQTTUtils(mqttBroker, mqqtUsername, mqttPassword, this);
         mqttUtils.subscribeToTopic("racecar/#");
-        loadedMaps = XMLUtils.loadMaps(mapFolder);
-        waypoints = XMLUtils.loadWaypoints(wayPointFolder);
+        wayPoints = XMLUtils.loadWaypoints(wayPointFolder);
     }
 
     @Override
@@ -107,35 +104,39 @@ public class Manager implements MQTTListener {
 
     private void waypointUpdate(long ID, String message) {
         vehicles.get(ID).setLastWayPoint(Integer.parseInt(message));
-        log.logInfo("MANAGER", "Vehicle with ID " + ID + " has reached waypoint " + message + ".");
+        Log.logInfo("MANAGER", "Vehicle with ID " + ID + " has reached waypoint " + message + ".");
     }
 
     private void locationUpdate(long ID, String message) {
         Type typeOfPoint = new TypeToken<Point>() {}.getType();
         vehicles.get(ID).setPoint((Point) JSONUtils.getObject(message,typeOfPoint));
-        log.logInfo("MANAGER", "Location update of vehicle with ID " + ID + ".");
+        Log.logInfo("MANAGER", "Location update of vehicle with ID " + ID + ".");
     }
 
     private void routeUpdate(long ID, String message) {
-        if (message.equals("done")) {
-            vehicles.get(ID).setOccupied(false);
-            if (!debugWithoutBackEnd) {
-                restUtilsMAAS.getTextPlain("completeJob/" + ID);
-            }
-            log.logInfo("MANAGER", "Vehicle with ID " + ID + " has completed his route.");
-        } else if (message.equals("error")) {
-            vehicles.get(ID).setOccupied(false);
-            log.logInfo("MANAGER", "Vehicle with ID " + ID + " had errors in his route request.");
-        } else if (message.equals("notcomplete")) {
-            vehicles.get(ID).setOccupied(true);
-            log.logInfo("MANAGER", "Vehicle with ID " + ID + " didn't complete his route yet.");
+        switch (message) {
+            case "done":
+                vehicles.get(ID).setOccupied(false);
+                if (!debugWithoutBackEnd) {
+                    restUtilsMAAS.getTextPlain("completeJob/" + ID);
+                }
+                Log.logInfo("MANAGER", "Vehicle with ID " + ID + " has completed his route.");
+                break;
+            case "error":
+                vehicles.get(ID).setOccupied(false);
+                Log.logInfo("MANAGER", "Vehicle with ID " + ID + " had errors in his route request.");
+                break;
+            case "notcomplete":
+                vehicles.get(ID).setOccupied(true);
+                Log.logInfo("MANAGER", "Vehicle with ID " + ID + " didn't complete his route yet.");
+                break;
         }
     }
 
     private void jobSend(long ID, long[] waypointValues) {
         vehicles.get(ID).setOccupied(true);
         String message = Arrays.toString(waypointValues).replace(", ", " ").replace("[", "").replace("]", "").trim();
-        log.logInfo("MANAGER", "Route job send to vehicle with ID " + ID + " with waypoints " + message);
+        Log.logInfo("MANAGER", "Route job send to vehicle with ID " + ID + " with wayPoints " + message);
         mqttUtils.publishMessage("racecar/" + ID + "/job", message);
     }
 
@@ -143,17 +144,17 @@ public class Manager implements MQTTListener {
     @Path("register")
     @Produces("text/plain")
     public Response register(@DefaultValue("1") @QueryParam("startwaypoint") int startwaypoint, @Context HttpServletResponse response) throws IOException {
-        if (!waypoints.containsKey(startwaypoint)) {
-            response.sendError(response.SC_NOT_FOUND, "Waypoint " + startwaypoint + " not found");
+        if (!wayPoints.containsKey(startwaypoint)) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Waypoint " + startwaypoint + " not found");
         } else {
             long id;
             if (!debugWithoutBackEnd) {
                 id = Long.parseLong(restUtilsBackBone.getTextPlain("bot/newBot/car"));
             } else {
-                id = Long.valueOf(vehicles.size());
+                id = (long) vehicles.size();
             }
-            vehicles.put(id, new Vehicle(id, startwaypoint, waypoints.get(startwaypoint)));
-            log.logInfo("MANAGER", "New vehicle registered. Given ID " + id + ". Has starting waypoint " + startwaypoint + ".");
+            vehicles.put(id, new Vehicle(id, startwaypoint, wayPoints.get(startwaypoint)));
+            Log.logInfo("MANAGER", "New vehicle registered. Given ID " + id + ". Has starting waypoint " + startwaypoint + ".");
 
             return Response.status(Response.Status.OK).
                     entity(id).
@@ -169,7 +170,7 @@ public class Manager implements MQTTListener {
     @Produces("application/json")
     public Response getPositions(@Context HttpServletResponse response) throws IOException {
         if (vehicles.isEmpty()) {
-            response.sendError(response.SC_NOT_FOUND, "no vehicles registered yet");
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "no vehicles registered yet");
         }else{
             List<Location> locations = new ArrayList<>();
             for (Vehicle vehicle : vehicles.values()) {
@@ -188,14 +189,14 @@ public class Manager implements MQTTListener {
     @Path("calcWeight/{start}/to/{stop}")
     @Produces("application/json")
     public Response calculateCostsRequest(@PathParam("start") final int startId, @PathParam("stop") final int endId, @Context HttpServletResponse response) throws IOException {
-        if (!waypoints.containsKey(startId) || !waypoints.containsKey(endId)) {
-            response.sendError(response.SC_NOT_FOUND, "start or end waypoint not found");
+        if (!wayPoints.containsKey(startId) || !wayPoints.containsKey(endId)) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "start or end waypoint not found");
         } else if (vehicles.isEmpty()) {
-            response.sendError(response.SC_NOT_FOUND, "no vehicles registered yet");
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "no vehicles registered yet");
         } else {
             List<Cost> costs = new ArrayList<>();
             for (Vehicle vehicle : vehicles.values()) {
-                costs.add(new Cost(vehicle.getOccupied(), calculateCost(vehicle.getLocation(),waypoints.get(startId)), calculateCost(waypoints.get(startId),waypoints.get(endId)), vehicle.getID()));
+                costs.add(new Cost(vehicle.getOccupied(), calculateCost(vehicle.getLocation(), wayPoints.get(startId)), calculateCost(wayPoints.get(startId), wayPoints.get(endId)), vehicle.getID()));
             }
             Log.logInfo("MANAGER", "Cost calculation request completed.");
             return Response.status(Response.Status.OK).
@@ -223,7 +224,7 @@ public class Manager implements MQTTListener {
     @Path("getwaypoints")
     @Produces("application/json")
     public String getWayPoints() {
-        return JSONUtils.objectToJSONStringWithKeyWord("waypoints", waypoints);
+        return JSONUtils.objectToJSONStringWithKeyWord("wayPoints", wayPoints);
     }
 
 
@@ -238,7 +239,7 @@ public class Manager implements MQTTListener {
                 output.write(data);
                 output.flush();
             } catch (Exception e) {
-                response.sendError(response.SC_NOT_FOUND, mapname + ".pgm not found");
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, mapname + ".pgm not found");
             }
         };
         return Response
@@ -259,7 +260,7 @@ public class Manager implements MQTTListener {
                 output.write(data);
                 output.flush();
             } catch (Exception e) {
-                response.sendError(response.SC_NOT_FOUND, mapname + ".yaml not found");
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, mapname + ".yaml not found");
             }
         };
         return Response

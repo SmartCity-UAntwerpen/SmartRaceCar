@@ -1,4 +1,4 @@
-package be.uantwerpen.fti.ds.sc.smartracecar.common;
+package be.uantwerpen.fti.ds.sc.smartracecar.manager;
 
 public class Job {
 

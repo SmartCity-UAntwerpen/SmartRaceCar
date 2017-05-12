@@ -2,9 +2,9 @@ package be.uantwerpen.fti.ds.sc.smartracecar.manager;
 
 import org.glassfish.jersey.server.ResourceConfig;
 
-public class JerseyConfiguration extends ResourceConfig {
+class JerseyConfiguration extends ResourceConfig {
 
-    public JerseyConfiguration() {
+    JerseyConfiguration() {
         packages("be.uantwerpen.fti.ds.sc.smartracecar.manager");
     }
 }

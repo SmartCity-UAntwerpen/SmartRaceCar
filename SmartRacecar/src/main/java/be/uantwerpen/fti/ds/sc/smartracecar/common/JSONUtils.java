@@ -64,13 +64,11 @@ public class JSONUtils {
 
     //Converts a Java object of a specific type to a JSON string with a keyword as first element.
     public static String objectToJSONString(Object object){
-        String data = gson.toJson(object);
-        return data;
+        return gson.toJson(object);
     }
 
     public static String arrayToJSONString(List<?> arrayList){
-        String data = gson.toJson(arrayList);
-        return data;
+        return gson.toJson(arrayList);
     }
 
     //Converts only a keyword to a JSON string.

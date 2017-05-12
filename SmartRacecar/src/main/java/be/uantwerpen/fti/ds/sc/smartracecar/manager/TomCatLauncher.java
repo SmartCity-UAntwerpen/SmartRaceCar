@@ -5,9 +5,9 @@ import org.apache.catalina.startup.Tomcat;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 
-public class TomCatLauncher {
+class TomCatLauncher {
 
-    public void start() throws Exception {
+    void start() throws Exception {
 
         String contextPath = "";
         String appBase = ".";

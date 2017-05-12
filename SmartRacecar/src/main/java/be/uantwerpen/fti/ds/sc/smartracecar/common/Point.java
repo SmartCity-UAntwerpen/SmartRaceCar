@@ -16,7 +16,7 @@ public class Point {
     private float z = 0; // quaternion z
     private float w = 0; // quaternion w
 
-    public Point(float x, float y,float z, float w){
+    Point(float x, float y,float z, float w){
         this.x = x;
         this.y = y;
         this.w = w;
