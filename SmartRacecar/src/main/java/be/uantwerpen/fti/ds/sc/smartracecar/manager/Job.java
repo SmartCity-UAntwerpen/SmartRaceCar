@@ -1,6 +1,6 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.manager;
 
-public class Job {
+class Job {
 
     private Long jobID;
     private Long idStart;
