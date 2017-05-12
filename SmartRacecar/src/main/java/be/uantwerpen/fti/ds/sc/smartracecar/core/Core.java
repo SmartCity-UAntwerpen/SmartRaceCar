@@ -212,7 +212,7 @@ public class Core implements CoreListener, MQTTListener {
     }
 
     private void routeError() {
-        Log.logInfo("CORE", "Route error.");
+        Log.logWarning("CORE", "Route error. Route Cancelled");
         occupied = false;
         mqttUtils.publishMessage("racecar/" + ID + "/route", "error");
     }
