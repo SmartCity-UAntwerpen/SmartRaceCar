@@ -17,8 +17,10 @@ public class TCPUtils extends Thread {
     private Socket serverSocket;
     private int clientPort;
     private int serverPort;
+    private String address;
 
-    public TCPUtils(int clientPort, int serverPort, TCPListener listener){
+    public TCPUtils(String address, int clientPort, int serverPort, TCPListener listener){
+        this.address = address;
         this.clientPort = clientPort;
         this.serverPort = serverPort;
         this.listener = listener;
@@ -65,7 +67,7 @@ public class TCPUtils extends Thread {
         //if connection to socket can not be made, it waits until it can.
         while (!connected) {
             try {
-                clientSocket = new Socket("localhost", clientPort);
+                clientSocket = new Socket(address, clientPort);
 
                 connected = true;
             } catch (UnknownHostException e) {

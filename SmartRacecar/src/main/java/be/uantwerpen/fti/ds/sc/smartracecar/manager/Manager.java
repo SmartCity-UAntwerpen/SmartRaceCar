@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.logging.Level;
 
 @Path("carmanager")
-public class Manager implements MQTTListener {
+public class Manager implements MQTTListener, TCPListener {
 
     private boolean debugWithoutBackEnd = true; // debug parameter to stop attempts to send or recieve messages from backbone.
     private static Log log;
@@ -31,10 +31,14 @@ public class Manager implements MQTTListener {
     private final String wayPointFolder = "wayPoints";
     private final String restURLMAAS = "http://localhost:8080/";
     private final String restURLBackBone = "http://localhost:8080/";
+    private final String socketAddress = "localhost";
+    private final int serverPort = 5005;
+    private final int clientPort = 5006;
 
     private MQTTUtils mqttUtils;
     private RESTUtils restUtilsMAAS;
     private RESTUtils restUtilsBackBone;
+    private TCPUtils tcpUtils;
 
     private static HashMap<Integer, WayPoint> wayPoints = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
     private static HashMap<Long, Vehicle> vehicles = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
@@ -51,6 +55,7 @@ public class Manager implements MQTTListener {
         restUtilsBackBone = new RESTUtils(restURLBackBone);
         mqttUtils = new MQTTUtils(mqttBroker, mqqtUsername, mqttPassword, this);
         mqttUtils.subscribeToTopic("racecar/#");
+        tcpUtils = new TCPUtils(socketAddress,clientPort,serverPort,this);
         wayPoints = XMLUtils.loadWaypoints(wayPointFolder);
     }
 
@@ -279,5 +284,10 @@ public class Manager implements MQTTListener {
                 new TomCatLauncher().start();
             }
         }
+    }
+
+    @Override
+    public void parseTCP(String message) {
+
     }
 }

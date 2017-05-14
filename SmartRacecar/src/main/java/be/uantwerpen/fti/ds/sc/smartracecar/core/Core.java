@@ -34,6 +34,7 @@ public class Core implements TCPListener, MQTTListener {
     private final String mqqtUsername = "root";
     private final String mqttPassword = "smartcity";
     private final String restURL = "http://localhost:8080/carmanager";
+    private final String SocketAdress = "localhost";
     private final int serverPort = 5005;
     private final int clientPort = 5006;
     private final String mapFolder = "maps";
@@ -58,7 +59,7 @@ public class Core implements TCPListener, MQTTListener {
         register();
         mqttUtils = new MQTTUtils(ID, mqttBroker, mqqtUsername, mqttPassword, this);
         mqttUtils.subscribeToTopic("racecar/" + ID + "/job");
-        tcpUtils = new TCPUtils(serverPort, clientPort, this);
+        tcpUtils = new TCPUtils(SocketAdress,serverPort, clientPort, this);
         tcpUtils.start();
 
         if (!debugWithoutRos) {
