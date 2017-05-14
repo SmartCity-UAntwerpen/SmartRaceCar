@@ -212,7 +212,6 @@ public class Manager implements MQTTListener, TCPListener {
     }
 
     private long calculateCost(Point startPoint, Point endPoint){
-
         return (long)5;
     }
 
@@ -288,6 +287,16 @@ public class Manager implements MQTTListener, TCPListener {
 
     @Override
     public void parseTCP(String message) {
-
+        if(message.matches("create[[:blank:]][0-9]+")){
+            tcpUtils.sendUpdate("ACK");
+        }else if(message.matches("run[[:blank:]][0-9]+")){
+            tcpUtils.sendUpdate("ACK");
+        }else if(message.matches("stop[[:blank:]][0-9]+")){
+            tcpUtils.sendUpdate("ACK");
+        }else if(message.matches("kill[[:blank:]][0-9]+")){
+            tcpUtils.sendUpdate("ACK");
+        }else if(message.matches("set[[:blank:]][0-9]+[[:blank:]]\\w+[[:blank:]]\\w+")){
+            tcpUtils.sendUpdate("ACK");
+        }
     }
 }
