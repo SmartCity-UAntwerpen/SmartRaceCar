@@ -24,7 +24,7 @@ import java.util.logging.Level;
 //interface to trigger certain events from other objects such as TCP Sockets or MQTT.
 
 
-public class Core implements CoreListener, MQTTListener {
+public class Core implements TCPListener, MQTTListener {
 
     //Hardcoded elements.
     private boolean debugWithoutRos = true; // debug parameter to stop attempts to send over sockets when ROS-Node is active.
@@ -250,6 +250,26 @@ public class Core implements CoreListener, MQTTListener {
                 Log.logWarning("CORE", "Current Route not completed. Not adding waypoints.");
                 routeNotComplete();
             }
+    }
+
+    public void parseTCP(String message) {
+        if (JSONUtils.isJSONValid(message)) {
+            //parses keyword to do the correct function call.
+            switch (JSONUtils.getFirst(message)) {
+                case "location":
+                    locationUpdate((Point) JSONUtils.getObjectWithKeyWord(message, Point.class));
+                    break;
+                case "arrivedWaypoint":
+                    wayPointReached();
+                    break;
+                case "connect":
+                    connectReceive();
+                    break;
+                default:
+                    Log.logWarning("CORE", "No matching keyword when parsing JSON from Sockets. Data: " + message);
+                    break;
+            }
+        }
     }
 
     //Event call over interface for when MQTT connection receives new route job requests. Adds all requested waypoints to route queue one by one.

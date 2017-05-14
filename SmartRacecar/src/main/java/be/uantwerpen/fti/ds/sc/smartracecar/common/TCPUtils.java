@@ -1,8 +1,5 @@
-package be.uantwerpen.fti.ds.sc.smartracecar.core;
+package be.uantwerpen.fti.ds.sc.smartracecar.common;
 
-import be.uantwerpen.fti.ds.sc.smartracecar.common.JSONUtils;
-import be.uantwerpen.fti.ds.sc.smartracecar.common.Log;
-import be.uantwerpen.fti.ds.sc.smartracecar.common.Point;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -14,14 +11,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 // Creates listener over sockets to listen to vehicle messages and sends back over other socket.
-class TCPUtils extends Thread {
+public class TCPUtils extends Thread {
 
-    private CoreListener listener;
+    private TCPListener listener;
     private Socket serverSocket;
     private int clientPort;
     private int serverPort;
 
-    TCPUtils(int clientPort, int serverPort, CoreListener listener){
+    public TCPUtils(int clientPort, int serverPort, TCPListener listener){
         this.clientPort = clientPort;
         this.serverPort = serverPort;
         this.listener = listener;
@@ -46,25 +43,10 @@ class TCPUtils extends Thread {
                 }
                 is = new DataInputStream(serverSocket.getInputStream());
                 line = is.readLine();
-                if(line != null && JSONUtils.isJSONValid(line))
+                if(line != null ){
                     Log.logConfig("SOCKETS","data received: " + line);
-                    //parses keyword to do the correct function call.
-                    switch (JSONUtils.getFirst(line)) {
-                        case "location":
-                            listener.locationUpdate((Point) JSONUtils.getObjectWithKeyWord(line,Point.class));
-                            break;
-                        case "arrivedWaypoint":
-                            listener.wayPointReached();
-                            break;
-                        case "connect":
-                            listener.connectReceive();
-                            break;
-                        default:
-                            Log.logWarning("SOCKETS","No matching keyword when parsing JSON. Data: " + line);
-                            break;
-
+                    listener.parseTCP(line);
                 }
-
             } catch (IOException e) {
                 Log.logSevere("SOCKETS","Cannot receive data." + e);
             }
@@ -73,7 +55,7 @@ class TCPUtils extends Thread {
     }
 
     //sends message over clientSocket to vehicle
-    void sendUpdate(String data) {
+    public void sendUpdate(String data) {
         Socket clientSocket = null;
         DataInputStream inputLine = new DataInputStream(new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8)));
         byte[] bytes = new byte[100];

@@ -24,6 +24,7 @@ public class Manager implements MQTTListener {
 
     private boolean debugWithoutBackEnd = true; // debug parameter to stop attempts to send or recieve messages from backbone.
     private static Log log;
+    Level level = Level.INFO;
     private final String mqttBroker = "tcp://broker.hivemq.com:1883";
     private final String mqqtUsername = "root";
     private final String mqttPassword = "smartcity";
@@ -44,7 +45,6 @@ public class Manager implements MQTTListener {
     }
 
     public Manager(String currentMap) throws MqttException {
-        Level level = Level.INFO;
         log = new Log(this.getClass(), level);
         Manager.currentMap = currentMap;
         restUtilsMAAS = new RESTUtils(restURLMAAS);
