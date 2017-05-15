@@ -5,9 +5,12 @@ import be.uantwerpen.fti.ds.sc.smartracecar.common.Point;
 class Vehicle {
 
     private Long ID;
+    private int lastWayPoint;
     private Point location;
     private boolean occupied = false;
-    private int lastWayPoint;
+    private Float speed = Float.valueOf(3);
+
+
 
     Vehicle(Long ID,int startWayPoint,Point startLocation){
         this.ID = ID;
@@ -42,5 +45,17 @@ class Vehicle {
 
     Long getID() {
         return ID;
+    }
+
+    void setID(Long ID){
+        this.ID = ID;
+    }
+
+    public void setLocation(Point location) {
+        this.location = location;
+    }
+
+    public void setSpeed(Float speed) {
+        this.speed = speed;
     }
 }

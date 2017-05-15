@@ -24,7 +24,7 @@ public class Manager implements MQTTListener, TCPListener {
 
     private boolean debugWithoutBackEnd = true; // debug parameter to stop attempts to send or recieve messages from backbone.
     private static Log log;
-    Level level = Level.INFO;
+    Level level = Level.CONFIG;
     private final String mqttBroker = "tcp://broker.hivemq.com:1883";
     private final String mqqtUsername = "root";
     private final String mqttPassword = "smartcity";
@@ -42,6 +42,7 @@ public class Manager implements MQTTListener, TCPListener {
 
     private static HashMap<Integer, WayPoint> wayPoints = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
     private static HashMap<Long, Vehicle> vehicles = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
+    private static HashMap<Long, SimulatedVehicle> simulatedVehicles = new HashMap<>();
     private static String currentMap;
 
     public Manager() {
@@ -81,27 +82,35 @@ public class Manager implements MQTTListener, TCPListener {
             } else {
                 Log.logWarning("MANAGER", "Vehicle with ID " + ID + " doesn't exist. Cant send route job.");
             }
+        } else if(topic.matches("racecar/tcptest")){
+            parseTCP(message);
         } else if (topic.matches("racecar/[0-9]+/location")) {
             long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
             if (vehicles.containsKey(ID)) {
                 locationUpdate(ID, message);
             } else {
-                Log.logWarning("MANAGER", "Vehicle with ID " + ID + " doesn't exist. Cant set location.");
+                Log.logConfig("MANAGER", "Vehicle with ID " + ID + " doesn't exist. Cant set location.");
             }
         } else if (topic.matches("racecar/[0-9]+/route")) {
             long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
             if (vehicles.containsKey(ID)) {
                 routeUpdate(ID, message);
             } else {
-                Log.logWarning("MANAGER", "Vehicle with ID " + ID + " doesn't exist. Cant update route information.");
+                Log.logConfig("MANAGER", "Vehicle with ID " + ID + " doesn't exist. Cant update route information.");
             }
-        }
-        else if (topic.matches("racecar/[0-9]+/waypoint")) {
+        } else if (topic.matches("racecar/[0-9]+/waypoint")) {
             long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
             if (vehicles.containsKey(ID)) {
                 waypointUpdate(ID, message);
             } else {
-                Log.logWarning("MANAGER", "Vehicle with ID " + ID + " doesn't exist. Cant update route information.");
+                Log.logConfig("MANAGER", "Vehicle with ID " + ID + " doesn't exist. Cant update route information.");
+            }
+        } else if (topic.matches("racecar/[0-9]+/kill")) {
+            long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
+            if (vehicles.containsKey(ID)) {
+                killVehicle(ID);
+            } else {
+                Log.logConfig("MANAGER", "Vehicle with ID " + ID + " doesn't exist. Cannot kill.");
             }
         }
     }
@@ -287,16 +296,103 @@ public class Manager implements MQTTListener, TCPListener {
 
     @Override
     public void parseTCP(String message) {
-        if(message.matches("create[[:blank:]][0-9]+")){
-            tcpUtils.sendUpdate("ACK");
-        }else if(message.matches("run[[:blank:]][0-9]+")){
-            tcpUtils.sendUpdate("ACK");
-        }else if(message.matches("stop[[:blank:]][0-9]+")){
-            tcpUtils.sendUpdate("ACK");
-        }else if(message.matches("kill[[:blank:]][0-9]+")){
-            tcpUtils.sendUpdate("ACK");
-        }else if(message.matches("set[[:blank:]][0-9]+[[:blank:]]\\w+[[:blank:]]\\w+")){
-            tcpUtils.sendUpdate("ACK");
+        if(message.matches("create\\s[0-9]+")){
+            long simulationID = Long.parseLong(message.replaceAll("\\D+", ""));
+            if(!simulatedVehicles.containsKey(simulationID)){
+                simulatedVehicles.put(simulationID,new SimulatedVehicle((long)-1,simulationID,-1,null));
+                if (!debugWithoutBackEnd)tcpUtils.sendUpdate("ACK");
+                Log.logInfo("MANAGER", "New simulated vehicle registered with simulation ID " + simulationID + ".");
+            }else{
+                if (!debugWithoutBackEnd)tcpUtils.sendUpdate("NACK");
+                Log.logConfig("MANAGER","Cannot create vehicle with simulation ID " + simulationID + ". It already exists.");
+            }
+        }else if(message.matches("run\\s[0-9]+")){
+            long simulationID = Long.parseLong(message.replaceAll("\\D+", ""));
+            if(simulatedVehicles.containsKey(simulationID)){
+                if(simulatedVehicles.get(simulationID).getID() == -1){
+                    if(simulatedVehicles.get(simulationID).getLastWayPoint() != -1){
+                        Long ID;
+                        if (!debugWithoutBackEnd) {
+                            ID = Long.parseLong(restUtilsBackBone.getTextPlain("bot/newBot/car"));
+                        } else {
+                            ID = (long) vehicles.size();
+                        }
+                        simulatedVehicles.get(simulationID).setID(ID);
+                        vehicles.put(ID,simulatedVehicles.get(simulationID));
+                        Log.logInfo("MANAGER", "Simulated Vehicle with simulation ID " + simulationID +  " started. Given ID " + ID + ".");
+                    }else{
+                        Log.logConfig("MANAGER","Cannot start vehicle with simulation ID " + simulationID + ". It didn't have a starting point set.");
+                        if (!debugWithoutBackEnd)tcpUtils.sendUpdate("NACK");
+                    }
+                }else{
+                    Log.logConfig("MANAGER","Cannot start vehicle with simulation ID " + simulationID + ". It was already started.");
+                    if (!debugWithoutBackEnd)tcpUtils.sendUpdate("NACK");
+                }
+            }else{
+                Log.logConfig("MANAGER","Cannot start vehicle with simulation ID " + simulationID + ". It does not exist.");
+                if (!debugWithoutBackEnd)tcpUtils.sendUpdate("NACK");
+            }
+            if (!debugWithoutBackEnd)tcpUtils.sendUpdate("ACK");
+        }else if(message.matches("stop\\s[0-9]+")){
+            long simulationID = Long.parseLong(message.replaceAll("\\D+", ""));
+            if(simulatedVehicles.containsKey(simulationID)){
+                stopVehicle(simulatedVehicles.get(simulationID).getID());
+                if (!debugWithoutBackEnd)tcpUtils.sendUpdate("ACK");
+            }else{
+                Log.logConfig("MANAGER","Cannot stop vehicle with simulation ID " + simulationID + ". It does not exist.");
+                if (!debugWithoutBackEnd)tcpUtils.sendUpdate("NACK");
+            }
+        }else if(message.matches("kill\\s[0-9]+")){
+            long simulationID = Long.parseLong(message.replaceAll("\\D+", ""));
+            if(simulatedVehicles.containsKey(simulationID)){
+                killVehicle(simulatedVehicles.get(simulationID).getID());
+                simulatedVehicles.remove(simulationID);
+                if (!debugWithoutBackEnd)tcpUtils.sendUpdate("ACK");
+            }else{
+                Log.logConfig("MANAGER","Cannot kill vehicle with simulation ID " + simulationID + ". It does not exist.");
+                if (!debugWithoutBackEnd)tcpUtils.sendUpdate("NACK");
+            }
+        }else if(message.matches("set\\s[0-9]+\\s\\w+\\s\\w+")){
+            String[] splitString = message.split("\\s+");
+            Long simulationID = Long.parseLong(splitString[1]);
+            if(simulatedVehicles.containsKey(simulationID)) {
+                String parameter = splitString[2];
+                String argument = splitString[3];
+                switch (parameter) {
+                    case "startpoint":
+                        simulatedVehicles.get(simulationID).setLastWayPoint(Integer.parseInt(argument));
+                        simulatedVehicles.get(simulationID).setLocation(wayPoints.get(Integer.parseInt(argument)));
+                        if(simulatedVehicles.get(simulationID).getID() != -1){
+                            vehicles.get(simulatedVehicles.get(simulationID).getID()).setLastWayPoint(Integer.parseInt(argument));
+                            vehicles.get(simulatedVehicles.get(simulationID).getID()).setLocation(wayPoints.get(Integer.parseInt(argument)));
+                        }
+                        Log.logInfo("MANAGER", "Simulated Vehicle with simulation ID " + simulationID +  " given starting point ID " + argument + ".");
+                        break;
+                    case "speed":
+                        simulatedVehicles.get(simulationID).setSpeed(Float.parseFloat(argument));
+                        if(simulatedVehicles.get(simulationID).getID() != -1){
+                            vehicles.get(simulatedVehicles.get(simulationID).getID()).setSpeed(Float.parseFloat(argument));
+                        }
+                        Log.logInfo("MANAGER", "Simulated Vehicle with simulation ID " + simulationID +  " given speed " + argument + ".");
+                        break;
+                    case "name":
+                        Log.logInfo("MANAGER", "Simulated Vehicle with simulation ID " + simulationID +  " given name " + argument + ".");
+                        break;
+                }
+            }else{
+                Log.logConfig("MANAGER","Cannot change vehicle with simulation ID " + simulationID + ". It does not exist.");
+                if (!debugWithoutBackEnd)tcpUtils.sendUpdate("NACK");
+            }
         }
+    }
+
+    private void stopVehicle(Long ID){
+        mqttUtils.publishMessage("racecar/" + ID + "/job","stop");
+        Log.logInfo("MANAGER", "Vehicle with ID " + ID +  " Stopped.");
+    }
+
+    private void killVehicle(Long ID){
+        vehicles.remove(ID);
+        Log.logInfo("MANAGER", "Vehicle with ID " + ID +  " killed.");
     }
 }

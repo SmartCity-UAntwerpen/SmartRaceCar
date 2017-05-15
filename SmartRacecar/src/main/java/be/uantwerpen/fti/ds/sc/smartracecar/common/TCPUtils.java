@@ -71,10 +71,10 @@ public class TCPUtils extends Thread {
 
                 connected = true;
             } catch (UnknownHostException e) {
-                Log.logSevere("SOCKETS","Cannot connect to car. Trying again." + e);
+                Log.logSevere("SOCKETS","Cannot connect to receiver. Trying again." + e);
                 connected = false;
             } catch (IOException e) {
-                Log.logWarning("SOCKETS","Cannot connect to Car to send   " + data + "   Trying again. Error:" + e);
+                Log.logWarning("SOCKETS","Cannot connect to receiver to send   " + data + "   Trying again. Error:" + e);
                 connected = false;
                 try {
                     Thread.sleep(1000);

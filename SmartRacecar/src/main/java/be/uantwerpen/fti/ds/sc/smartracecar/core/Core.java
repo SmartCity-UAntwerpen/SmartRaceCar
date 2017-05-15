@@ -235,6 +235,9 @@ public class Core implements TCPListener, MQTTListener {
     }
 
     public void parseMQTT(String topic, String message) {
+        if(message.equals("stop")){
+            sendWheelStates(0,0);
+        }else{
             if (!occupied) {
                 String[] waypointStringValues = message.split(" ");
                 try {
@@ -251,6 +254,7 @@ public class Core implements TCPListener, MQTTListener {
                 Log.logWarning("CORE", "Current Route not completed. Not adding waypoints.");
                 routeNotComplete();
             }
+        }
     }
 
     public void parseTCP(String message) {
