@@ -58,6 +58,8 @@ public class Manager implements MQTTListener, TCPListener {
         mqttUtils.subscribeToTopic("racecar/#");
         tcpUtils = new TCPUtils(socketAddress,clientPort,serverPort,this);
         wayPoints = XMLUtils.loadWaypoints(wayPointFolder);
+        Job test = new Job((long)1,(long)2,(long)3,(long)4);
+        System.out.print(JSONUtils.objectToJSONString(test));
     }
 
     @Override
@@ -279,6 +281,35 @@ public class Manager implements MQTTListener, TCPListener {
                 .ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
                 .header("content-disposition", "attachment; filename = " + mapname + ".yaml")
                 .build();
+    }
+
+    @POST
+    @Path("executeJob")
+    @Consumes("application/json")
+    public Response jobRequest(String data,@Context HttpServletResponse response) throws IOException {
+        Type typeOfJob = new TypeToken<Job>() {}.getType();
+        Job job = (Job) JSONUtils.getObject(data,typeOfJob);
+
+        if (vehicles.containsKey(job.getIdVehicle())) {
+            if (!vehicles.get(job.getIdVehicle()).getOccupied()) {
+                if(wayPoints.containsKey(job.getIdStart()) && wayPoints.containsKey(job.getIdEnd())){
+                    jobSend(job.getIdVehicle(), newArray);
+                    return Response.status(Response.Status.OK).build();
+                }else{
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND, "waypoints " + job.getIdStart() + " and/or " + job.getIdEnd() + "not found.");
+                    Log.logWarning("MANAGER", "Can't send route job as waypoints " + job.getIdStart() + " and/or " + job.getIdEnd() + " were not found.");
+                }
+
+            } else {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Vehicle with ID " + job.getIdVehicle() + " is occupied.");
+                Log.logWarning("MANAGER", "Vehicle with ID " + job.getIdVehicle() + " is occupied. Cant send route job.");
+            }
+
+        } else {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Vehicle with ID " + job.getIdVehicle() + " not found.");
+            Log.logWarning("MANAGER", "Vehicle with ID " + job.getIdVehicle() + " doesn't exist. Cant send route job.");
+        }
+        return Response.status(Response.Status.OK).build();
     }
 
 

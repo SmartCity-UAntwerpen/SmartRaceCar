@@ -13,4 +13,20 @@ class Job {
         this.idEnd = idEnd;
         this.idVehicle = idVehicle;
     }
+
+    public Long getJobID() {
+        return jobID;
+    }
+
+    public Long getIdStart() {
+        return idStart;
+    }
+
+    public Long getIdEnd() {
+        return idEnd;
+    }
+
+    public Long getIdVehicle() {
+        return idVehicle;
+    }
 }
