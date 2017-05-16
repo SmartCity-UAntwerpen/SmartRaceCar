@@ -43,8 +43,8 @@ public class XMLUtils {
         return loadedMaps;
     }
 
-    public static HashMap<Integer,WayPoint> loadWaypoints(String mapFolder) {
-        HashMap<Integer,WayPoint> loadedMaps = new HashMap<>();
+    public static HashMap<Long,WayPoint> loadWaypoints(String mapFolder) {
+        HashMap<Long,WayPoint> loadedMaps = new HashMap<>();
 
         try {
             File fXmlFile = new File(mapFolder + "/waypoints.xml");
@@ -62,7 +62,7 @@ public class XMLUtils {
                 if (nNode.getNodeType() == Node.ELEMENT_NODE) {
 
                     Element eElement = (Element) nNode;
-                    int id  = Integer.parseInt(eElement.getElementsByTagName("id").item(0).getTextContent());
+                    long id  = Long.parseLong(eElement.getElementsByTagName("id").item(0).getTextContent());
                     float x = Float.parseFloat(eElement.getElementsByTagName("x").item(0).getTextContent());
                     float y = Float.parseFloat(eElement.getElementsByTagName("y").item(0).getTextContent());
                     float z = Float.parseFloat(eElement.getElementsByTagName("z").item(0).getTextContent());

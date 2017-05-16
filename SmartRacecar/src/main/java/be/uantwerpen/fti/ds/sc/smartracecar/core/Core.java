@@ -45,11 +45,11 @@ public class Core implements TCPListener, MQTTListener {
 
     private long ID; // ID given by RaceCarManager.
     private HashMap<String, Map> loadedMaps = new HashMap<>(); // Map of all loaded maps.
-    private HashMap<Integer, WayPoint> wayPoints = new HashMap<>(); // Map of all loaded waypoints.
-    private Queue<Integer> currentRoute = new LinkedList<>();// All waypoint IDs to be handled in the current route.
+    private HashMap<Long, WayPoint> wayPoints = new HashMap<>(); // Map of all loaded waypoints.
+    private Queue<Long> currentRoute = new LinkedList<>();// All waypoint IDs to be handled in the current route.
     private int routeSize = 0; // Current route's size.
     private boolean connected = false; // To verify socket connection to vehicle.
-    private static int startPoint; // Starting position on map. Given by main argument.
+    private static long startPoint; // Starting position on map. Given by main argument.
     private boolean occupied = false; // To verify if racecar is currently occupied by a route job.
 
     public Core() throws InterruptedException, IOException {
@@ -81,7 +81,7 @@ public class Core implements TCPListener, MQTTListener {
     }
 
     //Event to be called when connection to car has been made
-    public void connectReceive() {
+    private void connectReceive() {
         connected = true;
         Log.logInfo("CORE", "Connected to car.");
 
@@ -90,7 +90,7 @@ public class Core implements TCPListener, MQTTListener {
     //Register vehicle with RaceCarManager
     private void register() {
         HashMap<String, String> queryParams = new HashMap<>();
-        queryParams.put("startwaypoint", Integer.toString(startPoint));
+        queryParams.put("startwaypoint", Long.toString(startPoint));
         String id = restUtils.getTextPlain("register", queryParams);
         ID = Long.parseLong(id, 10);
         Log.logInfo("CORE", "Vehicle received ID " + ID + ".");
@@ -98,9 +98,8 @@ public class Core implements TCPListener, MQTTListener {
 
     //Request all possible waypoints from RaceCarManager
     private void requestWaypoints() {
-        Type typeOfHashMap = new TypeToken<HashMap<Integer, WayPoint>>() {
-        }.getType();
-        wayPoints = (HashMap<Integer, WayPoint>) JSONUtils.getObjectWithKeyWord(restUtils.getJSON("getwaypoints"), typeOfHashMap);
+        Type typeOfHashMap = new TypeToken<HashMap<Long, WayPoint>>() {}.getType();
+        wayPoints = (HashMap<Long, WayPoint>) JSONUtils.getObjectWithKeyWord(restUtils.getJSON("getwaypoints"), typeOfHashMap);
         assert wayPoints != null;
         for (WayPoint wayPoint : wayPoints.values()) {
             Log.logConfig("CORE", "Waypoint " + wayPoint.getID() + " added: " + wayPoint.getX() + "," + wayPoint.getY() + "," + wayPoint.getZ() + "," + wayPoint.getW());
@@ -229,7 +228,7 @@ public class Core implements TCPListener, MQTTListener {
     }
 
     //Event call over interface for when the socket connection receives location update. Publishes this to the RaceCarManager over MQTT.
-    public void locationUpdate(Point location) {
+    private void locationUpdate(Point location) {
         Log.logInfo("CORE", "Location Updated.");
         mqttUtils.publishMessage("racecar/" + ID + "/location", JSONUtils.objectToJSONString(location));
     }
@@ -239,14 +238,14 @@ public class Core implements TCPListener, MQTTListener {
             sendWheelStates(0,0);
         }else{
             if (!occupied) {
-                String[] waypointStringValues = message.split(" ");
+                String[] wayPointStringValues = message.split(" ");
                 try {
-                    int[] waypointValues = new int[waypointStringValues.length];
-                    for (int index = 0; index < waypointStringValues.length; index++) {
+                    long[] wayPointValues = new long[wayPointStringValues.length];
+                    for (int index = 0; index < wayPointStringValues.length; index++) {
 
-                        waypointValues[index] = Integer.parseInt(waypointStringValues[index]);
+                        wayPointValues[index] = Integer.parseInt(wayPointStringValues[index]);
                     }
-                    jobRequest(waypointValues);
+                    jobRequest(wayPointValues);
                 } catch (NumberFormatException e) {
                     Log.logWarning("CORE", "Parsing MQTT gives bad result: " + e);
                 }
@@ -279,12 +278,12 @@ public class Core implements TCPListener, MQTTListener {
 
     //Event call over interface for when MQTT connection receives new route job requests. Adds all requested waypoints to route queue one by one.
     //Sets the vehicle to occupied. Ignores the request if vehicle is already occupied.
-    private void jobRequest(int[] wayPointIDs) {
+    private void jobRequest(long[] wayPointIDs) {
         Log.logInfo("CORE", "Route request received.");
         Boolean error = false;
         if (!occupied) {
             occupied = true;
-            for (int wayPointID : wayPointIDs) {
+            for (long wayPointID : wayPointIDs) {
                 if (wayPoints.containsKey(wayPointID)) {
                     currentRoute.add(wayPointID);
                     Log.logInfo("CORE", "Added waypoint with ID " + wayPointID + " to route.");
@@ -313,7 +312,7 @@ public class Core implements TCPListener, MQTTListener {
             System.out.println("Need at least 1 argument to run. Possible arguments: startpoint(int)");
             System.exit(0);
         } else if (args.length == 1) {
-            if (!args[0].isEmpty()) startPoint = Integer.parseInt(args[0]);
+            if (!args[0].isEmpty()) startPoint = Long.parseLong(args[0]);
         }
 
         final Core core = new Core();
