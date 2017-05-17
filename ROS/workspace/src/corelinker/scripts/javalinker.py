@@ -148,7 +148,7 @@ def calculate_cost(json_string):
                             'weight': costtime_start_goal, 'idVehicle': 12321}}
     logger.log_debug(json_string)
     json_string = json.dumps(jsonmessage)
-    javamodule.send_message(jsonmessage)
+    javamodule.send_message(json_string)
 
 
 def delegate_cost(startpose, goalpose, tolerance, speed):
