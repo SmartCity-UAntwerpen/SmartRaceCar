@@ -7,10 +7,16 @@ import be.uantwerpen.fti.ds.sc.smartracecar.common.Point;
  */
 public class SimulatedVehicle extends Vehicle{
 
-    private Long simulationID;
+    private long simulationID;
+    private long startPoint;
 
-    SimulatedVehicle(Long ID, Long simulationID, int startWayPoint, Point startLocation) {
+    SimulatedVehicle(long ID, long simulationID, long startWayPoint, Point startLocation) {
         super(ID, startWayPoint, startLocation);
         this.simulationID = simulationID;
+        this.startPoint = startWayPoint;
+    }
+
+    public long getStartPoint() {
+        return startPoint;
     }
 }

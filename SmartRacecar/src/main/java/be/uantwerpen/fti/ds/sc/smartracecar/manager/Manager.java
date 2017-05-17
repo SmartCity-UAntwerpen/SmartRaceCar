@@ -344,6 +344,20 @@ public class Manager implements MQTTListener, TCPListener {
                 simulatedVehicles.remove(simulationID);
                 return "ACK";
             }else{
+                Log.logConfig("MANAGER","Cannot restart vehicle with simulation ID " + simulationID + ". It does not exist.");
+                return "NACK";
+            }
+        }else if(message.matches("restart\\s[0-9]+")){
+            long simulationID = Long.parseLong(message.replaceAll("\\D+", ""));
+            if(simulatedVehicles.containsKey(simulationID)){
+                simulatedVehicles.get(simulationID).setLastWayPoint(simulatedVehicles.get(simulationID).getStartPoint());
+                simulatedVehicles.get(simulationID).setLocation(wayPoints.get(simulatedVehicles.get(simulationID).getStartPoint()));
+                if(simulatedVehicles.get(simulationID).getID() != -1){
+                    vehicles.get(simulatedVehicles.get(simulationID).getID()).setLastWayPoint(simulatedVehicles.get(simulationID).getStartPoint());
+                    vehicles.get(simulatedVehicles.get(simulationID).getID()).setLocation(wayPoints.get(simulatedVehicles.get(simulationID).getStartPoint()));
+                }
+                return "ACK";
+            }else{
                 Log.logConfig("MANAGER","Cannot kill vehicle with simulation ID " + simulationID + ". It does not exist.");
                 return "NACK";
             }
