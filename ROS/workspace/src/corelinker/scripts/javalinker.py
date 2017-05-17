@@ -134,6 +134,10 @@ def calculate_cost(json_string):
     start_posestamped = rosmodule.pose_2_posestamped(rosmodule.location_2_pose(start_location))
     goal_posestamped = rosmodule.pose_2_posestamped(rosmodule.location_2_pose(goal_location))
 
+    logger.log_debug(current_posestamped)
+    logger.log_debug(start_posestamped)
+    logger.log_debug(goal_posestamped)
+
     costtime_current_start = delegate_cost(current_posestamped, start_posestamped, navplan_tolerance, navplan_speed)
     logger.log_debug("[JAVALINKER][CALCCOST] Cost current-start: " + str(costtime_current_start) + " seconds")
 
@@ -142,7 +146,7 @@ def calculate_cost(json_string):
 
     jsonmessage = {'cost': {'status': False, 'weightToStart': costtime_current_start,
                             'weight': costtime_start_goal, 'idVehicle': 12321}}
-    logger.log_debug("[JAVALINKER][CALCCOST] JSON: " + jsonmessage)
+    logger.log_debug(json_string)
 
     javamodule.send_message(jsonmessage)
 
