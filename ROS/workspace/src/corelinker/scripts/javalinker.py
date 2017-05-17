@@ -5,6 +5,7 @@ import json
 import time
 import handlers.java_module as javamodule
 import handlers.ros_module as rosmodule
+import handlers.calc_cost as calccost
 from handlers.location import Location
 import socket
 from threading import Thread
@@ -37,6 +38,11 @@ currenty = 2
 currentz = 3
 currentw = 4
 
+navplan_tolerance = 0.5
+navplan_speed = 4.0
+
+current_location = 0
+
 cb_movebase_feedback_secs = 0
 cb_movebase_status_previous = 0
 
@@ -67,6 +73,9 @@ def get_type(json_string):
     elif json_string.keys()[0] == 'startPoint':
         logger.log_debug("[JAVALINKER] json_string key = startPoint")
         set_startpoint(json_string)
+    elif json_string.keys()[0] == 'cost':
+        logger.log_debug("[JAVALINKER] json_string key = cost")
+        calculate_cost()
 
 
 def set_current_map(json_string):
@@ -85,13 +94,12 @@ def set_startpoint(json_string):
 
 
 def set_next_waypoint(json_string):
-    print json_string
+    # print json_string
     next_waypoint = Location(json_string['nextWayPoint']['x'], json_string['nextWayPoint']['y'], 0.0, 0.0, 0.0,
                              json_string['nextWayPoint']['z'], json_string['nextWayPoint']['w'])
     logger.log_info("Setting next waypoint: " + str(next_waypoint.posx) + "," + str(next_waypoint.posy) + "," +
                     str(next_waypoint.orz) + "," + str(next_waypoint.orw))
-    rosmodule.publish_movebase_goal(next_waypoint.posx, next_waypoint.posy, 0.0, 0.0, 0.0, next_waypoint.orz,
-                                    next_waypoint.orw)
+    rosmodule.publish_movebase_goal(None)
     # time.sleep(3)
     # waypoint_reached()
 
@@ -114,6 +122,47 @@ def send_location(location):
     jsonmessage = {'location': {'x': location.posx, 'y': location.posy, 'z': location.orz, 'w': location.orw}}
     json_string = json.dumps(jsonmessage)
     javamodule.send_message(json_string)
+
+
+def calculate_cost(json_string):
+    start_location = Location(json_string['cost'][0]['x'], json_string['cost'][0]['y'], 0.0, 0.0, 0.0,
+                              json_string['cost'][0]['z'], json_string['cost'][0]['w'])
+    goal_location = Location(json_string['cost'][1]['x'], json_string['cost'][1]['y'], 0.0, 0.0, 0.0,
+                             json_string['cost'][1]['z'], json_string['cost'][1]['w'])
+
+    current_pose = rosmodule.location_2_pose(current_location)
+    start_pose = rosmodule.location_2_pose(start_location)
+    goal_pose = rosmodule.location_2_pose(goal_location)
+
+    costtime_current_start = delegate_cost(current_pose, start_pose, navplan_tolerance, navplan_speed)
+    logger.log_debug("[JAVALINKER][CALCCOST] Cost current-start: " + str(costtime_current_start) + " seconds")
+
+    costtime_start_goal = delegate_cost(start_pose, goal_pose, navplan_tolerance, navplan_speed)
+    logger.log_debug("[JAVALINKER][CALCCOST] Cost start-goal: " + str(costtime_start_goal) + " seconds")
+
+    jsonmessage = {'cost': {'status': False, 'weightToStart': costtime_current_start,
+                            'weight': costtime_start_goal, 'idVehicle': 12321}}
+    logger.log_debug("[JAVALINKER][CALCCOST] JSON: " + jsonmessage)
+
+    javamodule.send_message(jsonmessage)
+
+
+def delegate_cost(startpose, goalpose, tolerance, speed):
+    path = calccost.call_service_movebase(startpose, goalpose, tolerance)
+
+    if path is not None:
+        decimated_path = calccost.decimate_path(path.plan.poses)
+
+        distance = calccost.get_distance(decimated_path)
+        logger.log_debug("[JAVALINKER][DELCOST] Distance: " + distance + " meters")
+
+        cost_time = calccost.get_time(distance, speed)
+        logger.log_debug("Estimated cost time: " + cost_time)
+
+        return cost_time
+    else:
+        return None
+
 
 """
 #############################
@@ -169,7 +218,7 @@ def cb_movebase_status(data):
 
 
 def cb_movebase_feedback(data):
-    global cb_movebase_feedback_secs
+    global cb_movebase_feedback_secs, current_location
     header = data.header
     if header.stamp.secs - cb_movebase_feedback_secs >= 1:
         cb_movebase_feedback_secs = header.stamp.secs
