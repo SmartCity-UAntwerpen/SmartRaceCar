@@ -39,7 +39,7 @@ def stop():
 
 def publish_initialpose(location):
     i = 0
-    while i < 3:
+    while i < 5:
         pose = PoseWithCovarianceStamped()
         pose.header.stamp = rospy.Time.now()
         pose.header.frame_id = "map"
