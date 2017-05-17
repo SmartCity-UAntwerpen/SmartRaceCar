@@ -29,15 +29,15 @@ public class Manager implements MQTTListener, TCPListener {
     private final String mqttPassword = "smartcity";
     private final String wayPointFolder = "wayPoints";
     private final String restURLMAAS = "http://localhost:8080/";
-    private final String restURLBackBone = "http://localhost:8080/";
+    private final String restURLBackBone = "http://146.175.140.44:1994/";
     private final String socketAddress = "146.175.140.43";
     private final int serverPort = 5005;
     private final int clientPort = 5005;
 
     private static MQTTUtils mqttUtils;
-    private RESTUtils restUtilsMAAS;
-    private RESTUtils restUtilsBackBone;
-    private TCPUtils tcpUtils;
+    private static RESTUtils restUtilsMAAS;
+    private static RESTUtils restUtilsBackBone;
+    private static TCPUtils tcpUtils;
 
     private static HashMap<Long, WayPoint> wayPoints = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
     private static HashMap<Long, Vehicle> vehicles = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
