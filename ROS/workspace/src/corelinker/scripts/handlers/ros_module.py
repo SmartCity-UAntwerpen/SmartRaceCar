@@ -101,6 +101,17 @@ def location_2_pose(location):
     return new_pose
 
 
+def pose_2_posestamped(pose):
+    new_pose = PoseStamped()
+
+    new_pose.header.stamp = rospy.Time.now()
+    new_pose.header.frame_id = "map"
+
+    new_pose.pose = pose
+
+    return new_pose
+
+
 # def cb_movebase_status(data):
 #     status_list = data.status_list
 #     if len(status_list) != 0:
