@@ -32,7 +32,7 @@ public class Core implements TCPListener, MQTTListener {
     private final String mqttBroker = "tcp://143.129.39.151:1883";
     private final String mqqtUsername = "root";
     private final String mqttPassword = "smartcity";
-    private final String restURL = "http://localhost:8080/carmanager";
+    private final String restURL = "http://146.175.140.24:8080/carmanager";
     private final int serverPort = 5005;
     private final int clientPort = 5006;
     private final String mapFolder = "maps";
@@ -253,7 +253,7 @@ public class Core implements TCPListener, MQTTListener {
                     routeNotComplete();
                 }
             }
-        } else if (topic.matches("racecar/[0-9]+/cost")) {
+        } else if (topic.matches("racecar/[0-9]+/costrequest")) {
             String[] wayPointStringValues = message.split(" ");
             try {
                 long[] wayPointValues = new long[wayPointStringValues.length];
@@ -304,7 +304,9 @@ public class Core implements TCPListener, MQTTListener {
 
     private void costComplete(Cost cost){
         Log.logInfo("CORE", "Cost request calculated.");
-        mqttUtils.publishMessage("racecar/" + ID + "/cost", JSONUtils.objectToJSONString(cost));
+        cost.setStatus(occupied);
+        cost.setIdVehicle(ID);
+        mqttUtils.publishMessage("racecar/" + ID + "/costanswer", JSONUtils.objectToJSONString(cost));
     }
 
     //Event call over interface for when MQTT connection receives new route job requests. Adds all requested waypoints to route queue one by one.

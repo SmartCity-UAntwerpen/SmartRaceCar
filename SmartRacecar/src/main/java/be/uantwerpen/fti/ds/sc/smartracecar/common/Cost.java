@@ -13,4 +13,12 @@ public class Cost {
         this.weight = weight;
         this.idVehicle = idVehicle;
     }
+
+    public void setStatus(boolean status) {
+        this.status = status;
+    }
+
+    public void setIdVehicle(long idVehicle) {
+        this.idVehicle = idVehicle;
+    }
 }

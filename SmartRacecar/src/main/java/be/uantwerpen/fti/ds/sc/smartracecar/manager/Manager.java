@@ -44,7 +44,7 @@ public class Manager implements MQTTListener, TCPListener {
     private static HashMap<Long, Vehicle> vehicles = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
     private static HashMap<Long, SimulatedVehicle> simulatedVehicles = new HashMap<>();
     private static String currentMap;
-    private static boolean costsCalculated = false;
+    private static ArrayList<Cost> costs = new ArrayList<>();
 
     public Manager() {
 
@@ -94,10 +94,11 @@ public class Manager implements MQTTListener, TCPListener {
             } else {
                 Log.logConfig("MANAGER", "Vehicle with ID " + ID + " doesn't exist. Cannot kill.");
             }
-        }else if (topic.matches("racecar/[0-9]+/cost")) {
+        }else if (topic.matches("racecar/[0-9]+/costanswer")) {
             long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
             if (vehicles.containsKey(ID)) {
-                killVehicle(ID);
+                Type typeOfCost = new TypeToken<Cost>() {}.getType();
+                costs.add((Cost) JSONUtils.getObject(message,typeOfCost));
             } else {
                 Log.logConfig("MANAGER", "Vehicle with ID " + ID + " doesn't exist. Cannot kill.");
             }
@@ -189,10 +190,10 @@ public class Manager implements MQTTListener, TCPListener {
         } else if (vehicles.isEmpty()) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "no vehicles registered yet");
         } else {
-            List<Cost> costs = new ArrayList<>();
             for (Vehicle vehicle : vehicles.values()) {
-                costs.add(new Cost(vehicle.getOccupied(), calculateCost(vehicle.getLocation(), wayPoints.get(startId)), calculateCost(wayPoints.get(startId), wayPoints.get(endId)), vehicle.getID()));
+                mqttUtils.publishMessage("racecar/" + Long.toString(vehicle.getID()) + "/costrequest", Long.toString(startId) + " " + Long.toString(endId));
             }
+            ArrayList<Cost> costs = this.costs;
             Log.logInfo("MANAGER", "Cost calculation request completed.");
             return Response.status(Response.Status.OK).
                     entity(JSONUtils.arrayToJSONString(costs)).
