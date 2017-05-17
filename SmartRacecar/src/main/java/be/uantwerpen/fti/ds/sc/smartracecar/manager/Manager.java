@@ -350,15 +350,20 @@ public class Manager implements MQTTListener, TCPListener {
         }else if(message.matches("restart\\s[0-9]+")){
             long simulationID = Long.parseLong(message.replaceAll("\\D+", ""));
             if(simulatedVehicles.containsKey(simulationID)){
-                simulatedVehicles.get(simulationID).setLastWayPoint(simulatedVehicles.get(simulationID).getStartPoint());
-                simulatedVehicles.get(simulationID).setLocation(wayPoints.get(simulatedVehicles.get(simulationID).getStartPoint()));
-                if(simulatedVehicles.get(simulationID).getID() != -1){
-                    vehicles.get(simulatedVehicles.get(simulationID).getID()).setLastWayPoint(simulatedVehicles.get(simulationID).getStartPoint());
-                    vehicles.get(simulatedVehicles.get(simulationID).getID()).setLocation(wayPoints.get(simulatedVehicles.get(simulationID).getStartPoint()));
+                if(simulatedVehicles.get(simulationID).getLastWayPoint() != -1) {
+                    simulatedVehicles.get(simulationID).setLastWayPoint(simulatedVehicles.get(simulationID).getStartPoint());
+                    simulatedVehicles.get(simulationID).setLocation(wayPoints.get(simulatedVehicles.get(simulationID).getStartPoint()));
+                    if (simulatedVehicles.get(simulationID).getID() != -1) {
+                        vehicles.get(simulatedVehicles.get(simulationID).getID()).setLastWayPoint(simulatedVehicles.get(simulationID).getStartPoint());
+                        vehicles.get(simulatedVehicles.get(simulationID).getID()).setLocation(wayPoints.get(simulatedVehicles.get(simulationID).getStartPoint()));
+                    }
+                    return "ACK";
+                }else{
+                    Log.logConfig("MANAGER","Cannot restart vehicle with simulation ID " + simulationID + ". It isn't started.");
+                    return "NACK";
                 }
-                return "ACK";
             }else{
-                Log.logConfig("MANAGER","Cannot kill vehicle with simulation ID " + simulationID + ". It does not exist.");
+                Log.logConfig("MANAGER","Cannot restart vehicle with simulation ID " + simulationID + ". It does not exist.");
                 return "NACK";
             }
         }else if(message.matches("set\\s[0-9]+\\s\\w+\\s\\w+")){
