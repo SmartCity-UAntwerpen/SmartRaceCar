@@ -1,4 +1,6 @@
-package be.uantwerpen.fti.ds.sc.smartracecar.common;
+package be.uantwerpen.fti.ds.sc.smartracecar.core;
+
+import be.uantwerpen.fti.ds.sc.smartracecar.common.Log;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
@@ -11,16 +13,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 // Creates listener over sockets to listen to vehicle messages and sends back over other socket.
-public class TCPUtils extends Thread {
+class TCPUtils extends Thread {
 
     private TCPListener listener;
     private Socket serverSocket;
     private int clientPort;
     private int serverPort;
-    private String address;
 
-    public TCPUtils(String address, int clientPort, int serverPort, TCPListener listener){
-        this.address = address;
+    TCPUtils(int clientPort, int serverPort, TCPListener listener){
         this.clientPort = clientPort;
         this.serverPort = serverPort;
         this.listener = listener;
@@ -57,7 +57,7 @@ public class TCPUtils extends Thread {
     }
 
     //sends message over clientSocket to vehicle
-    public void sendUpdate(String data) {
+    void sendUpdate(String data) {
         Socket clientSocket = null;
         DataInputStream inputLine = new DataInputStream(new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8)));
         byte[] bytes = new byte[100];
@@ -67,7 +67,7 @@ public class TCPUtils extends Thread {
         //if connection to socket can not be made, it waits until it can.
         while (!connected) {
             try {
-                clientSocket = new Socket(address, clientPort);
+                clientSocket = new Socket("localhost", clientPort);
 
                 connected = true;
             } catch (UnknownHostException e) {

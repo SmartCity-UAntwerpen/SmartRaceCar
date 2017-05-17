@@ -3,7 +3,6 @@ package be.uantwerpen.fti.ds.sc.smartracecar.manager;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.google.gson.reflect.TypeToken;
 import org.eclipse.paho.client.mqttv3.MqttException;
-
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -24,16 +23,16 @@ public class Manager implements MQTTListener, TCPListener {
 
     private boolean debugWithoutBackEnd = true; // debug parameter to stop attempts to send or recieve messages from backbone.
     private static Log log;
-    Level level = Level.INFO;
-    private final String mqttBroker = "tcp://broker.hivemq.com:1883";
+    Level level = Level.CONFIG;
+    private final String mqttBroker = "tcp://143.129.39.151:1883";
     private final String mqqtUsername = "root";
     private final String mqttPassword = "smartcity";
     private final String wayPointFolder = "wayPoints";
     private final String restURLMAAS = "http://localhost:8080/";
     private final String restURLBackBone = "http://localhost:8080/";
-    private final String socketAddress = "localhost";
+    private final String socketAddress = "146.175.140.43";
     private final int serverPort = 5005;
-    private final int clientPort = 5006;
+    private final int clientPort = 5005;
 
     private static MQTTUtils mqttUtils;
     private RESTUtils restUtilsMAAS;
@@ -49,15 +48,16 @@ public class Manager implements MQTTListener, TCPListener {
 
     }
 
-    public Manager(String currentMap) throws MqttException {
+    public Manager(String currentMap) throws MqttException, IOException {
         log = new Log(this.getClass(), level);
         Manager.currentMap = currentMap;
         restUtilsMAAS = new RESTUtils(restURLMAAS);
         restUtilsBackBone = new RESTUtils(restURLBackBone);
         mqttUtils = new MQTTUtils(mqttBroker, mqqtUsername, mqttPassword, this);
         mqttUtils.subscribeToTopic("racecar/#");
-        tcpUtils = new TCPUtils(socketAddress,clientPort,serverPort,this);
         wayPoints = XMLUtils.loadWaypoints(wayPointFolder);
+        tcpUtils = new TCPUtils(5005,this);
+        tcpUtils.start();
     }
 
     @Override
@@ -290,16 +290,16 @@ public class Manager implements MQTTListener, TCPListener {
     }
 
     @Override
-    public void parseTCP(String message) {
+    public String parseTCP(String message) {
         if(message.matches("create\\s[0-9]+")){
             long simulationID = Long.parseLong(message.replaceAll("\\D+", ""));
             if(!simulatedVehicles.containsKey(simulationID)){
                 simulatedVehicles.put(simulationID,new SimulatedVehicle((long)-1,simulationID,-1,null));
-                if (!debugWithoutBackEnd)tcpUtils.sendUpdate("ACK");
                 Log.logInfo("MANAGER", "New simulated vehicle registered with simulation ID " + simulationID + ".");
+                return "ACK";
             }else{
-                if (!debugWithoutBackEnd)tcpUtils.sendUpdate("NACK");
                 Log.logConfig("MANAGER","Cannot create vehicle with simulation ID " + simulationID + ". It already exists.");
+                return "NACK";
             }
         }else if(message.matches("run\\s[0-9]+")){
             long simulationID = Long.parseLong(message.replaceAll("\\D+", ""));
@@ -315,37 +315,37 @@ public class Manager implements MQTTListener, TCPListener {
                         simulatedVehicles.get(simulationID).setID(ID);
                         vehicles.put(ID,simulatedVehicles.get(simulationID));
                         Log.logInfo("MANAGER", "Simulated Vehicle with simulation ID " + simulationID +  " started. Given ID " + ID + ".");
+                        return "ACK";
                     }else{
                         Log.logConfig("MANAGER","Cannot start vehicle with simulation ID " + simulationID + ". It didn't have a starting point set.");
-                        if (!debugWithoutBackEnd)tcpUtils.sendUpdate("NACK");
+                        return "NACK";
                     }
                 }else{
                     Log.logConfig("MANAGER","Cannot start vehicle with simulation ID " + simulationID + ". It was already started.");
-                    if (!debugWithoutBackEnd)tcpUtils.sendUpdate("NACK");
+                    return "NACK";
                 }
             }else{
                 Log.logConfig("MANAGER","Cannot start vehicle with simulation ID " + simulationID + ". It does not exist.");
-                if (!debugWithoutBackEnd)tcpUtils.sendUpdate("NACK");
+                return "NACK";
             }
-            if (!debugWithoutBackEnd)tcpUtils.sendUpdate("ACK");
         }else if(message.matches("stop\\s[0-9]+")){
             long simulationID = Long.parseLong(message.replaceAll("\\D+", ""));
             if(simulatedVehicles.containsKey(simulationID)){
                 stopVehicle(simulatedVehicles.get(simulationID).getID());
-                if (!debugWithoutBackEnd)tcpUtils.sendUpdate("ACK");
+                return "ACK";
             }else{
                 Log.logConfig("MANAGER","Cannot stop vehicle with simulation ID " + simulationID + ". It does not exist.");
-                if (!debugWithoutBackEnd)tcpUtils.sendUpdate("NACK");
+                return "NACK";
             }
         }else if(message.matches("kill\\s[0-9]+")){
             long simulationID = Long.parseLong(message.replaceAll("\\D+", ""));
             if(simulatedVehicles.containsKey(simulationID)){
                 killVehicle(simulatedVehicles.get(simulationID).getID());
                 simulatedVehicles.remove(simulationID);
-                if (!debugWithoutBackEnd)tcpUtils.sendUpdate("ACK");
+                return "ACK";
             }else{
                 Log.logConfig("MANAGER","Cannot kill vehicle with simulation ID " + simulationID + ". It does not exist.");
-                if (!debugWithoutBackEnd)tcpUtils.sendUpdate("NACK");
+                return "NACK";
             }
         }else if(message.matches("set\\s[0-9]+\\s\\w+\\s\\w+")){
             String[] splitString = message.split("\\s+");
@@ -362,23 +362,24 @@ public class Manager implements MQTTListener, TCPListener {
                             vehicles.get(simulatedVehicles.get(simulationID).getID()).setLocation(wayPoints.get(Long.parseLong(argument)));
                         }
                         Log.logInfo("MANAGER", "Simulated Vehicle with simulation ID " + simulationID +  " given starting point ID " + argument + ".");
-                        break;
+                        return "ACK";
                     case "speed":
                         simulatedVehicles.get(simulationID).setSpeed(Float.parseFloat(argument));
                         if(simulatedVehicles.get(simulationID).getID() != -1){
                             vehicles.get(simulatedVehicles.get(simulationID).getID()).setSpeed(Float.parseFloat(argument));
                         }
                         Log.logInfo("MANAGER", "Simulated Vehicle with simulation ID " + simulationID +  " given speed " + argument + ".");
-                        break;
+                        return "ACK";
                     case "name":
                         Log.logInfo("MANAGER", "Simulated Vehicle with simulation ID " + simulationID +  " given name " + argument + ".");
-                        break;
+                        return "ACK";
                 }
             }else{
                 Log.logConfig("MANAGER","Cannot change vehicle with simulation ID " + simulationID + ". It does not exist.");
-                if (!debugWithoutBackEnd)tcpUtils.sendUpdate("NACK");
+                return "NACK";
             }
         }
+        return "NACK";
     }
 
     private void stopVehicle(Long ID){

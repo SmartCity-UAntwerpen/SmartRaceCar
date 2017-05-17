@@ -29,12 +29,11 @@ public class Core implements TCPListener, MQTTListener {
     //Hardcoded elements.
     private boolean debugWithoutRos = true; // debug parameter to stop attempts to send over sockets when ROS-Node is active.
     private Log log;
-    private Level level = Level.INFO; //Debug level
-    private final String mqttBroker = "tcp://broker.hivemq.com:1883";
+    private Level level = Level.CONFIG; //Debug level
+    private final String mqttBroker = "tcp://143.129.39.151:1883";
     private final String mqqtUsername = "root";
     private final String mqttPassword = "smartcity";
     private final String restURL = "http://localhost:8080/carmanager";
-    private final String SocketAdress = "localhost";
     private final int serverPort = 5005;
     private final int clientPort = 5006;
     private final String mapFolder = "maps";
@@ -59,7 +58,7 @@ public class Core implements TCPListener, MQTTListener {
         register();
         mqttUtils = new MQTTUtils(ID, mqttBroker, mqqtUsername, mqttPassword, this);
         mqttUtils.subscribeToTopic("racecar/" + ID + "/job");
-        tcpUtils = new TCPUtils(SocketAdress,serverPort, clientPort, this);
+        tcpUtils = new TCPUtils(serverPort, clientPort, this);
         tcpUtils.start();
 
         if (!debugWithoutRos) {
