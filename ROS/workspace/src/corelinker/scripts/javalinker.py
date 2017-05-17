@@ -154,10 +154,10 @@ def delegate_cost(startpose, goalpose, tolerance, speed):
         decimated_path = calccost.decimate_path(path.plan.poses)
 
         distance = calccost.get_distance(decimated_path)
-        logger.log_debug("[JAVALINKER][DELCOST] Distance: " + distance + " meters")
+        logger.log_debug("[JAVALINKER][DELCOST] Distance: " + str(distance) + " meters")
 
         cost_time = calccost.get_time(distance, speed)
-        logger.log_debug("Estimated cost time: " + cost_time)
+        logger.log_debug("Estimated cost time: " + str(cost_time))
 
         return cost_time
     else:
