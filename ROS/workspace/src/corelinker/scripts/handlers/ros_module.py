@@ -6,6 +6,7 @@ from geometry_msgs.msg import PoseWithCovarianceStamped
 from geometry_msgs.msg import PoseStamped
 from actionlib_msgs.msg import GoalStatusArray
 from move_base_msgs.msg import MoveBaseActionFeedback
+from geometry_msgs.msg import Pose
 
 
 '''
@@ -39,20 +40,25 @@ def stop():
 
 def publish_initialpose(location):
     i = 0
+
+    new_pose = location_2_pose(location)
     while i < 5:
         pose = PoseWithCovarianceStamped()
         pose.header.stamp = rospy.Time.now()
         pose.header.frame_id = "map"
-        pose.pose.pose.position.x = location.posx
-        pose.pose.pose.position.y = location.posy
-        pose.pose.pose.position.z = location.posz
+        # pose.pose.pose.position.x = location.posx
+        # pose.pose.pose.position.y = location.posy
+        # pose.pose.pose.position.z = location.posz
+
+        # pose.pose.pose.orientation.x = location.orx
+        # pose.pose.pose.orientation.y = location.ory
+        # pose.pose.pose.orientation.z = location.orz
+        # pose.pose.pose.orientation.w = location.orw
         pose.pose.covariance = [0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                                 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                                 0.0, 0.0, 0.06853891945200942]
-        pose.pose.pose.orientation.x = location.orx
-        pose.pose.pose.orientation.y = location.ory
-        pose.pose.pose.orientation.z = location.orz
-        pose.pose.pose.orientation.w = location.orw
+
+        pose.pose.pose = new_pose
 
         pub_initial_pose.publish(pose)
         i += 1
@@ -61,47 +67,64 @@ def publish_initialpose(location):
     return
 
 
-def publish_movebase_goal(posx, posy, posz, orx, ory, orz, orw):
+def publish_movebase_goal(location):
     pose = PoseStamped()
     pose.header.stamp = rospy.Time.now()
     pose.header.frame_id = "map"
-    pose.pose.position.x = posx
-    pose.pose.position.y = posy
-    pose.pose.position.z = posz
-    pose.pose.orientation.x = orx
-    pose.pose.orientation.y = ory
-    pose.pose.orientation.z = orz
-    pose.pose.orientation.w = orw
+
+    # pose.pose.position.x = posx
+    # pose.pose.position.y = posy
+    # pose.pose.position.z = posz
+    # pose.pose.orientation.x = orx
+    # pose.pose.orientation.y = ory
+    # pose.pose.orientation.z = orz
+    # pose.pose.orientation.w = orw
+
+    pose.pose = location_2_pose(location)
 
     pub_movebase_goal.publish(pose)
     logger.log_debug("[ROSMODULE] Goal published")
     return
 
 
-def cb_movebase_status(data):
-    status_list = data.status_list
-    if len(status_list) != 0:
-        logger.log_debug("[STATUS] Status: " + status_list[len(status_list) - 1].status)
+def location_2_pose(location):
+    new_pose = Pose()
+    new_pose.position.x = location.posx
+    new_pose.position.y = location.posy
+    new_pose.position.z = 0.0
+
+    new_pose.orientation.x = 0.0
+    new_pose.orientation.y = 0.0
+    new_pose.orientation.z = location.orz
+    new_pose.orientation.w = location.orw
+
+    return new_pose
 
 
-def cb_movebase_feedback(data):
-    global cb_movebase_feedback_secs
-    header = data.header
-    if header.stamp.secs - cb_movebase_feedback_secs >= 1:
-        cb_movebase_feedback_secs = header.stamp.secs
-        pose = data.feedback.base_position.pose
-        logger.log_debug("[FEEDBACK] Secs: " + header.stamp.secs)
-        logger.log_debug("[FEEDBACK] Position: X: " + pose.position.x +
-                         ", Y: " + pose.position.y +
-                         ", Z: " + pose.position.z)
-        logger.log_debug("[FEEDBACK] Orientation: X: " + pose.orientation.x +
-                         ", Y: " + pose.orientation.y +
-                         ", Z: " + pose.orientation.z +
-                         ", W: " + pose.orientation.w)
-        location = Location(pose.position.x, pose.position.y, 0, 0, 0, pose.orientation.z, pose.orientation.w)
-
-        from .. import javalinker
-        javalinker.send_location(location)
+# def cb_movebase_status(data):
+#     status_list = data.status_list
+#     if len(status_list) != 0:
+#         logger.log_debug("[STATUS] Status: " + status_list[len(status_list) - 1].status)
+#
+#
+# def cb_movebase_feedback(data):
+#     global cb_movebase_feedback_secs
+#     header = data.header
+#     if header.stamp.secs - cb_movebase_feedback_secs >= 1:
+#         cb_movebase_feedback_secs = header.stamp.secs
+#         pose = data.feedback.base_position.pose
+#         logger.log_debug("[FEEDBACK] Secs: " + header.stamp.secs)
+#         logger.log_debug("[FEEDBACK] Position: X: " + pose.position.x +
+#                          ", Y: " + pose.position.y +
+#                          ", Z: " + pose.position.z)
+#         logger.log_debug("[FEEDBACK] Orientation: X: " + pose.orientation.x +
+#                          ", Y: " + pose.orientation.y +
+#                          ", Z: " + pose.orientation.z +
+#                          ", W: " + pose.orientation.w)
+#         location = Location(pose.position.x, pose.position.y, 0, 0, 0, pose.orientation.z, pose.orientation.w)
+#
+#         from .. import javalinker
+#         javalinker.send_location(location)
 
 
 def init_ros(logger_argument):
