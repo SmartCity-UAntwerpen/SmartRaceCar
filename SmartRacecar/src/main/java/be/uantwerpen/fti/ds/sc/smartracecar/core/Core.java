@@ -1,6 +1,7 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.core;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
+import be.uantwerpen.fti.ds.sc.smartracecar.common.Map;
 import com.google.gson.reflect.TypeToken;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -16,9 +17,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.*;
 import java.util.logging.Level;
 
 //interface to trigger certain events from other objects such as TCP Sockets or MQTT.
@@ -27,7 +26,7 @@ import java.util.logging.Level;
 public class Core implements TCPListener, MQTTListener {
 
     //Hardcoded elements.
-    private boolean debugWithoutRos = true; // debug parameter to stop attempts to send over sockets when ROS-Node is active.
+    private boolean debugWithoutRos = false; // debug parameter to stop attempts to send over sockets when ROS-Node is active.
     private Log log;
     private Level level = Level.CONFIG; //Debug level
     private final String mqttBroker = "tcp://143.129.39.151:1883";
@@ -57,7 +56,7 @@ public class Core implements TCPListener, MQTTListener {
         requestWaypoints();
         register();
         mqttUtils = new MQTTUtils(ID, mqttBroker, mqqtUsername, mqttPassword, this);
-        mqttUtils.subscribeToTopic("racecar/" + ID + "/job");
+        mqttUtils.subscribeToTopic("racecar/" + ID + "/#");
         tcpUtils = new TCPUtils(serverPort, clientPort, this);
         tcpUtils.start();
 
@@ -233,24 +232,38 @@ public class Core implements TCPListener, MQTTListener {
     }
 
     public void parseMQTT(String topic, String message) {
-        if(message.equals("stop")){
-            sendWheelStates(0,0);
-        }else{
-            if (!occupied) {
-                String[] wayPointStringValues = message.split(" ");
-                try {
-                    long[] wayPointValues = new long[wayPointStringValues.length];
-                    for (int index = 0; index < wayPointStringValues.length; index++) {
-
-                        wayPointValues[index] = Integer.parseInt(wayPointStringValues[index]);
-                    }
-                    jobRequest(wayPointValues);
-                } catch (NumberFormatException e) {
-                    Log.logWarning("CORE", "Parsing MQTT gives bad result: " + e);
-                }
+        if (topic.matches("racecar/[0-9]+/job")) {
+            if (message.equals("stop")) {
+                sendWheelStates(0, 0);
             } else {
-                Log.logWarning("CORE", "Current Route not completed. Not adding waypoints.");
-                routeNotComplete();
+                if (!occupied) {
+                    String[] wayPointStringValues = message.split(" ");
+                    try {
+                        long[] wayPointValues = new long[wayPointStringValues.length];
+                        for (int index = 0; index < wayPointStringValues.length; index++) {
+
+                            wayPointValues[index] = Integer.parseInt(wayPointStringValues[index]);
+                        }
+                        jobRequest(wayPointValues);
+                    } catch (NumberFormatException e) {
+                        Log.logWarning("CORE", "Parsing MQTT gives bad result: " + e);
+                    }
+                } else {
+                    Log.logWarning("CORE", "Current Route not completed. Not adding waypoints.");
+                    routeNotComplete();
+                }
+            }
+        } else if (topic.matches("racecar/[0-9]+/cost")) {
+            String[] wayPointStringValues = message.split(" ");
+            try {
+                long[] wayPointValues = new long[wayPointStringValues.length];
+                for (int index = 0; index < wayPointStringValues.length; index++) {
+
+                    wayPointValues[index] = Integer.parseInt(wayPointStringValues[index]);
+                }
+                costRequest(wayPointValues);
+            } catch (NumberFormatException e) {
+                Log.logWarning("CORE", "Parsing MQTT gives bad result: " + e);
             }
         }
     }
@@ -268,11 +281,30 @@ public class Core implements TCPListener, MQTTListener {
                 case "connect":
                     connectReceive();
                     break;
+                case "cost":
+                    costComplete((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
                 default:
                     Log.logWarning("CORE", "No matching keyword when parsing JSON from Sockets. Data: " + message);
                     break;
             }
         }
+    }
+
+    private void costRequest(long[] wayPointIDs){
+        List<Point> costs = new ArrayList<>();
+        costs.add(wayPoints.get(wayPointIDs[0]));
+        costs.add(wayPoints.get(wayPointIDs[1]));
+        if (!debugWithoutRos){
+            tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("cost", JSONUtils.arrayToJSONString(costs)));
+        }else{
+            costComplete(new Cost(false,(long)5,(long)5,ID));
+        }
+        Log.logInfo("CORE", "Cost request send between waypoints " + wayPointIDs[0] + " and " + wayPointIDs[1] + ".");
+    }
+
+    private void costComplete(Cost cost){
+        Log.logInfo("CORE", "Cost request calculated.");
+        mqttUtils.publishMessage("racecar/" + ID + "/cost", JSONUtils.objectToJSONString(cost));
     }
 
     //Event call over interface for when MQTT connection receives new route job requests. Adds all requested waypoints to route queue one by one.

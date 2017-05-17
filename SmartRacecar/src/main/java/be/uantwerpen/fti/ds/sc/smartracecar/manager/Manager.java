@@ -21,7 +21,8 @@ import java.util.logging.Level;
 @Path("carmanager")
 public class Manager implements MQTTListener, TCPListener {
 
-    private boolean debugWithoutBackEnd = true; // debug parameter to stop attempts to send or recieve messages from backbone.
+    private boolean debugWithoutBackBone = true; // debug parameter to stop attempts to send or recieve messages from backbone.
+    private boolean debugWithoutMAAS = true; // debug parameter to stop attempts to send or recieve messages from MAAS
     private static Log log;
     Level level = Level.CONFIG;
     private final String mqttBroker = "tcp://143.129.39.151:1883";
@@ -43,6 +44,7 @@ public class Manager implements MQTTListener, TCPListener {
     private static HashMap<Long, Vehicle> vehicles = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
     private static HashMap<Long, SimulatedVehicle> simulatedVehicles = new HashMap<>();
     private static String currentMap;
+    private static boolean costsCalculated = false;
 
     public Manager() {
 
@@ -92,6 +94,13 @@ public class Manager implements MQTTListener, TCPListener {
             } else {
                 Log.logConfig("MANAGER", "Vehicle with ID " + ID + " doesn't exist. Cannot kill.");
             }
+        }else if (topic.matches("racecar/[0-9]+/cost")) {
+            long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
+            if (vehicles.containsKey(ID)) {
+                killVehicle(ID);
+            } else {
+                Log.logConfig("MANAGER", "Vehicle with ID " + ID + " doesn't exist. Cannot kill.");
+            }
         }
     }
 
@@ -110,7 +119,7 @@ public class Manager implements MQTTListener, TCPListener {
         switch (message) {
             case "done":
                 vehicles.get(ID).setOccupied(false);
-                if (!debugWithoutBackEnd) {
+                if (!debugWithoutMAAS) {
                     restUtilsMAAS.getTextPlain("completeJob/" + ID);
                 }
                 Log.logInfo("MANAGER", "Vehicle with ID " + ID + " has completed his route.");
@@ -134,8 +143,8 @@ public class Manager implements MQTTListener, TCPListener {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "Waypoint " + startWayPoint + " not found");
         } else {
             long id;
-            if (!debugWithoutBackEnd) {
-                id = Long.parseLong(restUtilsBackBone.getTextPlain("bot/newBot/car"));
+            if (!debugWithoutBackBone) {
+                id = Long.parseLong(restUtilsBackBone.getJSON("bot/newBot/car"));
             } else {
                 id = (long) vehicles.size();
             }
@@ -307,8 +316,8 @@ public class Manager implements MQTTListener, TCPListener {
                 if(simulatedVehicles.get(simulationID).getID() == -1){
                     if(simulatedVehicles.get(simulationID).getLastWayPoint() != -1){
                         Long ID;
-                        if (!debugWithoutBackEnd) {
-                            ID = Long.parseLong(restUtilsBackBone.getTextPlain("bot/newBot/car"));
+                        if (!debugWithoutBackBone) {
+                            ID = Long.parseLong(restUtilsBackBone.getJSON("bot/newBot/car"));
                         } else {
                             ID = (long) vehicles.size();
                         }

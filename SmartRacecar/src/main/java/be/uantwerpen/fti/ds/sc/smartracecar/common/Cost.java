@@ -1,13 +1,13 @@
-package be.uantwerpen.fti.ds.sc.smartracecar.manager;
+package be.uantwerpen.fti.ds.sc.smartracecar.common;
 
-class Cost {
+public class Cost {
 
     private boolean status;
     private Long weightToStart;
     private Long weight;
     private Long idVehicle;
 
-    Cost(boolean status, Long weightToStart, Long weight, Long idVehicle){
+    public Cost(boolean status, Long weightToStart, Long weight, Long idVehicle){
         this.status = status;
         this.weightToStart = weightToStart;
         this.weight = weight;
