@@ -130,14 +130,14 @@ def calculate_cost(json_string):
     goal_location = Location(json_string['cost'][1]['x'], json_string['cost'][1]['y'], 0.0, 0.0, 0.0,
                              json_string['cost'][1]['z'], json_string['cost'][1]['w'])
 
-    current_pose = rosmodule.location_2_pose(current_location)
-    start_pose = rosmodule.location_2_pose(start_location)
-    goal_pose = rosmodule.location_2_pose(goal_location)
+    current_posestamped = rosmodule.pose_2_posestamped(rosmodule.location_2_pose(current_location))
+    start_posestamped = rosmodule.pose_2_posestamped(rosmodule.location_2_pose(start_location))
+    goal_posestamped = rosmodule.pose_2_posestamped(rosmodule.location_2_pose(goal_location))
 
-    costtime_current_start = delegate_cost(current_pose, start_pose, navplan_tolerance, navplan_speed)
+    costtime_current_start = delegate_cost(current_posestamped, start_posestamped, navplan_tolerance, navplan_speed)
     logger.log_debug("[JAVALINKER][CALCCOST] Cost current-start: " + str(costtime_current_start) + " seconds")
 
-    costtime_start_goal = delegate_cost(start_pose, goal_pose, navplan_tolerance, navplan_speed)
+    costtime_start_goal = delegate_cost(start_posestamped, goal_posestamped, navplan_tolerance, navplan_speed)
     logger.log_debug("[JAVALINKER][CALCCOST] Cost start-goal: " + str(costtime_start_goal) + " seconds")
 
     jsonmessage = {'cost': {'status': False, 'weightToStart': costtime_current_start,
