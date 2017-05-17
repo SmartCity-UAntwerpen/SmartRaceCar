@@ -75,7 +75,7 @@ def get_type(json_string):
         set_startpoint(json_string)
     elif json_string.keys()[0] == 'cost':
         logger.log_debug("[JAVALINKER] json_string key = cost")
-        calculate_cost()
+        calculate_cost(json_string)
 
 
 def set_current_map(json_string):
