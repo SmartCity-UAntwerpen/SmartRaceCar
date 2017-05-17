@@ -146,8 +146,8 @@ def init_ros(logger_argument):
     elif logging_level == 4:
         rospy.init_node('javalinker', log_level=rospy.ERROR, anonymous=True)
 
-    rospy.Subscriber('move_base/status', GoalStatusArray, cb_movebase_status)
-    rospy.Subscriber('move_base/feedback', MoveBaseActionFeedback, cb_movebase_feedback)
+    # rospy.Subscriber('move_base/status', GoalStatusArray, cb_movebase_status)
+    # rospy.Subscriber('move_base/feedback', MoveBaseActionFeedback, cb_movebase_feedback)
 
     logger.log_info("[ROSMODULE] ROS initialised")
 
