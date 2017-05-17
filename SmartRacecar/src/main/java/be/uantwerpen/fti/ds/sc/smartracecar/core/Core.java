@@ -295,7 +295,7 @@ public class Core implements TCPListener, MQTTListener {
         costs.add(wayPoints.get(wayPointIDs[0]));
         costs.add(wayPoints.get(wayPointIDs[1]));
         if (!debugWithoutRos){
-            tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("cost", JSONUtils.arrayToJSONString(costs)));
+            tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("cost",costs));
         }else{
             costComplete(new Cost(false,(long)5,(long)5,ID));
         }

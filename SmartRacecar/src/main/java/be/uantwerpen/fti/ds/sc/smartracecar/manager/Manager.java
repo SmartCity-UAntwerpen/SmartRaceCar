@@ -32,8 +32,8 @@ public class Manager implements MQTTListener, TCPListener {
     private final String restURLMAAS = "http://localhost:8080/";
     private final String restURLBackBone = "http://146.175.140.44:1994/";
     private final String socketAddress = "146.175.140.43";
-    private final int serverPort = 5005;
-    private final int clientPort = 5005;
+    private final int serverPort = 10000;
+    private final int clientPort = 10000;
 
     private static MQTTUtils mqttUtils;
     private static RESTUtils restUtilsMAAS;
@@ -184,7 +184,7 @@ public class Manager implements MQTTListener, TCPListener {
     @GET
     @Path("calcWeight/{start}/to/{stop}")
     @Produces("application/json")
-    public Response calculateCostsRequest(@PathParam("start") final long startId, @PathParam("stop") final long endId, @Context HttpServletResponse response) throws IOException {
+    public Response calculateCostsRequest(@PathParam("start") final long startId, @PathParam("stop") final long endId, @Context HttpServletResponse response) throws IOException, InterruptedException {
         if (!wayPoints.containsKey(startId) || !wayPoints.containsKey(endId)) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "start or end waypoint not found");
         } else if (vehicles.isEmpty()) {
@@ -192,6 +192,9 @@ public class Manager implements MQTTListener, TCPListener {
         } else {
             for (Vehicle vehicle : vehicles.values()) {
                 mqttUtils.publishMessage("racecar/" + Long.toString(vehicle.getID()) + "/costrequest", Long.toString(startId) + " " + Long.toString(endId));
+            }
+            while(costs.size() != (vehicles.size() - simulatedVehicles.size())){
+                Thread.sleep(1000);
             }
             ArrayList<Cost> costs = this.costs;
             Log.logInfo("MANAGER", "Cost calculation request completed.");
