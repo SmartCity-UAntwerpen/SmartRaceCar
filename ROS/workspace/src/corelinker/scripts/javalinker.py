@@ -125,6 +125,8 @@ def send_location(location):
 
 
 def calculate_cost(json_string):
+    global current_location
+
     start_location = Location(json_string['cost'][0]['x'], json_string['cost'][0]['y'], 0.0, 0.0, 0.0,
                               json_string['cost'][0]['z'], json_string['cost'][0]['w'])
     goal_location = Location(json_string['cost'][1]['x'], json_string['cost'][1]['y'], 0.0, 0.0, 0.0,
@@ -138,7 +140,7 @@ def calculate_cost(json_string):
     logger.log_debug(start_posestamped)
     logger.log_debug(goal_posestamped)
 
-    costtime_current_start = delegate_cost(current_posestamped, start_posestamped, navplan_tolerance, navplan_speed)
+    costtime_current_start = delegate_cost(goal_posestamped, start_posestamped, navplan_tolerance, navplan_speed)
     logger.log_debug("[JAVALINKER][CALCCOST] Cost current-start: " + str(costtime_current_start) + " seconds")
 
     costtime_start_goal = delegate_cost(start_posestamped, goal_posestamped, navplan_tolerance, navplan_speed)
