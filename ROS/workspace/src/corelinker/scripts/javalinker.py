@@ -85,23 +85,23 @@ def set_current_map(json_string):
 
 
 def set_startpoint(json_string):
+    global current_location
     start_location = Location(json_string['startPoint']['x'], json_string['startPoint']['y'], 0.0, 0.0, 0.0,
                               json_string['startPoint']['z'], json_string['startPoint']['w'])
 
     logger.log_info("Current startPoint set: " + str(start_location.posx) + "," + str(start_location.posy) + "," +
                     str(start_location.orz) + "," + str(start_location.orw))
+    current_location = start_location
+
     rosmodule.publish_initialpose(start_location)
 
 
 def set_next_waypoint(json_string):
-    # print json_string
     next_waypoint = Location(json_string['nextWayPoint']['x'], json_string['nextWayPoint']['y'], 0.0, 0.0, 0.0,
                              json_string['nextWayPoint']['z'], json_string['nextWayPoint']['w'])
     logger.log_info("Setting next waypoint: " + str(next_waypoint.posx) + "," + str(next_waypoint.posy) + "," +
                     str(next_waypoint.orz) + "," + str(next_waypoint.orw))
-    rosmodule.publish_movebase_goal(None)
-    # time.sleep(3)
-    # waypoint_reached()
+    rosmodule.publish_movebase_goal(next_waypoint)
 
 
 def waypoint_reached():
@@ -206,12 +206,15 @@ class ServerThread(Thread):
 
 
 def cb_movebase_status(data):
+    global cb_movebase_status_previous
+
     status_list = data.status_list
     if len(status_list) != 0:
         status = status_list[len(status_list) - 1].status
         logger.log_debug("[STATUS] Status: " + status_list[len(status_list) - 1].status)
 
         if status != cb_movebase_status_previous:
+            cb_movebase_status_previous = status
             if status == 3:
                 logger.log_debug("[JAVALINKER] Waypoint reached")
                 waypoint_reached()
@@ -223,14 +226,14 @@ def cb_movebase_feedback(data):
     if header.stamp.secs - cb_movebase_feedback_secs >= 1:
         cb_movebase_feedback_secs = header.stamp.secs
         pose = data.feedback.base_position.pose
-        logger.log_debug("[FEEDBACK] Secs: " + header.stamp.secs)
-        logger.log_debug("[FEEDBACK] Position: X: " + pose.position.x +
-                         ", Y: " + pose.position.y +
-                         ", Z: " + pose.position.z)
-        logger.log_debug("[FEEDBACK] Orientation: X: " + pose.orientation.x +
-                         ", Y: " + pose.orientation.y +
-                         ", Z: " + pose.orientation.z +
-                         ", W: " + pose.orientation.w)
+        logger.log_debug("[FEEDBACK] Secs: " + str(header.stamp.secs))
+        logger.log_debug("[FEEDBACK] Position: X: " + str(pose.position.x) +
+                         ", Y: " + str(pose.position.y) +
+                         ", Z: " + str(pose.position.z))
+        logger.log_debug("[FEEDBACK] Orientation: X: " + str(pose.orientation.x) +
+                         ", Y: " + str(pose.orientation.y) +
+                         ", Z: " + str(pose.orientation.z) +
+                         ", W: " + str(pose.orientation.w))
         current_location = Location(pose.position.x, pose.position.y, 0, 0, 0, pose.orientation.z, pose.orientation.w)
         send_location(current_location)
 
@@ -249,7 +252,6 @@ if __name__ == "__main__":
     if not DEBUG_WITHOUT_ROS:
         rosmodule.init_ros(logger)
         logger.log_debug("[JAVALINKER] Debug with ros!")
-        rosmodule.rospy_spin()
 
         import rospy
         from actionlib_msgs.msg import GoalStatusArray
@@ -257,6 +259,7 @@ if __name__ == "__main__":
 
         rospy.Subscriber('move_base/status', GoalStatusArray, cb_movebase_status)
         rospy.Subscriber('move_base/feedback', MoveBaseActionFeedback, cb_movebase_feedback)
+        rosmodule.rospy_spin()
 
     else:
         while True:
