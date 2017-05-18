@@ -268,7 +268,7 @@ if __name__ == "__main__":
     if not DEBUG_WITHOUT_JAVA:
         javamodule.set_logger(logger)
         start_thread()
-        threadsmodule.start_java_thread(1)
+        # threadsmodule.start_java_thread(1)
         logger.log_info("Debug without java: False")
 
     # while currentmap is 'default':
