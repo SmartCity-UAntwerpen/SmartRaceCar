@@ -218,7 +218,7 @@ class ROSThread(Thread):
 
     def run(self):
         global logger, currentmap
-        while True:
+        while not exit_node:
             print currentmap
             print "Waiting for map"
             time.sleep(0.1)
@@ -284,29 +284,33 @@ def cb_movebase_feedback(data):
 """
 
 if __name__ == "__main__":
-    if not DEBUG_WITHOUT_JAVA:
-        javamodule.set_logger(logger)
-        start_thread()
-        logger.log_info("Debug without java: False")
+    try:
+        if not DEBUG_WITHOUT_JAVA:
+            javamodule.set_logger(logger)
+            start_thread()
+            logger.log_info("Debug without java: False")
 
-    # while currentmap is 'default':
-    #     print "Waiting for map"
-    #     time.sleep(0.1)
-    # os.system("roslaunch f1tenth_2dnav move_base.launch map_name:=zbuilding.yaml speed:=1.4 ")
+        # while currentmap is 'default':
+        #     print "Waiting for map"
+        #     time.sleep(0.1)
+        # os.system("roslaunch f1tenth_2dnav move_base.launch map_name:=zbuilding.yaml speed:=1.4 ")
 
-    if not DEBUG_WITHOUT_ROS:
-        start_ros_thread()
-        # rosmodule.init_ros(logger)
-        # logger.log_debug("[JAVALINKER] Debug with ros!")
-        #
-        # import rospy
-        # from actionlib_msgs.msg import GoalStatusArray
-        # from move_base_msgs.msg import MoveBaseActionFeedback
-        #
-        # rospy.Subscriber('move_base/status', GoalStatusArray, cb_movebase_status)
-        # rospy.Subscriber('move_base/feedback', MoveBaseActionFeedback, cb_movebase_feedback)
-        # rosmodule.rospy_spin()
+        if not DEBUG_WITHOUT_ROS:
+            start_ros_thread()
+            # rosmodule.init_ros(logger)
+            # logger.log_debug("[JAVALINKER] Debug with ros!")
+            #
+            # import rospy
+            # from actionlib_msgs.msg import GoalStatusArray
+            # from move_base_msgs.msg import MoveBaseActionFeedback
+            #
+            # rospy.Subscriber('move_base/status', GoalStatusArray, cb_movebase_status)
+            # rospy.Subscriber('move_base/feedback', MoveBaseActionFeedback, cb_movebase_feedback)
+            # rosmodule.rospy_spin()
 
-    else:
-        while True:
-            time.sleep(5)
+        else:
+            while True:
+                time.sleep(5)
+    except KeyboardInterrupt:
+        exit_node = True
+        raise
