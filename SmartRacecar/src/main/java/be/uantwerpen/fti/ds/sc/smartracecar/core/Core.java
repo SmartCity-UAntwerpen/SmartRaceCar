@@ -24,7 +24,7 @@ import java.util.logging.Level;
 //interface to trigger certain events from other objects such as TCP Sockets or MQTT.
 
 
-public class Core implements TCPListener, MQTTListener {
+class Core implements TCPListener, MQTTListener {
 
     //Hardcoded elements.
     private boolean debugWithoutRos = true; // debug parameter to stop attempts to send over sockets when ROS-Node is active.
@@ -50,7 +50,7 @@ public class Core implements TCPListener, MQTTListener {
     private static long startPoint; // Starting position on map. Given by main argument.
     private boolean occupied = false; // To verify if racecar is currently occupied by a route job.
 
-    public Core() throws InterruptedException, IOException {
+    private Core() throws InterruptedException, IOException {
         log = new Log(this.getClass(), level);
         restUtils = new RESTUtils(restURL);
         requestWaypoints();

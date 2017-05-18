@@ -6,17 +6,17 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.logging.Level;
 
-class SimDeployer implements TCPListener {
+ class SimDeployer implements TCPListener {
 
     private final int serverPort = 5007;
     private static Log log;
-    Level level = Level.CONFIG;
+    private Level level = Level.CONFIG;
 
     private TCPUtils tcpUtils;
 
     private static HashMap<Long, SimulatedVehicle> simulatedVehicles = new HashMap<>();
 
-    SimDeployer() throws IOException {
+    private SimDeployer() throws IOException {
         log = new Log(this.getClass(), level);
         tcpUtils = new TCPUtils(serverPort, this);
         tcpUtils.start();
@@ -70,7 +70,7 @@ class SimDeployer implements TCPListener {
                     return false;
             }
         } else {
-            Log.logConfig("MANAGER", "Cannot stop vehicle with simulation ID " + simulationID + ". It does not exist.");
+            Log.logWarning("MANAGER", "Cannot stop vehicle with simulation ID " + simulationID + ". It does not exist.");
             return false;
         }
     }
@@ -81,7 +81,7 @@ class SimDeployer implements TCPListener {
             Log.logInfo("MANAGER", "New simulated vehicle registered with simulation ID " + simulationID + ".");
             return true;
         } else {
-            Log.logConfig("MANAGER", "Cannot create vehicle with simulation ID " + simulationID + ". It already exists.");
+            Log.logWarning("MANAGER", "Cannot create vehicle with simulation ID " + simulationID + ". It already exists.");
             return false;
         }
 
@@ -92,7 +92,7 @@ class SimDeployer implements TCPListener {
             Log.logInfo("MANAGER", "Vehicle with ID " + simulationID + " Stopped.");
             return true;
         } else {
-            Log.logConfig("MANAGER", "Cannot stop vehicle with simulation ID " + simulationID + ". It does not exist.");
+            Log.logWarning("MANAGER", "Cannot stop vehicle with simulation ID " + simulationID + ". It does not exist.");
             return false;
         }
     }
@@ -103,7 +103,7 @@ class SimDeployer implements TCPListener {
             Log.logInfo("MANAGER", "Vehicle with ID " + simulationID + " killed.");
             return true;
         } else {
-            Log.logConfig("MANAGER", "Cannot restart vehicle with simulation ID " + simulationID + ". It does not exist.");
+            Log.logWarning("MANAGER", "Cannot restart vehicle with simulation ID " + simulationID + ". It does not exist.");
             return false;
         }
     }
@@ -111,14 +111,14 @@ class SimDeployer implements TCPListener {
     private boolean restartVehicle(long simulationID){
         if (simulatedVehicles.containsKey(simulationID)) {
             if (simulatedVehicles.get(simulationID).isDeployed()) {
-                Log.logConfig("MANAGER", "Restarted vehicle with simulation ID " + simulationID + ".");
+                Log.logInfo("MANAGER", "Restarted vehicle with simulation ID " + simulationID + ".");
                 return true;
             } else {
-                Log.logConfig("MANAGER", "Cannot restart vehicle with simulation ID " + simulationID + ". It isn't started.");
+                Log.logWarning("MANAGER", "Cannot restart vehicle with simulation ID " + simulationID + ". It isn't started.");
                 return false;
             }
         } else {
-            Log.logConfig("MANAGER", "Cannot restart vehicle with simulation ID " + simulationID + ". It does not exist.");
+            Log.logWarning("MANAGER", "Cannot restart vehicle with simulation ID " + simulationID + ". It does not exist.");
             return false;
         }
     }
@@ -131,15 +131,15 @@ class SimDeployer implements TCPListener {
                     Log.logInfo("MANAGER", "Simulated Vehicle with simulation ID " + simulationID + " started.");
                     return true;
                 } else {
-                    Log.logConfig("MANAGER", "Cannot start vehicle with simulation ID " + simulationID + ". It didn't have a starting point set.");
+                    Log.logWarning("MANAGER", "Cannot start vehicle with simulation ID " + simulationID + ". It didn't have a starting point set.");
                     return false;
                 }
             } else {
-                Log.logConfig("MANAGER", "Cannot start vehicle with simulation ID " + simulationID + ". It was already started.");
+                Log.logWarning("MANAGER", "Cannot start vehicle with simulation ID " + simulationID + ". It was already started.");
                 return false;
             }
         } else {
-            Log.logConfig("MANAGER", "Cannot start vehicle with simulation ID " + simulationID + ". It does not exist.");
+            Log.logWarning("MANAGER", "Cannot start vehicle with simulation ID " + simulationID + ". It does not exist.");
             return false;
         }
     }

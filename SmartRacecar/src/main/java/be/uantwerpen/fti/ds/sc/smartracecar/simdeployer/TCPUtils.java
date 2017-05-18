@@ -4,13 +4,13 @@ import be.uantwerpen.fti.ds.sc.smartracecar.common.Log;
 import java.net.*;
 import java.io.*;
 
-public class TCPUtils extends Thread {
+class TCPUtils extends Thread {
     private ServerSocket serverSocket;
     private BufferedReader in;
     private PrintWriter out;
     private TCPListener listener;
 
-    public TCPUtils(int port, TCPListener listener) throws IOException {
+    TCPUtils(int port, TCPListener listener) throws IOException {
         serverSocket = new ServerSocket(port);
         this.listener = listener;
     }
