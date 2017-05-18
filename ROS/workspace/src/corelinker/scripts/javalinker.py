@@ -205,6 +205,33 @@ class ServerThread(Thread):
             json_string = json.loads(data_string)
             get_type(json_string)
 
+
+def start_ros_thread():
+    newthread = ROSThread()
+    newthread.daemon = True
+    newthread.start()
+
+
+class ROSThread(Thread):
+    def __init__(self):
+        Thread.__init__(self)
+
+    def run(self):
+        while currentmap is 'default':
+            print "Waiting for map"
+            time.sleep(0.1)
+
+        rosmodule.init_ros(logger)
+        logger.log_debug("[JAVALINKER] Debug with ros!")
+
+        import rospy
+        from actionlib_msgs.msg import GoalStatusArray
+        from move_base_msgs.msg import MoveBaseActionFeedback
+
+        rospy.Subscriber('move_base/status', GoalStatusArray, cb_movebase_status)
+        rospy.Subscriber('move_base/feedback', MoveBaseActionFeedback, cb_movebase_feedback)
+        rosmodule.rospy_spin()
+
 """
 ##############################
 ##  ROS Callback functions  ##
@@ -256,22 +283,23 @@ if __name__ == "__main__":
         start_thread()
         logger.log_info("Debug without java: False")
 
-    while currentmap is 'default':
-        print "Waiting for map"
-        time.sleep(0.1)
+    # while currentmap is 'default':
+    #     print "Waiting for map"
+    #     time.sleep(0.1)
     # os.system("roslaunch f1tenth_2dnav move_base.launch map_name:=zbuilding.yaml speed:=1.4 ")
 
     if not DEBUG_WITHOUT_ROS:
-        rosmodule.init_ros(logger)
-        logger.log_debug("[JAVALINKER] Debug with ros!")
-
-        import rospy
-        from actionlib_msgs.msg import GoalStatusArray
-        from move_base_msgs.msg import MoveBaseActionFeedback
-
-        rospy.Subscriber('move_base/status', GoalStatusArray, cb_movebase_status)
-        rospy.Subscriber('move_base/feedback', MoveBaseActionFeedback, cb_movebase_feedback)
-        rosmodule.rospy_spin()
+        start_ros_thread()
+        # rosmodule.init_ros(logger)
+        # logger.log_debug("[JAVALINKER] Debug with ros!")
+        #
+        # import rospy
+        # from actionlib_msgs.msg import GoalStatusArray
+        # from move_base_msgs.msg import MoveBaseActionFeedback
+        #
+        # rospy.Subscriber('move_base/status', GoalStatusArray, cb_movebase_status)
+        # rospy.Subscriber('move_base/feedback', MoveBaseActionFeedback, cb_movebase_feedback)
+        # rosmodule.rospy_spin()
 
     else:
         while True:
