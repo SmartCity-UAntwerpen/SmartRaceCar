@@ -12,6 +12,7 @@ import socket
 from threading import Thread
 
 logger = logmodule.Logger()
+print "kak"
 
 # Set this variable to False when using the Ros-system
 # The code bypasses all Ros functions when set to True
