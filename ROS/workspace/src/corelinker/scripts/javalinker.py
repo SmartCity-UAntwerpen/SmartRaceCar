@@ -258,6 +258,7 @@ if __name__ == "__main__":
 
     while currentmap is 'default':
         print "Waiting for map"
+        time.sleep(0.1)
     # os.system("roslaunch f1tenth_2dnav move_base.launch map_name:=zbuilding.yaml speed:=1.4 ")
 
     if not DEBUG_WITHOUT_ROS:
