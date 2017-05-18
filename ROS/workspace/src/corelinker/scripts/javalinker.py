@@ -12,7 +12,6 @@ import socket
 from threading import Thread
 
 logger = logmodule.Logger()
-print "kak"
 
 # Set this variable to False when using the Ros-system
 # The code bypasses all Ros functions when set to True
@@ -220,6 +219,7 @@ class ROSThread(Thread):
     def run(self):
         global logger, currentmap
         while currentmap == 'default':
+            print currentmap
             print "Waiting for map"
             time.sleep(0.1)
 
