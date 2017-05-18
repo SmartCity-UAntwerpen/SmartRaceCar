@@ -42,6 +42,8 @@ currentw = 4
 navplan_tolerance = 0.5
 navplan_speed = 4.0
 
+navstack_speed = 4.0
+
 current_location = 0
 
 cb_movebase_feedback_secs = 0
@@ -207,6 +209,24 @@ class ServerThread(Thread):
             json_string = json.loads(data_string)
             get_type(json_string)
 
+
+def start_navstack_thread(currentmap, speed):
+    newthread = NavStack_Thread(currentmap, speed)
+    newthread.daemon = True
+    newthread.start()
+
+
+class NavStack_Thread(Thread):
+    def __init__(self, _CURRENTMAP_, _SPEED_):
+        Thread.__init__(self)
+        self._CURRENTMAP_ = _CURRENTMAP_
+        self._SPEED_ = _SPEED_
+
+    def run(self):
+        command = "roslaunch f1tenth_2dnav move_base.launch map_name:=" + self._CURRENTMAP_ + \
+                  ".yaml speed:=" + self._SPEED_ + ""
+        os.system(command)
+
 """
 ##############################
 ##  ROS Callback functions  ##
@@ -253,9 +273,8 @@ def cb_movebase_feedback(data):
 """
 
 
-def launch_navstack(currentmap):
-    command = "roslaunch f1tenth_2dnav move_base.launch map_name:=" + currentmap + ".yaml speed:=1.4"
-    os.system(command)
+def launch_navstack(curmap):
+    start_navstack_thread(curmap, navstack_speed)
     logger.log_debug("[JAVALINKER] navstack launched")
 
 if __name__ == "__main__":
