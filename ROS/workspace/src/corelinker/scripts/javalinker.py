@@ -217,7 +217,7 @@ class ROSThread(Thread):
         Thread.__init__(self)
 
     def run(self):
-        global logger
+        global logger, currentmap
         while currentmap is 'default':
             print "Waiting for map"
             time.sleep(0.1)
