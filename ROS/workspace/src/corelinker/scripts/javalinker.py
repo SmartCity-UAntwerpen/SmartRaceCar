@@ -2,6 +2,7 @@
 
 import handlers.logger as logmodule
 import json
+import os
 import time
 import handlers.java_module as javamodule
 import handlers.ros_module as rosmodule
@@ -254,6 +255,10 @@ if __name__ == "__main__":
         javamodule.set_logger(logger)
         start_thread()
         logger.log_info("Debug without java: False")
+
+    while currentmap is not 'default':
+        logger.log_debug("Waiting for map")
+    # os.system("roslaunch f1tenth_2dnav move_base.launch map_name:=zbuilding.yaml speed:=1.4 ")
 
     if not DEBUG_WITHOUT_ROS:
         rosmodule.init_ros(logger)
