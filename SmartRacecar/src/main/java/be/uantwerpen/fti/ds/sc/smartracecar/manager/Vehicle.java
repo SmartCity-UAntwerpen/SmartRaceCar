@@ -8,7 +8,6 @@ class Vehicle {
     private long lastWayPoint;
     private Point location;
     private boolean occupied = false;
-    private Float speed = Float.valueOf(3);
 
 
 
@@ -34,28 +33,11 @@ class Vehicle {
         occupied = state;
     }
 
-
-    Point getLocation() {
-        return location;
-    }
-
     boolean getOccupied() {
         return occupied;
     }
 
     Long getID() {
         return ID;
-    }
-
-    void setID(Long ID){
-        this.ID = ID;
-    }
-
-    public void setLocation(Point location) {
-        this.location = location;
-    }
-
-    public void setSpeed(Float speed) {
-        this.speed = speed;
     }
 }
