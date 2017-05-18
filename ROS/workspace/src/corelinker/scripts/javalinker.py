@@ -255,6 +255,7 @@ def cb_movebase_feedback(data):
 
 def launch_navstack(currentmap):
     os.system("roslaunch f1tenth_2dnav move_base.launch map_name:=zbuilding.yaml speed:=1.4 ")
+    logger.log_debug("[JAVALINKER] navstack launched")
 
 if __name__ == "__main__":
     if not DEBUG_WITHOUT_JAVA:
