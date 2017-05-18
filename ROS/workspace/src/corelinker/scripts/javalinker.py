@@ -212,7 +212,7 @@ class ServerThread(Thread):
 
 def start_navstack_thread(currentmap, speed):
     newthread = NavStack_Thread(currentmap, speed)
-    newthread.daemon = True
+    newthread.daemon = False
     newthread.start()
 
 
