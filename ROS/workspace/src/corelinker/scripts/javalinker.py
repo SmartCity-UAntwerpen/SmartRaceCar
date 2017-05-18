@@ -222,11 +222,10 @@ class ROSThread(Thread):
             print currentmap
             print "Waiting for map"
             time.sleep(0.1)
-            if currentmap is not 'default':
-                print 'Currentmap got altered'
-                print currentmap
-
-                break
+            # if currentmap is not 'default':
+            #     print 'Currentmap got altered'
+            #     print currentmap
+            #     break
 
         rosmodule.init_ros(logger)
         logger.log_debug("[JAVALINKER] Debug with ros!")
