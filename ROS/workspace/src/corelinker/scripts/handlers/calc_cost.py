@@ -51,18 +51,18 @@ def get_time(distance, speed):
     return distance / speed
 
 
-if __name__ == "__main__":
-    print "Starting"
-    rospy.init_node('Dummy_servicecaller', anonymous=True)
-
-    calculated_path = call_service_movebase()
-
-    if calculated_path is not None:
-        decimated_path = decimate_path(calculated_path.plan.poses)
-        distance = get_distance(decimated_path)
-        print "Estimated time: %f" % get_time(distance, 1.111111)
-
-    print "Done!"
+# if __name__ == "__main__":
+#     print "Starting"
+#     rospy.init_node('Dummy_servicecaller', anonymous=True)
+#
+#     calculated_path = call_service_movebase()
+#
+#     if calculated_path is not None:
+#         decimated_path = decimate_path(calculated_path.plan.poses)
+#         distance = get_distance(decimated_path)
+#         print "Estimated time: %f" % get_time(distance, 1.111111)
+#
+#     print "Done!"
 
 '''
 <x>0.5</x>

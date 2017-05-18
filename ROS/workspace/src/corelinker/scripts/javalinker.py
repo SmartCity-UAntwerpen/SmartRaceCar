@@ -2,6 +2,7 @@
 
 import handlers.logger as logmodule
 import json
+import os
 import time
 import handlers.java_module as javamodule
 import handlers.ros_module as rosmodule
@@ -125,26 +126,32 @@ def send_location(location):
 
 
 def calculate_cost(json_string):
+    global current_location
+
     start_location = Location(json_string['cost'][0]['x'], json_string['cost'][0]['y'], 0.0, 0.0, 0.0,
                               json_string['cost'][0]['z'], json_string['cost'][0]['w'])
     goal_location = Location(json_string['cost'][1]['x'], json_string['cost'][1]['y'], 0.0, 0.0, 0.0,
                              json_string['cost'][1]['z'], json_string['cost'][1]['w'])
 
-    current_pose = rosmodule.location_2_pose(current_location)
-    start_pose = rosmodule.location_2_pose(start_location)
-    goal_pose = rosmodule.location_2_pose(goal_location)
+    current_posestamped = rosmodule.pose_2_posestamped(rosmodule.location_2_pose(current_location))
+    start_posestamped = rosmodule.pose_2_posestamped(rosmodule.location_2_pose(start_location))
+    goal_posestamped = rosmodule.pose_2_posestamped(rosmodule.location_2_pose(goal_location))
 
-    costtime_current_start = delegate_cost(current_pose, start_pose, navplan_tolerance, navplan_speed)
+    logger.log_debug(current_posestamped)
+    logger.log_debug(start_posestamped)
+    logger.log_debug(goal_posestamped)
+
+    costtime_current_start = delegate_cost(current_posestamped, start_posestamped, navplan_tolerance, navplan_speed)
     logger.log_debug("[JAVALINKER][CALCCOST] Cost current-start: " + str(costtime_current_start) + " seconds")
 
-    costtime_start_goal = delegate_cost(start_pose, goal_pose, navplan_tolerance, navplan_speed)
+    costtime_start_goal = delegate_cost(start_posestamped, goal_posestamped, navplan_tolerance, navplan_speed)
     logger.log_debug("[JAVALINKER][CALCCOST] Cost start-goal: " + str(costtime_start_goal) + " seconds")
 
     jsonmessage = {'cost': {'status': False, 'weightToStart': costtime_current_start,
                             'weight': costtime_start_goal, 'idVehicle': 12321}}
-    logger.log_debug("[JAVALINKER][CALCCOST] JSON: " + jsonmessage)
-
-    javamodule.send_message(jsonmessage)
+    logger.log_debug(json_string)
+    json_string = json.dumps(jsonmessage)
+    javamodule.send_message(json_string)
 
 
 def delegate_cost(startpose, goalpose, tolerance, speed):
@@ -154,10 +161,10 @@ def delegate_cost(startpose, goalpose, tolerance, speed):
         decimated_path = calccost.decimate_path(path.plan.poses)
 
         distance = calccost.get_distance(decimated_path)
-        logger.log_debug("[JAVALINKER][DELCOST] Distance: " + distance + " meters")
+        logger.log_debug("[JAVALINKER][DELCOST] Distance: " + str(distance) + " meters")
 
         cost_time = calccost.get_time(distance, speed)
-        logger.log_debug("Estimated cost time: " + cost_time)
+        logger.log_debug("Estimated cost time: " + str(cost_time))
 
         return cost_time
     else:
@@ -248,6 +255,10 @@ if __name__ == "__main__":
         javamodule.set_logger(logger)
         start_thread()
         logger.log_info("Debug without java: False")
+
+    while currentmap is 'default':
+        logger.log_debug("Waiting for map")
+    # os.system("roslaunch f1tenth_2dnav move_base.launch map_name:=zbuilding.yaml speed:=1.4 ")
 
     if not DEBUG_WITHOUT_ROS:
         rosmodule.init_ros(logger)
