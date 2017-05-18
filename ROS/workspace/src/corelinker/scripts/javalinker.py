@@ -208,7 +208,7 @@ class ServerThread(Thread):
 
 def start_ros_thread():
     newthread = ROSThread()
-    newthread.daemon = True
+    newthread.daemon = False
     newthread.start()
 
 
