@@ -5,6 +5,7 @@ import json
 import os
 import time
 import handlers.java_module as javamodule
+import handlers.threads as threadsmodule
 import handlers.ros_module as rosmodule
 import handlers.calc_cost as calccost
 from handlers.location import Location
@@ -210,22 +211,7 @@ class ServerThread(Thread):
             get_type(json_string)
 
 
-def start_navstack_thread(currentmap, speed):
-    newthread = NavStack_Thread(currentmap, speed)
-    newthread.daemon = False
-    newthread.start()
 
-
-class NavStack_Thread(Thread):
-    def __init__(self, _CURRENTMAP_, _SPEED_):
-        Thread.__init__(self)
-        self._CURRENTMAP_ = _CURRENTMAP_
-        self._SPEED_ = _SPEED_
-
-    def run(self):
-        command = "roslaunch f1tenth_2dnav move_base.launch map_name:=" + self._CURRENTMAP_ + \
-                  ".yaml speed:=" + str(self._SPEED_) + ""
-        os.system(command)
 
 """
 ##############################
@@ -274,13 +260,15 @@ def cb_movebase_feedback(data):
 
 
 def launch_navstack(curmap):
-    start_navstack_thread(curmap, navstack_speed)
+    # start_navstack_thread(curmap, navstack_speed)
+    threadsmodule.start_navstack_thread(curmap, navstack_speed)
     logger.log_debug("[JAVALINKER] navstack launched")
 
 if __name__ == "__main__":
     if not DEBUG_WITHOUT_JAVA:
         javamodule.set_logger(logger)
         start_thread()
+        threadsmodule.start_java_thread(1)
         logger.log_info("Debug without java: False")
 
     # while currentmap is 'default':
