@@ -224,7 +224,7 @@ class NavStack_Thread(Thread):
 
     def run(self):
         command = "roslaunch f1tenth_2dnav move_base.launch map_name:=" + self._CURRENTMAP_ + \
-                  ".yaml speed:=" + self._SPEED_ + ""
+                  ".yaml speed:=" + str(self._SPEED_) + ""
         os.system(command)
 
 """
