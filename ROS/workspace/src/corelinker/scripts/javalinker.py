@@ -84,7 +84,7 @@ def set_current_map(json_string):
     currentmap = json_string['currentMap']['name']
     logger.log_info("Current map set: " + currentmap)
 
-    start_ros()
+    launch_navstack(currentmap)
 
 
 def set_startpoint(json_string):
@@ -253,17 +253,8 @@ def cb_movebase_feedback(data):
 """
 
 
-def start_ros():
-    rosmodule.init_ros(logger)
-    logger.log_debug("[JAVALINKER] Debug with ros!")
-
-    import rospy
-    from actionlib_msgs.msg import GoalStatusArray
-    from move_base_msgs.msg import MoveBaseActionFeedback
-
-    rospy.Subscriber('move_base/status', GoalStatusArray, cb_movebase_status)
-    rospy.Subscriber('move_base/feedback', MoveBaseActionFeedback, cb_movebase_feedback)
-    rosmodule.rospy_spin()
+def launch_navstack(currentmap):
+    os.system("roslaunch f1tenth_2dnav move_base.launch map_name:=zbuilding.yaml speed:=1.4 ")
 
 if __name__ == "__main__":
     if not DEBUG_WITHOUT_JAVA:
@@ -276,17 +267,17 @@ if __name__ == "__main__":
     #     time.sleep(0.1)
     # os.system("roslaunch f1tenth_2dnav move_base.launch map_name:=zbuilding.yaml speed:=1.4 ")
 
-    # if not DEBUG_WITHOUT_ROS:
-        # rosmodule.init_ros(logger)
-        # logger.log_debug("[JAVALINKER] Debug with ros!")
-        #
-        # import rospy
-        # from actionlib_msgs.msg import GoalStatusArray
-        # from move_base_msgs.msg import MoveBaseActionFeedback
-        #
-        # rospy.Subscriber('move_base/status', GoalStatusArray, cb_movebase_status)
-        # rospy.Subscriber('move_base/feedback', MoveBaseActionFeedback, cb_movebase_feedback)
-        # rosmodule.rospy_spin()
+    if not DEBUG_WITHOUT_ROS:
+        rosmodule.init_ros(logger)
+        logger.log_debug("[JAVALINKER] Debug with ros!")
+
+        import rospy
+        from actionlib_msgs.msg import GoalStatusArray
+        from move_base_msgs.msg import MoveBaseActionFeedback
+
+        rospy.Subscriber('move_base/status', GoalStatusArray, cb_movebase_status)
+        rospy.Subscriber('move_base/feedback', MoveBaseActionFeedback, cb_movebase_feedback)
+        rosmodule.rospy_spin()
 
     else:
         while True:
