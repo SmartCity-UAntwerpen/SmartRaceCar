@@ -5,6 +5,7 @@ import json
 import os
 import time
 import handlers.java_module as javamodule
+import handlers.threads as threadsmodule
 import handlers.ros_module as rosmodule
 import handlers.calc_cost as calccost
 from handlers.location import Location
@@ -41,6 +42,8 @@ currentw = 4
 
 navplan_tolerance = 0.5
 navplan_speed = 4.0
+
+navstack_speed = 4.0
 
 current_location = 0
 
@@ -83,6 +86,8 @@ def set_current_map(json_string):
     global currentmap, logger
     currentmap = json_string['currentMap']['name']
     logger.log_info("Current map set: " + currentmap)
+
+    launch_navstack(currentmap)
 
 
 def set_startpoint(json_string):
@@ -205,6 +210,9 @@ class ServerThread(Thread):
             json_string = json.loads(data_string)
             get_type(json_string)
 
+
+
+
 """
 ##############################
 ##  ROS Callback functions  ##
@@ -250,14 +258,22 @@ def cb_movebase_feedback(data):
 ######################
 """
 
+
+def launch_navstack(curmap):
+    # start_navstack_thread(curmap, navstack_speed)
+    threadsmodule.start_navstack_thread(curmap, navstack_speed)
+    logger.log_debug("[JAVALINKER] navstack launched")
+
 if __name__ == "__main__":
     if not DEBUG_WITHOUT_JAVA:
         javamodule.set_logger(logger)
         start_thread()
+        # threadsmodule.start_java_thread(1)
         logger.log_info("Debug without java: False")
 
-    while currentmap is 'default':
-        logger.log_debug("Waiting for map")
+    # while currentmap is 'default':
+    #     print "Waiting for map"
+    #     time.sleep(0.1)
     # os.system("roslaunch f1tenth_2dnav move_base.launch map_name:=zbuilding.yaml speed:=1.4 ")
 
     if not DEBUG_WITHOUT_ROS:
