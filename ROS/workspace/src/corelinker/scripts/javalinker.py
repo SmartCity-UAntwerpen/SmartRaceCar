@@ -284,6 +284,7 @@ def cb_movebase_feedback(data):
 """
 
 if __name__ == "__main__":
+    exit_node = False
     try:
         if not DEBUG_WITHOUT_JAVA:
             javamodule.set_logger(logger)
