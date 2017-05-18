@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.logging.Level;
 
 @Path("carmanager")
-class Manager implements MQTTListener{
+public class Manager implements MQTTListener{
 
     private boolean debugWithoutBackBone = true; // debug parameter to stop attempts to send or recieve messages from backbone.
     private boolean debugWithoutMAAS = true; // debug parameter to stop attempts to send or recieve messages from MAAS
@@ -42,11 +42,11 @@ class Manager implements MQTTListener{
     private static String currentMap;
     private static ArrayList<Cost> costs = new ArrayList<>();
 
-    private Manager() {
+    public Manager() {
 
     }
 
-    private Manager(String currentMap) throws MqttException, IOException {
+    public Manager(String currentMap) throws MqttException, IOException {
         log = new Log(this.getClass(), level);
         Manager.currentMap = currentMap;
         restUtilsMAAS = new RESTUtils(restURLMAAS);
