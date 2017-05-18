@@ -15,6 +15,7 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -26,7 +27,7 @@ import java.util.logging.Level;
 public class Core implements TCPListener, MQTTListener {
 
     //Hardcoded elements.
-    private boolean debugWithoutRos = false; // debug parameter to stop attempts to send over sockets when ROS-Node is active.
+    private boolean debugWithoutRos = true; // debug parameter to stop attempts to send over sockets when ROS-Node is active.
     private Log log;
     private Level level = Level.CONFIG; //Debug level
     private final String mqttBroker = "tcp://143.129.39.151:1883";
@@ -35,7 +36,6 @@ public class Core implements TCPListener, MQTTListener {
     private final String restURL = "http://146.175.140.24:8080/carmanager";
     private final int serverPort = 5005;
     private final int clientPort = 5006;
-    private final String mapFolder = "maps";
 
     private MQTTUtils mqttUtils;
     private TCPUtils tcpUtils;
@@ -69,8 +69,31 @@ public class Core implements TCPListener, MQTTListener {
             connected = true;
         }
         sendStartPoint();
-        loadedMaps = XMLUtils.loadMaps(mapFolder);
+        loadedMaps = XMLUtils.loadMaps(findMapsFolder());
         requestMap();
+    }
+
+    private String findMapsFolder(){
+        FileUtils fileUtils = new FileUtils();
+        fileUtils.searchDirectory(new File(".."), "maps.xml");
+        if(fileUtils.getResult().size() == 0){
+            fileUtils.searchDirectory(new File("./.."), "maps.xml");
+            if(fileUtils.getResult().size() == 0){
+                fileUtils.searchDirectory(new File("./../.."), "maps.xml");
+                if(fileUtils.getResult().size() == 0){
+                    fileUtils.searchDirectory(new File("./../../.."), "maps.xml");
+                    if(fileUtils.getResult().size() == 0){
+                        Log.logSevere("CORE","maps.xml not found. Make sure it exists in some folder (maximum 3 levels deep).");
+                        System.exit(0);
+                    }
+                }
+            }
+        }
+        String output = null;
+        for (String matched : fileUtils.getResult()){
+                output=matched;
+        }
+        return output;
     }
 
     //Send connection check over sockets
@@ -139,7 +162,7 @@ public class Core implements TCPListener, MQTTListener {
             DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
 
-            Document document = documentBuilder.parse(mapFolder + "/maps.xml");
+            Document document = documentBuilder.parse(findMapsFolder() + "/maps.xml");
             Element root = document.getDocumentElement();
 
             Element newMap = document.createElement("map");
@@ -156,7 +179,7 @@ public class Core implements TCPListener, MQTTListener {
             Transformer transformer = transformerFactory.newTransformer();
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-            StreamResult result = new StreamResult(mapFolder + "/maps.xml");
+            StreamResult result = new StreamResult(findMapsFolder() + "/maps.xml");
             transformer.transform(source, result);
 
         } catch (ParserConfigurationException | SAXException | IOException | TransformerException e) {
@@ -196,7 +219,7 @@ public class Core implements TCPListener, MQTTListener {
     }
 
     //Event call over interface to be used when socket connection received message that waypoint has been reached.
-    public void wayPointReached() {
+    private void wayPointReached() {
         Log.logInfo("CORE", "Waypoint reached.");
         updateRoute();
     }

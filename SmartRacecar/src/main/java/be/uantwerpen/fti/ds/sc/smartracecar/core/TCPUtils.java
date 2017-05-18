@@ -44,6 +44,7 @@ class TCPUtils extends Thread {
                     serverSocket = echoServer.accept();
                 }
                 is = new DataInputStream(serverSocket.getInputStream());
+
                 line = is.readLine();
                 if(line != null ){
                     Log.logConfig("SOCKETS","data received: " + line);

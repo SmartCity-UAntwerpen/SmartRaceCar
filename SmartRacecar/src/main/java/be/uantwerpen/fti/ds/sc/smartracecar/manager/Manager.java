@@ -9,6 +9,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
@@ -31,9 +32,8 @@ public class Manager implements MQTTListener, TCPListener {
     private final String wayPointFolder = "wayPoints";
     private final String restURLMAAS = "http://localhost:8080/";
     private final String restURLBackBone = "http://146.175.140.44:1994/";
-    private final String socketAddress = "146.175.140.43";
-    private final int serverPort = 10000;
-    private final int clientPort = 10000;
+    private final int serverPort = 5007;
+    private final int clientPort = 5007;
 
     private static MQTTUtils mqttUtils;
     private static RESTUtils restUtilsMAAS;
@@ -193,23 +193,30 @@ public class Manager implements MQTTListener, TCPListener {
             for (Vehicle vehicle : vehicles.values()) {
                 mqttUtils.publishMessage("racecar/" + Long.toString(vehicle.getID()) + "/costrequest", Long.toString(startId) + " " + Long.toString(endId));
             }
-            while(costs.size() != (vehicles.size() - simulatedVehicles.size())){
+            while(costs.size() != getRunningVehicleAmount()){
+                Log.logInfo("MANAGER", "waiting for vehicles to complete request.");
                 Thread.sleep(1000);
             }
-            ArrayList<Cost> costs = this.costs;
+            ArrayList<Cost> costCopy = (ArrayList<Cost>)costs.clone();
+            this.costs.clear();
             Log.logInfo("MANAGER", "Cost calculation request completed.");
             return Response.status(Response.Status.OK).
-                    entity(JSONUtils.arrayToJSONString(costs)).
+                    entity(JSONUtils.arrayToJSONString(costCopy)).
                     type("application/json").
                     build();
         }
         return null;
     }
 
-    private long calculateCost(Point startPoint, Point endPoint){
-        return (long)5;
+    private int getRunningVehicleAmount(){
+        int simulated = 0;
+        for(Vehicle vehicle : vehicles.values()){
+            if(vehicle.getClass() == SimulatedVehicle.class){
+                simulated++;
+            }
+        }
+        return vehicles.size()-simulated;
     }
-
 
     @GET
     @Path("getmapname")
