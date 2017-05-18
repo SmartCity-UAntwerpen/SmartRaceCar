@@ -84,6 +84,8 @@ def set_current_map(json_string):
     currentmap = json_string['currentMap']['name']
     logger.log_info("Current map set: " + currentmap)
 
+    start_ros()
+
 
 def set_startpoint(json_string):
     global current_location
