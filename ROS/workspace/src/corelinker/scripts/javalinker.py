@@ -256,7 +256,7 @@ if __name__ == "__main__":
         start_thread()
         logger.log_info("Debug without java: False")
 
-    while currentmap is not 'default':
+    while currentmap is 'default':
         logger.log_debug("Waiting for map")
     # os.system("roslaunch f1tenth_2dnav move_base.launch map_name:=zbuilding.yaml speed:=1.4 ")
 
