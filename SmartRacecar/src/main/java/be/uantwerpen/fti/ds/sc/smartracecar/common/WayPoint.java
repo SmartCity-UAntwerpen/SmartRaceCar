@@ -4,12 +4,10 @@ package be.uantwerpen.fti.ds.sc.smartracecar.common;
 public class WayPoint extends Point {
 
     private long ID = 0; // waypoint ID given by RaceCarManager.
-    private int weight = 0; //weight used for pathfinding algorthims.
 
-    WayPoint(long ID,float x, float y,float z, float w, int weight) {
+    WayPoint(long ID,float x, float y,float z, float w) {
         super(x, y, z, w);
         this.ID = ID;
-        this.weight = weight;
     }
 
     public long getID() {

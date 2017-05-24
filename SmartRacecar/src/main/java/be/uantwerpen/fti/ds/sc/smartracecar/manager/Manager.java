@@ -58,28 +58,25 @@ public class Manager implements MQTTListener{
 
     @Override
     public void parseMQTT(String topic, String message) {
-        if (topic.matches("racecar/[0-9]+/location")) {
-            long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
-            if (vehicles.containsKey(ID)) {
-                locationUpdate(ID, message);
-            } else {
-                Log.logConfig("MANAGER", "Vehicle with ID " + ID + " doesn't exist. Cant set location.");
-            }
-        } else if (topic.matches("racecar/[0-9]+/route")) {
+        if (topic.matches("racecar/[0-9]+/route")) {
             long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
             if (vehicles.containsKey(ID)) {
                 routeUpdate(ID, message);
             } else {
                 Log.logConfig("MANAGER", "Vehicle with ID " + ID + " doesn't exist. Cant update route information.");
             }
-        } else if (topic.matches("racecar/[0-9]+/waypoint")) {
+        }
+        if (topic.matches("racecar/[0-9]+/percentage")) {
             long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
             if (vehicles.containsKey(ID)) {
-                waypointUpdate(ID, message);
+                Type typeOfLocation = new TypeToken<Location>() {}.getType();
+                Location location = (Location) JSONUtils.getObject(message,typeOfLocation);
+                vehicles.get(ID).getLocation().setPercentage(location.getPercentage());
             } else {
                 Log.logConfig("MANAGER", "Vehicle with ID " + ID + " doesn't exist. Cant update route information.");
             }
-        }else if (topic.matches("racecar/[0-9]+/costanswer")) {
+        }
+        else if (topic.matches("racecar/[0-9]+/costanswer")) {
             long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
             if (vehicles.containsKey(ID)) {
                 Type typeOfCost = new TypeToken<Cost>() {}.getType();
@@ -90,17 +87,6 @@ public class Manager implements MQTTListener{
         }
     }
 
-    private void waypointUpdate(long ID, String message) {
-        vehicles.get(ID).setLastWayPoint(Long.parseLong(message));
-        Log.logInfo("MANAGER", "Vehicle with ID " + ID + " has reached waypoint " + message + ".");
-    }
-
-    private void locationUpdate(long ID, String message) {
-        Type typeOfPoint = new TypeToken<Point>() {}.getType();
-        vehicles.get(ID).setPoint((Point) JSONUtils.getObject(message,typeOfPoint));
-        Log.logInfo("MANAGER", "Location update of vehicle with ID " + ID + ".");
-    }
-
     private void routeUpdate(long ID, String message) {
         switch (message) {
             case "done":
@@ -108,6 +94,8 @@ public class Manager implements MQTTListener{
                 if (!debugWithoutMAAS) {
                     restUtilsMAAS.getTextPlain("completeJob/" + ID);
                 }
+                vehicles.get(ID).getLocation().setIdStart(vehicles.get(ID).getLocation().getIdEnd());
+                vehicles.get(ID).getLocation().setPercentage(0);
                 Log.logInfo("MANAGER", "Vehicle with ID " + ID + " has completed his route.");
                 break;
             case "error":
@@ -134,7 +122,7 @@ public class Manager implements MQTTListener{
             } else {
                 id = (long) vehicles.size();
             }
-            vehicles.put(id, new Vehicle(id, startWayPoint, wayPoints.get(startWayPoint)));
+            vehicles.put(id, new Vehicle(id, startWayPoint));
             Log.logInfo("MANAGER", "New vehicle registered. Given ID " + id + ". Has starting waypoint " + startWayPoint + ".");
 
             return Response.status(Response.Status.OK).
@@ -155,7 +143,7 @@ public class Manager implements MQTTListener{
         }else{
             List<Location> locations = new ArrayList<>();
             for (Vehicle vehicle : vehicles.values()) {
-                locations.add(new Location(vehicle.getID(),vehicle.getLastWayPoint()));
+                locations.add(vehicle.getLocation());
             }
             Log.logInfo("MANAGER", "All vehicle Locations request has been completed.");
             return Response.status(Response.Status.OK).
@@ -259,6 +247,11 @@ public class Manager implements MQTTListener{
         if (vehicles.containsKey(job.getIdVehicle())) {
             if (!vehicles.get(job.getIdVehicle()).getOccupied()) {
                 if(wayPoints.containsKey(job.getIdStart()) && wayPoints.containsKey(job.getIdEnd())){
+                    Location location = vehicles.get(job.getIdVehicle()).getLocation();
+                    location.setIdStart(job.getIdStart());
+                    location.setIdEnd(job.getIdEnd());
+                    location.setPercentage(0);
+                    vehicles.get(job.getIdVehicle()).setLocation(location);
                     jobSend(job.getIdVehicle(),job.getIdStart(),job.getIdEnd());
                     return Response.status(Response.Status.OK).build();
                 }else{

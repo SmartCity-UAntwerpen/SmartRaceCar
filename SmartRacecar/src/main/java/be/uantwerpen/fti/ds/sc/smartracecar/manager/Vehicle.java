@@ -1,32 +1,18 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.manager;
 
-import be.uantwerpen.fti.ds.sc.smartracecar.common.Point;
+import be.uantwerpen.fti.ds.sc.smartracecar.common.Location;
 
 class Vehicle {
 
     private Long ID;
-    private long lastWayPoint;
-    private Point location;
+    private Location location;
     private boolean occupied = false;
 
 
 
-    Vehicle(Long ID,long startWayPoint,Point startLocation){
+    Vehicle(Long ID,long startWayPoint){
         this.ID = ID;
-        this.lastWayPoint = startWayPoint;
-        this.location = startLocation;
-    }
-
-    void setPoint(Point p){
-        this.location = p;
-    }
-
-    void setLastWayPoint(long lastWayPoint){
-        this.lastWayPoint = lastWayPoint;
-    }
-
-    long getLastWayPoint() {
-        return lastWayPoint;
+        location = new Location(ID,startWayPoint,startWayPoint,0);
     }
 
     void setOccupied(boolean state){
@@ -39,5 +25,13 @@ class Vehicle {
 
     Long getID() {
         return ID;
+    }
+
+    public Location getLocation() {
+        return location;
+    }
+
+    public void setLocation(Location location) {
+        this.location = location;
     }
 }

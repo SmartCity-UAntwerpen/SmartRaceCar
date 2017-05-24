@@ -67,9 +67,8 @@ public class XMLUtils {
                     float y = Float.parseFloat(eElement.getElementsByTagName("y").item(0).getTextContent());
                     float z = Float.parseFloat(eElement.getElementsByTagName("z").item(0).getTextContent());
                     float w = Float.parseFloat(eElement.getElementsByTagName("w").item(0).getTextContent());
-                    int weight  = Integer.parseInt(eElement.getElementsByTagName("weight").item(0).getTextContent());
-                    loadedMaps.put(id,new WayPoint(id,x,y,z,w,weight));
-                    Log.logConfig("XML","Added wayPoint: " + id + " and coordinates " + x +"," + y +"," + z +"," + w +" and weight " + weight + ".");
+                    loadedMaps.put(id,new WayPoint(id,x,y,z,w));
+                    Log.logConfig("XML","Added wayPoint: " + id + " and coordinates " + x +"," + y +"," + z +"," + w +".");
                 }
             }
         } catch (Exception e) {
