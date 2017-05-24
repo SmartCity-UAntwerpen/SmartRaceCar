@@ -96,20 +96,11 @@ public class Manager implements MQTTListener{
         else if (topic.matches("racecar/[0-9]+/costanswer")) {
             long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
             if (vehicles.containsKey(ID)) {
-                Type typeOfCost = new TypeToken<Cost>() {}.getType();
-                costs.add((Cost) JSONUtils.getObject(message,typeOfCost));
+                Type typeOfCost = new TypeToken<Cost>() {
+                }.getType();
+                costs.add((Cost) JSONUtils.getObject(message, typeOfCost));
             } else {
                 Log.logConfig("MANAGER", "Vehicle with ID " + ID + " doesn't exist. Cannot process cost answer.");
-            }
-        }else if (topic.matches("racecar/[0-9]+/kill")) {
-            long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
-            if (vehicles.containsKey(ID)) {
-                if(!debugWithoutBackBone)restUtilsBackBone.getTextPlain("delete/" + ID);
-                vehicles.remove(ID);
-                Log.logInfo("MANAGER", "Vehicle with ID " + ID + " stopped. ID removed.");
-
-            } else {
-                Log.logConfig("MANAGER", "Vehicle with ID " + ID + " doesn't exist. Cannot kill.");
             }
         }
     }
@@ -213,6 +204,21 @@ public class Manager implements MQTTListener{
     @Produces("text/plain")
     public String getMapName() {
         return currentMap;
+    }
+
+    @GET
+    @Path("delete/{id}")
+    @Produces("text/plain")
+    public Response deleteVehicle(@PathParam("id") final long id,@Context HttpServletResponse response) throws IOException {
+        if (vehicles.containsKey(id)) {
+            if(!debugWithoutBackBone)restUtilsBackBone.getTextPlain("delete/" + id);
+            vehicles.remove(id);
+            Log.logInfo("MANAGER", "Vehicle with ID " + id + " stopped. ID removed.");
+            return Response.status(Response.Status.OK).build();
+        }else{
+            response.sendError(HttpServletResponse.SC_NOT_FOUND," vehicle with id " +  id + "  not found");
+        }
+        return null;
     }
 
     @GET

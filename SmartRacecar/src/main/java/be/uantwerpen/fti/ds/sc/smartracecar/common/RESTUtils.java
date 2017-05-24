@@ -40,6 +40,20 @@ public class RESTUtils {
         return responseString;
     }
 
+    public void getCall(String URL) {
+        WebTarget resourceWebTarget = webTarget.path(URL);
+        Invocation.Builder invocationBuilder = resourceWebTarget.request("text/plain");
+        Response response = null;
+        Log.logConfig("REST","Attempting request with URL:" + resourceWebTarget.getUri());
+        try {
+            response = invocationBuilder.get();
+        } catch (ProcessingException e) {
+            Log.logSevere("REST", "Cannot connect to REST service: " + e);
+            System.exit(0);
+        }
+        checkForError(response);
+    }
+
     public String getTextPlain(String URL,HashMap<String,String> queryParams) {
         WebTarget resourceWebTarget = webTarget.path(URL);
         for (HashMap.Entry<String, String> entry : queryParams.entrySet()) {

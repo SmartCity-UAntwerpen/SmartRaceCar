@@ -78,6 +78,7 @@ import java.util.logging.Level;
     private boolean createVehicle(long simulationID){
         if (!simulatedVehicles.containsKey(simulationID)) {
             simulatedVehicles.put(simulationID, new SimulatedVehicle(simulationID));
+            //TODO deploy jars
             Log.logInfo("SIMDEPLOYER", "New simulated vehicle registered with simulation ID " + simulationID + ".");
             return true;
         } else {

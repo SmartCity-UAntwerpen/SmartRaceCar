@@ -74,7 +74,6 @@ class Core implements TCPListener, MQTTListener {
         sendStartPoint();
         loadedMaps = XMLUtils.loadMaps(findMapsFolder());
         requestMap();
-        killCar();
     }
 
     private String findMapsFolder(){
@@ -321,7 +320,7 @@ class Core implements TCPListener, MQTTListener {
 
     private void killCar(){
         Log.logInfo("CORE", "Vehicle kill request. Closing connections and shutting down...");
-        mqttUtils.publishMessage("racecar/" + ID + "/kill","kill");
+        restUtils.getCall("delete/" + ID);
         if(!debugWithoutRos)tcpUtils.closeTCP();
         mqttUtils.closeMQTT();
         System.exit(0);
