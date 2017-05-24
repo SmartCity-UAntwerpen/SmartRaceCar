@@ -8,9 +8,9 @@ import java.util.logging.Level;
 
  class SimDeployer implements TCPListener {
 
-    private final int serverPort = 5007;
+    private final int serverPort = 9999;
     private static Log log;
-    private Level level = Level.CONFIG;
+    private Level level = Level.INFO;
 
     private TCPUtils tcpUtils;
 

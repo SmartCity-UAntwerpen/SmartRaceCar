@@ -6,7 +6,6 @@
 		<y>0</y>
 		<z>-1</z>
 		<w>0.02</w>
-		<weight>1</weight>
 	</waypoint>
 	<waypoint>
 		<id>2</id>
@@ -14,7 +13,6 @@
 		<y>-0.53</y>
 		<z>0.71</z>
 		<w>0.71</w>
-		<weight>1</weight>
 	</waypoint>
 	<waypoint>
 		<id>3</id>
@@ -22,7 +20,6 @@
 		<y>-1.11</y>
 		<z>-0.3</z>
 		<w>0.95</w>
-		<weight>1</weight>
 	</waypoint>
 	<waypoint>
 		<id>4</id>
@@ -30,6 +27,5 @@
 		<y>-9.19</y>
 		<z>-0.71</z>
 		<w>0.71</w>
-		<weight>1</weight>
 	</waypoint>
 </waypoints>

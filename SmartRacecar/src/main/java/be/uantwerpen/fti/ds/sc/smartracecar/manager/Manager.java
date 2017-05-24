@@ -21,14 +21,13 @@ import java.util.logging.Level;
 @Path("carmanager")
 public class Manager implements MQTTListener{
 
-    private boolean debugWithoutBackBone = true; // debug parameter to stop attempts to send or recieve messages from backbone.
+    private boolean debugWithoutBackBone = false; // debug parameter to stop attempts to send or recieve messages from backbone.
     private boolean debugWithoutMAAS = true; // debug parameter to stop attempts to send or recieve messages from MAAS
     private static Log log;
     Level level = Level.CONFIG;
     private final String mqttBroker = "tcp://143.129.39.151:1883";
     private final String mqqtUsername = "root";
     private final String mqttPassword = "smartcity";
-    private final String wayPointFolder = "wayPoints";
     private final String restURLMAAS = "http://localhost:8080/";
     private final String restURLBackBone = "http://146.175.140.44:1994/";
 
@@ -51,9 +50,27 @@ public class Manager implements MQTTListener{
         Manager.currentMap = currentMap;
         restUtilsMAAS = new RESTUtils(restURLMAAS);
         restUtilsBackBone = new RESTUtils(restURLBackBone);
+        loadWayPoints();
         mqttUtils = new MQTTUtils(mqttBroker, mqqtUsername, mqttPassword, this);
         mqttUtils.subscribeToTopic("racecar/#");
-        wayPoints = XMLUtils.loadWaypoints(wayPointFolder);
+    }
+
+    private void loadWayPoints(){
+        if(debugWithoutBackBone){
+            wayPoints.put((long)8,new WayPoint(8,(float)0.5,(float)0,(float)-1,(float)0.02));
+            wayPoints.put((long)9,new WayPoint(9,(float)-13.4,(float)-0.53,(float)0.71,(float)0.71));
+            wayPoints.put((long)10,new WayPoint(10,(float)-27.14,(float)-1.11,(float)-0.3,(float)0.95));
+            wayPoints.put((long)11,new WayPoint(11,(float)-28.25,(float)-9.19,(float)-0.71,(float)0.71));
+        }else{
+            String jsonString = restUtilsBackBone.getJSON("map/stringmapjson/car");
+            JSONUtils.isJSONValid(jsonString);
+            Type typeOfWayPointArray = new TypeToken<ArrayList<WayPoint>>() {}.getType();
+            ArrayList<WayPoint> wayPointsTemp = (ArrayList<WayPoint>) JSONUtils.getObject(jsonString, typeOfWayPointArray);
+            for (WayPoint wayPoint : wayPointsTemp) {
+                wayPoints.put(wayPoint.getID(),wayPoint);
+                Log.logConfig("MANAGER","Added wayPoint with ID " + wayPoint.getID() + " and coordinates " + wayPoint.getX() +"," + wayPoint.getY() +"," + wayPoint.getZ() +"," + wayPoint.getW() +".");
+            }
+        }
     }
 
     @Override

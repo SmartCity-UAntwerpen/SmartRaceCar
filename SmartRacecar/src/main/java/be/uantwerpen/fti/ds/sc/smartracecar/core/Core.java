@@ -35,7 +35,7 @@ class Core implements TCPListener, MQTTListener {
     private final String mqqtUsername = "root";
     private final String mqttPassword = "smartcity";
    // private final String restURL = "http://146.175.140.17:8080/carmanager";
-    private final String restURL = "http://143.169.194.10:8080/carmanager";
+    private final String restURL = "http://localhost:8080/carmanager";
     private static int serverPort = 5005;
     private static int clientPort = 5006;
 
