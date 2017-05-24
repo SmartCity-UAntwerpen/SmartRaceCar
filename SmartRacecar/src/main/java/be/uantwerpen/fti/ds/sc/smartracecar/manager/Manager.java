@@ -21,7 +21,7 @@ import java.util.logging.Level;
 @Path("carmanager")
 public class Manager implements MQTTListener{
 
-    private boolean debugWithoutBackBone = false; // debug parameter to stop attempts to send or recieve messages from backbone.
+    private boolean debugWithoutBackBone = true; // debug parameter to stop attempts to send or recieve messages from backbone.
     private boolean debugWithoutMAAS = true; // debug parameter to stop attempts to send or recieve messages from MAAS
     private static Log log;
     Level level = Level.CONFIG;
@@ -90,7 +90,7 @@ public class Manager implements MQTTListener{
                 Location location = (Location) JSONUtils.getObject(message,typeOfLocation);
                 vehicles.get(ID).getLocation().setPercentage(location.getPercentage());
             } else {
-                Log.logConfig("MANAGER", "Vehicle with ID " + ID + " doesn't exist. Cant update route information.");
+                Log.logConfig("MANAGER", "Vehicle with ID " + ID + " doesn't exist. Cant update route percentage.");
             }
         }
         else if (topic.matches("racecar/[0-9]+/costanswer")) {
@@ -98,6 +98,16 @@ public class Manager implements MQTTListener{
             if (vehicles.containsKey(ID)) {
                 Type typeOfCost = new TypeToken<Cost>() {}.getType();
                 costs.add((Cost) JSONUtils.getObject(message,typeOfCost));
+            } else {
+                Log.logConfig("MANAGER", "Vehicle with ID " + ID + " doesn't exist. Cannot process cost answer.");
+            }
+        }else if (topic.matches("racecar/[0-9]+/kill")) {
+            long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
+            if (vehicles.containsKey(ID)) {
+                if(!debugWithoutBackBone)restUtilsBackBone.getTextPlain("delete/" + ID);
+                vehicles.remove(ID);
+                Log.logInfo("MANAGER", "Vehicle with ID " + ID + " stopped. ID removed.");
+
             } else {
                 Log.logConfig("MANAGER", "Vehicle with ID " + ID + " doesn't exist. Cannot kill.");
             }
