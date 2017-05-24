@@ -52,7 +52,7 @@ class Core implements TCPListener, MQTTListener {
     private static long startPoint; // Starting position on map. Given by main argument.
     private boolean occupied = false; // To verify if racecar is currently occupied by a route job.
 
-    private Core() throws InterruptedException, IOException {
+    private Core(long startPoint,int serverPort,int clientPort) throws InterruptedException, IOException {
         log = new Log(this.getClass(), level);
         log.logConfig("CORE","Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
         restUtils = new RESTUtils(restURL);
@@ -391,7 +391,7 @@ class Core implements TCPListener, MQTTListener {
             if (!args[1].isEmpty()) clientPort  = Integer.parseInt(args[1]);
             if (!args[2].isEmpty()) serverPort = Integer.parseInt(args[2]);
         }
-        final Core core = new Core();
+        final Core core = new Core(startPoint,clientPort,serverPort);
     }
 
 }

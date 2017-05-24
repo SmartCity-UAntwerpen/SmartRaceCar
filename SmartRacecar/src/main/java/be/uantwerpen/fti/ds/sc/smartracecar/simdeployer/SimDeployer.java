@@ -2,6 +2,7 @@ package be.uantwerpen.fti.ds.sc.smartracecar.simdeployer;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.Log;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.logging.Level;
@@ -23,7 +24,7 @@ import java.util.logging.Level;
     }
 
     @Override
-    public String parseTCP(String message) {
+    public String parseTCP(String message) throws IOException {
         boolean result = false;
         if (message.matches("create\\s[0-9]+")) {
             result = createVehicle(Long.parseLong(message.replaceAll("\\D+", "")));
@@ -146,7 +147,7 @@ import java.util.logging.Level;
     }
 
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException {
         final SimDeployer simDeployer = new SimDeployer();
     }
 }
