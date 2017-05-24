@@ -89,4 +89,14 @@ public class MQTTUtils implements MqttCallback{
             Log.logSevere("MQTT","Could not Publish." + e);
         }
     }
+
+    public void closeMQTT(){
+        try {
+            client.disconnect();
+            client.close();
+        } catch (MqttException e) {
+            Log.logSevere("MQTT","Could not close MQTT Connection :" + e);
+        }
+
+    }
 }

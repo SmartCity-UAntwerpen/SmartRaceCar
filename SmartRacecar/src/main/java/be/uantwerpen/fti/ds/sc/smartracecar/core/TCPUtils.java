@@ -96,7 +96,7 @@ class TCPUtils extends Thread {
         }
     }
 
-    private void closeTCP(){
+    void closeTCP(){
         try {
             serverSocket.close();
         } catch (IOException e) {

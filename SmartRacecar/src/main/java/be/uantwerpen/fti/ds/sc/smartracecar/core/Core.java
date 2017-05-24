@@ -1,6 +1,7 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.core;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
+import be.uantwerpen.fti.ds.sc.smartracecar.common.Location;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.Map;
 import com.google.gson.reflect.TypeToken;
 import org.w3c.dom.Document;
@@ -33,9 +34,10 @@ class Core implements TCPListener, MQTTListener {
     private final String mqttBroker = "tcp://143.129.39.151:1883";
     private final String mqqtUsername = "root";
     private final String mqttPassword = "smartcity";
-    private final String restURL = "http://146.175.140.24:8080/carmanager";
-    private final int serverPort = 5005;
-    private final int clientPort = 5006;
+   // private final String restURL = "http://146.175.140.17:8080/carmanager";
+    private final String restURL = "http://localhost:8080/carmanager";
+    private static int serverPort = 5005;
+    private static int clientPort = 5006;
 
     private MQTTUtils mqttUtils;
     private TCPUtils tcpUtils;
@@ -52,6 +54,7 @@ class Core implements TCPListener, MQTTListener {
 
     private Core() throws InterruptedException, IOException {
         log = new Log(this.getClass(), level);
+        log.logConfig("CORE","Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
         restUtils = new RESTUtils(restURL);
         requestWaypoints();
         register();
@@ -71,6 +74,7 @@ class Core implements TCPListener, MQTTListener {
         sendStartPoint();
         loadedMaps = XMLUtils.loadMaps(findMapsFolder());
         requestMap();
+        killCar();
     }
 
     private String findMapsFolder(){
@@ -200,7 +204,6 @@ class Core implements TCPListener, MQTTListener {
     //Sends information of the next waypoint over the socket connection to the vehicle.
     private void updateRoute() {
         if (!currentRoute.isEmpty()) {
-            mqttUtils.publishMessage("racecar/" + ID + "/waypoint", String.valueOf(currentRoute.peek()));
             WayPoint nextWayPoint = wayPoints.get(currentRoute.poll());
             if (!debugWithoutRos) tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("nextWayPoint", nextWayPoint));
             Log.logInfo("CORE", "Sending next waypoint with ID " + nextWayPoint.getID() + " (" + (routeSize - currentRoute.size()) + "/" + routeSize + ")");
@@ -249,9 +252,9 @@ class Core implements TCPListener, MQTTListener {
     }
 
     //Event call over interface for when the socket connection receives location update. Publishes this to the RaceCarManager over MQTT.
-    private void locationUpdate(Point location) {
+    private void locationUpdate(Location location) {
         Log.logInfo("CORE", "Location Updated.");
-        mqttUtils.publishMessage("racecar/" + ID + "/location", JSONUtils.objectToJSONString(location));
+        mqttUtils.publishMessage("racecar/" + ID + "/percentage", JSONUtils.objectToJSONString(location));
     }
 
     public void parseMQTT(String topic, String message) {
@@ -295,14 +298,17 @@ class Core implements TCPListener, MQTTListener {
         if (JSONUtils.isJSONValid(message)) {
             //parses keyword to do the correct function call.
             switch (JSONUtils.getFirst(message)) {
-                case "location":
-                    locationUpdate((Point) JSONUtils.getObjectWithKeyWord(message, Point.class));
+                case "percentage":
+                    locationUpdate((Location) JSONUtils.getObjectWithKeyWord(message, Point.class));
                     break;
                 case "arrivedWaypoint":
                     wayPointReached();
                     break;
                 case "connect":
                     connectReceive();
+                    break;
+                case "kill":
+                    killCar();
                     break;
                 case "cost":
                     costComplete((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
@@ -311,6 +317,14 @@ class Core implements TCPListener, MQTTListener {
                     break;
             }
         }
+    }
+
+    private void killCar(){
+        Log.logInfo("CORE", "Vehicle kill request. Closing connections and shutting down...");
+        mqttUtils.publishMessage("racecar/" + ID + "/kill","kill");
+        if(!debugWithoutRos)tcpUtils.closeTCP();
+        mqttUtils.closeMQTT();
+        System.exit(0);
     }
 
     private void costRequest(long[] wayPointIDs){
@@ -365,12 +379,19 @@ class Core implements TCPListener, MQTTListener {
     public static void main(String[] args) throws IOException, InterruptedException {
 
         if (args.length == 0) {
-            System.out.println("Need at least 1 argument to run. Possible arguments: startpoint(int)");
+            System.out.println("Need 1 or 3 argument to run. Possible arguments: startpoint(int)(needed!) tcpclientport(int) tcpserverport(int)");
             System.exit(0);
         } else if (args.length == 1) {
             if (!args[0].isEmpty()) startPoint = Long.parseLong(args[0]);
         }
-
+        else if (args.length == 2) {
+            System.out.println("Need at least 1 or 3 argument to run. Possible arguments: startpoint(int)(needed!) tcpclientport(int) tcpserverport(int)");
+            System.exit(0);
+        }else {
+            if (!args[0].isEmpty()) startPoint = Long.parseLong(args[0]);
+            if (!args[1].isEmpty()) clientPort  = Integer.parseInt(args[1]);
+            if (!args[2].isEmpty()) serverPort = Integer.parseInt(args[2]);
+        }
         final Core core = new Core();
     }
 
