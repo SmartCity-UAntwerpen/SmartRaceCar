@@ -21,4 +21,12 @@ public class Cost {
     public void setIdVehicle(long idVehicle) {
         this.idVehicle = idVehicle;
     }
+
+    public Long getWeightToStart() {
+        return weightToStart;
+    }
+
+    public Long getWeight() {
+        return weight;
+    }
 }

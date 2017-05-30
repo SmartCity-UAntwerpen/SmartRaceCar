@@ -1,7 +1,10 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.simkernel;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
+import com.google.gson.reflect.TypeToken;
 
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.logging.Level;
 
 class SimKernel implements TCPListener {
@@ -19,9 +22,11 @@ class SimKernel implements TCPListener {
     private boolean connected = false; // To verify socket connection to vehicle.
     private Map map;
     private WayPoint startPoint;
+    private Point currentPosition;
 
 
     SimKernel(int serverPort,int clientPort) throws InterruptedException {
+        currentPosition = new Point(startPoint.getX(),startPoint.getY(),startPoint.getZ(),startPoint.getW());
         log = new Log(this.getClass(), level);
         log.logConfig("SIMKERNEL","Startup parameters: TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
         restUtils = new RESTUtils(restURL);
@@ -32,13 +37,15 @@ class SimKernel implements TCPListener {
         }
     }
 
-
-
     @Override
     public void parseTCP(String message) {
         if (JSONUtils.isJSONValid(message)) {
             //parses keyword to do the correct function call.
             switch (JSONUtils.getFirst(message)) {
+                case "cost":
+                    Type typeOfCosts = new TypeToken<ArrayList<Cost>>() {}.getType();
+                    calculateCost((ArrayList<Cost>) JSONUtils.getObjectWithKeyWord(message,typeOfCosts));
+                    break;
                 case "connect":
                     connectReceive();
                     break;
@@ -60,6 +67,22 @@ class SimKernel implements TCPListener {
         Log.logInfo("SIMKERNEL", "Connected to Core.");
     }
 
+    private void wayPointReached() {
+        tcpUtils.sendUpdate(JSONUtils.keywordToJSONString("arrivedWaypoint"));
+        connected = true;
+        Log.logInfo("SIMKERNEL", "Arrived at waypoint. Waiting for next order.");
+    }
+
+    private void calculateCost(ArrayList<Cost> costs){
+        Log.logInfo("SIMKERNEL", "Cost request...");
+        Cost cost = new Cost(false,(long)5,(long)5,(long)0);
+        if(!debugWithoutRosServer){
+            Type typeOfCost = new TypeToken<Cost>() {}.getType();
+            cost = (Cost) JSONUtils.getObjectWithKeyWord(restUtils.getJSON("getCost"), typeOfCost);
+        }
+        Log.logInfo("SIMKERNEL", "Calculated cost between current and start: " + cost.getWeightToStart() + "s. Cost to end : " + cost.getWeight() + "s.");
+        tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("cost",cost));
+    }
 
     public static void main(String[] args) throws Exception {
 
