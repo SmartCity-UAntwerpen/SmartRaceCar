@@ -13,8 +13,8 @@ public class MQTTUtils implements MqttCallback{
 
         options.setCleanSession(true);
         options.setKeepAliveInterval(0);
-        //options.setUserName(username);
-        //options.setPassword(password.toCharArray());
+        options.setUserName(username);
+        options.setPassword(password.toCharArray());
 
         try {
             client = new MqttClient(brokerURL, MqttClient.generateClientId());
@@ -33,8 +33,8 @@ public class MQTTUtils implements MqttCallback{
 
         options.setCleanSession(true);
         options.setKeepAliveInterval(0);
-        //options.setUserName(username);
-        //options.setPassword(password.toCharArray());
+        options.setUserName(username);
+        options.setPassword(password.toCharArray());
 
         try {
             client = new MqttClient(brokerURL,String.valueOf(ID));

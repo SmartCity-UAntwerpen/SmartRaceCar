@@ -11,7 +11,7 @@ class SimKernel implements TCPListener {
 
     private boolean debugWithoutRosServer = true; // debug parameter to stop attempts to send over sockets when ROSServer-Node is active.
     private Log log;
-    private Level level = Level.CONFIG; //Debug level
+    private Level level = Level.INFO; //Debug level
     private final String restURL = "http://localhost:8080/carmanager";
     private static int serverPort = 5005;
     private static int clientPort = 5006;

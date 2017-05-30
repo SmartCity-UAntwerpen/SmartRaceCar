@@ -30,9 +30,8 @@ class Core implements TCPListener, MQTTListener {
     //Hardcoded elements.
     private boolean debugWithoutRos = false; // debug parameter to stop attempts to send over sockets when ROS-Node is active.
     private Log log;
-    private Level level = Level.CONFIG; //Debug level
-    private final String mqttBroker = "tcp://broker.hivemq.com:1883";
-    //private final String mqttBroker = "tcp://143.129.39.151:1883";
+    private Level level = Level.INFO; //Debug level
+    private final String mqttBroker = "tcp://143.129.39.151:1883";
     private final String mqqtUsername = "root";
     private final String mqttPassword = "smartcity";
    // private final String restURL = "http://146.175.140.17:8080/carmanager";
