@@ -28,10 +28,11 @@ import java.util.logging.Level;
 class Core implements TCPListener, MQTTListener {
 
     //Hardcoded elements.
-    private boolean debugWithoutRos = true; // debug parameter to stop attempts to send over sockets when ROS-Node is active.
+    private boolean debugWithoutRos = false; // debug parameter to stop attempts to send over sockets when ROS-Node is active.
     private Log log;
     private Level level = Level.CONFIG; //Debug level
-    private final String mqttBroker = "tcp://143.129.39.151:1883";
+    private final String mqttBroker = "tcp://broker.hivemq.com:1883";
+    //private final String mqttBroker = "tcp://143.129.39.151:1883";
     private final String mqqtUsername = "root";
     private final String mqttPassword = "smartcity";
    // private final String restURL = "http://146.175.140.17:8080/carmanager";
@@ -388,10 +389,10 @@ class Core implements TCPListener, MQTTListener {
             System.exit(0);
         }else {
             if (!args[0].isEmpty()) startPoint = Long.parseLong(args[0]);
-            if (!args[1].isEmpty()) clientPort  = Integer.parseInt(args[1]);
-            if (!args[2].isEmpty()) serverPort = Integer.parseInt(args[2]);
+            if (!args[1].isEmpty()) serverPort  = Integer.parseInt(args[1]);
+            if (!args[2].isEmpty()) clientPort = Integer.parseInt(args[2]);
         }
-        final Core core = new Core(startPoint,clientPort,serverPort);
+        final Core core = new Core(startPoint,serverPort,clientPort);
     }
 
 }

@@ -25,7 +25,8 @@ public class Manager implements MQTTListener{
     private boolean debugWithoutMAAS = true; // debug parameter to stop attempts to send or recieve messages from MAAS
     private static Log log;
     Level level = Level.CONFIG;
-    private final String mqttBroker = "tcp://143.129.39.151:1883";
+    private final String mqttBroker = "tcp://broker.hivemq.com:1883";
+    //private final String mqttBroker = "tcp://143.129.39.151:1883";
     private final String mqqtUsername = "root";
     private final String mqttPassword = "smartcity";
     private final String restURLMAAS = "http://localhost:8080/";
@@ -312,8 +313,8 @@ public class Manager implements MQTTListener{
     }
 
     public static void main(String[] args) throws Exception {
-        if (args.length == 0) {
-            System.out.println("Need at least 1 argument to run. Possible arguments: currentMap(String)");
+        if (args.length != 1) {
+            System.out.println("Need 1 argument to run. Possible arguments: currentMap(String)");
             System.exit(0);
         } else if (args.length == 1) {
             if (!args[0].isEmpty()) {

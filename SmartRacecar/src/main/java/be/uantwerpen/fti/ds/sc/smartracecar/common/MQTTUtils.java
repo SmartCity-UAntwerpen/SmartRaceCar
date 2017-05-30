@@ -12,9 +12,9 @@ public class MQTTUtils implements MqttCallback{
         this.listener = listener;
 
         options.setCleanSession(true);
-        options.setKeepAliveInterval(30);
-        options.setUserName(username);
-        options.setPassword(password.toCharArray());
+        options.setKeepAliveInterval(0);
+        //options.setUserName(username);
+        //options.setPassword(password.toCharArray());
 
         try {
             client = new MqttClient(brokerURL, MqttClient.generateClientId());
@@ -32,9 +32,9 @@ public class MQTTUtils implements MqttCallback{
         this.listener = listener;
 
         options.setCleanSession(true);
-        options.setKeepAliveInterval(30);
-        options.setUserName(username);
-        options.setPassword(password.toCharArray());
+        options.setKeepAliveInterval(0);
+        //options.setUserName(username);
+        //options.setPassword(password.toCharArray());
 
         try {
             client = new MqttClient(brokerURL,String.valueOf(ID));
