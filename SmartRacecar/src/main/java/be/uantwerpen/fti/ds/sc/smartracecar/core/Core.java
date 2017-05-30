@@ -299,7 +299,7 @@ class Core implements TCPListener, MQTTListener {
             //parses keyword to do the correct function call.
             switch (JSONUtils.getFirst(message)) {
                 case "percentage":
-                    locationUpdate((Location) JSONUtils.getObjectWithKeyWord(message, Point.class));
+                    locationUpdate((Location) JSONUtils.getObjectWithKeyWord(message, Location.class));
                     break;
                 case "arrivedWaypoint":
                     wayPointReached();

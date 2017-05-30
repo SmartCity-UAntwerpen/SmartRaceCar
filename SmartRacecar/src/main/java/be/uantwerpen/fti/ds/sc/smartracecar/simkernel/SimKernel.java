@@ -26,7 +26,6 @@ class SimKernel implements TCPListener {
 
 
     SimKernel(int serverPort,int clientPort) throws InterruptedException {
-        currentPosition = new Point(startPoint.getX(),startPoint.getY(),startPoint.getZ(),startPoint.getW());
         log = new Log(this.getClass(), level);
         log.logConfig("SIMKERNEL","Startup parameters: TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
         restUtils = new RESTUtils(restURL);
@@ -35,6 +34,7 @@ class SimKernel implements TCPListener {
         while (!connected) {
             Thread.sleep(1);
         }
+        currentPosition = new Point(startPoint.getX(),startPoint.getY(),startPoint.getZ(),startPoint.getW());
     }
 
     @Override
@@ -57,6 +57,13 @@ class SimKernel implements TCPListener {
                     map = (Map) JSONUtils.getObjectWithKeyWord(message, Map.class);
                     Log.logInfo("SIMKERNEL", "Map set to '" + map.getName() + "'.");
                     break;
+                case "nextWayPoint":
+                    Type typeOfWayPoint = new TypeToken<WayPoint>() {}.getType();
+                    jobRequest((WayPoint) JSONUtils.getObjectWithKeyWord(message,typeOfWayPoint));
+                    break;
+                default:
+                    Log.logWarning("SIMKERNEL", "No matching keyword when parsing JSON from Sockets. Data: " + message);
+                    break;
             }
         }
     }
@@ -73,12 +80,35 @@ class SimKernel implements TCPListener {
         Log.logInfo("SIMKERNEL", "Arrived at waypoint. Waiting for next order.");
     }
 
+    private void jobRequest(WayPoint nextPoint){
+        Log.logInfo("SIMKERNEL", "Job request to drive to " + nextPoint.getX() + "," + nextPoint.getY() + "," + nextPoint.getZ() + "," + nextPoint.getW() + ".");
+        Cost cost = new Cost(false,(long)5,(long)5,(long)0);
+        if(!debugWithoutRosServer){
+            Type typeOfCost = new TypeToken<Cost>() {}.getType();
+            cost = (Cost) JSONUtils.getObjectWithKeyWord(restUtils.getJSON("getCost"), typeOfCost);
+            //TODO implement proper REST
+        }
+        Log.logInfo("SIMKERNEL", "Travel time to destination is " + cost.getWeight() + "s.");
+        for(int i = 0;i <= 10 ; i++){
+            try {
+                Thread.sleep((cost.getWeight()*1000)/10);
+                Location location = new Location(0,0,0,i*10);
+                tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("percentage",location));
+                Log.logInfo("SIMKERNEL", "travelled " + i*10 + "% of total route.");
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        wayPointReached();
+    }
+
     private void calculateCost(ArrayList<Cost> costs){
         Log.logInfo("SIMKERNEL", "Cost request...");
         Cost cost = new Cost(false,(long)5,(long)5,(long)0);
         if(!debugWithoutRosServer){
             Type typeOfCost = new TypeToken<Cost>() {}.getType();
             cost = (Cost) JSONUtils.getObjectWithKeyWord(restUtils.getJSON("getCost"), typeOfCost);
+            //TODO implement proper REST
         }
         Log.logInfo("SIMKERNEL", "Calculated cost between current and start: " + cost.getWeightToStart() + "s. Cost to end : " + cost.getWeight() + "s.");
         tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("cost",cost));
