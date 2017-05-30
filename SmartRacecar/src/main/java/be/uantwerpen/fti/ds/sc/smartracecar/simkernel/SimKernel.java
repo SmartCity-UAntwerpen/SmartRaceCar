@@ -100,6 +100,7 @@ class SimKernel implements TCPListener {
             }
         }
         wayPointReached();
+        currentPosition = new Point(nextPoint.getX(),nextPoint.getY(),nextPoint.getZ(),nextPoint.getW());
     }
 
     private void calculateCost(ArrayList<Cost> costs){
