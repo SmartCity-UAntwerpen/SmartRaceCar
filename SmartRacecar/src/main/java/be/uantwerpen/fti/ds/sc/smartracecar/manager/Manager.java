@@ -110,7 +110,9 @@ public class Manager implements MQTTListener{
             case "done":
                 vehicles.get(ID).setOccupied(false);
                 if (!debugWithoutMAAS) {
-                    restUtilsMAAS.getTextPlain("completeJob/" + ID);
+                    HashMap<String,String> queryParams = new HashMap<>();
+                    queryParams.put("idJob",Long.toString(ID));
+                    restUtilsMAAS.getTextPlain("completeJob",queryParams);
                 }
                 vehicles.get(ID).getLocation().setIdStart(vehicles.get(ID).getLocation().getIdEnd());
                 vehicles.get(ID).getLocation().setPercentage(0);
@@ -173,9 +175,9 @@ public class Manager implements MQTTListener{
     }
 
     @GET
-    @Path("calcWeight/{start}/to/{stop}")
+    @Path("calcWeight")
     @Produces("application/json")
-    public Response calculateCostsRequest(@PathParam("start") final long startId, @PathParam("stop") final long endId, @Context HttpServletResponse response) throws IOException, InterruptedException {
+    public Response calculateCostsRequest(@QueryParam("start") long startId,@QueryParam("stop") long endId, @Context HttpServletResponse response) throws IOException, InterruptedException {
         if (!wayPoints.containsKey(startId) || !wayPoints.containsKey(endId)) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "start or end waypoint not found");
         } else if (vehicles.isEmpty()) {
@@ -270,12 +272,11 @@ public class Manager implements MQTTListener{
                 .build();
     }
 
-    @POST
+    @GET
     @Path("executeJob")
-    @Consumes("application/json")
-    public Response jobRequest(String data,@Context HttpServletResponse response) throws IOException {
-        Type typeOfJob = new TypeToken<Job>() {}.getType();
-        Job job = (Job) JSONUtils.getObject(data,typeOfJob);
+    @Produces("text/plain")
+    public Response jobRequest(@QueryParam("idJob") long idJob,@QueryParam("idVehicle") long idVehicle,@QueryParam("idStart") long idStart,@QueryParam("idEnd") long idEnd,String data,@Context HttpServletResponse response) throws IOException {
+        Job job = new Job(idJob,idStart,idEnd,idVehicle);
 
         if (vehicles.containsKey(job.getIdVehicle())) {
             if (!vehicles.get(job.getIdVehicle()).getOccupied()) {
