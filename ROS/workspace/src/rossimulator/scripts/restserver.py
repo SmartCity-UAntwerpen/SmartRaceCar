@@ -46,28 +46,21 @@ class CalculateCost:
                                     jsonreq[0]['z'], jsonreq[0]['w'])
 
         print "[CALCCOST] Current location:"
-        print current_location
+        print str(current_location)
         print "------"
 
         start_location = Location(jsonreq[1]['x'], jsonreq[1]['y'], 0.0, 0.0, 0.0,
                                   jsonreq[1]['z'], jsonreq[1]['w'])
 
         print "[CALCCOST] Start location:"
-        print start_location
+        print str(start_location)
         print "------"
 
         goal_location = Location(jsonreq[2]['x'], jsonreq[2]['y'], 0.0, 0.0, 0.0,
                                  jsonreq[2]['z'], jsonreq[2]['w'])
 
         print "[CALCCOST] Start location:"
-        print goal_location
-        print "------"
-
-        jsonmessage = {'cost': {'status': False, 'weightToStart': 4.0,
-                                'weight': 3.0, 'idVehicle': 12321}}
-
-        print "[CALCCOST] Jsonmessage:"
-        print jsonmessage
+        print str(goal_location)
         print "------"
 
         current_posestamped = calccostsim.pose_2_posestamped(calccostsim.location_2_pose(current_location))
@@ -77,11 +70,21 @@ class CalculateCost:
         print "[CALCCOST] Posestamped calculated"
         print "------"
 
-        # time = calccostsim.delegate_cost(current_location, start_location, 0.3, 4.0)
+        time_curstart = calccostsim.delegate_cost(current_posestamped, start_posestamped, 0.3, 4.0)
+        time_startgoal = calccostsim.delegate_cost(start_posestamped, goal_posestamped, 0.3, 4.0)
 
-        # print "[CALCCOST] Time: " + str(time)
+        print "[CALCCOST] Time current start: " + str(time_curstart)
+        print "[CALCCOST] Time start goal: " + str(time_startgoal)
+
+        jsonmessage = {'cost': {'status': False, 'weightToStart': time_curstart,
+                                'weight': time_startgoal, 'idVehicle': 12321}}
+
+        print "[CALCCOST] Jsonmessage:"
+        print jsonmessage
+        print "------"
 
         return jsonmessage
 
 if __name__ == "__main__":
+    calccostsim.init_ros()
     rossim = SimRest()
