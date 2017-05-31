@@ -90,6 +90,7 @@ class CalculateCost:
         return jsonmessage
 
 if __name__ == "__main__":
+    calccostsim.init_ros()
     rossim = SimRest()
 
 '''

@@ -108,22 +108,12 @@ def get_time(distance, speed):
 #     print "Done!"
 
 
-def init_ros(logger_argument):
-    logger = logger_argument
+def init_ros():
+    # pub_drive_parameters = rospy.Publisher('drive_parameters', drive_param, queue_size=10)
+    # pub_initial_pose = rospy.Publisher('initialpose', PoseWithCovarianceStamped, queue_size=10)
+    # pub_movebase_goal = rospy.Publisher('move_base_simple/goal', PoseStamped, queue_size=10)
 
-    pub_drive_parameters = rospy.Publisher('drive_parameters', drive_param, queue_size=10)
-    pub_initial_pose = rospy.Publisher('initialpose', PoseWithCovarianceStamped, queue_size=10)
-    pub_movebase_goal = rospy.Publisher('move_base_simple/goal', PoseStamped, queue_size=10)
-
-    logging_level = logger.logging_level
-    if logging_level == 1:
-        rospy.init_node('javalinker', log_level=rospy.DEBUG, anonymous=True)
-    elif logging_level == 2:
-        rospy.init_node('javalinker', log_level=rospy.INFO, anonymous=True)
-    elif logging_level == 3:
-        rospy.init_node('javalinker', log_level=rospy.WARN, anonymous=True)
-    elif logging_level == 4:
-        rospy.init_node('javalinker', log_level=rospy.ERROR, anonymous=True)
+    rospy.init_node('rossimulator', anonymous=True)
 
     # rospy.Subscriber('move_base/status', GoalStatusArray, cb_movebase_status)
     # rospy.Subscriber('move_base/feedback', MoveBaseActionFeedback, cb_movebase_feedback)
