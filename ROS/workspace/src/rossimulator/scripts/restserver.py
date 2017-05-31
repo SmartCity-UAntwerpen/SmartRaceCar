@@ -64,7 +64,7 @@ class CalculateCost:
                                  jsonreq['cost'][2]['z'], jsonreq['cost'][2]['w'])
 
         print "Start location:"
-        print start_location
+        print goal_location
         print "------"
 
         jsonmessage = {'cost': {'status': False, 'weightToStart': 4.0,
