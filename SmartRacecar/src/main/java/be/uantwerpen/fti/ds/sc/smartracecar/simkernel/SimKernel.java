@@ -34,7 +34,6 @@ class SimKernel implements TCPListener {
         while (!connected) {
             Thread.sleep(1);
         }
-        currentPosition = new Point(startPoint.getX(),startPoint.getY(),startPoint.getZ(),startPoint.getW());
     }
 
     @Override
@@ -52,6 +51,7 @@ class SimKernel implements TCPListener {
                 case "startPoint":
                     startPoint = (WayPoint) JSONUtils.getObjectWithKeyWord(message, WayPoint.class);
                     Log.logInfo("SIMKERNEL", "Startpoint set to " + startPoint.getX() + "," + startPoint.getY() + "," + startPoint.getZ() + "," + startPoint.getW() + ".");
+                    currentPosition = new Point(startPoint.getX(),startPoint.getY(),startPoint.getZ(),startPoint.getW());
                     break;
                 case "currentMap":
                     map = (Map) JSONUtils.getObjectWithKeyWord(message, Map.class);
@@ -104,7 +104,7 @@ class SimKernel implements TCPListener {
     }
 
     private void calculateCost(ArrayList<Cost> costs){
-        Log.logInfo("SIMKERNEL", "Cost request...");
+        Log.logInfo("SIMKERNEL", "Cost request received. Requesting calculation from ROS Server.");
         Cost cost = new Cost(false,(long)5,(long)5,(long)0);
         if(!debugWithoutRosServer){
             Type typeOfCost = new TypeToken<Cost>() {}.getType();

@@ -113,9 +113,7 @@ class Core implements TCPListener, MQTTListener {
 
     //Register vehicle with RaceCarManager
     private void register() {
-        HashMap<String, String> queryParams = new HashMap<>();
-        queryParams.put("startwaypoint", Long.toString(startPoint));
-        String id = restUtils.getTextPlain("register", queryParams);
+        String id = restUtils.getTextPlain("register/" + Long.toString(startPoint));
         ID = Long.parseLong(id, 10);
         Log.logInfo("CORE", "Vehicle received ID " + ID + ".");
     }
@@ -311,6 +309,7 @@ class Core implements TCPListener, MQTTListener {
                     break;
                 case "cost":
                     costComplete((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
+                    break;
                 default:
                     Log.logWarning("CORE", "No matching keyword when parsing JSON from Sockets. Data: " + message);
                     break;
@@ -335,7 +334,7 @@ class Core implements TCPListener, MQTTListener {
         }else{
             costComplete(new Cost(false,(long)5,(long)5,ID));
         }
-        Log.logInfo("CORE", "Cost request send between waypoints " + wayPointIDs[0] + " and " + wayPointIDs[1] + ".");
+        Log.logInfo("CORE", "Cost request received between waypoints " + wayPointIDs[0] + " and " + wayPointIDs[1] + ". Calculating.");
     }
 
     private void costComplete(Cost cost){

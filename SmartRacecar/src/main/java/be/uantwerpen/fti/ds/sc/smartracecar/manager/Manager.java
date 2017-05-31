@@ -110,9 +110,7 @@ public class Manager implements MQTTListener{
             case "done":
                 vehicles.get(ID).setOccupied(false);
                 if (!debugWithoutMAAS) {
-                    HashMap<String,String> queryParams = new HashMap<>();
-                    queryParams.put("idJob",Long.toString(ID));
-                    restUtilsMAAS.getTextPlain("completeJob",queryParams);
+                    restUtilsMAAS.getTextPlain("completeJob/" + ID);
                 }
                 vehicles.get(ID).getLocation().setIdStart(vehicles.get(ID).getLocation().getIdEnd());
                 vehicles.get(ID).getLocation().setPercentage(0);
@@ -130,9 +128,9 @@ public class Manager implements MQTTListener{
     }
 
     @GET
-    @Path("register")
+    @Path("register/{startwaypoint}")
     @Produces("text/plain")
-    public Response register(@DefaultValue("1") @QueryParam("startwaypoint") long startWayPoint, @Context HttpServletResponse response) throws IOException {
+    public Response register(@PathParam("startwaypoint") long startWayPoint, @Context HttpServletResponse response) throws IOException {
         if (!wayPoints.containsKey(startWayPoint)) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "Waypoint " + startWayPoint + " not found");
         } else {
@@ -175,9 +173,9 @@ public class Manager implements MQTTListener{
     }
 
     @GET
-    @Path("calcWeight")
+    @Path("calcWeight/{idStart}/{idStop}")
     @Produces("application/json")
-    public Response calculateCostsRequest(@QueryParam("start") long startId,@QueryParam("stop") long endId, @Context HttpServletResponse response) throws IOException, InterruptedException {
+    public Response calculateCostsRequest(@PathParam("idStart") long startId,@PathParam("idStop") long endId, @Context HttpServletResponse response) throws IOException, InterruptedException {
         if (!wayPoints.containsKey(startId) || !wayPoints.containsKey(endId)) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "start or end waypoint not found");
         } else if (vehicles.isEmpty()) {
@@ -273,9 +271,9 @@ public class Manager implements MQTTListener{
     }
 
     @GET
-    @Path("executeJob")
+    @Path("executeJob/{idJob}/{idVehicle}/{idStart}/{idEnd}")
     @Produces("text/plain")
-    public Response jobRequest(@QueryParam("idJob") long idJob,@QueryParam("idVehicle") long idVehicle,@QueryParam("idStart") long idStart,@QueryParam("idEnd") long idEnd,String data,@Context HttpServletResponse response) throws IOException {
+    public Response jobRequest(@PathParam("idJob") long idJob,@PathParam("idVehicle") long idVehicle,@PathParam("idStart") long idStart,@PathParam("idEnd") long idEnd,String data,@Context HttpServletResponse response) throws IOException {
         Job job = new Job(idJob,idStart,idEnd,idVehicle);
 
         if (vehicles.containsKey(job.getIdVehicle())) {
