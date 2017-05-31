@@ -12,7 +12,7 @@ class SimRest():
         # self.mqtt_client= mqtt_client
 
         cherrypy.server.socket_host = '0.0.0.0'
-        cherrypy.tree.mount(CalculateCost(self.logger), '/calcWeight', {'/': {'tools.gzip.on': True}})
+        cherrypy.tree.mount(CalculateCost(), '/calcWeight', {'/': {'tools.gzip.on': True}})
         cherrypy.engine.start()
         # self.getWaypoints()
         # print self.waypoints[1]['ID']
