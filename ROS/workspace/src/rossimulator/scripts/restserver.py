@@ -1,5 +1,6 @@
 from random import randint
 import cherrypy
+import handlers.calc_cost_sim as calccostsim
 import json
 from handlers.location import Location
 
@@ -72,6 +73,13 @@ class CalculateCost:
 
         print "Jsonmessage:"
         print jsonmessage
+        print "------"
+
+        current_posestamped = calccostsim.pose_2_posestamped(calccostsim.location_2_pose(current_location))
+        start_posestamped = calccostsim.pose_2_posestamped(calccostsim.location_2_pose(start_location))
+        goal_posestamped = calccostsim.pose_2_posestamped(calccostsim.location_2_pose(goal_location))
+
+        print "Posestamped calculated"
         print "------"
 
         return jsonmessage
