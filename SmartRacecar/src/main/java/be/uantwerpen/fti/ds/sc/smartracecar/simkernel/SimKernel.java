@@ -10,7 +10,7 @@ import java.util.logging.Level;
 
 class SimKernel implements TCPListener {
 
-    private boolean debugWithoutRosServer = true; // debug parameter to stop attempts to send over sockets when ROSServer-Node is active.
+    private boolean debugWithoutRosServer = false; // debug parameter to stop attempts to send over sockets when ROSServer-Node is active.
     private Log log;
     private Level level = Level.CONFIG; //Debug level
     private final String restURL = "http://143.129.39.117:8080";
@@ -89,6 +89,7 @@ class SimKernel implements TCPListener {
         if(!debugWithoutRosServer){
             List<Point> points = new ArrayList<>();
             points.add(currentPosition);
+            points.add(currentPosition);
             points.add(nextPoint);
             Type typeOfCost = new TypeToken<Cost>() {}.getType();
             cost = (Cost) JSONUtils.getObjectWithKeyWord(restUtils.getJSONPostJSON("calcWeight",JSONUtils.arrayToJSONString(points)), typeOfCost);
@@ -109,6 +110,7 @@ class SimKernel implements TCPListener {
     }
 
     private void calculateCost(ArrayList<Point> points){
+        points.add(currentPosition);
         Log.logInfo("SIMKERNEL", "Cost request received. Requesting calculation from ROS Server.");
         Cost cost = new Cost(false,(long)5,(long)5,(long)0);
         if(!debugWithoutRosServer){

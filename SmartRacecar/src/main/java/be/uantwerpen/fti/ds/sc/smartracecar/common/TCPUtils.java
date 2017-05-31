@@ -57,10 +57,8 @@ public class TCPUtils extends Thread {
 
                 } catch (SocketTimeoutException s) {
                     Log.logSevere("SOCKETS", "Timed out." + s);
-                    break;
                 } catch (IOException e) {
                     e.printStackTrace();
-                    break;
                 }
             }
         }else{
