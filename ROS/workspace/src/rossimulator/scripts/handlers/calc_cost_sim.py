@@ -118,7 +118,7 @@ def init_ros():
     # rospy.Subscriber('move_base/status', GoalStatusArray, cb_movebase_status)
     # rospy.Subscriber('move_base/feedback', MoveBaseActionFeedback, cb_movebase_feedback)
 
-    logger.log_info("[ROSMODULE] ROS initialised")
+    # logger.log_info("[ROSMODULE] ROS initialised")
 
 '''
 <x>0.5</x>
