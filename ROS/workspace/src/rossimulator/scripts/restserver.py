@@ -8,8 +8,6 @@ import handlers.logger as logger
 # from droneparameters import DroneParameters
 # import requests
 
-logger = logger.Logger()
-print "logger made"
 
 class SimRest():
     def __init__(self, logger):
@@ -90,4 +88,5 @@ class CalculateCost:
         return jsonmessage
 
 if __name__ == "__main__":
+    logger = logger.Logger()
     rossim = SimRest(logger)
