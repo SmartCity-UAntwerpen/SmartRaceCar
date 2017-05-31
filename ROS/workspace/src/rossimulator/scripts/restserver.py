@@ -3,19 +3,21 @@ import cherrypy
 import handlers.calc_cost_sim as calccostsim
 import json
 from handlers.location import Location
+import handlers.logger as logger
 
 # from droneparameters import DroneParameters
 # import requests
 
 
 class SimRest():
-    def __init__(self):
+    def __init__(self, logger):
         # logg
         # self.id_droneparam=id_droneparam
         # self.mqtt_client= mqtt_client
+        self.logger = logger
 
         cherrypy.server.socket_host = '0.0.0.0'
-        cherrypy.tree.mount(CalculateCost(), '/calcWeight', {'/': {'tools.gzip.on': True}})
+        cherrypy.tree.mount(CalculateCost(self.logger), '/calcWeight', {'/': {'tools.gzip.on': True}})
         cherrypy.engine.start()
         # self.getWaypoints()
         # print self.waypoints[1]['ID']
@@ -23,8 +25,8 @@ class SimRest():
 
 class CalculateCost:
 
-    def __init__(self):
-        pass
+    def __init__(self, logger):
+        self.logger = logger
 
     # def _cp_dispatch(self, vpath):
     #     if len(vpath)== 3:
@@ -38,8 +40,7 @@ class CalculateCost:
     @cherrypy.tools.json_in()
     def index(self):
 
-        print"Starting calccost method"
-        print "------"
+        self.logger.log_debug("Calccost function started!")
 
         jsonreq = cherrypy.request.json
 
@@ -82,7 +83,10 @@ class CalculateCost:
         print "Posestamped calculated"
         print "------"
 
+        time = calccostsim.delegate_cost(current_location, start_location, 0.3, 4.0)
+
         return jsonmessage
 
 if __name__ == "__main__":
-    rossim = SimRest()
+    logger = logger.Logger()
+    rossim = SimRest(logger)
