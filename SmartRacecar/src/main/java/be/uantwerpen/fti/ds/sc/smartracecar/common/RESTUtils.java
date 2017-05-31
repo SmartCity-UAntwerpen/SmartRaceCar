@@ -1,10 +1,7 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.common;
 
 import javax.ws.rs.*;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.client.*;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
@@ -79,6 +76,23 @@ public class RESTUtils {
         WebTarget resourceWebTarget = webTarget.path(URL);
         Invocation.Builder invocationBuilder = resourceWebTarget.request("application/json");
         Response response = null;
+        Log.logConfig("REST","Attempting request with URL:" + resourceWebTarget.getUri());
+        try {
+            response = invocationBuilder.get();
+        } catch (ProcessingException e) {
+            Log.logSevere("REST", "Cannot connect to REST service: " + e);
+            System.exit(0);
+        }
+        checkForError(response,resourceWebTarget.getUri());
+        String responseString = response.readEntity(String.class);
+        Log.logConfig("REST","JSON Returned from request '"+ URL + "' is: " + responseString);
+        return responseString;
+    }
+
+    public String getJSONPostJSON(String URL,String jsonString){
+        WebTarget resourceWebTarget = webTarget.path(URL);
+        Invocation.Builder invocationBuilder = resourceWebTarget.request("application/json");
+        Response response = invocationBuilder.post(Entity.entity(jsonString, "application/json"));
         Log.logConfig("REST","Attempting request with URL:" + resourceWebTarget.getUri());
         try {
             response = invocationBuilder.get();

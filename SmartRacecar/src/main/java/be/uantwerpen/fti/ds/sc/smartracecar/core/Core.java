@@ -355,11 +355,11 @@ class Core implements TCPListener, MQTTListener {
     }
 
     private void costRequest(long[] wayPointIDs){
-        List<Point> costs = new ArrayList<>();
-        costs.add(wayPoints.get(wayPointIDs[0]));
-        costs.add(wayPoints.get(wayPointIDs[1]));
+        List<Point> points = new ArrayList<>();
+        points.add(wayPoints.get(wayPointIDs[0]));
+        points.add(wayPoints.get(wayPointIDs[1]));
         if (!debugWithoutRosNode){
-            tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("cost",costs));
+            tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("cost",points));
         }else{
             costComplete(new Cost(false,(long)5,(long)5,ID));
         }

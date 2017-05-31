@@ -12,7 +12,7 @@ import java.util.logging.Level;
 
     private final int serverPort = 9999;
     private static Log log;
-    private Level level = Level.INFO;
+    private Level level = Level.CONFIG;
 
     private TCPUtils tcpUtils;
 
@@ -53,7 +53,7 @@ import java.util.logging.Level;
     }
 
     private boolean setVehicle(long simulationID, String parameter, String argument) {
-        if (!simulatedVehicles.containsKey(simulationID)) {
+        if (simulatedVehicles.containsKey(simulationID)) {
             switch (parameter) {
                 case "startpoint":
                     simulatedVehicles.get(simulationID).setStartPoint(Long.parseLong(argument));
@@ -72,7 +72,7 @@ import java.util.logging.Level;
                     return false;
             }
         } else {
-            Log.logWarning("SIMDEPLOYER", "Cannot stop vehicle with simulation ID " + simulationID + ". It does not exist.");
+            Log.logWarning("SIMDEPLOYER", "Cannot set vehicle with simulation ID " + simulationID + ". It does not exist.");
             return false;
         }
     }
@@ -87,7 +87,6 @@ import java.util.logging.Level;
             Log.logWarning("SIMDEPLOYER", "Cannot create vehicle with simulation ID " + simulationID + ". It already exists.");
             return false;
         }
-
     }
 
     private boolean stopVehicle(long simulationID) {
@@ -129,7 +128,7 @@ import java.util.logging.Level;
     private boolean startupVehicle(long simulationID){
         if (simulatedVehicles.containsKey(simulationID)) {
             if (!simulatedVehicles.get(simulationID).isDeployed()) {
-                if (simulatedVehicles.get(simulationID).getStartPoint() == -1) {
+                if (simulatedVehicles.get(simulationID).getStartPoint() != -1) {
                     simulatedVehicles.get(simulationID).setDeployed(true);
                     Log.logInfo("SIMDEPLOYER", "Simulated Vehicle with simulation ID " + simulationID + " started.");
                     return true;

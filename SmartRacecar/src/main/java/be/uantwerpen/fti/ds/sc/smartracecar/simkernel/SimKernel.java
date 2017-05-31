@@ -5,6 +5,7 @@ import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 
 class SimKernel implements TCPListener {
@@ -12,7 +13,7 @@ class SimKernel implements TCPListener {
     private boolean debugWithoutRosServer = true; // debug parameter to stop attempts to send over sockets when ROSServer-Node is active.
     private Log log;
     private Level level = Level.CONFIG; //Debug level
-    private final String restURL = "http://localhost:8081/carmanager";
+    private final String restURL = "http://143.129.39.117:8080";
     private static int serverPort = 5005;
     private static int clientPort = 5006;
 
@@ -43,8 +44,8 @@ class SimKernel implements TCPListener {
             //parses keyword to do the correct function call.
             switch (JSONUtils.getFirst(message)) {
                 case "cost":
-                    Type typeOfCosts = new TypeToken<ArrayList<Cost>>() {}.getType();
-                    calculateCost((ArrayList<Cost>) JSONUtils.getObjectWithKeyWord(message,typeOfCosts));
+                    Type typeOfPoints = new TypeToken<ArrayList<Point>>() {}.getType();
+                    calculateCost((ArrayList<Point>) JSONUtils.getObjectWithKeyWord(message,typeOfPoints));
                     break;
                 case "connect":
                     connectReceive();
@@ -86,9 +87,11 @@ class SimKernel implements TCPListener {
         Log.logInfo("SIMKERNEL", "Job request to drive to " + nextPoint.getX() + "," + nextPoint.getY() + "," + nextPoint.getZ() + "," + nextPoint.getW() + ".");
         Cost cost = new Cost(false,(long)5,(long)5,(long)0);
         if(!debugWithoutRosServer){
+            List<Point> points = new ArrayList<>();
+            points.add(currentPosition);
+            points.add(nextPoint);
             Type typeOfCost = new TypeToken<Cost>() {}.getType();
-            cost = (Cost) JSONUtils.getObjectWithKeyWord(restUtils.getJSON("getCost"), typeOfCost);
-            //TODO implement proper REST
+            cost = (Cost) JSONUtils.getObjectWithKeyWord(restUtils.getJSONPostJSON("calcWeight",JSONUtils.arrayToJSONString(points)), typeOfCost);
         }
         Log.logInfo("SIMKERNEL", "Travel time to destination is " + cost.getWeight() + "s.");
         for(int i = 0;i <= 10 ; i++){
@@ -105,13 +108,12 @@ class SimKernel implements TCPListener {
         currentPosition = new Point(nextPoint.getX(),nextPoint.getY(),nextPoint.getZ(),nextPoint.getW());
     }
 
-    private void calculateCost(ArrayList<Cost> costs){
+    private void calculateCost(ArrayList<Point> points){
         Log.logInfo("SIMKERNEL", "Cost request received. Requesting calculation from ROS Server.");
         Cost cost = new Cost(false,(long)5,(long)5,(long)0);
         if(!debugWithoutRosServer){
             Type typeOfCost = new TypeToken<Cost>() {}.getType();
-            cost = (Cost) JSONUtils.getObjectWithKeyWord(restUtils.getJSON("getCost"), typeOfCost);
-            //TODO implement proper REST
+            cost = (Cost) JSONUtils.getObjectWithKeyWord(restUtils.getJSONPostJSON("calcWeight",JSONUtils.arrayToJSONString(points)), typeOfCost);
         }
         Log.logInfo("SIMKERNEL", "Calculated cost between current and start: " + cost.getWeightToStart() + "s. Cost to end : " + cost.getWeight() + "s.");
         tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("cost",cost));
