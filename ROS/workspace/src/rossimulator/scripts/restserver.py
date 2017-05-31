@@ -21,7 +21,7 @@ class SimRest():
 class CalculateCost:
 
     def __init__(self):
-
+        pass
     # def _cp_dispatch(self, vpath):
     #     if len(vpath)== 3:
     #         self.start = vpath.pop(0)#start
