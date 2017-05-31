@@ -6,6 +6,8 @@ import be.uantwerpen.fti.ds.sc.smartracecar.common.Map;
 import com.google.gson.reflect.TypeToken;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -27,7 +29,7 @@ class Core implements TCPListener, MQTTListener {
     //Hardcoded elements.
     private boolean debugWithoutRosNode = false; // debug parameter to stop attempts to send over sockets when ROS-Node is active.
     private Log log;
-    private Level level = Level.INFO; //Debug level. best usages are LEVEL.INFO(for basic info) and LEVEL.CONFIG(for debug messages)
+    private Level level = Level.CONFIG; //Debug level. best usages are LEVEL.INFO(for basic info) and LEVEL.CONFIG(for debug messages)
     private final String mqttBroker = "tcp://143.129.39.151:1883"; // MQTT Broker URL
     private final String mqqtUsername = "root"; // MQTT Broker Username
     private final String mqttPassword = "smartcity"; // MQTT Broker Password
@@ -58,7 +60,7 @@ class Core implements TCPListener, MQTTListener {
         register();
         mqttUtils = new MQTTUtils(ID, mqttBroker, mqqtUsername, mqttPassword, this);
         mqttUtils.subscribeToTopic("racecar/" + ID + "/#");
-        tcpUtils = new TCPUtils(serverPort, clientPort, this);
+        tcpUtils = new TCPUtils(clientPort, serverPort, this,false);
         tcpUtils.start();
         //Keep trying to make connection every second
         if (!debugWithoutRosNode) {
@@ -67,8 +69,39 @@ class Core implements TCPListener, MQTTListener {
             connected = true;
         }
         sendStartPoint();
-        loadedMaps = XMLUtils.loadMaps(findMapsFolder());
+        loadedMaps = loadMaps(findMapsFolder());
         requestMap();
+    }
+
+    //Load all current available offline maps from the /mapFolder folder. It reads and maps.xml file with all the necessary information.
+    public static HashMap<String,Map> loadMaps(String mapFolder) {
+        HashMap<String,Map> loadedMaps = new HashMap<>();
+
+        try {
+            File fXmlFile = new File(mapFolder + "/maps.xml");
+            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+            Document doc = dBuilder.parse(fXmlFile);
+            doc.getDocumentElement().normalize();
+
+            NodeList nList = doc.getElementsByTagName("map");
+
+            for (int temp = 0; temp < nList.getLength(); temp++) {
+
+                Node nNode = nList.item(temp);
+
+                if (nNode.getNodeType() == Node.ELEMENT_NODE) {
+
+                    Element eElement = (Element) nNode;
+                    String name = eElement.getElementsByTagName("name").item(0).getTextContent();
+                    loadedMaps.put(name,new Map(name));
+                    Log.logConfig("XML","Added map: " + name + ".");
+                }
+            }
+        } catch (Exception e) {
+            Log.logSevere("XML","Could not correctly load XML of maps." + e);
+        }
+        return loadedMaps;
     }
 
     private String findMapsFolder(){
@@ -286,7 +319,7 @@ class Core implements TCPListener, MQTTListener {
         }
     }
 
-    public void parseTCP(String message) {
+    public String parseTCP(String message) {
         if (JSONUtils.isJSONValid(message)) {
             //parses keyword to do the correct function call.
             switch (JSONUtils.getFirst(message)) {
@@ -310,6 +343,7 @@ class Core implements TCPListener, MQTTListener {
                     break;
             }
         }
+        return null;
     }
 
     private void killCar(){

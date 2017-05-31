@@ -1,8 +1,9 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.simdeployer;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.Log;
+import be.uantwerpen.fti.ds.sc.smartracecar.common.TCPListener;
+import be.uantwerpen.fti.ds.sc.smartracecar.common.TCPUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.logging.Level;
@@ -19,7 +20,7 @@ import java.util.logging.Level;
 
     private SimDeployer() throws IOException {
         log = new Log(this.getClass(), level);
-        tcpUtils = new TCPUtils(serverPort, this);
+        tcpUtils = new TCPUtils(serverPort, this,true);
         tcpUtils.start();
     }
 

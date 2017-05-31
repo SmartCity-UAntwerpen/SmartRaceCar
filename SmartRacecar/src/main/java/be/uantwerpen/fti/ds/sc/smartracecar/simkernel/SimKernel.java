@@ -11,7 +11,7 @@ class SimKernel implements TCPListener {
 
     private boolean debugWithoutRosServer = true; // debug parameter to stop attempts to send over sockets when ROSServer-Node is active.
     private Log log;
-    private Level level = Level.INFO; //Debug level
+    private Level level = Level.CONFIG; //Debug level
     private final String restURL = "http://localhost:8081/carmanager";
     private static int serverPort = 5005;
     private static int clientPort = 5006;
@@ -29,15 +29,16 @@ class SimKernel implements TCPListener {
         log = new Log(this.getClass(), level);
         log.logConfig("SIMKERNEL","Startup parameters: TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
         restUtils = new RESTUtils(restURL);
-        tcpUtils = new TCPUtils(serverPort, clientPort, this);
+        tcpUtils = new TCPUtils(clientPort, serverPort, this,false);
         tcpUtils.start();
         while (!connected) {
-            Thread.sleep(1);
+            log.logWarning("SIMKERNEL","Waiting for connection with vehicle Core...");
+            Thread.sleep(1000);
         }
     }
 
     @Override
-    public void parseTCP(String message) {
+    public String parseTCP(String message) {
         if (JSONUtils.isJSONValid(message)) {
             //parses keyword to do the correct function call.
             switch (JSONUtils.getFirst(message)) {
@@ -66,6 +67,7 @@ class SimKernel implements TCPListener {
                     break;
             }
         }
+        return null;
     }
 
     private void connectReceive() {
