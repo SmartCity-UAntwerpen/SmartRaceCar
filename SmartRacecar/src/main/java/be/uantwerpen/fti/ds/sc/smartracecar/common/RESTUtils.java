@@ -34,7 +34,7 @@ public class RESTUtils {
             Log.logSevere("REST", "Cannot connect to REST service: " + e);
             System.exit(0);
         }
-        checkForError(response);
+        checkForError(response,resourceWebTarget.getUri());
         String responseString = response.readEntity(String.class);
         Log.logConfig("REST","Text Returned from request '"+ URL + "' is: " + responseString);
         return responseString;
@@ -51,7 +51,7 @@ public class RESTUtils {
             Log.logSevere("REST", "Cannot connect to REST service: " + e);
             System.exit(0);
         }
-        checkForError(response);
+        checkForError(response,resourceWebTarget.getUri());
     }
 
     public String getTextPlain(String URL,HashMap<String,String> queryParams) {
@@ -69,7 +69,7 @@ public class RESTUtils {
             Log.logSevere("REST", "Cannot connect to REST service: " + e);
             System.exit(0);
         }
-        checkForError(response);
+        checkForError(response,resourceWebTarget.getUri());
         String responseString = response.readEntity(String.class);
         Log.logConfig("REST","Text Returned from request '"+ URL + "' is: " + responseString);
         return responseString;
@@ -86,7 +86,7 @@ public class RESTUtils {
             Log.logSevere("REST", "Cannot connect to REST service: " + e);
             System.exit(0);
         }
-        checkForError(response);
+        checkForError(response,resourceWebTarget.getUri());
         String responseString = response.readEntity(String.class);
         Log.logConfig("REST","JSON Returned from request '"+ URL + "' is: " + responseString);
         return responseString;
@@ -100,7 +100,7 @@ public class RESTUtils {
         Log.logConfig("REST","Attempting request with URL:" + resourceWebTarget.getUri());
         try {
             response = invocationBuilder.get();
-            checkForError(response);
+            checkForError(response,resourceWebTarget.getUri());
             InputStream in = response.readEntity(InputStream.class);
             Files.copy(in, out, StandardCopyOption.REPLACE_EXISTING);
             in.close();
@@ -113,7 +113,7 @@ public class RESTUtils {
         }
     }
 
-    private void checkForError(Response response) {
+    private void checkForError(Response response,java.net.URI url) {
         if (response.getStatus() != Response.Status.OK.getStatusCode()) {
             Response.Status status = Response.Status.fromStatusCode(response.getStatus());
             WebApplicationException webAppException;
@@ -142,7 +142,7 @@ public class RESTUtils {
                 default:
                     webAppException = new WebApplicationException();
             }
-            Log.logSevere("REST", "Error with request: " + webAppException.getMessage());
+            Log.logSevere("REST", "Error with request: " + webAppException.getMessage() + ". URL:" + url);
             System.exit(0);
         }
     }
