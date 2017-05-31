@@ -3,18 +3,13 @@ import cherrypy
 import handlers.calc_cost_sim as calccostsim
 import json
 from handlers.location import Location
-import handlers.logger as logger
-
-# from droneparameters import DroneParameters
-# import requests
 
 
 class SimRest():
-    def __init__(self, logger):
+    def __init__(self):
         # logg
         # self.id_droneparam=id_droneparam
         # self.mqtt_client= mqtt_client
-        self.logger = logger
 
         cherrypy.server.socket_host = '0.0.0.0'
         cherrypy.tree.mount(CalculateCost(self.logger), '/calcWeight', {'/': {'tools.gzip.on': True}})
@@ -25,8 +20,7 @@ class SimRest():
 
 class CalculateCost:
 
-    def __init__(self, logger):
-        self.logger = logger
+    def __init__(self):
 
     # def _cp_dispatch(self, vpath):
     #     if len(vpath)== 3:
@@ -40,39 +34,39 @@ class CalculateCost:
     @cherrypy.tools.json_in()
     def index(self):
 
-        self.logger.log_debug("Calccost function started!")
+        print "[CALCCOST] Calccost executing..."
 
         jsonreq = cherrypy.request.json
 
-        print "Incoming JSON-Request:"
+        print "[CALCCOST] Incoming JSON-Request:"
         print jsonreq
         print "------"
 
         current_location = Location(jsonreq['cost'][0]['x'], jsonreq['cost'][0]['y'], 0.0, 0.0, 0.0,
                                     jsonreq['cost'][0]['z'], jsonreq['cost'][0]['w'])
 
-        print "Current location:"
+        print "[CALCCOST] Current location:"
         print current_location
         print "------"
 
         start_location = Location(jsonreq['cost'][1]['x'], jsonreq['cost'][1]['y'], 0.0, 0.0, 0.0,
                                   jsonreq['cost'][1]['z'], jsonreq['cost'][1]['w'])
 
-        print "Start location:"
+        print "[CALCCOST] Start location:"
         print start_location
         print "------"
 
         goal_location = Location(jsonreq['cost'][2]['x'], jsonreq['cost'][2]['y'], 0.0, 0.0, 0.0,
                                  jsonreq['cost'][2]['z'], jsonreq['cost'][2]['w'])
 
-        print "Start location:"
+        print "[CALCCOST] Start location:"
         print goal_location
         print "------"
 
         jsonmessage = {'cost': {'status': False, 'weightToStart': 4.0,
                                 'weight': 3.0, 'idVehicle': 12321}}
 
-        print "Jsonmessage:"
+        print "[CALCCOST] Jsonmessage:"
         print jsonmessage
         print "------"
 
@@ -80,13 +74,14 @@ class CalculateCost:
         start_posestamped = calccostsim.pose_2_posestamped(calccostsim.location_2_pose(start_location))
         goal_posestamped = calccostsim.pose_2_posestamped(calccostsim.location_2_pose(goal_location))
 
-        print "Posestamped calculated"
+        print "[CALCCOST] Posestamped calculated"
         print "------"
 
-        time = calccostsim.delegate_cost(current_location, start_location, 0.3, 4.0)
+        # time = calccostsim.delegate_cost(current_location, start_location, 0.3, 4.0)
+
+        # print "[CALCCOST] Time: " + str(time)
 
         return jsonmessage
 
 if __name__ == "__main__":
-    logger = logger.Logger()
-    rossim = SimRest(logger)
+    rossim = SimRest()
