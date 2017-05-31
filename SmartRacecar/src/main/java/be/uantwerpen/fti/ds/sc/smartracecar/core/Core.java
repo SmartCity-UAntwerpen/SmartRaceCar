@@ -22,34 +22,31 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.logging.Level;
 
-//interface to trigger certain events from other objects such as TCP Sockets or MQTT.
-
-
 class Core implements TCPListener, MQTTListener {
 
     //Hardcoded elements.
-    private boolean debugWithoutRos = false; // debug parameter to stop attempts to send over sockets when ROS-Node is active.
+    private boolean debugWithoutRosNode = false; // debug parameter to stop attempts to send over sockets when ROS-Node is active.
     private Log log;
-    private Level level = Level.INFO; //Debug level
-    private final String mqttBroker = "tcp://143.129.39.151:1883";
-    private final String mqqtUsername = "root";
-    private final String mqttPassword = "smartcity";
-   // private final String restURL = "http://146.175.140.17:8080/carmanager";
-    private final String restURL = "http://localhost:8080/carmanager";
-    private static int serverPort = 5005;
-    private static int clientPort = 5006;
+    private Level level = Level.INFO; //Debug level. best usages are LEVEL.INFO(for basic info) and LEVEL.CONFIG(for debug messages)
+    private final String mqttBroker = "tcp://143.129.39.151:1883"; // MQTT Broker URL
+    private final String mqqtUsername = "root"; // MQTT Broker Username
+    private final String mqttPassword = "smartcity"; // MQTT Broker Password
+    private final String restURL = "http://143.129.39.151:8081/carmanager"; // REST Service URL to Manager
+    private static int serverPort = 5005; // TCP Port to listen on for messages from ROS Node.
+    private static int clientPort = 5006; // TCP Port to send to messages to ROS Node.
 
+    //Help services
     private MQTTUtils mqttUtils;
     private TCPUtils tcpUtils;
     private RESTUtils restUtils;
 
-    private long ID; // ID given by RaceCarManager.
+    private long ID; // ID given by Manager to identify vehicle.
+    private int routeSize = 0; // Current route's size.
+    private static long startPoint; // Starting position on map. Given by main argument.
     private HashMap<String, Map> loadedMaps = new HashMap<>(); // Map of all loaded maps.
     private HashMap<Long, WayPoint> wayPoints = new HashMap<>(); // Map of all loaded waypoints.
     private Queue<Long> currentRoute = new LinkedList<>();// All waypoint IDs to be handled in the current route.
-    private int routeSize = 0; // Current route's size.
     private boolean connected = false; // To verify socket connection to vehicle.
-    private static long startPoint; // Starting position on map. Given by main argument.
     private boolean occupied = false; // To verify if racecar is currently occupied by a route job.
 
     private Core(long startPoint,int serverPort,int clientPort) throws InterruptedException, IOException {
@@ -62,8 +59,8 @@ class Core implements TCPListener, MQTTListener {
         mqttUtils.subscribeToTopic("racecar/" + ID + "/#");
         tcpUtils = new TCPUtils(serverPort, clientPort, this);
         tcpUtils.start();
-
-        if (!debugWithoutRos) {
+        //Keep trying to make connection every second
+        if (!debugWithoutRosNode) {
             connectSend();
             while (!connected) {
                 Thread.sleep(1);
@@ -132,7 +129,7 @@ class Core implements TCPListener, MQTTListener {
     //Set the starting point for the vehicle. Sending it over the socket connection.
     private void sendStartPoint() {
         Log.logInfo("CORE", "Starting point set as waypoint with ID " + startPoint + ".");
-        if (!debugWithoutRos)
+        if (!debugWithoutRosNode)
             tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("startPoint", wayPoints.get(startPoint)));
     }
 
@@ -193,7 +190,7 @@ class Core implements TCPListener, MQTTListener {
 
     //Send the name and other information of the current map to the vehicle over the socket connection.
     private void sendCurrentMap(String mapName) {
-        if (!debugWithoutRos) tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", loadedMaps.get(mapName)));
+        if (!debugWithoutRosNode) tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", loadedMaps.get(mapName)));
 
     }
 
@@ -202,9 +199,9 @@ class Core implements TCPListener, MQTTListener {
     private void updateRoute() {
         if (!currentRoute.isEmpty()) {
             WayPoint nextWayPoint = wayPoints.get(currentRoute.poll());
-            if (!debugWithoutRos) tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("nextWayPoint", nextWayPoint));
+            if (!debugWithoutRosNode) tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("nextWayPoint", nextWayPoint));
             Log.logInfo("CORE", "Sending next waypoint with ID " + nextWayPoint.getID() + " (" + (routeSize - currentRoute.size()) + "/" + routeSize + ")");
-            if(debugWithoutRos){
+            if(debugWithoutRosNode){
                 try {
                     Thread.sleep(3000);
                 } catch (InterruptedException e) {
@@ -244,7 +241,7 @@ class Core implements TCPListener, MQTTListener {
 
     //Send wheel states to the vehicle over the socket connection. useful for emergency stops and other requests.
     private void sendWheelStates(float throttle, float steer) {
-        if (!debugWithoutRos) tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("drive", new Drive(steer, throttle)));
+        if (!debugWithoutRosNode) tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("drive", new Drive(steer, throttle)));
         Log.logInfo("CORE", "Sending wheel state Throttle:" + throttle + ", Steer:" + steer + ".");
     }
 
@@ -320,7 +317,7 @@ class Core implements TCPListener, MQTTListener {
     private void killCar(){
         Log.logInfo("CORE", "Vehicle kill request. Closing connections and shutting down...");
         restUtils.getCall("delete/" + ID);
-        if(!debugWithoutRos)tcpUtils.closeTCP();
+        if(!debugWithoutRosNode)tcpUtils.closeTCP();
         mqttUtils.closeMQTT();
         System.exit(0);
     }
@@ -329,7 +326,7 @@ class Core implements TCPListener, MQTTListener {
         List<Point> costs = new ArrayList<>();
         costs.add(wayPoints.get(wayPointIDs[0]));
         costs.add(wayPoints.get(wayPointIDs[1]));
-        if (!debugWithoutRos){
+        if (!debugWithoutRosNode){
             tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("cost",costs));
         }else{
             costComplete(new Cost(false,(long)5,(long)5,ID));

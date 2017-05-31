@@ -13,7 +13,7 @@ class TomCatLauncher {
         String appBase = ".";
         String port = System.getenv("PORT");
         if (port == null || port.isEmpty()) {
-            port = "8080";
+            port = "8081";
         }
 
         Tomcat tomcat = new Tomcat();
