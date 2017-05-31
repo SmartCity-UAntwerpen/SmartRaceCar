@@ -42,22 +42,22 @@ class CalculateCost:
         print jsonreq
         print "------"
 
-        current_location = Location(jsonreq['cost'][0]['x'], jsonreq['cost'][0]['y'], 0.0, 0.0, 0.0,
-                                    jsonreq['cost'][0]['z'], jsonreq['cost'][0]['w'])
+        current_location = Location(jsonreq[0]['x'], jsonreq[0]['y'], 0.0, 0.0, 0.0,
+                                    jsonreq[0]['z'], jsonreq[0]['w'])
 
         print "[CALCCOST] Current location:"
         print current_location
         print "------"
 
-        start_location = Location(jsonreq['cost'][1]['x'], jsonreq['cost'][1]['y'], 0.0, 0.0, 0.0,
-                                  jsonreq['cost'][1]['z'], jsonreq['cost'][1]['w'])
+        start_location = Location(jsonreq[1]['x'], jsonreq[1]['y'], 0.0, 0.0, 0.0,
+                                  jsonreq[1]['z'], jsonreq[1]['w'])
 
         print "[CALCCOST] Start location:"
         print start_location
         print "------"
 
-        goal_location = Location(jsonreq['cost'][2]['x'], jsonreq['cost'][2]['y'], 0.0, 0.0, 0.0,
-                                 jsonreq['cost'][2]['z'], jsonreq['cost'][2]['w'])
+        goal_location = Location(jsonreq[2]['x'], jsonreq[2]['y'], 0.0, 0.0, 0.0,
+                                 jsonreq[2]['z'], jsonreq[2]['w'])
 
         print "[CALCCOST] Start location:"
         print goal_location
