@@ -52,16 +52,16 @@ def delegate_cost(startpose, goalpose, tolerance, speed):
 
 def call_service_movebase(startpose, goalpose, tolerance):
     rospy.wait_for_service('move_base/make_plan')
-    print "Waiting complete!"
+    print "[SERVICE] Waiting complete!"
     try:
         pathservice = rospy.ServiceProxy('move_base/make_plan', GetPlan)
-        print "Serviceproxy made"
+        print "[SERVICE] Serviceproxy made"
 
         calculated_path = pathservice(startpose, goalpose, tolerance)
-        print "Path calculated"
+        print "[SERVICE] Path calculated"
 
     except rospy.ServiceException, e:
-        print "Service call failed: %s" % e
+        print "[SERVICE] Service call failed: %s" % e
         return None
     else:
         return calculated_path
@@ -86,7 +86,7 @@ def get_distance(array_poses):
 
         distance += math.sqrt(math.pow(b_x - a_x, 2) + math.pow(b_y - a_y, 2))
 
-    print "Distance: %f" % distance
+    print "[DISTANCE] Distance: %f" % distance
     return distance
 
 
