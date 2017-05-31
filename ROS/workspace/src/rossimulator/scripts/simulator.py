@@ -7,7 +7,7 @@ import time
 import handlers.java_module as javamodule
 import handlers.threads as threadsmodule
 import handlers.ros_module as rosmodule
-import handlers.calc_cost as calccost
+import handlers.calc_cost_sim as calccost
 from handlers.location import Location
 import socket
 from threading import Thread
