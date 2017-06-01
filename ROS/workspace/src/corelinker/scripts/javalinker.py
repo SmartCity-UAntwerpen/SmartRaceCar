@@ -11,6 +11,8 @@ import handlers.calc_cost as calccost
 from handlers.location import Location
 import socket
 from threading import Thread
+import sys
+import signal
 
 logger = logmodule.Logger()
 
@@ -259,6 +261,11 @@ def cb_movebase_feedback(data):
 """
 
 
+def signal_handler(signal, frame):
+    javamodule.stop()
+    sys.exit(0)
+
+
 def launch_navstack(curmap):
     # start_navstack_thread(curmap, navstack_speed)
     threadsmodule.start_navstack_thread(curmap, navstack_speed)
@@ -275,6 +282,8 @@ if __name__ == "__main__":
     #     print "Waiting for map"
     #     time.sleep(0.1)
     # os.system("roslaunch f1tenth_2dnav move_base.launch map_name:=zbuilding.yaml speed:=1.4 ")
+
+    signal.signal(signal.SIGINT, signal_handler)
 
     if not DEBUG_WITHOUT_ROS:
         rosmodule.init_ros(logger)

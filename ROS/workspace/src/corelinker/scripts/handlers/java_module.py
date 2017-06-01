@@ -43,6 +43,12 @@ def send_message(json_string):
     logger.log_debug("[CLIENTSOCKET] Socket closed")
 
 
+def stop():
+    jsonmessage = {'kill': 0}
+    json_string = json.dumps(jsonmessage)
+    send_message(json_string)
+
+
 def connect():
     jsonmessage = {'connect': {'x': 0, 'y': 0}}
     json_string = json.dumps(jsonmessage)
