@@ -141,7 +141,7 @@
                             <executable>chmod</executable>
                             <arguments>
                                 <argument>+x</argument>
-                                <argument>/release/*</argument>
+                                <argument>/*.jar</argument>
                             </arguments>
                         </configuration>
                     </execution>
