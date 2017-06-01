@@ -97,3 +97,4 @@ if __name__ == "__main__":
     rossim = SimRest()
     signal.signal(signal.SIGINT, signal_handler)
     print "Press Ctrl+C to exit"
+    signal.pause()
