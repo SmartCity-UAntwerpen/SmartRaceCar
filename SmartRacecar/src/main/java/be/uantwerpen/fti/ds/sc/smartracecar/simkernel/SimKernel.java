@@ -109,8 +109,10 @@ class SimKernel implements TCPListener {
         currentPosition = new Point(nextPoint.getX(),nextPoint.getY(),nextPoint.getZ(),nextPoint.getW());
     }
 
-    private void calculateCost(ArrayList<Point> points){
+    private void calculateCost(ArrayList<Point> pointsTemp){
+        ArrayList<Point> points = new ArrayList<>();
         points.add(currentPosition);
+        points.addAll(pointsTemp);
         Log.logInfo("SIMKERNEL", "Cost request received. Requesting calculation from ROS Server.");
         Cost cost = new Cost(false,(long)5,(long)5,(long)0);
         if(!debugWithoutRosServer){
