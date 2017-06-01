@@ -235,12 +235,11 @@ public class Manager implements MQTTListener{
     @Path("getmappgm/{mapname}")
     @Produces("application/octet-stream")
     public Response getMapPGM(@PathParam("mapname") final String mapname, @Context HttpServletResponse response) throws UnsupportedEncodingException {
-        String patht = Manager.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        String decodedPath = URLDecoder.decode(patht, "UTF-8").replace("Manager.jar","");
-        log.logInfo("MANAGER",decodedPath);
+        String patht = Paths.get("").toAbsolutePath().toString();
+        log.logInfo("MANAGER",patht);
         StreamingOutput fileStream = output -> {
             try {
-                java.nio.file.Path path = Paths.get(decodedPath + "maps/" + mapname + ".pgm");
+                java.nio.file.Path path = Paths.get(patht + "/maps/" + mapname + ".pgm");
                 byte[] data = Files.readAllBytes(path);
                 output.write(data);
                 output.flush();
