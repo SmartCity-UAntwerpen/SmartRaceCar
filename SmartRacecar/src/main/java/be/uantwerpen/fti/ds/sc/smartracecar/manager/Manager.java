@@ -240,7 +240,7 @@ public class Manager implements MQTTListener{
         log.logInfo("MANAGER",decodedPath.replace("Manager.jar",""));
         StreamingOutput fileStream = output -> {
             try {
-                java.nio.file.Path path = Paths.get("maps/" + mapname + ".pgm");
+                java.nio.file.Path path = Paths.get("./maps/" + mapname + ".pgm");
                 byte[] data = Files.readAllBytes(path);
                 output.write(data);
                 output.flush();
@@ -281,7 +281,6 @@ public class Manager implements MQTTListener{
     @Produces("text/plain")
     public Response jobRequest(@PathParam("idJob") long idJob,@PathParam("idVehicle") long idVehicle,@PathParam("idStart") long idStart,@PathParam("idEnd") long idEnd,String data,@Context HttpServletResponse response) throws IOException {
         Job job = new Job(idJob,idStart,idEnd,idVehicle);
-        Log.logWarning("MANAGER","OLIVER SUCKT");
         if (vehicles.containsKey(job.getIdVehicle())) {
             if (!vehicles.get(job.getIdVehicle()).getOccupied()) {
                 if(wayPoints.containsKey(job.getIdStart()) && wayPoints.containsKey(job.getIdEnd())){
