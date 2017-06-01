@@ -3,6 +3,8 @@ import cherrypy
 import handlers.calc_cost_sim as calccostsim
 import json
 from handlers.location import Location
+import signal
+import sys
 
 
 class SimRest():
@@ -85,6 +87,13 @@ class CalculateCost:
 
         return jsonmessage
 
+
+def signal_handler(signal, frame):
+    print "Going to exit!"
+    sys.exit(0)
+
 if __name__ == "__main__":
     calccostsim.init_ros()
     rossim = SimRest()
+    signal.signal(signal.SIGINT, signal_handler)
+    print "Press Ctrl+C to exit"
