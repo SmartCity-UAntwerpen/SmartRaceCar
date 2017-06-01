@@ -240,7 +240,7 @@ public class Manager implements MQTTListener{
         log.logInfo("MANAGER",decodedPath.replace("Manager.jar",""));
         StreamingOutput fileStream = output -> {
             try {
-                java.nio.file.Path path = Paths.get("./maps/" + mapname + ".pgm");
+                java.nio.file.Path path = Paths.get(decodedPath + "/maps/" + mapname + ".pgm");
                 byte[] data = Files.readAllBytes(path);
                 output.write(data);
                 output.flush();
