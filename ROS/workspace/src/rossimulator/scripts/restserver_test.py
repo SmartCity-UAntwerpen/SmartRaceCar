@@ -74,11 +74,11 @@ class CalculateCost:
         print "[CALCCOST] Posestamped calculated"
         print "------"
 
-        # time_curstart = calccostsim.delegate_cost(current_posestamped, start_posestamped, 0.3, 4.0)
-        # time_startgoal = calccostsim.delegate_cost(start_posestamped, goal_posestamped, 0.3, 4.0)
+        time_curstart = calccostsim.delegate_cost(current_posestamped, start_posestamped, 0.3, 4.0)
+        time_startgoal = calccostsim.delegate_cost(start_posestamped, goal_posestamped, 0.3, 4.0)
 
-        # print "[CALCCOST] Time curstart: " + str(time_curstart)
-        # print "[CALCCOST] Time startgoal: " + str(time_startgoal)
+        print "[CALCCOST] Time curstart: " + str(time_curstart)
+        print "[CALCCOST] Time startgoal: " + str(time_startgoal)
 
         jsonmessage = {'cost': {'status': False, 'weightToStart': 321.0,
                                 'weight': 123.0, 'idVehicle': 12321}}
