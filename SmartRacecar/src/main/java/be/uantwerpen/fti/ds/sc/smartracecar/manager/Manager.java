@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 
 @Path("carmanager")
 public class Manager implements MQTTListener{
@@ -41,15 +42,19 @@ public class Manager implements MQTTListener{
     private static HashMap<Long, WayPoint> wayPoints = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
     private static HashMap<Long, Vehicle> vehicles = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
     private static String currentMap;
+    private static String mapsPath;
     private static ArrayList<Cost> costs = new ArrayList<>();
 
     public Manager() {
 
     }
 
-    public Manager(String currentMap) throws MqttException, IOException {
+    public Manager(String currentMap,String mapsPath) throws MqttException, IOException {
         log = new Log(this.getClass(), level);
         Manager.currentMap = currentMap;
+        Manager.mapsPath = mapsPath;
+        log.logConfig("MANAGER","Startup parameters: Map: " + currentMap + " | Path to maps folder: " + mapsPath );
+
         restUtilsMAAS = new RESTUtils(restURLMAAS);
         restUtilsBackBone = new RESTUtils(restURLBackBone);
         loadWayPoints();
@@ -235,11 +240,9 @@ public class Manager implements MQTTListener{
     @Path("getmappgm/{mapname}")
     @Produces("application/octet-stream")
     public Response getMapPGM(@PathParam("mapname") final String mapname, @Context HttpServletResponse response) throws UnsupportedEncodingException {
-        String patht = Paths.get("").toAbsolutePath().toString();
-        log.logInfo("MANAGER",patht);
         StreamingOutput fileStream = output -> {
             try {
-                java.nio.file.Path path = Paths.get(patht + "/maps/" + mapname + ".pgm");
+                java.nio.file.Path path = Paths.get(mapsPath + "/" + mapname + ".pgm");
                 byte[] data = Files.readAllBytes(path);
                 output.write(data);
                 output.flush();
@@ -261,7 +264,7 @@ public class Manager implements MQTTListener{
     public Response getMapYAML(@PathParam("mapname") final String mapname, @Context HttpServletResponse response) {
         StreamingOutput fileStream = output -> {
             try {
-                java.nio.file.Path path = Paths.get("maps/" + mapname + ".yaml");
+                java.nio.file.Path path = Paths.get(mapsPath + "/" + mapname + ".yaml");
                 byte[] data = Files.readAllBytes(path);
                 output.write(data);
                 output.flush();
@@ -314,14 +317,13 @@ public class Manager implements MQTTListener{
     }
 
     public static void main(String[] args) throws Exception {
-        if (args.length != 1) {
-            System.out.println("Need 1 argument to run. Possible arguments: currentMap(String)");
+        if (args.length != 2) {
+            System.out.println("Need 2 arguments to run. Possible arguments: currentMap(String) mapsPath(String)");
             System.exit(0);
-        } else if (args.length == 1) {
-            if (!args[0].isEmpty()) {
-                final Manager manager = new Manager(args[0]);
+        } else if (args.length == 2) {
+                final Manager manager = new Manager(args[0],args[1]);
                 new TomCatLauncher().start();
-            }
+
         }
     }
 }
