@@ -140,8 +140,7 @@
                         <configuration>
                             <executable>chmod</executable>
                             <arguments>
-                                <argument>-R</argument>
-                                <argument>777</argument>
+                                <argument>+x</argument>
                                 <argument>./</argument>
                             </arguments>
                         </configuration>
