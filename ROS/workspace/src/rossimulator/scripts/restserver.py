@@ -19,6 +19,9 @@ class SimRest():
         # self.getWaypoints()
         # print self.waypoints[1]['ID']
 
+    def stop(self):
+        cherrypy.engine.exit()
+
 
 class CalculateCost:
 
@@ -90,6 +93,7 @@ class CalculateCost:
 
 def signal_handler(signal, frame):
     print "Going to exit!"
+    rossim.stop()
     sys.exit(0)
 
 if __name__ == "__main__":
