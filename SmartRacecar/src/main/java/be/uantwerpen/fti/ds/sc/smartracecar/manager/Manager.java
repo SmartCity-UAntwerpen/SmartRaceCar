@@ -10,7 +10,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
+import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -232,7 +234,10 @@ public class Manager implements MQTTListener{
     @GET
     @Path("getmappgm/{mapname}")
     @Produces("application/octet-stream")
-    public Response getMapPGM(@PathParam("mapname") final String mapname, @Context HttpServletResponse response) {
+    public Response getMapPGM(@PathParam("mapname") final String mapname, @Context HttpServletResponse response) throws UnsupportedEncodingException {
+        String patht = Manager.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        String decodedPath = URLDecoder.decode(patht, "UTF-8");
+        log.logInfo("MANAGER",decodedPath.replace("Manager.jar",""));
         StreamingOutput fileStream = output -> {
             try {
                 java.nio.file.Path path = Paths.get("maps/" + mapname + ".pgm");
@@ -240,6 +245,7 @@ public class Manager implements MQTTListener{
                 output.write(data);
                 output.flush();
             } catch (Exception e) {
+                log.logWarning("MANAGER", String.valueOf(e));
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, mapname + ".pgm not found");
             }
         };
