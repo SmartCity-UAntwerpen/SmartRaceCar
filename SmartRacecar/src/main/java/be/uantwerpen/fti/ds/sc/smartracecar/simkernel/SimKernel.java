@@ -47,6 +47,10 @@ class SimKernel implements TCPListener {
                     Type typeOfPoints = new TypeToken<ArrayList<Point>>() {}.getType();
                     calculateCost((ArrayList<Point>) JSONUtils.getObjectWithKeyWord(message,typeOfPoints));
                     break;
+                case "costtiming":
+                    Type typeOfPointss = new TypeToken<ArrayList<Point>>() {}.getType();
+                    calculateTiming((ArrayList<Point>) JSONUtils.getObjectWithKeyWord(message,typeOfPointss));
+                    break;
                 case "connect":
                     connectReceive();
                     break;
@@ -85,7 +89,7 @@ class SimKernel implements TCPListener {
 
     private void jobRequest(WayPoint nextPoint){
         Log.logInfo("SIMKERNEL", "Job request to drive to " + nextPoint.getX() + "," + nextPoint.getY() + "," + nextPoint.getZ() + "," + nextPoint.getW() + ".");
-        Cost cost = new Cost(false,(long)5,(long)5,(long)0);
+        Cost cost = new Cost(false,5,5,(long)0);
         if(!debugWithoutRosServer){
             List<Point> points = new ArrayList<>();
             points.add(currentPosition);
@@ -114,13 +118,27 @@ class SimKernel implements TCPListener {
         points.add(currentPosition);
         points.addAll(pointsTemp);
         Log.logInfo("SIMKERNEL", "Cost request received. Requesting calculation from ROS Server.");
-        Cost cost = new Cost(false,(long)5,(long)5,(long)0);
+        Cost cost = new Cost(false,5,5,(long)0);
         if(!debugWithoutRosServer){
             Type typeOfCost = new TypeToken<Cost>() {}.getType();
             cost = (Cost) JSONUtils.getObjectWithKeyWord(restUtils.getJSONPostJSON("calcWeight",JSONUtils.arrayToJSONString(points)), typeOfCost);
         }
         Log.logInfo("SIMKERNEL", "Calculated cost between current and start: " + cost.getWeightToStart() + "s. Cost to end : " + cost.getWeight() + "s.");
         tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("cost",cost));
+    }
+
+    private void calculateTiming(ArrayList<Point> pointsTemp){
+        ArrayList<Point> points = new ArrayList<>();
+        points.add(currentPosition);
+        points.addAll(pointsTemp);
+        Log.logInfo("SIMKERNEL", "Timing request received. Requesting calculation from ROS Server.");
+        Cost cost = new Cost(false,5,5,(long)0);
+        if(!debugWithoutRosServer){
+            Type typeOfCost = new TypeToken<Cost>() {}.getType();
+            cost = (Cost) JSONUtils.getObjectWithKeyWord(restUtils.getJSONPostJSON("calcWeight",JSONUtils.arrayToJSONString(points)), typeOfCost);
+        }
+        Log.logInfo("SIMKERNEL", "Calculated timing between current and start: " + cost.getWeightToStart() + "s. Timing to end : " + cost.getWeight() + "s.");
+        tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("costtiming",cost));
     }
 
     public static void main(String[] args) throws Exception {

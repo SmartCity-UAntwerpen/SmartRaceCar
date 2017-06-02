@@ -92,8 +92,14 @@ public class RESTUtils {
     public String getJSONPostJSON(String URL,String jsonString){
         WebTarget resourceWebTarget = webTarget.path(URL);
         Invocation.Builder invocationBuilder =  resourceWebTarget.request("application/json");
-        Log.logConfig("REST","Attempting POST(JSON) request with json:" + jsonString);
-        Response response = invocationBuilder.put(Entity.json(jsonString));
+        Log.logConfig("REST","Attempting POST(JSON) request with URL:" + resourceWebTarget.getUri() + " and with json:" + jsonString);
+        Response response = null;
+        try {
+            response = invocationBuilder.put(Entity.json(jsonString));
+        } catch (ProcessingException e) {
+            Log.logSevere("REST", "Cannot connect to REST service: " + e);
+            System.exit(0);
+        }
         checkForError(response,resourceWebTarget.getUri());
         String responseString = response.readEntity(String.class);
         Log.logConfig("REST","JSON Returned from request '"+ URL + "' is: " + responseString);

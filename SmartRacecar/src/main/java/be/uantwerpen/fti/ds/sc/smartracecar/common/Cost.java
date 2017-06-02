@@ -3,11 +3,11 @@ package be.uantwerpen.fti.ds.sc.smartracecar.common;
 public class Cost {
 
     private boolean status;
-    private Long weightToStart;
-    private Long weight;
+    private int weightToStart;
+    private int weight;
     private Long idVehicle;
 
-    public Cost(boolean status, Long weightToStart, Long weight, Long idVehicle){
+    public Cost(boolean status, int weightToStart, int weight, Long idVehicle){
         this.status = status;
         this.weightToStart = weightToStart;
         this.weight = weight;
@@ -22,11 +22,11 @@ public class Cost {
         this.idVehicle = idVehicle;
     }
 
-    public Long getWeightToStart() {
+    public int getWeightToStart() {
         return weightToStart;
     }
 
-    public Long getWeight() {
+    public int getWeight() {
         return weight;
     }
 }

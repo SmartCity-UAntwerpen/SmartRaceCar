@@ -29,7 +29,7 @@ class Core implements TCPListener, MQTTListener {
     //Hardcoded elements.
     private boolean debugWithoutRosNode = false; // debug parameter to stop attempts to send over sockets when ROS-Node is active.
     private Log log;
-    private Level level = Level.CONFIG; //Debug level. best usages are LEVEL.INFO(for basic info) and LEVEL.CONFIG(for debug messages)
+    private Level level = Level.INFO; //Debug level. best usages are LEVEL.INFO(for basic info) and LEVEL.CONFIG(for debug messages)
     private final String mqttBroker = "tcp://143.129.39.151:1883"; // MQTT Broker URL
     private final String mqqtUsername = "root"; // MQTT Broker Username
     private final String mqttPassword = "smartcity"; // MQTT Broker Password
@@ -49,6 +49,8 @@ class Core implements TCPListener, MQTTListener {
     private HashMap<String, Map> loadedMaps = new HashMap<>(); // Map of all loaded maps.
     private HashMap<Long, WayPoint> wayPoints = new HashMap<>(); // Map of all loaded waypoints.
     private Queue<Long> currentRoute = new LinkedList<>();// All waypoint IDs to be handled in the current route.
+    private int CostCurrentToStartTiming = -1;
+    private int CostStartToEndTiming = -1;
     private boolean connected = false; // To verify socket connection to vehicle.
     private boolean occupied = false; // To verify if racecar is currently occupied by a route job.
 
@@ -278,7 +280,15 @@ class Core implements TCPListener, MQTTListener {
 
     //Event call over interface for when the socket connection receives location update. Publishes this to the RaceCarManager over MQTT.
     private void locationUpdate(Location location) {
-        Log.logInfo("CORE", "Location Updated.");
+        if(currentRoute.size() == 0){
+           float weight = (float) CostStartToEndTiming / (float) (CostCurrentToStartTiming+CostStartToEndTiming);
+           location.setPercentage(Math.round((1-weight)*100 + location.getPercentage()*weight));
+        }else if(currentRoute.size() == 1){
+
+            float weight = (float) CostCurrentToStartTiming / (float) (CostCurrentToStartTiming+CostStartToEndTiming);
+            location.setPercentage(Math.round(location.getPercentage()*weight));
+        }
+        Log.logInfo("CORE", "Location Updated. Vehicle has " + location.getPercentage() + "% of route completed");
         mqttUtils.publishMessage("racecar/" + ID + "/percentage", JSONUtils.objectToJSONString(location));
     }
 
@@ -338,12 +348,20 @@ class Core implements TCPListener, MQTTListener {
                 case "cost":
                     costComplete((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
                     break;
+                case "costtiming":
+                    costTiming((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
+                    break;
                 default:
                     Log.logWarning("CORE", "No matching keyword when parsing JSON from Sockets. Data: " + message);
                     break;
             }
         }
         return null;
+    }
+
+    private void costTiming(Cost cost){
+        CostCurrentToStartTiming = cost.getWeightToStart();
+        CostStartToEndTiming = cost.getWeight();
     }
 
     private void killCar(){
@@ -361,9 +379,20 @@ class Core implements TCPListener, MQTTListener {
         if (!debugWithoutRosNode){
             tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("cost",points));
         }else{
-            costComplete(new Cost(false,(long)5,(long)5,ID));
+            costComplete(new Cost(false,5,5,ID));
         }
         Log.logInfo("CORE", "Cost request received between waypoints " + wayPointIDs[0] + " and " + wayPointIDs[1] + ". Calculating.");
+    }
+
+    private void timeRequest(long[] wayPointIDs){
+        List<Point> points = new ArrayList<>();
+        points.add(wayPoints.get(wayPointIDs[0]));
+        points.add(wayPoints.get(wayPointIDs[1]));
+        if (!debugWithoutRosNode){
+            tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("costtiming",points));
+        }else{
+            costComplete(new Cost(false,5,5,ID));
+        }
     }
 
     private void costComplete(Cost cost){
@@ -376,10 +405,19 @@ class Core implements TCPListener, MQTTListener {
     //Event call over interface for when MQTT connection receives new route job requests. Adds all requested waypoints to route queue one by one.
     //Sets the vehicle to occupied. Ignores the request if vehicle is already occupied.
     private void jobRequest(long[] wayPointIDs) {
+
         Log.logInfo("CORE", "Route request received.");
         Boolean error = false;
         if (!occupied) {
             occupied = true;
+            timeRequest(wayPointIDs);
+            while(CostCurrentToStartTiming == -1 && CostStartToEndTiming == -1){
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
             for (long wayPointID : wayPointIDs) {
                 if (wayPoints.containsKey(wayPointID)) {
                     currentRoute.add(wayPointID);
