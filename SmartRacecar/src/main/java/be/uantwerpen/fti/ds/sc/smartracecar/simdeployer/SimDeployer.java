@@ -1,10 +1,10 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.simdeployer;
 
-import be.uantwerpen.fti.ds.sc.smartracecar.common.Log;
-import be.uantwerpen.fti.ds.sc.smartracecar.common.TCPListener;
-import be.uantwerpen.fti.ds.sc.smartracecar.common.TCPUtils;
+import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
+import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.logging.Level;
 
@@ -13,16 +13,32 @@ import java.util.logging.Level;
     private final int serverPort = 9999;
     private static Log log;
     private Level level = Level.CONFIG;
+    private final String restURL = "http://143.129.39.151:8081/carmanager"; // REST Service URL to Manager
 
-    private TCPUtils tcpUtils;
 
-    private static HashMap<Long, SimulatedVehicle> simulatedVehicles = new HashMap<>();
+     private TCPUtils tcpUtils;
+    private RESTUtils restUtils;
+
+    private static HashMap<Long, SimulatedVehicle> simulatedVehicles = new HashMap<>();private HashMap<Long, WayPoint> wayPoints = new HashMap<>(); // Map of all loaded waypoints.
 
     private SimDeployer() throws IOException {
         log = new Log(this.getClass(), level);
+        restUtils = new RESTUtils(restURL);
+        requestWaypoints();
         tcpUtils = new TCPUtils(serverPort, this,true);
         tcpUtils.start();
     }
+
+     //Request all possible waypoints from RaceCarManager
+     private void requestWaypoints() {
+         Type typeOfHashMap = new TypeToken<HashMap<Long, WayPoint>>() {}.getType();
+         wayPoints = (HashMap<Long, WayPoint>) JSONUtils.getObjectWithKeyWord(restUtils.getJSON("getwaypoints"), typeOfHashMap);
+         assert wayPoints != null;
+         for (WayPoint wayPoint : wayPoints.values()) {
+             Log.logConfig("SIMDEPLOYER", "Waypoint " + wayPoint.getID() + " added: " + wayPoint.getX() + "," + wayPoint.getY() + "," + wayPoint.getZ() + "," + wayPoint.getW());
+         }
+         Log.logInfo("SIMDEPLOYER", "All possible waypoints(" + wayPoints.size() + ") received.");
+     }
 
     @Override
     public String parseTCP(String message) throws IOException {
@@ -56,9 +72,14 @@ import java.util.logging.Level;
         if (simulatedVehicles.containsKey(simulationID)) {
             switch (parameter) {
                 case "startpoint":
-                    simulatedVehicles.get(simulationID).setStartPoint(Long.parseLong(argument));
-                    Log.logInfo("SIMDEPLOYER", "Simulated Vehicle with simulation ID " + simulationID + " given starting point ID " + argument + ".");
-                    return true;
+                    if(wayPoints.containsKey(Long.parseLong(argument))) {
+                        simulatedVehicles.get(simulationID).setStartPoint(Long.parseLong(argument));
+                        Log.logInfo("SIMDEPLOYER", "Simulated Vehicle with simulation ID " + simulationID + " given starting point ID " + argument + ".");
+                        return true;
+                    }else{
+                        Log.logWarning("SIMDEPLOYER", "Cannot set vehicle with simulation ID " + simulationID + " to have startpoint " +  Long.parseLong(argument) + ". It does not exist.");
+                        return false;
+                    }
                 case "speed":
                     simulatedVehicles.get(simulationID).setSpeed(Float.parseFloat(argument));
                     Log.logInfo("SIMDEPLOYER", "Simulated Vehicle with simulation ID " + simulationID + " given speed " + argument + ".");

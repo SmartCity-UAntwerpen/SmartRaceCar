@@ -24,7 +24,7 @@ public class RESTUtils {
         WebTarget resourceWebTarget = webTarget.path(URL);
         Invocation.Builder invocationBuilder = resourceWebTarget.request("text/plain");
         Response response = null;
-        Log.logConfig("REST","Attempting request with URL:" + resourceWebTarget.getUri());
+        Log.logConfig("REST","Attempting GET(text plain) request with URL:" + resourceWebTarget.getUri());
         try {
             response = invocationBuilder.get();
         } catch (ProcessingException e) {
@@ -41,7 +41,7 @@ public class RESTUtils {
         WebTarget resourceWebTarget = webTarget.path(URL);
         Invocation.Builder invocationBuilder = resourceWebTarget.request("text/plain");
         Response response = null;
-        Log.logConfig("REST","Attempting request with URL:" + resourceWebTarget.getUri());
+        Log.logConfig("REST","Attempting GET request with URL:" + resourceWebTarget.getUri());
         try {
             response = invocationBuilder.get();
         } catch (ProcessingException e) {
@@ -58,7 +58,7 @@ public class RESTUtils {
         }
         Invocation.Builder invocationBuilder = resourceWebTarget.request("text/plain");
 
-        Log.logConfig("REST","Attempting request with URL:" + resourceWebTarget.getUri());
+        Log.logConfig("REST","Attempting GET with queryparams (text plain) request with URL:" + resourceWebTarget.getUri());
         Response response = null;
         try {
             response = invocationBuilder.get();
@@ -76,7 +76,7 @@ public class RESTUtils {
         WebTarget resourceWebTarget = webTarget.path(URL);
         Invocation.Builder invocationBuilder = resourceWebTarget.request("application/json");
         Response response = null;
-        Log.logConfig("REST","Attempting request with URL:" + resourceWebTarget.getUri());
+        Log.logConfig("REST","Attempting GET(JSON) request with URL:" + resourceWebTarget.getUri());
         try {
             response = invocationBuilder.get();
         } catch (ProcessingException e) {
@@ -92,7 +92,7 @@ public class RESTUtils {
     public String getJSONPostJSON(String URL,String jsonString){
         WebTarget resourceWebTarget = webTarget.path(URL);
         Invocation.Builder invocationBuilder =  resourceWebTarget.request("application/json");
-        Log.logConfig("REST","Sending POST REST request with json:" + jsonString);
+        Log.logConfig("REST","Attempting POST(JSON) request with json:" + jsonString);
         Response response = invocationBuilder.put(Entity.json(jsonString));
         checkForError(response,resourceWebTarget.getUri());
         String responseString = response.readEntity(String.class);
@@ -105,7 +105,7 @@ public class RESTUtils {
         WebTarget resourceWebTarget = webTarget.path(URL);
         Invocation.Builder invocationBuilder = resourceWebTarget.request("application/octet-stream");
         Response response;
-        Log.logConfig("REST","Attempting request with URL:" + resourceWebTarget.getUri());
+        Log.logConfig("REST","Attempting GET(file) request with URL:" + resourceWebTarget.getUri());
         try {
             response = invocationBuilder.get();
             checkForError(response,resourceWebTarget.getUri());
