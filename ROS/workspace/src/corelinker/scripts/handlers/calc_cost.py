@@ -43,7 +43,6 @@ def get_distance(array_poses):
 
         distance += math.sqrt(math.pow(b_x - a_x, 2) + math.pow(b_y - a_y, 2))
 
-    print "Distance: %f" % distance
     return distance
 
 

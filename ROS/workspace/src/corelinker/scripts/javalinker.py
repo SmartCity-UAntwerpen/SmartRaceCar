@@ -81,7 +81,10 @@ def get_type(json_string):
         set_startpoint(json_string)
     elif json_string.keys()[0] == 'cost':
         logger.log_debug("[JAVALINKER] json_string key = cost")
-        calculate_cost(json_string)
+        calculate_cost(json_string, False)  # Called by calcWeight-command
+    elif json_string.keys()[0] == 'costtiming':
+        logger.log_debug("[JAVALINKER] json_string key = costtiming")
+        calculate_cost(json_string, True)   # Called by jobRequest-command
 
 
 def set_current_map(json_string):
@@ -132,7 +135,7 @@ def send_location(location):
     javamodule.send_message(json_string)
 
 
-def calculate_cost(json_string):
+def calculate_cost(json_string, timing):
     global current_location
 
     start_location = Location(json_string['cost'][0]['x'], json_string['cost'][0]['y'], 0.0, 0.0, 0.0,
@@ -154,8 +157,13 @@ def calculate_cost(json_string):
     costtime_start_goal = delegate_cost(start_posestamped, goal_posestamped, navplan_tolerance, navplan_speed)
     logger.log_debug("[JAVALINKER][CALCCOST] Cost start-goal: " + str(costtime_start_goal) + " seconds")
 
-    jsonmessage = {'cost': {'status': False, 'weightToStart': costtime_current_start,
-                            'weight': costtime_start_goal, 'idVehicle': 12321}}
+    if timing:
+        jsonmessage = {'costtiming': {'status': False, 'weightToStart': costtime_current_start,
+                                      'weight': costtime_start_goal, 'idVehicle': 12321}}
+    else:
+        jsonmessage = {'cost': {'status': False, 'weightToStart': costtime_current_start,
+                                'weight': costtime_start_goal, 'idVehicle': 12321}}
+
     logger.log_debug(json_string)
     json_string = json.dumps(jsonmessage)
     javamodule.send_message(json_string)
