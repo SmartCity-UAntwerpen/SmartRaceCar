@@ -24,8 +24,8 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.logging.Level;
 
-class Core implements TCPListener, MQTTListener {
 
+    class Core implements TCPListener, MQTTListener {
     //Hardcoded elements.
     private boolean debugWithoutRosNode = false; // debug parameter to stop attempts to send over sockets when ROS-Node is active.
     private Log log;
