@@ -42,8 +42,8 @@ public class Simulation {
         public void run() {
             //Create process
             ProcessBuilder processBuilder = new ProcessBuilder("java");
-            //processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-            //processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
+            processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+            processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
             //Add core boot arguments
             List<String> processCommands = processBuilder.command();
             processCommands.add("-jar");

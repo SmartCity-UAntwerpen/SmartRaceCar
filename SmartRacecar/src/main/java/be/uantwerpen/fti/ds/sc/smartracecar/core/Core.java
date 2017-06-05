@@ -34,7 +34,6 @@ public class Core implements TCPListener, MQTTListener {
     private final String mqqtUsername = "root"; // MQTT Broker Username
     private final String mqttPassword = "smartcity"; // MQTT Broker Password
     private final String restURL = "http://143.129.39.151:8081/carmanager"; // REST Service URL to Manager
-    //private final String restURL = "http://localhost:8081/carmanager"; // REST Service URL to Manager
     private static int serverPort = 5005; // TCP Port to listen on for messages from ROS Node.
     private static int clientPort = 5006; // TCP Port to send to messages to ROS Node.
 

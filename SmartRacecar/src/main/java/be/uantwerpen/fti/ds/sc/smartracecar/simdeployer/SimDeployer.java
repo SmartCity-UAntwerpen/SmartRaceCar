@@ -14,6 +14,7 @@ class SimDeployer implements TCPListener {
     private static Log log;
     private Level level = Level.INFO;
     private final String restURL = "http://143.129.39.151:8081/carmanager"; // REST Service URL to Manager
+    private final String jarPath;
 
     private TCPUtils tcpUtils;
     private RESTUtils restUtils;
@@ -22,7 +23,8 @@ class SimDeployer implements TCPListener {
     private HashMap<Long, SimulatedVehicle> simulatedVehicles = new HashMap<>();
     private HashMap<Long, WayPoint> wayPoints = new HashMap<>(); // Map of all loaded waypoints.
 
-    private SimDeployer() throws IOException, InterruptedException {
+    private SimDeployer(String jarPath) throws IOException, InterruptedException {
+        this.jarPath = jarPath;
         log = new Log(this.getClass(), level);
         restUtils = new RESTUtils(restURL);
         requestWaypoints();
@@ -105,7 +107,7 @@ class SimDeployer implements TCPListener {
 
     private boolean createVehicle(long simulationID) {
         if (!simulatedVehicles.containsKey(simulationID)) {
-            simulatedVehicles.put(simulationID, new SimulatedVehicle(simulationID));
+            simulatedVehicles.put(simulationID, new SimulatedVehicle(simulationID,jarPath));
             Log.logInfo("SIMDEPLOYER", "New simulated vehicle registered with simulation ID " + simulationID + ".");
             return true;
         } else {
@@ -183,6 +185,12 @@ class SimDeployer implements TCPListener {
 
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        SimDeployer simDeployer = new SimDeployer();
+        if (args.length != 1) {
+            System.out.println("Need 1 arguments to run. Possible arguments: jarPath(String)");
+            System.exit(0);
+        } else if (args.length == 1) {
+            SimDeployer simDeployer = new SimDeployer(args[0]);
+        }
+
     }
 }

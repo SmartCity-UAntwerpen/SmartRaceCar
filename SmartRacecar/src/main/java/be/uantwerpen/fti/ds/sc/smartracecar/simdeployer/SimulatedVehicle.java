@@ -17,10 +17,10 @@ class SimulatedVehicle{
     private int portOne;
     private int portTwo;
 
-    SimulatedVehicle(long simulationID) {
+    SimulatedVehicle(long simulationID,String jarPath) {
         name = "SimCar" + simulationID;
-        this.simulatedCore = new Simulation("Core.jar");
-        this.simulatedSimKernel = new Simulation("SimKernel.jar");
+        this.simulatedCore = new Simulation(jarPath + "\\Core.jar");
+        this.simulatedSimKernel = new Simulation(jarPath + "\\SimKernel.jar");
     }
 
     void start(int portOne, int portTwo){
