@@ -8,37 +8,58 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.logging.Level;
 
- class SimDeployer implements TCPListener {
+class SimDeployer implements TCPListener {
 
     private final int serverPort = 9999;
     private static Log log;
-    private Level level = Level.CONFIG;
+    private Level level = Level.INFO;
     private final String restURL = "http://143.129.39.151:8081/carmanager"; // REST Service URL to Manager
 
-
-     private TCPUtils tcpUtils;
+    private TCPUtils tcpUtils;
     private RESTUtils restUtils;
+    private int portCount = 1025;
 
-    private static HashMap<Long, SimulatedVehicle> simulatedVehicles = new HashMap<>();private HashMap<Long, WayPoint> wayPoints = new HashMap<>(); // Map of all loaded waypoints.
+    private HashMap<Long, SimulatedVehicle> simulatedVehicles = new HashMap<>();
+    private HashMap<Long, WayPoint> wayPoints = new HashMap<>(); // Map of all loaded waypoints.
+    Simulation simulation;
+    Simulation simulation2;
 
-    private SimDeployer() throws IOException {
+    private SimDeployer() throws IOException, InterruptedException {
         log = new Log(this.getClass(), level);
         restUtils = new RESTUtils(restURL);
         requestWaypoints();
-        tcpUtils = new TCPUtils(serverPort, this,true);
+        tcpUtils = new TCPUtils(serverPort, this, true);
         tcpUtils.start();
+        parseTCP("create 1");
+        parseTCP("set 1 startpoint 8");
+        parseTCP("run 1");
+        Thread.sleep(5000);
+        parseTCP("stop 1");
+        Thread.sleep(5000);
+        parseTCP("restart 1");
+        Thread.sleep(5000);
+        parseTCP("restart 1");
+        Thread.sleep(5000);
+        parseTCP("stop 1");
+        Thread.sleep(5000);
+        parseTCP("set 1 startpoint 11");
+        Thread.sleep(5000);
+        parseTCP("restart 1");
+        Thread.sleep(5000);
+        parseTCP("kill 1");
     }
 
-     //Request all possible waypoints from RaceCarManager
-     private void requestWaypoints() {
-         Type typeOfHashMap = new TypeToken<HashMap<Long, WayPoint>>() {}.getType();
-         wayPoints = (HashMap<Long, WayPoint>) JSONUtils.getObjectWithKeyWord(restUtils.getJSON("getwaypoints"), typeOfHashMap);
-         assert wayPoints != null;
-         for (WayPoint wayPoint : wayPoints.values()) {
-             Log.logConfig("SIMDEPLOYER", "Waypoint " + wayPoint.getID() + " added: " + wayPoint.getX() + "," + wayPoint.getY() + "," + wayPoint.getZ() + "," + wayPoint.getW());
-         }
-         Log.logInfo("SIMDEPLOYER", "All possible waypoints(" + wayPoints.size() + ") received.");
-     }
+    //Request all possible waypoints from RaceCarManager
+    private void requestWaypoints() {
+        Type typeOfHashMap = new TypeToken<HashMap<Long, WayPoint>>() {
+        }.getType();
+        wayPoints = (HashMap<Long, WayPoint>) JSONUtils.getObjectWithKeyWord(restUtils.getJSON("getwaypoints"), typeOfHashMap);
+        assert wayPoints != null;
+        for (WayPoint wayPoint : wayPoints.values()) {
+            Log.logConfig("SIMDEPLOYER", "Waypoint " + wayPoint.getID() + " added: " + wayPoint.getX() + "," + wayPoint.getY() + "," + wayPoint.getZ() + "," + wayPoint.getW());
+        }
+        Log.logInfo("SIMDEPLOYER", "All possible waypoints(" + wayPoints.size() + ") received.");
+    }
 
     @Override
     public String parseTCP(String message) throws IOException {
@@ -58,12 +79,11 @@ import java.util.logging.Level;
             Long simulationID = Long.parseLong(splitString[1]);
             String parameter = splitString[2];
             String argument = splitString[3];
-            result = setVehicle(simulationID,parameter,argument);
+            result = setVehicle(simulationID, parameter, argument);
         }
-        if(result){
+        if (result) {
             return "ACK";
-        }
-        else{
+        } else {
             return "NACK";
         }
     }
@@ -72,12 +92,16 @@ import java.util.logging.Level;
         if (simulatedVehicles.containsKey(simulationID)) {
             switch (parameter) {
                 case "startpoint":
-                    if(wayPoints.containsKey(Long.parseLong(argument))) {
+                    if (wayPoints.containsKey(Long.parseLong(argument))) {
                         simulatedVehicles.get(simulationID).setStartPoint(Long.parseLong(argument));
+                        if(simulatedVehicles.get(simulationID).isDeployed()){
+                            simulatedVehicles.get(simulationID).setStartPoint(Long.parseLong(argument));
+                            simulatedVehicles.get(simulationID).ResetStartPoint();
+                        }
                         Log.logInfo("SIMDEPLOYER", "Simulated Vehicle with simulation ID " + simulationID + " given starting point ID " + argument + ".");
                         return true;
-                    }else{
-                        Log.logWarning("SIMDEPLOYER", "Cannot set vehicle with simulation ID " + simulationID + " to have startpoint " +  Long.parseLong(argument) + ". It does not exist.");
+                    } else {
+                        Log.logWarning("SIMDEPLOYER", "Cannot set vehicle with simulation ID " + simulationID + " to have startpoint " + Long.parseLong(argument) + ". It does not exist.");
                         return false;
                     }
                 case "speed":
@@ -98,10 +122,9 @@ import java.util.logging.Level;
         }
     }
 
-    private boolean createVehicle(long simulationID){
+    private boolean createVehicle(long simulationID) {
         if (!simulatedVehicles.containsKey(simulationID)) {
             simulatedVehicles.put(simulationID, new SimulatedVehicle(simulationID));
-            //TODO deploy jars
             Log.logInfo("SIMDEPLOYER", "New simulated vehicle registered with simulation ID " + simulationID + ".");
             return true;
         } else {
@@ -112,6 +135,7 @@ import java.util.logging.Level;
 
     private boolean stopVehicle(long simulationID) {
         if (simulatedVehicles.containsKey(simulationID)) {
+            simulatedVehicles.get(simulationID).stop();
             Log.logInfo("SIMDEPLOYER", "Vehicle with ID " + simulationID + " Stopped.");
             return true;
         } else {
@@ -122,6 +146,7 @@ import java.util.logging.Level;
 
     private boolean killVehicle(long simulationID) {
         if (simulatedVehicles.containsKey(simulationID)) {
+            if(simulatedVehicles.get(simulationID).isDeployed())simulatedVehicles.get(simulationID).kill();
             simulatedVehicles.remove(simulationID);
             Log.logInfo("SIMDEPLOYER", "Vehicle with ID " + simulationID + " killed.");
             return true;
@@ -131,10 +156,11 @@ import java.util.logging.Level;
         }
     }
 
-    private boolean restartVehicle(long simulationID){
+    private boolean restartVehicle(long simulationID) {
         if (simulatedVehicles.containsKey(simulationID)) {
             if (simulatedVehicles.get(simulationID).isDeployed()) {
                 Log.logInfo("SIMDEPLOYER", "Restarted vehicle with simulation ID " + simulationID + ".");
+                simulatedVehicles.get(simulationID).restart();
                 return true;
             } else {
                 Log.logWarning("SIMDEPLOYER", "Cannot restart vehicle with simulation ID " + simulationID + ". It isn't started.");
@@ -146,17 +172,24 @@ import java.util.logging.Level;
         }
     }
 
-    private boolean startupVehicle(long simulationID){
+    private boolean startupVehicle(long simulationID) throws IOException {
         if (simulatedVehicles.containsKey(simulationID)) {
             if (!simulatedVehicles.get(simulationID).isDeployed()) {
-                if (simulatedVehicles.get(simulationID).getStartPoint() != -1) {
-                    simulatedVehicles.get(simulationID).setDeployed(true);
-                    Log.logInfo("SIMDEPLOYER", "Simulated Vehicle with simulation ID " + simulationID + " started.");
+                if(!simulatedVehicles.get(simulationID).isAvailable()){
+                    if (simulatedVehicles.get(simulationID).getStartPoint() != -1) {
+                        simulatedVehicles.get(simulationID).start(tcpUtils.findRandomOpenPort(),tcpUtils.findRandomOpenPort());
+                        Log.logInfo("SIMDEPLOYER", "Simulated Vehicle with simulation ID " + simulationID + " started.");
+                        return true;
+                    } else {
+                        Log.logWarning("SIMDEPLOYER", "Cannot start vehicle with simulation ID " + simulationID + ". It didn't have a starting point set.");
+                        return false;
+                    }
+                }else{
+                    simulatedVehicles.get(simulationID).run();
+                    Log.logInfo("SIMDEPLOYER", "Stopped simulated Vehicle with simulation ID " + simulationID + " started again.");
                     return true;
-                } else {
-                    Log.logWarning("SIMDEPLOYER", "Cannot start vehicle with simulation ID " + simulationID + ". It didn't have a starting point set.");
-                    return false;
                 }
+
             } else {
                 Log.logWarning("SIMDEPLOYER", "Cannot start vehicle with simulation ID " + simulationID + ". It was already started.");
                 return false;
@@ -168,7 +201,7 @@ import java.util.logging.Level;
     }
 
 
-    public static void main(String[] args) throws IOException {
-        final SimDeployer simDeployer = new SimDeployer();
+    public static void main(String[] args) throws IOException, InterruptedException {
+        SimDeployer simDeployer = new SimDeployer();
     }
 }

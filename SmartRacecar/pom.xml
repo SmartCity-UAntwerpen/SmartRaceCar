@@ -31,7 +31,7 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <outputFile>release/Manager/Manager.jar</outputFile>
+                            <outputFile>release/Manager.jar</outputFile>
                             <transformers>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
@@ -57,7 +57,7 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <outputFile>release/Core/Core.jar</outputFile>
+                            <outputFile>release/Core.jar</outputFile>
                             <transformers>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
@@ -83,7 +83,7 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <outputFile>release/SimDeployer/SimDeployer.jar</outputFile>
+                            <outputFile>release/SimDeployer.jar</outputFile>
                             <transformers>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
@@ -109,7 +109,7 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <outputFile>release/SimKernel/SimKernel.jar</outputFile>
+                            <outputFile>release/SimKernel.jar</outputFile>
                             <transformers>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">

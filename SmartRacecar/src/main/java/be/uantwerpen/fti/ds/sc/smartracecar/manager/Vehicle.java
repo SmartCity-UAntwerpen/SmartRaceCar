@@ -7,7 +7,7 @@ class Vehicle {
     private Long ID;
     private Location location;
     private boolean occupied = false;
-
+    private boolean available = true;
 
 
     Vehicle(Long ID,long startWayPoint){
@@ -33,5 +33,13 @@ class Vehicle {
 
     public void setLocation(Location location) {
         this.location = location;
+    }
+
+    public void setAvailable(boolean available) {
+        this.available = available;
+    }
+
+    public boolean isAvailable() {
+        return available;
     }
 }

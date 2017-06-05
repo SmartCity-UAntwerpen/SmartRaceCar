@@ -29,7 +29,7 @@ public class Manager implements MQTTListener{
     private boolean debugWithoutBackBone = true; // debug parameter to stop attempts to send or recieve messages from backbone.
     private boolean debugWithoutMAAS = true; // debug parameter to stop attempts to send or recieve messages from MAAS
     private static Log log;
-    Level level = Level.CONFIG;
+    Level level = Level.INFO;
     private final String mqttBroker = "tcp://143.129.39.151:1883";
     private final String mqqtUsername = "root";
     private final String mqttPassword = "smartcity";
@@ -93,7 +93,7 @@ public class Manager implements MQTTListener{
                 Log.logConfig("MANAGER", "Vehicle with ID " + ID + " doesn't exist. Cant update route information.");
             }
         }
-        if (topic.matches("racecar/[0-9]+/percentage")) {
+        else if (topic.matches("racecar/[0-9]+/percentage")) {
             long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
             if (vehicles.containsKey(ID)) {
                 Type typeOfLocation = new TypeToken<Location>() {}.getType();
@@ -111,6 +111,18 @@ public class Manager implements MQTTListener{
                 costs.add((Cost) JSONUtils.getObject(message, typeOfCost));
             } else {
                 Log.logConfig("MANAGER", "Vehicle with ID " + ID + " doesn't exist. Cannot process cost answer.");
+            }
+        }
+        else if (topic.matches("racecar/[0-9]+/available")) {
+            long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
+            if (vehicles.containsKey(ID)) {
+                vehicles.get(ID).setAvailable(Boolean.parseBoolean(message));
+                if(vehicles.get(ID).isAvailable())
+                    Log.logInfo("MANAGER", "Vehicle with ID " + ID + " set to be available.");
+                else
+                    Log.logInfo("MANAGER", "Vehicle with ID " + ID + " set to be no longer available.");
+            } else {
+                Log.logConfig("MANAGER", "Vehicle with ID " + ID + " doesn't exist. Cannot set availability.");
             }
         }
     }
@@ -171,7 +183,9 @@ public class Manager implements MQTTListener{
         }else{
             List<Location> locations = new ArrayList<>();
             for (Vehicle vehicle : vehicles.values()) {
-                locations.add(vehicle.getLocation());
+                if(vehicle.isAvailable()){
+                    locations.add(vehicle.getLocation());
+                }
             }
             Log.logInfo("MANAGER", "All vehicle Locations request has been completed.");
             return Response.status(Response.Status.OK).
@@ -191,12 +205,17 @@ public class Manager implements MQTTListener{
         } else if (vehicles.isEmpty()) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "no vehicles registered yet");
         } else {
+            int totalVehicles = 0;
             for (Vehicle vehicle : vehicles.values()) {
-                mqttUtils.publishMessage("racecar/" + Long.toString(vehicle.getID()) + "/costrequest", Long.toString(startId) + " " + Long.toString(endId));
+                if(vehicle.isAvailable()){
+                    totalVehicles++;
+                    mqttUtils.publishMessage("racecar/" + Long.toString(vehicle.getID()) + "/costrequest", Long.toString(startId) + " " + Long.toString(endId));
+                }
             }
-            while(costs.size() != vehicles.size()){
+
+            while(costs.size() != totalVehicles){
                 Log.logInfo("MANAGER", "waiting for vehicles to complete request.");
-                Thread.sleep(1000);
+                Thread.sleep(200);
             }
             ArrayList<Cost> costCopy = (ArrayList<Cost>)costs.clone();
             this.costs.clear();
@@ -287,7 +306,7 @@ public class Manager implements MQTTListener{
     public Response jobRequest(@PathParam("idJob") long idJob,@PathParam("idVehicle") long idVehicle,@PathParam("idStart") long idStart,@PathParam("idEnd") long idEnd,String data,@Context HttpServletResponse response) throws IOException {
         Job job = new Job(idJob,idStart,idEnd,idVehicle);
         if (vehicles.containsKey(job.getIdVehicle())) {
-            if (!vehicles.get(job.getIdVehicle()).getOccupied()) {
+            if (!vehicles.get(job.getIdVehicle()).getOccupied() && vehicles.get(job.getIdVehicle()).isAvailable()) {
                 if(wayPoints.containsKey(job.getIdStart()) && wayPoints.containsKey(job.getIdEnd())){
                     Location location = vehicles.get(job.getIdVehicle()).getLocation();
                     location.setIdStart(job.getIdStart());
@@ -302,8 +321,8 @@ public class Manager implements MQTTListener{
                 }
 
             } else {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Vehicle with ID " + job.getIdVehicle() + " is occupied.");
-                Log.logWarning("MANAGER", "Vehicle with ID " + job.getIdVehicle() + " is occupied. Cant send route job.");
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Vehicle with ID " + job.getIdVehicle() + " is occupied or not available.");
+                Log.logWarning("MANAGER", "Vehicle with ID " + job.getIdVehicle() + " is occupied or not available. Cant send route job.");
             }
 
         } else {
