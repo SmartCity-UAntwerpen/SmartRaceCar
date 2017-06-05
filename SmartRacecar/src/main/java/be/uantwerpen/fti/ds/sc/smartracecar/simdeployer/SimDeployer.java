@@ -21,8 +21,6 @@ class SimDeployer implements TCPListener {
 
     private HashMap<Long, SimulatedVehicle> simulatedVehicles = new HashMap<>();
     private HashMap<Long, WayPoint> wayPoints = new HashMap<>(); // Map of all loaded waypoints.
-    Simulation simulation;
-    Simulation simulation2;
 
     private SimDeployer() throws IOException, InterruptedException {
         log = new Log(this.getClass(), level);
@@ -30,23 +28,6 @@ class SimDeployer implements TCPListener {
         requestWaypoints();
         tcpUtils = new TCPUtils(serverPort, this, true);
         tcpUtils.start();
-        parseTCP("create 1");
-        parseTCP("set 1 startpoint 8");
-        parseTCP("run 1");
-        Thread.sleep(5000);
-        parseTCP("stop 1");
-        Thread.sleep(5000);
-        parseTCP("restart 1");
-        Thread.sleep(5000);
-        parseTCP("restart 1");
-        Thread.sleep(5000);
-        parseTCP("stop 1");
-        Thread.sleep(5000);
-        parseTCP("set 1 startpoint 11");
-        Thread.sleep(5000);
-        parseTCP("restart 1");
-        Thread.sleep(5000);
-        parseTCP("kill 1");
     }
 
     //Request all possible waypoints from RaceCarManager
