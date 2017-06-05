@@ -3,8 +3,12 @@ package be.uantwerpen.fti.ds.sc.smartracecar.manager;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.google.gson.reflect.TypeToken;
 import org.eclipse.paho.client.mqttv3.MqttException;
+
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -12,14 +16,12 @@ import javax.ws.rs.core.StreamingOutput;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
-import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.stream.Stream;
 
 @Path("carmanager")
 public class Manager implements MQTTListener{
@@ -78,6 +80,7 @@ public class Manager implements MQTTListener{
                 Log.logConfig("MANAGER","Added wayPoint with ID " + wayPoint.getID() + " and coordinates " + wayPoint.getX() +"," + wayPoint.getY() +"," + wayPoint.getZ() +"," + wayPoint.getW() +".");
             }
         }
+        Log.logInfo("CORE", "All possible waypoints(" + wayPoints.size() + ") received.");
     }
 
     @Override

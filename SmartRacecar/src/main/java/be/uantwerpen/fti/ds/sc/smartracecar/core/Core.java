@@ -33,8 +33,8 @@ class Core implements TCPListener, MQTTListener {
     private final String mqttBroker = "tcp://143.129.39.151:1883"; // MQTT Broker URL
     private final String mqqtUsername = "root"; // MQTT Broker Username
     private final String mqttPassword = "smartcity"; // MQTT Broker Password
-    private final String restURL = "http://143.129.39.151:8081/carmanager"; // REST Service URL to Manager
-    //private final String restURL = "http://localhost:8081/carmanager"; // REST Service URL to Manager
+    //private final String restURL = "http://143.129.39.151:8081/carmanager"; // REST Service URL to Manager
+    private final String restURL = "http://localhost:8081/carmanager"; // REST Service URL to Manager
     private static int serverPort = 5005; // TCP Port to listen on for messages from ROS Node.
     private static int clientPort = 5006; // TCP Port to send to messages to ROS Node.
 
@@ -136,9 +136,8 @@ class Core implements TCPListener, MQTTListener {
 
     //Event to be called when connection to car has been made
     private void connectReceive() {
-        connected = true;
         Log.logInfo("CORE", "Connected to car.");
-
+        connected = true;
     }
 
     //Register vehicle with RaceCarManager
@@ -174,14 +173,14 @@ class Core implements TCPListener, MQTTListener {
         String mapName = restUtils.getTextPlain("getmapname");
         //String mapName = "zbuilding";
         if (loadedMaps.containsKey(mapName)) {
-            Log.logInfo("CORE", "Current map '" + mapName + "' found.");
+            Log.logInfo("CORE", "Current used map '" + mapName + "' found in folder, setting as current map.");
             sendCurrentMap(mapName);
         } else {
-            Log.logConfig("CORE", "Current map '" + mapName + "' not found. Downloading...");
+            Log.logConfig("CORE", "Current used map '" + mapName + "' not found. Downloading...");
             restUtils.getFile("getmappgm/" + mapName, "maps", mapName, "pgm");
             restUtils.getFile("getmapyaml/" + mapName, "maps", mapName, "yaml");
             addMap(mapName);
-            Log.logInfo("CORE", "Current map '" + mapName + "' downloaded.");
+            Log.logInfo("CORE", "Current map '" + mapName + "' downloaded and set as current map.");
             sendCurrentMap(mapName);
         }
     }
@@ -214,7 +213,7 @@ class Core implements TCPListener, MQTTListener {
             transformer.transform(source, result);
 
         } catch (ParserConfigurationException | SAXException | IOException | TransformerException e) {
-            Log.logSevere("CORE", "Could not add map to XML of maps." + e);
+            Log.logWarning("CORE", "Could not add map to XML of maps." + e);
         }
         loadedMaps.put(name, map);
         Log.logConfig("CORE", "Added downloaded map : " + name + ".");
