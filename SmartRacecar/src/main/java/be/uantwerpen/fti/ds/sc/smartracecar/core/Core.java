@@ -1,7 +1,6 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.core;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
-import be.uantwerpen.fti.ds.sc.smartracecar.common.Location;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.Map;
 import com.google.gson.reflect.TypeToken;
 import org.w3c.dom.Document;
@@ -25,39 +24,45 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.logging.Level;
 
-
 class Core implements TCPListener, MQTTListener {
-    //Hardcoded elements.
-    private boolean debugWithoutRosServer = false; // debug parameter to stop attempts to send over sockets when ROS-Node is active.
-    private Log log;
-    private Level level = Level.INFO; //Debug level. best usages are LEVEL.INFO(for basic info) and LEVEL.CONFIG(for debug messages)
+    //Hardcoded settings
+    private boolean debugWithoutRosKernel = false; // debug parameter for using this module without a connected RosKernel/SimKernel
+    private Level level = Level.INFO; //Logging level. Best usages are LEVEL.INFO(for basic info) and LEVEL.CONFIG(for debug messages).
     private final String mqttBroker = "tcp://143.129.39.151:1883"; // MQTT Broker URL
     private final String mqqtUsername = "root"; // MQTT Broker Username
     private final String mqttPassword = "smartcity"; // MQTT Broker Password
     private final String restURL = "http://143.129.39.151:8081/carmanager"; // REST Service URL to Manager
-    //private final String restURL = "http://localhost:8081/carmanager"; // REST Service URL to Manager
-    private static int serverPort = 5005; // TCP Port to listen on for messages from ROS Node.
-    private static int clientPort = 5006; // TCP Port to send to messages to ROS Node.
+    private static int serverPort = 5005; // Standard TCP Port to listen on for messages from ROS Node.
+    private static int clientPort = 5006; // Standard TCP Port to send to messages to ROS Node.
 
     //Help services
     private MQTTUtils mqttUtils;
     private TCPUtils tcpUtils;
     private RESTUtils restUtils;
 
+    //variables
     private long ID; // ID given by Manager to identify vehicle.
     private int routeSize = 0; // Current route's size.
     private static long startPoint; // Starting position on map. Given by main argument.
     private HashMap<String, Map> loadedMaps = new HashMap<>(); // Map of all loaded maps.
     private HashMap<Long, WayPoint> wayPoints = new HashMap<>(); // Map of all loaded waypoints.
-    private Queue<Long> currentRoute = new LinkedList<>();// All waypoint IDs to be handled in the current route.
-    private int CostCurrentToStartTiming = -1;
-    private int CostStartToEndTiming = -1;
+    private Queue<Long> currentRoute = new LinkedList<>(); // All waypoint IDs to be handled in the current route.
+    private int CostCurrentToStartTiming = -1; // Time in seconds from current position to start position of route.
+    private int CostStartToEndTiming = -1; // Time in seconds from start position to end position of route.
     private boolean connected = false; // To verify socket connection to vehicle.
     private boolean occupied = false; // To verify if racecar is currently occupied by a route job.
 
+
+    /**
+     * Module representing the high-level of a vehicle.
+     *
+     * @param startPoint Starting point of the vehicle. Defined by input arguments of main method.
+     * @param serverPort Port to listen for messages of SimKernel/Roskernel. Defined by input arguments of main method.
+     * @param clientPort Port to send messages to SimKernel/Roskernel. Defined by input arguments of main method.
+     */
     private Core(long startPoint, int serverPort, int clientPort) throws InterruptedException, IOException {
-        log = new Log(this.getClass(), level);
-        log.logConfig("CORE", "Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
+        Log log = new Log(this.getClass(), level);
+        Log.logConfig("CORE", "Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
         restUtils = new RESTUtils(restURL);
         requestWaypoints();
         register();
@@ -65,21 +70,22 @@ class Core implements TCPListener, MQTTListener {
         mqttUtils.subscribeToTopic("racecar/" + ID + "/#");
         tcpUtils = new TCPUtils(clientPort, serverPort, this, false);
         tcpUtils.start();
-        //Keep trying to make connection every second
-        if (!debugWithoutRosServer) {
+        if (!debugWithoutRosKernel) {
             connectSend();
-        } else {
-            connected = true;
         }
         sendStartPoint();
         loadedMaps = loadMaps(findMapsFolder());
         requestMap();
     }
 
-    //Load all current available offline maps from the /mapFolder folder. It reads and maps.xml file with all the necessary information.
-    public static HashMap<String, Map> loadMaps(String mapFolder) {
+    /**
+     * Load all current available offline maps from the /mapFolder folder.
+     * It reads the maps.xml file with all the necessary information.
+     *
+     * @param mapFolder location of the maps.xml file.
+     */
+    private HashMap<String, Map> loadMaps(String mapFolder) {
         HashMap<String, Map> loadedMaps = new HashMap<>();
-
         try {
             File fXmlFile = new File(mapFolder + "/maps.xml");
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
@@ -107,6 +113,9 @@ class Core implements TCPListener, MQTTListener {
         return loadedMaps;
     }
 
+    /**
+     * Find the location of the maps.xml containing folder. Searches up to 3 levels deep.
+     */
     private String findMapsFolder() {
         FileUtils fileUtils = new FileUtils();
         fileUtils.searchDirectory(new File(".."), "maps.xml");
@@ -130,25 +139,33 @@ class Core implements TCPListener, MQTTListener {
         return output;
     }
 
-    //Send connection check over sockets
+    /**
+     * Send connection request over sockets to RosKernel/SimKernel.
+     */
     private void connectSend() {
         tcpUtils.sendUpdate(JSONUtils.keywordToJSONString("connect"));
     }
 
-    //Event to be called when connection to car has been made
+    /**
+     * Event to be called when connection to car has been made.
+     */
     private void connectReceive() {
         Log.logInfo("CORE", "Connected to car.");
-        connected = true;
     }
 
-    //Register vehicle with RaceCarManager
+
+    /**
+     * Register vehicle with Manager over REST.
+     */
     private void register() {
         String id = restUtils.getTextPlain("register/" + Long.toString(startPoint));
         ID = Long.parseLong(id, 10);
         Log.logInfo("CORE", "Vehicle received ID " + ID + ".");
     }
 
-    //Request all possible waypoints from RaceCarManager
+    /**
+     * Request all possible waypoints from RaceCarManager over REST
+     */
     private void requestWaypoints() {
         Type typeOfHashMap = new TypeToken<HashMap<Long, WayPoint>>() {
         }.getType();
@@ -160,84 +177,78 @@ class Core implements TCPListener, MQTTListener {
         Log.logInfo("CORE", "All possible waypoints(" + wayPoints.size() + ") received.");
     }
 
-    //Set the starting point for the vehicle. Sending it over the socket connection.
+    /**
+     * Sends starting point to the vehicle's SimKernel/RosKernel over socket connection.
+     */
     private void sendStartPoint() {
         Log.logInfo("CORE", "Starting point set as waypoint with ID " + startPoint + ".");
-        if (!debugWithoutRosServer)
+        if (!debugWithoutRosKernel)
             tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("startPoint", wayPoints.get(startPoint)));
     }
 
-
-    //REST call to RaceCarManager to request the name of the current map. If this map is not found in the offline available maps, it does another
-    //REST download call to download the map and store it in it's /mapFolder and add it to the maps.xml file.
-    //After that it sends this information to the vehicle to be used over the socket connection.
+    /**
+     * REST GET request to Manager to request the name of the current map. If this map is not found in the offline available maps, it does another
+     * REST GET request to download the map files and store it in the mapfolder and add it to the maps.xml file.
+     * After that it sends this information to the vehicle SimKernel/SimKernel over the socket connection.
+     */
     private void requestMap() throws IOException {
         String mapName = restUtils.getTextPlain("getmapname");
         //String mapName = "zbuilding";
         if (loadedMaps.containsKey(mapName)) {
             Log.logInfo("CORE", "Current used map '" + mapName + "' found in folder, setting as current map.");
-            sendCurrentMap(mapName);
+            if (!debugWithoutRosKernel)
+                tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", loadedMaps.get(mapName)));
         } else {
             Log.logConfig("CORE", "Current used map '" + mapName + "' not found. Downloading...");
-            restUtils.getFile("getmappgm/" + mapName, "maps", mapName, "pgm");
-            restUtils.getFile("getmapyaml/" + mapName, "maps", mapName, "yaml");
-            addMap(mapName);
+            restUtils.getFile("getmappgm/" + findMapsFolder(), "maps", mapName, "pgm");
+            restUtils.getFile("getmapyaml/" + findMapsFolder(), "maps", mapName, "yaml");
+            Map map = new Map(mapName);
+            try {
+                DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+                DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+
+                Document document = documentBuilder.parse(findMapsFolder() + "/maps.xml");
+                Element root = document.getDocumentElement();
+
+                Element newMap = document.createElement("map");
+
+                Element newName = document.createElement("name");
+                newName.appendChild(document.createTextNode(mapName));
+                newMap.appendChild(newName);
+
+                root.appendChild(newMap);
+
+                DOMSource source = new DOMSource(document);
+
+                TransformerFactory transformerFactory = TransformerFactory.newInstance();
+                Transformer transformer = transformerFactory.newTransformer();
+                transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+                transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+                StreamResult result = new StreamResult(findMapsFolder() + "/maps.xml");
+                transformer.transform(source, result);
+
+            } catch (ParserConfigurationException | SAXException | IOException | TransformerException e) {
+                Log.logWarning("CORE", "Could not add map to XML of maps." + e);
+            }
+            loadedMaps.put(mapName, map);
+            Log.logConfig("CORE", "Added downloaded map : " + mapName + ".");
             Log.logInfo("CORE", "Current map '" + mapName + "' downloaded and set as current map.");
-            sendCurrentMap(mapName);
+            if (!debugWithoutRosKernel)
+                tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", loadedMaps.get(mapName)));
         }
     }
 
-    //Add a new map to the /mapFolder folder and update the maps.xml file.
-    private void addMap(String name) {
-        Map map = new Map(name);
-        try {
-            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-
-            Document document = documentBuilder.parse(findMapsFolder() + "/maps.xml");
-            Element root = document.getDocumentElement();
-
-            Element newMap = document.createElement("map");
-
-            Element newName = document.createElement("name");
-            newName.appendChild(document.createTextNode(name));
-            newMap.appendChild(newName);
-
-            root.appendChild(newMap);
-
-            DOMSource source = new DOMSource(document);
-
-            TransformerFactory transformerFactory = TransformerFactory.newInstance();
-            Transformer transformer = transformerFactory.newTransformer();
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-            StreamResult result = new StreamResult(findMapsFolder() + "/maps.xml");
-            transformer.transform(source, result);
-
-        } catch (ParserConfigurationException | SAXException | IOException | TransformerException e) {
-            Log.logWarning("CORE", "Could not add map to XML of maps." + e);
-        }
-        loadedMaps.put(name, map);
-        Log.logConfig("CORE", "Added downloaded map : " + name + ".");
-
-    }
-
-    //Send the name and other information of the current map to the vehicle over the socket connection.
-    private void sendCurrentMap(String mapName) {
-        if (!debugWithoutRosServer)
-            tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", loadedMaps.get(mapName)));
-
-    }
-
-    //Tto be used when when a new waypoint has to be send to the vehicle or to check if route is completed.
-    //Sends information of the next waypoint over the socket connection to the vehicle.
+    /**
+     * To be used when when a new waypoint has to be send to the vehicle or to check if route is completed.
+     * Sends information of the next waypoint over the socket connection to the vehicle's SimKernel/RosKernel.
+     */
     private void updateRoute() {
         if (!currentRoute.isEmpty()) {
             WayPoint nextWayPoint = wayPoints.get(currentRoute.poll());
-            if (!debugWithoutRosServer)
+            if (!debugWithoutRosKernel)
                 tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("nextWayPoint", nextWayPoint));
             Log.logInfo("CORE", "Sending next waypoint with ID " + nextWayPoint.getID() + " (" + (routeSize - currentRoute.size()) + "/" + routeSize + ")");
-            if (debugWithoutRosServer) {
+            if (debugWithoutRosKernel) { //Debug code to go over all waypoints with a 3s sleep in between.
                 try {
                     Thread.sleep(3000);
                 } catch (InterruptedException e) {
@@ -251,38 +262,62 @@ class Core implements TCPListener, MQTTListener {
         }
     }
 
-    //Event call over interface to be used when socket connection received message that waypoint has been reached.
+    /**
+     * Event call over interface to be used when socket connection received message that waypoint has been reached.
+     */
     private void wayPointReached() {
         Log.logInfo("CORE", "Waypoint reached.");
         updateRoute();
     }
 
-    //When all waypoints have been completed the vehicle becomes available again.
+    /**
+     * When all waypoints have been completed the vehicle becomes unoccupied again.
+     * Sends MQTT message to Manager to update the vehicle status.
+     */
     private void routeCompleted() {
         Log.logInfo("CORE", "Route Completed.");
         occupied = false;
         mqttUtils.publishMessage("racecar/" + ID + "/route", "done");
     }
 
+    /**
+     * When all a requested route job can't be done by the vehicle.
+     * Sends MQTT message to Manager to update the route status.
+     */
     private void routeError() {
         Log.logWarning("CORE", "Route error. Route Cancelled");
         occupied = false;
         mqttUtils.publishMessage("racecar/" + ID + "/route", "error");
     }
 
+    /**
+     * When all a requested route job can't be done by the vehicle as it's still completing a route.
+     * Sends MQTT message to Manager to update the route status.
+     */
     private void routeNotComplete() {
         occupied = false;
         mqttUtils.publishMessage("racecar/" + ID + "/route", "notcomplete");
     }
 
-    //Send wheel states to the vehicle over the socket connection. useful for emergency stops and other requests.
+    /**
+     * Send wheel states to the vehicle over the socket connection. useful for emergency stops and other specific requests.
+     *
+     * @param throttle throttle value for the vehicle wheels.
+     * @param steer    rotation value for the vehicle wheels.
+     */
     private void sendWheelStates(float throttle, float steer) {
-        if (!debugWithoutRosServer)
+        if (!debugWithoutRosKernel)
             tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("drive", new Drive(steer, throttle)));
         Log.logInfo("CORE", "Sending wheel state Throttle:" + throttle + ", Steer:" + steer + ".");
     }
 
-    //Event call over interface for when the socket connection receives location update. Publishes this to the RaceCarManager over MQTT.
+
+    /**
+     * When vehicle's RosKernel/SimKernel sends update on route completion it needs to be transformed to the completion amount for the total route.
+     * To do this it receives a cost calculation from the RosServer that it requested and uses this to determine the size of each waypoint's sub-route.
+     *
+     * @param location Location object containing the current percentage value.
+     */
     private void locationUpdate(Location location) {
         if (currentRoute.size() == 0) {
             float weight = (float) CostStartToEndTiming / (float) (CostCurrentToStartTiming + CostStartToEndTiming);
@@ -296,6 +331,13 @@ class Core implements TCPListener, MQTTListener {
         mqttUtils.publishMessage("racecar/" + ID + "/percentage", JSONUtils.objectToJSONString(location));
     }
 
+    /**
+     * Interfaced method to parse MQTT message and topic after MQTT callback is triggered by incoming message.
+     * Used by messages coming from Manager to request a route job or a cost calculation request.
+     *
+     * @param topic   received MQTT topic
+     * @param message received MQTT message string
+     */
     public void parseMQTT(String topic, String message) {
         if (topic.matches("racecar/[0-9]+/job")) {
             if (message.equals("stop")) {
@@ -333,6 +375,13 @@ class Core implements TCPListener, MQTTListener {
         }
     }
 
+    /**
+     * Interfaced method to parse TCP message socket callback is triggered by incoming message.
+     * Used for messages about percentage route completion, next waypoint arrived, initial connection setup,
+     * stopping/killing/starting/restarting vehicle, setting the startpoint or cost calculation response.
+     *
+     * @param message received TCP socket message string
+     */
     public String parseTCP(String message) {
         if (JSONUtils.isJSONValid(message)) {
             //parses keyword to do the correct function call.
@@ -351,11 +400,9 @@ class Core implements TCPListener, MQTTListener {
                     break;
                 case "stop":
                     sendAvailability(false);
-                    Log.logInfo("CORE", "Vehicle set to be no longer available.");
                     break;
                 case "start":
                     sendAvailability(true);
-                    Log.logInfo("CORE", "Vehicle set to be available again.");
                     break;
                 case "startpoint":
                     startPoint = (long) JSONUtils.getObjectWithKeyWord(message, Long.class);
@@ -371,7 +418,7 @@ class Core implements TCPListener, MQTTListener {
                     costComplete((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
                     break;
                 case "costtiming":
-                    costTiming((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
+                    timeComplete((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
                     break;
                 default:
                     Log.logWarning("CORE", "No matching keyword when parsing JSON from Sockets. Data: " + message);
@@ -381,28 +428,37 @@ class Core implements TCPListener, MQTTListener {
         return null;
     }
 
-    private void costTiming(Cost cost) {
-        CostCurrentToStartTiming = cost.getWeightToStart();
-        CostStartToEndTiming = cost.getWeight();
-    }
-
+    /**
+     * Set availability status of vehicle in the Manager by sending MQTT message.
+     *
+     * @param state state to be send. (available=true, unavailable=false)
+     */
     private void sendAvailability(boolean state) {
         mqttUtils.publishMessage("racecar/" + ID + "/available", Boolean.toString(state));
+        Log.logInfo("CORE", "Vehicle's availability status set to " + state + '.');
     }
 
+    /**
+     * Closes all connections (TCP & MQTT), unregisters the vehicle with the Manager and shut the module down.
+     */
     private void killCar() {
         Log.logInfo("CORE", "Vehicle kill request. Closing connections and shutting down...");
         restUtils.getCall("delete/" + ID);
-        if (!debugWithoutRosServer) tcpUtils.closeTCP();
+        if (!debugWithoutRosKernel) tcpUtils.closeTCP();
         mqttUtils.closeMQTT();
         System.exit(0);
     }
 
+    /**
+     * Called by incoming cost calculation requests. Sends the request further to the RosKernel/SimKernel.
+     *
+     * @param wayPointIDs Array of waypoint ID's to have their cost calculated.
+     */
     private void costRequest(long[] wayPointIDs) {
         List<Point> points = new ArrayList<>();
         points.add(wayPoints.get(wayPointIDs[0]));
         points.add(wayPoints.get(wayPointIDs[1]));
-        if (!debugWithoutRosServer) {
+        if (!debugWithoutRosKernel) {
             tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("cost", points));
         } else {
             costComplete(new Cost(false, 5, 5, ID));
@@ -410,17 +466,11 @@ class Core implements TCPListener, MQTTListener {
         Log.logInfo("CORE", "Cost request received between waypoints " + wayPointIDs[0] + " and " + wayPointIDs[1] + ". Calculating.");
     }
 
-    private void timeRequest(long[] wayPointIDs) {
-        List<Point> points = new ArrayList<>();
-        points.add(wayPoints.get(wayPointIDs[0]));
-        points.add(wayPoints.get(wayPointIDs[1]));
-        if (!debugWithoutRosServer) {
-            tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("costtiming", points));
-        } else {
-            costComplete(new Cost(false, 5, 5, ID));
-        }
-    }
-
+    /**
+     * Called by received response from SimKernel/RosKernel of cost calculation request.
+     *
+     * @param cost Cost object containing the calculated weights.
+     */
     private void costComplete(Cost cost) {
         Log.logInfo("CORE", "Cost request calculated.");
         cost.setStatus(occupied);
@@ -428,10 +478,42 @@ class Core implements TCPListener, MQTTListener {
         mqttUtils.publishMessage("racecar/" + ID + "/costanswer", JSONUtils.objectToJSONString(cost));
     }
 
-    //Event call over interface for when MQTT connection receives new route job requests. Adds all requested waypoints to route queue one by one.
-    //Sets the vehicle to occupied. Ignores the request if vehicle is already occupied.
-    private void jobRequest(long[] wayPointIDs) {
+    /**
+     * Called by incoming timing calculation requests. Sends the request further to the RosKernel/SimKernel.
+     *
+     * @param wayPointIDs Array of waypoint ID's to have their timing calculated.
+     */
+    private void timeRequest(long[] wayPointIDs) {
+        List<Point> points = new ArrayList<>();
+        points.add(wayPoints.get(wayPointIDs[0]));
+        points.add(wayPoints.get(wayPointIDs[1]));
+        if (!debugWithoutRosKernel) {
+            tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("costtiming", points));
+        } else {
+            costComplete(new Cost(false, 5, 5, ID));
+        }
+    }
 
+    /**
+     * When vehicle has completed cost calculation for the locationUpdate() function it's sets the variables
+     * CostCurrentToStartTiming and CostStartToEndTiming of the Core to be used by locationUpdate().
+     *
+     * @param cost Cost object containing the weights of the sub-routes.
+     */
+    private void timeComplete(Cost cost) {
+        CostCurrentToStartTiming = cost.getWeightToStart();
+        CostStartToEndTiming = cost.getWeight();
+    }
+
+    /**
+     * Event call over interface for when MQTT connection receives new route job requests from the Manager.
+     * Adds all requested waypoints to route queue one by one.
+     * Sets the vehicle to occupied. Ignores the request if vehicle is already occupied.
+     * Then triggers the first waypoint to be send to the RosKernel/SimKernel.
+     *
+     * @param wayPointIDs Array of waypoint ID's that are on the route to be completed.
+     */
+    private void jobRequest(long[] wayPointIDs) {
         Log.logInfo("CORE", "Route request received.");
         Boolean error = false;
         if (!occupied) {
@@ -451,15 +533,16 @@ class Core implements TCPListener, MQTTListener {
                 } else {
                     Log.logWarning("CORE", "Waypoint with ID '" + wayPointID + "' not found.");
                     currentRoute.clear();
-                    routeError();
                     error = true;
                 }
-
             }
             if (!error) {
                 routeSize = currentRoute.size();
                 Log.logInfo("CORE", "All waypoints(" + routeSize + ") of route added. Starting route.");
                 updateRoute();
+            } else {
+                Log.logWarning("CORE", "Certain waypoints not found. Route cancelled.");
+                routeError();
             }
         } else {
             Log.logWarning("CORE", "Current Route not completed. Not adding waypoints.");
