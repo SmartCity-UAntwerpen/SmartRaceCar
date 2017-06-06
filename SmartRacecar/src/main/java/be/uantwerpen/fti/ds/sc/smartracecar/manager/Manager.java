@@ -316,20 +316,20 @@ public class Manager implements MQTTListener {
                         jobSend(job.getIdVehicle(), job.getIdStart(), job.getIdEnd());
                         return Response.status(Response.Status.OK).build();
                     } else {
-                        response.sendError(HttpServletResponse.SC_NOT_FOUND,"idEndError");
+                        response.sendError(HttpServletResponse.SC_NOT_FOUND,"No matching ending waypoint found");
                         Log.logWarning("MANAGER", "Can't send route job as waypoints " + job.getIdStart() + " was not found.");
                     }
                 } else {
-                    response.sendError(HttpServletResponse.SC_NOT_FOUND,"idStartError");
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND,"No matching starting waypoint found");
                     Log.logWarning("MANAGER", "Can't send route job as waypoints " + job.getIdStart() + " was not found.");
                 }
             } else {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, "VehicleBusy");
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "This vehicle is busy or occupied");
                 Log.logWarning("MANAGER", "Vehicle with ID " + job.getIdVehicle() + " is occupied or not available. Cant send route job.");
             }
 
         } else {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, "idVehicleError");
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "This vehicle doesn't exist");
             Log.logWarning("MANAGER", "Vehicle with ID " + job.getIdVehicle() + " doesn't exist. Cant send route job.");
         }
         return Response.status(Response.Status.OK).build();
