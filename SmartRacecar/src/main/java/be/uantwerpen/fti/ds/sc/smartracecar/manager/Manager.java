@@ -115,9 +115,10 @@ public class Manager implements MQTTListener {
         } else if (topic.matches("racecar/[0-9]+/locationupdate")) {
             long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
             if (vehicles.containsKey(ID)) {
-                Log.logInfo("MANAGER", "Vehicle with ID " + ID + " has it's location changed to waypoint " + message);
+                Log.logInfo("MANAGER", "Vehicle with ID " + ID + " has it's location changed to waypoint " + message + ".");
                 Location loc = vehicles.get(ID).getLocation();
                 loc.setIdStart(Long.parseLong(message));
+                loc.setIdEnd(Long.parseLong(message));
                 vehicles.get(ID).setLocation(loc);
             } else {
                 Log.logConfig("MANAGER", "Vehicle with ID " + ID + " doesn't exist. Cannot set new location.");
