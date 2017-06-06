@@ -80,7 +80,8 @@ class SimDeployer implements TCPListener {
                         simulatedVehicles.get(simulationID).setStartPoint(Long.parseLong(argument));
                         if (simulatedVehicles.get(simulationID).isDeployed()) {
                             simulatedVehicles.get(simulationID).setStartPoint(Long.parseLong(argument));
-                            simulatedVehicles.get(simulationID).ResetStartPoint();
+                            if(!simulatedVehicles.get(simulationID).isAvailable())
+                                simulatedVehicles.get(simulationID).ResetStartPoint();
                         }
                         Log.logInfo("SIMDEPLOYER", "Simulated Vehicle with simulation ID " + simulationID + " given starting point ID " + argument + ".");
                         return true;
