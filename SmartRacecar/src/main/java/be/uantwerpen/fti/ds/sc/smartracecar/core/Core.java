@@ -9,6 +9,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -25,7 +26,7 @@ import java.util.*;
 import java.util.logging.Level;
 
 
-    class Core implements TCPListener, MQTTListener {
+class Core implements TCPListener, MQTTListener {
     //Hardcoded elements.
     private boolean debugWithoutRosServer = false; // debug parameter to stop attempts to send over sockets when ROS-Node is active.
     private Log log;
@@ -54,15 +55,15 @@ import java.util.logging.Level;
     private boolean connected = false; // To verify socket connection to vehicle.
     private boolean occupied = false; // To verify if racecar is currently occupied by a route job.
 
-    private Core(long startPoint,int serverPort,int clientPort) throws InterruptedException, IOException {
+    private Core(long startPoint, int serverPort, int clientPort) throws InterruptedException, IOException {
         log = new Log(this.getClass(), level);
-        log.logConfig("CORE","Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
+        log.logConfig("CORE", "Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
         restUtils = new RESTUtils(restURL);
         requestWaypoints();
         register();
         mqttUtils = new MQTTUtils(mqttBroker, mqqtUsername, mqttPassword, this);
         mqttUtils.subscribeToTopic("racecar/" + ID + "/#");
-        tcpUtils = new TCPUtils(clientPort, serverPort, this,false);
+        tcpUtils = new TCPUtils(clientPort, serverPort, this, false);
         tcpUtils.start();
         //Keep trying to make connection every second
         if (!debugWithoutRosServer) {
@@ -76,8 +77,8 @@ import java.util.logging.Level;
     }
 
     //Load all current available offline maps from the /mapFolder folder. It reads and maps.xml file with all the necessary information.
-    public static HashMap<String,Map> loadMaps(String mapFolder) {
-        HashMap<String,Map> loadedMaps = new HashMap<>();
+    public static HashMap<String, Map> loadMaps(String mapFolder) {
+        HashMap<String, Map> loadedMaps = new HashMap<>();
 
         try {
             File fXmlFile = new File(mapFolder + "/maps.xml");
@@ -96,35 +97,35 @@ import java.util.logging.Level;
 
                     Element eElement = (Element) nNode;
                     String name = eElement.getElementsByTagName("name").item(0).getTextContent();
-                    loadedMaps.put(name,new Map(name));
-                    Log.logConfig("XML","Added map: " + name + ".");
+                    loadedMaps.put(name, new Map(name));
+                    Log.logConfig("XML", "Added map: " + name + ".");
                 }
             }
         } catch (Exception e) {
-            Log.logSevere("XML","Could not correctly load XML of maps." + e);
+            Log.logSevere("XML", "Could not correctly load XML of maps." + e);
         }
         return loadedMaps;
     }
 
-    private String findMapsFolder(){
+    private String findMapsFolder() {
         FileUtils fileUtils = new FileUtils();
         fileUtils.searchDirectory(new File(".."), "maps.xml");
-        if(fileUtils.getResult().size() == 0){
+        if (fileUtils.getResult().size() == 0) {
             fileUtils.searchDirectory(new File("./.."), "maps.xml");
-            if(fileUtils.getResult().size() == 0){
+            if (fileUtils.getResult().size() == 0) {
                 fileUtils.searchDirectory(new File("./../.."), "maps.xml");
-                if(fileUtils.getResult().size() == 0){
+                if (fileUtils.getResult().size() == 0) {
                     fileUtils.searchDirectory(new File("./../../.."), "maps.xml");
-                    if(fileUtils.getResult().size() == 0){
-                        Log.logSevere("CORE","maps.xml not found. Make sure it exists in some folder (maximum 3 levels deep).");
+                    if (fileUtils.getResult().size() == 0) {
+                        Log.logSevere("CORE", "maps.xml not found. Make sure it exists in some folder (maximum 3 levels deep).");
                         System.exit(0);
                     }
                 }
             }
         }
         String output = null;
-        for (String matched : fileUtils.getResult()){
-                output=matched;
+        for (String matched : fileUtils.getResult()) {
+            output = matched;
         }
         return output;
     }
@@ -149,7 +150,8 @@ import java.util.logging.Level;
 
     //Request all possible waypoints from RaceCarManager
     private void requestWaypoints() {
-        Type typeOfHashMap = new TypeToken<HashMap<Long, WayPoint>>() {}.getType();
+        Type typeOfHashMap = new TypeToken<HashMap<Long, WayPoint>>() {
+        }.getType();
         wayPoints = (HashMap<Long, WayPoint>) JSONUtils.getObjectWithKeyWord(restUtils.getJSON("getwaypoints"), typeOfHashMap);
         assert wayPoints != null;
         for (WayPoint wayPoint : wayPoints.values()) {
@@ -222,7 +224,8 @@ import java.util.logging.Level;
 
     //Send the name and other information of the current map to the vehicle over the socket connection.
     private void sendCurrentMap(String mapName) {
-        if (!debugWithoutRosServer) tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", loadedMaps.get(mapName)));
+        if (!debugWithoutRosServer)
+            tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", loadedMaps.get(mapName)));
 
     }
 
@@ -231,9 +234,10 @@ import java.util.logging.Level;
     private void updateRoute() {
         if (!currentRoute.isEmpty()) {
             WayPoint nextWayPoint = wayPoints.get(currentRoute.poll());
-            if (!debugWithoutRosServer) tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("nextWayPoint", nextWayPoint));
+            if (!debugWithoutRosServer)
+                tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("nextWayPoint", nextWayPoint));
             Log.logInfo("CORE", "Sending next waypoint with ID " + nextWayPoint.getID() + " (" + (routeSize - currentRoute.size()) + "/" + routeSize + ")");
-            if(debugWithoutRosServer){
+            if (debugWithoutRosServer) {
                 try {
                     Thread.sleep(3000);
                 } catch (InterruptedException e) {
@@ -273,19 +277,20 @@ import java.util.logging.Level;
 
     //Send wheel states to the vehicle over the socket connection. useful for emergency stops and other requests.
     private void sendWheelStates(float throttle, float steer) {
-        if (!debugWithoutRosServer) tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("drive", new Drive(steer, throttle)));
+        if (!debugWithoutRosServer)
+            tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("drive", new Drive(steer, throttle)));
         Log.logInfo("CORE", "Sending wheel state Throttle:" + throttle + ", Steer:" + steer + ".");
     }
 
     //Event call over interface for when the socket connection receives location update. Publishes this to the RaceCarManager over MQTT.
     private void locationUpdate(Location location) {
-        if(currentRoute.size() == 0){
-           float weight = (float) CostStartToEndTiming / (float) (CostCurrentToStartTiming+CostStartToEndTiming);
-           location.setPercentage(Math.round((1-weight)*100 + location.getPercentage()*weight));
-        }else if(currentRoute.size() == 1){
+        if (currentRoute.size() == 0) {
+            float weight = (float) CostStartToEndTiming / (float) (CostCurrentToStartTiming + CostStartToEndTiming);
+            location.setPercentage(Math.round((1 - weight) * 100 + location.getPercentage() * weight));
+        } else if (currentRoute.size() == 1) {
 
-            float weight = (float) CostCurrentToStartTiming / (float) (CostCurrentToStartTiming+CostStartToEndTiming);
-            location.setPercentage(Math.round(location.getPercentage()*weight));
+            float weight = (float) CostCurrentToStartTiming / (float) (CostCurrentToStartTiming + CostStartToEndTiming);
+            location.setPercentage(Math.round(location.getPercentage() * weight));
         }
         Log.logInfo("CORE", "Location Updated. Vehicle has " + location.getPercentage() + "% of route completed");
         mqttUtils.publishMessage("racecar/" + ID + "/percentage", JSONUtils.objectToJSONString(location));
@@ -344,6 +349,23 @@ import java.util.logging.Level;
                 case "kill":
                     killCar();
                     break;
+                case "stop":
+                    sendAvailability(false);
+                    Log.logInfo("CORE", "Vehicle set to be no longer available.");
+                    break;
+                case "start":
+                    sendAvailability(true);
+                    Log.logInfo("CORE", "Vehicle set to be available again.");
+                    break;
+                case "startpoint":
+                    startPoint = (long) JSONUtils.getObjectWithKeyWord(message, Long.class);
+                    Log.logInfo("CORE", "Setting new starting point with ID " + JSONUtils.getObjectWithKeyWord(message, Long.class));
+                    break;
+                case "restart":
+                    sendAvailability(true);
+                    tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentPosition", wayPoints.get(startPoint)));
+                    Log.logInfo("CORE", "Vehicle restarted.");
+                    break;
                 case "cost":
                     costComplete((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
                     break;
@@ -358,43 +380,47 @@ import java.util.logging.Level;
         return null;
     }
 
-    private void costTiming(Cost cost){
+    private void costTiming(Cost cost) {
         CostCurrentToStartTiming = cost.getWeightToStart();
         CostStartToEndTiming = cost.getWeight();
     }
 
-    private void killCar(){
+    private void sendAvailability(boolean state) {
+        mqttUtils.publishMessage("racecar/" + ID + "/available", Boolean.toString(state));
+    }
+
+    private void killCar() {
         Log.logInfo("CORE", "Vehicle kill request. Closing connections and shutting down...");
         restUtils.getCall("delete/" + ID);
-        if(!debugWithoutRosServer)tcpUtils.closeTCP();
+        if (!debugWithoutRosServer) tcpUtils.closeTCP();
         mqttUtils.closeMQTT();
         System.exit(0);
     }
 
-    private void costRequest(long[] wayPointIDs){
+    private void costRequest(long[] wayPointIDs) {
         List<Point> points = new ArrayList<>();
         points.add(wayPoints.get(wayPointIDs[0]));
         points.add(wayPoints.get(wayPointIDs[1]));
-        if (!debugWithoutRosServer){
-            tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("cost",points));
-        }else{
-            costComplete(new Cost(false,5,5,ID));
+        if (!debugWithoutRosServer) {
+            tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("cost", points));
+        } else {
+            costComplete(new Cost(false, 5, 5, ID));
         }
         Log.logInfo("CORE", "Cost request received between waypoints " + wayPointIDs[0] + " and " + wayPointIDs[1] + ". Calculating.");
     }
 
-    private void timeRequest(long[] wayPointIDs){
+    private void timeRequest(long[] wayPointIDs) {
         List<Point> points = new ArrayList<>();
         points.add(wayPoints.get(wayPointIDs[0]));
         points.add(wayPoints.get(wayPointIDs[1]));
-        if (!debugWithoutRosServer){
-            tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("costtiming",points));
-        }else{
-            costComplete(new Cost(false,5,5,ID));
+        if (!debugWithoutRosServer) {
+            tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("costtiming", points));
+        } else {
+            costComplete(new Cost(false, 5, 5, ID));
         }
     }
 
-    private void costComplete(Cost cost){
+    private void costComplete(Cost cost) {
         Log.logInfo("CORE", "Cost request calculated.");
         cost.setStatus(occupied);
         cost.setIdVehicle(ID);
@@ -410,7 +436,7 @@ import java.util.logging.Level;
         if (!occupied) {
             occupied = true;
             timeRequest(wayPointIDs);
-            while(CostCurrentToStartTiming == -1 && CostStartToEndTiming == -1){
+            while (CostCurrentToStartTiming == -1 && CostStartToEndTiming == -1) {
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
@@ -429,7 +455,7 @@ import java.util.logging.Level;
                 }
 
             }
-            if(!error){
+            if (!error) {
                 routeSize = currentRoute.size();
                 Log.logInfo("CORE", "All waypoints(" + routeSize + ") of route added. Starting route.");
                 updateRoute();
@@ -447,16 +473,15 @@ import java.util.logging.Level;
             System.exit(0);
         } else if (args.length == 1) {
             if (!args[0].isEmpty()) startPoint = Long.parseLong(args[0]);
-        }
-        else if (args.length == 2) {
+        } else if (args.length == 2) {
             System.out.println("Need at least 1 or 3 argument to run. Possible arguments: startpoint(int)(needed!) tcpclientport(int) tcpserverport(int)");
             System.exit(0);
-        }else {
+        } else {
             if (!args[0].isEmpty()) startPoint = Long.parseLong(args[0]);
-            if (!args[1].isEmpty()) serverPort  = Integer.parseInt(args[1]);
+            if (!args[1].isEmpty()) serverPort = Integer.parseInt(args[1]);
             if (!args[2].isEmpty()) clientPort = Integer.parseInt(args[2]);
         }
-        final Core core = new Core(startPoint,serverPort,clientPort);
+        final Core core = new Core(startPoint, serverPort, clientPort);
     }
 
 }
