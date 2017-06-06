@@ -24,6 +24,9 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.logging.Level;
 
+/**
+ * Module representing the high-level of a vehicle.
+ */
 class Core implements TCPListener, MQTTListener {
     //Hardcoded settings
     private boolean debugWithoutRosKernel = false; // debug parameter for using this module without a connected RosKernel/SimKernel
