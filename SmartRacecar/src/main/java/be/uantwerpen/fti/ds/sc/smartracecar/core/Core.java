@@ -359,6 +359,7 @@ class Core implements TCPListener, MQTTListener {
                     break;
                 case "startpoint":
                     startPoint = (long) JSONUtils.getObjectWithKeyWord(message, Long.class);
+                    mqttUtils.publishMessage("racecar/" + ID + "/locationupdate", message);
                     Log.logInfo("CORE", "Setting new starting point with ID " + JSONUtils.getObjectWithKeyWord(message, Long.class));
                     break;
                 case "restart":
