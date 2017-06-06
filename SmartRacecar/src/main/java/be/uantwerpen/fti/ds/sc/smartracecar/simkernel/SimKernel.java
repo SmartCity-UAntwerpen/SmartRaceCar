@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
-public class SimKernel implements TCPListener {
+class SimKernel implements TCPListener {
 
     private boolean debugWithoutRosServer = false; // debug parameter to stop attempts to send over sockets when ROSServer-Node is active.
     private Log log;
@@ -25,7 +25,7 @@ public class SimKernel implements TCPListener {
     private WayPoint startPoint;
     private Point currentPosition;
 
-    public SimKernel(int serverPort, int clientPort) throws InterruptedException {
+    SimKernel(int serverPort, int clientPort) throws InterruptedException {
         log = new Log(this.getClass(), level);
         log.logConfig("SIMKERNEL","Startup parameters: TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
         restUtils = new RESTUtils(restURL);

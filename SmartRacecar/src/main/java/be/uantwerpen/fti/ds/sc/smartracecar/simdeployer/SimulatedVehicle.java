@@ -78,7 +78,7 @@ class SimulatedVehicle{
         return deployed;
     }
 
-    public boolean isAvailable() {
+    boolean isAvailable() {
         return available;
     }
 }

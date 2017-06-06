@@ -2,7 +2,7 @@ package be.uantwerpen.fti.ds.sc.smartracecar.simdeployer;
 
 import java.util.List;
 
-public class Simulation {
+class Simulation {
 
 
     private String location;
@@ -10,13 +10,13 @@ public class Simulation {
     private Thread thread;
     private List<String> runArguments;
 
-    public Simulation(String location) {
+    Simulation(String location) {
         this.location = location;
         this.running = false;
         this.thread = null;
     }
 
-    public boolean start(List<String> runArguments) {
+    boolean start(List<String> runArguments) {
         this.runArguments = runArguments;
         if (!running) {
             thread = new Thread(new CoreProcess());
@@ -28,7 +28,7 @@ public class Simulation {
         }
     }
 
-    public boolean stop() {
+    boolean stop() {
         if (running) {
             thread.interrupt();
             return true;
