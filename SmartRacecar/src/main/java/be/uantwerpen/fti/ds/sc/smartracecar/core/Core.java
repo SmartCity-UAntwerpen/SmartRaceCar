@@ -27,7 +27,7 @@ import java.util.logging.Level;
 
     class Core implements TCPListener, MQTTListener {
     //Hardcoded elements.
-    private boolean debugWithoutRosNode = false; // debug parameter to stop attempts to send over sockets when ROS-Node is active.
+    private boolean debugWithoutRosServer = false; // debug parameter to stop attempts to send over sockets when ROS-Node is active.
     private Log log;
     private Level level = Level.INFO; //Debug level. best usages are LEVEL.INFO(for basic info) and LEVEL.CONFIG(for debug messages)
     private final String mqttBroker = "tcp://143.129.39.151:1883"; // MQTT Broker URL
@@ -65,7 +65,7 @@ import java.util.logging.Level;
         tcpUtils = new TCPUtils(clientPort, serverPort, this,false);
         tcpUtils.start();
         //Keep trying to make connection every second
-        if (!debugWithoutRosNode) {
+        if (!debugWithoutRosServer) {
             connectSend();
         } else {
             connected = true;
@@ -161,7 +161,7 @@ import java.util.logging.Level;
     //Set the starting point for the vehicle. Sending it over the socket connection.
     private void sendStartPoint() {
         Log.logInfo("CORE", "Starting point set as waypoint with ID " + startPoint + ".");
-        if (!debugWithoutRosNode)
+        if (!debugWithoutRosServer)
             tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("startPoint", wayPoints.get(startPoint)));
     }
 
@@ -222,7 +222,7 @@ import java.util.logging.Level;
 
     //Send the name and other information of the current map to the vehicle over the socket connection.
     private void sendCurrentMap(String mapName) {
-        if (!debugWithoutRosNode) tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", loadedMaps.get(mapName)));
+        if (!debugWithoutRosServer) tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", loadedMaps.get(mapName)));
 
     }
 
@@ -231,9 +231,9 @@ import java.util.logging.Level;
     private void updateRoute() {
         if (!currentRoute.isEmpty()) {
             WayPoint nextWayPoint = wayPoints.get(currentRoute.poll());
-            if (!debugWithoutRosNode) tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("nextWayPoint", nextWayPoint));
+            if (!debugWithoutRosServer) tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("nextWayPoint", nextWayPoint));
             Log.logInfo("CORE", "Sending next waypoint with ID " + nextWayPoint.getID() + " (" + (routeSize - currentRoute.size()) + "/" + routeSize + ")");
-            if(debugWithoutRosNode){
+            if(debugWithoutRosServer){
                 try {
                     Thread.sleep(3000);
                 } catch (InterruptedException e) {
@@ -273,7 +273,7 @@ import java.util.logging.Level;
 
     //Send wheel states to the vehicle over the socket connection. useful for emergency stops and other requests.
     private void sendWheelStates(float throttle, float steer) {
-        if (!debugWithoutRosNode) tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("drive", new Drive(steer, throttle)));
+        if (!debugWithoutRosServer) tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("drive", new Drive(steer, throttle)));
         Log.logInfo("CORE", "Sending wheel state Throttle:" + throttle + ", Steer:" + steer + ".");
     }
 
@@ -366,7 +366,7 @@ import java.util.logging.Level;
     private void killCar(){
         Log.logInfo("CORE", "Vehicle kill request. Closing connections and shutting down...");
         restUtils.getCall("delete/" + ID);
-        if(!debugWithoutRosNode)tcpUtils.closeTCP();
+        if(!debugWithoutRosServer)tcpUtils.closeTCP();
         mqttUtils.closeMQTT();
         System.exit(0);
     }
@@ -375,7 +375,7 @@ import java.util.logging.Level;
         List<Point> points = new ArrayList<>();
         points.add(wayPoints.get(wayPointIDs[0]));
         points.add(wayPoints.get(wayPointIDs[1]));
-        if (!debugWithoutRosNode){
+        if (!debugWithoutRosServer){
             tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("cost",points));
         }else{
             costComplete(new Cost(false,5,5,ID));
@@ -387,7 +387,7 @@ import java.util.logging.Level;
         List<Point> points = new ArrayList<>();
         points.add(wayPoints.get(wayPointIDs[0]));
         points.add(wayPoints.get(wayPointIDs[1]));
-        if (!debugWithoutRosNode){
+        if (!debugWithoutRosServer){
             tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("costtiming",points));
         }else{
             costComplete(new Cost(false,5,5,ID));
