@@ -14,6 +14,7 @@ class SimDeployer implements TCPListener {
     private static Log log;
     private Level level = Level.INFO;
     private final String restURL = "http://143.129.39.151:8081/carmanager"; // REST Service URL to Manager
+    //private final String restURL = "http://localhost:8081/carmanager"; // REST Service URL to Manager
     private final String jarPath;
 
     private TCPUtils tcpUtils;
@@ -30,6 +31,21 @@ class SimDeployer implements TCPListener {
         requestWaypoints();
         tcpUtils = new TCPUtils(serverPort, this, true);
         tcpUtils.start();
+        parseTCP("create 1");
+        Thread.sleep(1000);
+        parseTCP("create 2");
+        Thread.sleep(1000);
+        parseTCP("create 3");
+        Thread.sleep(1000);
+        parseTCP("set 1 startpoint 8");
+        parseTCP("set 2 startpoint 9");
+        parseTCP("set 3 startpoint 10");
+        Thread.sleep(1000);
+        parseTCP("run 1");
+        Thread.sleep(1000);
+        parseTCP("run 2");
+        Thread.sleep(1000);
+        parseTCP("run 3");
     }
 
     //Request all possible waypoints from RaceCarManager

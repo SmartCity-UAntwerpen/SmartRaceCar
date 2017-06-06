@@ -10,7 +10,7 @@ import java.util.logging.Level;
 
 public class SimKernel implements TCPListener {
 
-    private boolean debugWithoutRosServer = true; // debug parameter to stop attempts to send over sockets when ROSServer-Node is active.
+    private boolean debugWithoutRosServer = false; // debug parameter to stop attempts to send over sockets when ROSServer-Node is active.
     private Log log;
     private Level level = Level.INFO; //Debug level
     private final String restURL = "http://143.129.39.117:8080";
@@ -32,7 +32,7 @@ public class SimKernel implements TCPListener {
         tcpUtils = new TCPUtils(clientPort, serverPort, this,false);
         tcpUtils.start();
         while (!connected) {
-            log.logWarning("SIMKERNEL","Waiting for connection with vehicle Core...");
+            log.logWarning("SIMKERNEL","Waiting for connection with vehicle Core on port " + serverPort);
             Thread.sleep(1000);
         }
     }
