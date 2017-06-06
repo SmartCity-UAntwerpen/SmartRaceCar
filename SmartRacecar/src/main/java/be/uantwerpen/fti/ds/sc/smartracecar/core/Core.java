@@ -1,6 +1,7 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.core;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
+import be.uantwerpen.fti.ds.sc.smartracecar.common.Location;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.Map;
 import com.google.gson.reflect.TypeToken;
 import org.w3c.dom.Document;
@@ -8,7 +9,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -24,8 +24,8 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.logging.Level;
 
-public class Core implements TCPListener, MQTTListener {
 
+    class Core implements TCPListener, MQTTListener {
     //Hardcoded elements.
     private boolean debugWithoutRosNode = false; // debug parameter to stop attempts to send over sockets when ROS-Node is active.
     private Log log;
@@ -34,6 +34,7 @@ public class Core implements TCPListener, MQTTListener {
     private final String mqqtUsername = "root"; // MQTT Broker Username
     private final String mqttPassword = "smartcity"; // MQTT Broker Password
     private final String restURL = "http://143.129.39.151:8081/carmanager"; // REST Service URL to Manager
+    //private final String restURL = "http://localhost:8081/carmanager"; // REST Service URL to Manager
     private static int serverPort = 5005; // TCP Port to listen on for messages from ROS Node.
     private static int clientPort = 5006; // TCP Port to send to messages to ROS Node.
 
@@ -343,23 +344,6 @@ public class Core implements TCPListener, MQTTListener {
                 case "kill":
                     killCar();
                     break;
-                case "stop":
-                    sendAvailability(false);
-                    Log.logInfo("CORE", "Vehicle set to be no longer available.");
-                    break;
-                case "start":
-                    sendAvailability(true);
-                    Log.logInfo("CORE", "Vehicle set to be available again.");
-                    break;
-                case "startpoint":
-                    startPoint = (long) JSONUtils.getObjectWithKeyWord(message, Long.class);
-                    Log.logInfo("CORE", "Setting new starting point with ID " +  JSONUtils.getObjectWithKeyWord(message, Long.class));
-                    break;
-                case "restart":
-                    sendAvailability(true);
-                    tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentPosition",wayPoints.get(startPoint)));
-                    Log.logInfo("CORE", "Vehicle restarted.");
-                    break;
                 case "cost":
                     costComplete((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
                     break;
@@ -385,10 +369,6 @@ public class Core implements TCPListener, MQTTListener {
         if(!debugWithoutRosNode)tcpUtils.closeTCP();
         mqttUtils.closeMQTT();
         System.exit(0);
-    }
-
-    private void sendAvailability(boolean state){
-        mqttUtils.publishMessage("racecar/" + ID + "/available", Boolean.toString(state));
     }
 
     private void costRequest(long[] wayPointIDs){
@@ -478,4 +458,5 @@ public class Core implements TCPListener, MQTTListener {
         }
         final Core core = new Core(startPoint,serverPort,clientPort);
     }
+
 }
