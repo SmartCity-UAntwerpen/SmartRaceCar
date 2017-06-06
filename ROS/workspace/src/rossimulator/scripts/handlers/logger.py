@@ -21,9 +21,13 @@ class Logger:
     def __init__(self):
         self.logging_level = logging_level
 
+        print "logger init"
+
         if debug_without_ros:
             if self.logging_level == 1:
                 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s [%(levelname)s] %(message)s')
+                print "Debug logger init"
+                logging.debug("--Debug logger init")
             elif self.logging_level == 2:
                 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
             elif self.logging_level == 3:
