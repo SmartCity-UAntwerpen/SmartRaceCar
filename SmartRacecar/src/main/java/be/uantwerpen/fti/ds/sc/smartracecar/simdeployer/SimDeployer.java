@@ -135,7 +135,7 @@ class SimDeployer implements TCPListener {
             Log.logInfo("SIMDEPLOYER", "Vehicle with ID " + simulationID + " killed.");
             return true;
         } else {
-            Log.logWarning("SIMDEPLOYER", "Cannot restart vehicle with simulation ID " + simulationID + ". It does not exist.");
+            Log.logWarning("SIMDEPLOYER", "Cannot kill vehicle with simulation ID " + simulationID + ". It does not exist.");
             return false;
         }
     }
