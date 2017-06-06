@@ -19,8 +19,8 @@ class SimulatedVehicle{
 
     SimulatedVehicle(long simulationID,String jarPath) {
         name = "SimCar" + simulationID;
-        this.simulatedCore = new Simulation(jarPath + "\\Core.jar");
-        this.simulatedSimKernel = new Simulation(jarPath + "\\SimKernel.jar");
+        this.simulatedCore = new Simulation(jarPath + "Core.jar");
+        this.simulatedSimKernel = new Simulation(jarPath + "SimKernel.jar");
     }
 
     void start(int portOne, int portTwo){
