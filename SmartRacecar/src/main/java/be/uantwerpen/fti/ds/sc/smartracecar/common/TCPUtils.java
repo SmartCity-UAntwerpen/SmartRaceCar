@@ -150,7 +150,8 @@ public class TCPUtils extends Thread {
 
         boolean connected = false;
         //if connection to socket can not be made, it waits until it can.
-        while (!connected) {
+        int tryTimes = 0;
+        while (!connected && tryTimes != 5) {
             try {
                 clientSocket = new Socket("localhost", port);
 
@@ -159,8 +160,9 @@ public class TCPUtils extends Thread {
                 Log.logSevere("SOCKETS","Cannot connect to receiver. Trying again." + e);
                 connected = false;
             } catch (IOException e) {
-                Log.logWarning("SOCKETS","Cannot connect to receiver to send   " + data + "   Trying again. Error:" + e);
+                Log.logWarning("SOCKETS","Cannot connect to receiver to send   " + data + "   Trying again(" + tryTimes + "/5). Error:" + e);
                 connected = false;
+                tryTimes++;
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e1) {
