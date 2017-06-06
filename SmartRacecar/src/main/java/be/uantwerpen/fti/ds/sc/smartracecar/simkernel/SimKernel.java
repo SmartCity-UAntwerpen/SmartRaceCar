@@ -8,11 +8,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
-class SimKernel implements TCPListener {
+public class SimKernel implements TCPListener {
 
     private boolean debugWithoutRosServer = false; // debug parameter to stop attempts to send over sockets when ROSServer-Node is active.
     private Log log;
-    private Level level = Level.CONFIG; //Debug level
+    private Level level = Level.INFO; //Debug level
     private final String restURL = "http://143.129.39.117:8080";
     private static int serverPort = 5005;
     private static int clientPort = 5006;
@@ -25,15 +25,14 @@ class SimKernel implements TCPListener {
     private WayPoint startPoint;
     private Point currentPosition;
 
-
-    SimKernel(int serverPort,int clientPort) throws InterruptedException {
+    public SimKernel(int serverPort, int clientPort) throws InterruptedException {
         log = new Log(this.getClass(), level);
         log.logConfig("SIMKERNEL","Startup parameters: TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
         restUtils = new RESTUtils(restURL);
         tcpUtils = new TCPUtils(clientPort, serverPort, this,false);
         tcpUtils.start();
         while (!connected) {
-            log.logWarning("SIMKERNEL","Waiting for connection with vehicle Core...");
+            log.logWarning("SIMKERNEL","Waiting for connection with vehicle Core on port " + serverPort);
             Thread.sleep(1000);
         }
     }
@@ -66,6 +65,11 @@ class SimKernel implements TCPListener {
                 case "nextWayPoint":
                     Type typeOfWayPoint = new TypeToken<WayPoint>() {}.getType();
                     jobRequest((WayPoint) JSONUtils.getObjectWithKeyWord(message,typeOfWayPoint));
+                    break;
+                case "currentPosition":
+                    Type typeOfWayPoint2 = new TypeToken<WayPoint>() {}.getType();
+                    currentPosition = (WayPoint) JSONUtils.getObjectWithKeyWord(message,typeOfWayPoint2);
+                    Log.logInfo("SIMKERNEL", "Current position set to " + currentPosition.getX() + "," + currentPosition.getY() + "," + currentPosition.getZ() + "," + currentPosition.getW() + ".");
                     break;
                 default:
                     Log.logWarning("SIMKERNEL", "No matching keyword when parsing JSON from Sockets. Data: " + message);

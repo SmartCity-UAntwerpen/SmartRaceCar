@@ -60,7 +60,7 @@ import java.util.logging.Level;
         restUtils = new RESTUtils(restURL);
         requestWaypoints();
         register();
-        mqttUtils = new MQTTUtils(ID, mqttBroker, mqqtUsername, mqttPassword, this);
+        mqttUtils = new MQTTUtils(mqttBroker, mqqtUsername, mqttPassword, this);
         mqttUtils.subscribeToTopic("racecar/" + ID + "/#");
         tcpUtils = new TCPUtils(clientPort, serverPort, this,false);
         tcpUtils.start();

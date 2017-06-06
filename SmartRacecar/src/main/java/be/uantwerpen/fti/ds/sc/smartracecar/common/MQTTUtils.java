@@ -27,26 +27,6 @@ public class MQTTUtils implements MqttCallback{
         }
     }
 
-    public MQTTUtils(long ID, String brokerURL, String username, String password, MQTTListener listener){
-        MqttConnectOptions options = new MqttConnectOptions();
-        this.listener = listener;
-
-        options.setCleanSession(true);
-        options.setKeepAliveInterval(0);
-        options.setUserName(username);
-        options.setPassword(password.toCharArray());
-
-        try {
-            client = new MqttClient(brokerURL,String.valueOf(ID));
-            client.setCallback(this);
-            client.connectWithResult(options);
-            Log.logConfig("MQTT","Connected to '" + brokerURL + "'.");
-        } catch (MqttException e) {
-            Log.logSevere("MQTT","Could not connect to '" + brokerURL + "'." + e);
-            System.exit(0);
-        }
-    }
-
     @Override
     public void connectionLost(Throwable t) {
         Log.logSevere("MQTT","Connection lost.");
