@@ -14,6 +14,7 @@ class SimRest():
         # self.mqtt_client= mqtt_client
 
         cherrypy.server.socket_host = '0.0.0.0'
+        cherrypy.config.update({'server.socket_port': 8084})
         cherrypy.tree.mount(CalculateCost(), '/calcWeight', {'/': {'tools.gzip.on': True}})
         cherrypy.engine.start()
         # self.getWaypoints()
