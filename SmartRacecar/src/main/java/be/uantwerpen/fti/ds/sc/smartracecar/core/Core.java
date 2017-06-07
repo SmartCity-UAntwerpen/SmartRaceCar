@@ -95,7 +95,7 @@ class Core implements TCPListener, MQTTListener {
             }catch (IOException ex) {
                 String path = Core.class.getProtectionDomain().getCodeSource().getLocation().getPath();
                 String decodedPath = URLDecoder.decode(path, "UTF-8");
-                System.out.println(decodedPath);
+                decodedPath = decodedPath.replace("Core.jar","");
                 input = new FileInputStream(decodedPath + "/core.properties");
             }
 
