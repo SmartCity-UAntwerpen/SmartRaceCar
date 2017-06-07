@@ -8,6 +8,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
+import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -41,7 +42,14 @@ class SimDeployer implements TCPListener {
         InputStream input = null;
         System.out.println(new File(".").getAbsolutePath());
         try {
-            input = new FileInputStream("./simdeployer.properties");
+            try{
+                input = new FileInputStream("simdeployer.properties");
+            }catch (IOException ex) {
+                String path = SimDeployer.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+                String decodedPath = URLDecoder.decode(path, "UTF-8");
+                System.out.println(decodedPath);
+                input = new FileInputStream(decodedPath + "/simdeployer.properties");
+            }
 
             // load a properties file
             prop.load(input);

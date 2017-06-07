@@ -15,6 +15,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.*;
 import java.lang.reflect.Type;
+import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -68,7 +69,14 @@ public class Manager implements MQTTListener {
         InputStream input = null;
         System.out.println(new File(".").getAbsolutePath());
         try {
-            input = new FileInputStream("./manager.properties");
+            try{
+                input = new FileInputStream("manager.properties");
+            }catch (IOException ex) {
+                String path = Manager.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+                String decodedPath = URLDecoder.decode(path, "UTF-8");
+                System.out.println(decodedPath);
+                input = new FileInputStream(decodedPath + "/manager.properties");
+            }
 
             // load a properties file
             prop.load(input);

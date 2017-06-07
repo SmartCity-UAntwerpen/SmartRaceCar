@@ -9,6 +9,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -48,7 +49,14 @@ class SimKernel implements TCPListener {
         InputStream input = null;
         System.out.println(new File(".").getAbsolutePath());
         try {
-            input = new FileInputStream("./simkernel.properties");
+            try{
+                input = new FileInputStream("simkernel.properties");
+            }catch (IOException ex) {
+                String path = SimKernel.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+                String decodedPath = URLDecoder.decode(path, "UTF-8");
+                System.out.println(decodedPath);
+                input = new FileInputStream(decodedPath + "/simkernel.properties");
+            }
 
             // load a properties file
             prop.load(input);

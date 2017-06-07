@@ -20,6 +20,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.*;
 import java.lang.reflect.Type;
+import java.net.URLDecoder;
 import java.util.*;
 import java.util.logging.Level;
 
@@ -89,7 +90,14 @@ class Core implements TCPListener, MQTTListener {
         InputStream input = null;
         System.out.println(new File(".").getAbsolutePath());
         try {
-            input = new FileInputStream("./core.properties");
+            try{
+                input = new FileInputStream("core.properties");
+            }catch (IOException ex) {
+                String path = Core.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+                String decodedPath = URLDecoder.decode(path, "UTF-8");
+                System.out.println(decodedPath);
+                input = new FileInputStream(decodedPath + "/core.properties");
+            }
 
             // load a properties file
             prop.load(input);
