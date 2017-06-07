@@ -29,8 +29,8 @@ public class Manager implements MQTTListener {
     private boolean debugWithoutBackBone = true; // debug parameter to stop attempts to send or recieve messages from backbone.
     private boolean debugWithoutMAAS = true; // debug parameter to stop attempts to send or recieve messages from MAAS
     private String mqttBroker = "tcp://143.129.39.151:1883"; // MQTT Broker URL
-    private String mqqtUsername = "";
-    private String mqttPassword = "";
+    private String mqqtUsername = "root";
+    private String mqttPassword = "smartcity";
     private String restURLMAAS = "http://localhost:8080/";
     private String restURLBackBone = "http://143.129.39.151:10000";
 
