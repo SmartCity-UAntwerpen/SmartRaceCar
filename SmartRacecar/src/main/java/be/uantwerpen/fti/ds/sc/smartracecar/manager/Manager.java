@@ -31,11 +31,11 @@ public class Manager implements MQTTListener {
 
     private boolean debugWithoutBackBone = true; // debug parameter to stop attempts to send or recieve messages from backbone.
     private boolean debugWithoutMAAS = true; // debug parameter to stop attempts to send or recieve messages from MAAS
-    private String mqttBroker = "tcp://143.129.39.151:1883";
-    private String mqqtUsername = "root";
-    private String mqttPassword = "smartcity";
+    private String mqttBroker = "tcp://broker.hivemq.com:1883"; // MQTT Broker URL
+    private String mqqtUsername = "";
+    private String mqttPassword = "";
     private String restURLMAAS = "http://localhost:8080/";
-    private String restURLBackBone = "http://146.175.140.44:1994/";
+    private String restURLBackBone = "http://143.129.39.151:10000";
 
     private static MQTTUtils mqttUtils;
     private static RESTUtils restUtilsMAAS;
@@ -92,23 +92,23 @@ public class Manager implements MQTTListener {
                     log = new Log(this.getClass(), Level.SEVERE);
                     break;
             }
-            debugWithoutBackBone = Boolean.getBoolean(prop.getProperty("debugWithoutBackBone"));
-            debugWithoutMAAS = Boolean.getBoolean(prop.getProperty("debugWithoutMAAS"));
+            debugWithoutBackBone = Boolean.parseBoolean(prop.getProperty("debugWithoutBackBone"));
+            debugWithoutMAAS = Boolean.parseBoolean(prop.getProperty("debugWithoutMAAS"));
             mqttBroker = "tcp://" + prop.getProperty("mqttBroker");
             mqqtUsername = prop.getProperty("mqqtUsername");
             mqttPassword = prop.getProperty("mqttPassword");
             restURLMAAS = prop.getProperty("restURLMAAS");
             restURLBackBone = prop.getProperty("restURLBackBone");
-            Log.logInfo("CORE", "Config loaded");
+            Log.logInfo("MANAGER", "Config loaded");
         } catch (IOException ex) {
             log = new Log(this.getClass(), Level.INFO);
-            Log.logWarning("CORE", "Could not read config file: " + ex);
+            Log.logWarning("MANAGER", "Could not read config file: " + ex);
         } finally {
             if (input != null) {
                 try {
                     input.close();
                 } catch (IOException e) {
-                    Log.logWarning("CORE", "Could not read config file: " + e);
+                    Log.logWarning("MANAGER", "Could not read config file: " + e);
                 }
             }
         }
@@ -116,10 +116,10 @@ public class Manager implements MQTTListener {
 
     private void loadWayPoints() {
         if (debugWithoutBackBone) {
-            wayPoints.put((long) 8, new WayPoint(8, (float) 0.5, (float) 0, (float) -1, (float) 0.02));
-            wayPoints.put((long) 9, new WayPoint(9, (float) -13.4, (float) -0.53, (float) 0.71, (float) 0.71));
-            wayPoints.put((long) 10, new WayPoint(10, (float) -27.14, (float) -1.11, (float) -0.3, (float) 0.95));
-            wayPoints.put((long) 11, new WayPoint(11, (float) -28.25, (float) -9.19, (float) -0.71, (float) 0.71));
+            wayPoints.put((long) 46, new WayPoint(8, (float) 0.5, (float) 0, (float) -1, (float) 0.02));
+            wayPoints.put((long) 47, new WayPoint(9, (float) -13.4, (float) -0.53, (float) 0.71, (float) 0.71));
+            wayPoints.put((long) 48, new WayPoint(10, (float) -27.14, (float) -1.11, (float) -0.3, (float) 0.95));
+            wayPoints.put((long) 49, new WayPoint(11, (float) -28.25, (float) -9.19, (float) -0.71, (float) 0.71));
         } else {
             String jsonString = restUtilsBackBone.getJSON("map/stringmapjson/car");
             JSONUtils.isJSONValid(jsonString);

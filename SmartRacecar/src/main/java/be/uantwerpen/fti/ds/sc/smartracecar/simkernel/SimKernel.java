@@ -69,17 +69,17 @@ class SimKernel implements TCPListener {
                     break;
             }
             restURL = prop.getProperty("restURL");
-            debugWithoutRosServer = Boolean.getBoolean(prop.getProperty("debugWithoutRosServer"));
-            Log.logInfo("CORE", "Config loaded");
+            debugWithoutRosServer = Boolean.parseBoolean(prop.getProperty("debugWithoutRosServer"));
+            Log.logInfo("SIMKERNEL", "Config loaded");
         } catch (IOException ex) {
             log = new Log(this.getClass(), Level.INFO);
-            Log.logWarning("CORE", "Could not read config file: " + ex);
+            Log.logWarning("SIMKERNEL", "Could not read config file: " + ex);
         } finally {
             if (input != null) {
                 try {
                     input.close();
                 } catch (IOException e) {
-                    Log.logWarning("CORE", "Could not read config file: " + e);
+                    Log.logWarning("SIMKERNEL", "Could not read config file: " + e);
                 }
             }
         }

@@ -110,7 +110,7 @@ class Core implements TCPListener, MQTTListener {
                     log = new Log(this.getClass(), Level.SEVERE);
                     break;
             }
-            debugWithoutRosKernel = Boolean.getBoolean(prop.getProperty("debugWithoutRosKernel"));
+            debugWithoutRosKernel = Boolean.parseBoolean(prop.getProperty("debugWithoutRosKernel"));
             mqttBroker = "tcp://" + prop.getProperty("mqttBroker");
             mqqtUsername = prop.getProperty("mqqtUsername");
             mqttPassword = prop.getProperty("mqttPassword");

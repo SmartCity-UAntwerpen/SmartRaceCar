@@ -62,16 +62,16 @@ class SimDeployer implements TCPListener {
             }
             restURL = prop.getProperty("restURL");
             serverPort = Integer.parseInt(prop.getProperty("serverPort"));
-            Log.logInfo("CORE", "Config loaded");
+            Log.logInfo("SIMDEPLOYER", "Config loaded");
         } catch (IOException ex) {
             log = new Log(this.getClass(), Level.INFO);
-            Log.logWarning("CORE", "Could not read config file: " + ex);
+            Log.logWarning("SIMDEPLOYER", "Could not read config file: " + ex);
         } finally {
             if (input != null) {
                 try {
                     input.close();
                 } catch (IOException e) {
-                    Log.logWarning("CORE", "Could not read config file: " + e);
+                    Log.logWarning("SIMDEPLOYER", "Could not read config file: " + e);
                 }
             }
         }
