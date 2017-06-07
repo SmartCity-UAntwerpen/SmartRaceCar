@@ -73,11 +73,7 @@ public class Manager implements MQTTListener {
             }catch (IOException ex) {
                 String path = Manager.class.getProtectionDomain().getCodeSource().getLocation().getPath();
                 String decodedPath = URLDecoder.decode(path, "UTF-8");
-                System.out.println(decodedPath);
                 decodedPath = decodedPath.replace("Manager.jar","");
-                System.out.println(decodedPath);
-
-                System.out.println(decodedPath);
                 input = new FileInputStream(decodedPath + "/manager.properties");
             }
 
@@ -281,7 +277,7 @@ public class Manager implements MQTTListener {
                 }
             }
 
-            while (costs.size() != totalVehicles || timer != 100) {
+            while (costs.size() != totalVehicles && timer != 100) {
                 Log.logInfo("MANAGER", "waiting for vehicles to complete request.");
                 Thread.sleep(200);
                 timer++;
