@@ -32,7 +32,7 @@ public class Manager implements MQTTListener {
     private String mqqtUsername = "";
     private String mqttPassword = "";
     private String restURLMAAS = "http://localhost:8080/";
-    private String restURLBackBone = "http://143.129.39.151:10000";
+    private String restURLBackBone = "http://146.175.140.44:1994";
 
     private static MQTTUtils mqttUtils;
     private static RESTUtils restUtilsMAAS;
