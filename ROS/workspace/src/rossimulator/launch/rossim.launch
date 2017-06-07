@@ -1,6 +1,9 @@
 <?xml version="1.0"?>
 <launch>  
 
+  <!-- This launch file is started using the 'robot_upstart'-package.
+       More info on http://docs.ros.org/jade/api/robot_upstart/html/ -->
+
   <include file="$(find f1tenth_2dnav)/launch/tf_rossim.launch"/>
   <include file="$(find f1tenth_2dnav)/launch/move_base_rossim.launch"/>
 
