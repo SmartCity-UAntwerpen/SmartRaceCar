@@ -2,44 +2,87 @@ package be.uantwerpen.fti.ds.sc.smartracecar.manager;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.Location;
 
+/**
+ * Model that describes a F1 vehicle.
+ */
 class Vehicle {
 
-    private Long ID;
-    private Location location;
-    private boolean occupied = false;
-    private boolean available = true;
+    private Long ID; // ID of the vehicle.
+    private Location location; // Location of the vehicle. Containing information on it's route progress.
+    private boolean occupied = false; // If the vehicle is occupied by a current route job.
+    private boolean available = true; // If the vehicle is available for jobs or other requests.
 
-
+    /**
+     * Model that describes a F1 vehicle.
+     *
+     * @param ID ID of the vehicle
+     * @param startWayPoint ID of the waypoint where the vehicle starts.
+     */
     Vehicle(Long ID,long startWayPoint){
         this.ID = ID;
         location = new Location(ID,startWayPoint,startWayPoint,0);
     }
 
+    /**
+     * Method to set the status if the vehicle is occupied by a route job already.
+     *
+     * @param state Status of occupation of teh vehicle by another route job.
+     */
     void setOccupied(boolean state){
         occupied = state;
     }
 
+    /**
+     * Method to get the status if the vehicle is occupied by a route job already.
+     *
+     * @return Status of occupation of teh vehicle by another route job.
+     */
     boolean getOccupied() {
         return occupied;
     }
 
+    /**
+     * Method to get the vehicle's ID.
+     *
+     * @return Long of the vehicle's ID.
+     */
     Long getID() {
         return ID;
     }
 
-    public Location getLocation() {
+    /**
+     * Method to get the current location.
+     *
+     * @return Current location object.
+     */
+    Location getLocation() {
         return location;
     }
 
-    public void setLocation(Location location) {
+    /**
+     * Method to set the current location.
+     *
+     * @param location Current location object.
+     */
+    void setLocation(Location location) {
         this.location = location;
     }
 
-    public void setAvailable(boolean available) {
+    /**
+     * Method to set the status if the vehicle is available for jobs or other requests.
+     *
+     * @param available Status of availability of the vehicle
+     */
+    void setAvailable(boolean available) {
         this.available = available;
     }
 
-    public boolean isAvailable() {
+    /**
+     * Method to get the status if the vehicle is available for jobs or other requests.
+     *
+     * @return Status of availability of the vehicle
+     */
+    boolean isAvailable() {
         return available;
     }
 }

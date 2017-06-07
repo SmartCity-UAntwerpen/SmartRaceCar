@@ -2,20 +2,33 @@ package be.uantwerpen.fti.ds.sc.smartracecar.simdeployer;
 
 import java.util.List;
 
+/**
+ * Model that describes a simulation of a Jar.
+ */
 class Simulation {
 
+    private String location; // Location of the jar file
+    private boolean running; // Parameter to know if it's already running
+    private Thread thread; // Thread containing the simulation
+    private List<String> runArguments; // All arguments used to star the jar.
 
-    private String location;
-    private boolean running;
-    private Thread thread;
-    private List<String> runArguments;
-
+    /**
+     * Model that describes a simulation of a Jar.
+     *
+     * @param location location of the jar.
+     */
     Simulation(String location) {
         this.location = location;
         this.running = false;
         this.thread = null;
     }
 
+    /**
+     * Starts the threaded process of running the jar in a process.
+     *
+     * @param runArguments All input arguments that the jar needs.
+     * @return boolean if the start was successful.
+     */
     boolean start(List<String> runArguments) {
         this.runArguments = runArguments;
         if (!running) {
@@ -28,6 +41,11 @@ class Simulation {
         }
     }
 
+    /**
+     * Interrupts the thread containing the running jar.
+     *
+     * @return Boolean if the stop was successful.
+     */
     boolean stop() {
         if (running) {
             thread.interrupt();
@@ -37,6 +55,9 @@ class Simulation {
         }
     }
 
+    /**
+     * process that will contain the jar. Uses a processbuilder.
+     */
     private class CoreProcess implements Runnable {
         @Override
         public void run() {
@@ -44,7 +65,6 @@ class Simulation {
             ProcessBuilder processBuilder = new ProcessBuilder("java");
             //processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
             //processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
-            //Add core boot arguments
             List<String> processCommands = processBuilder.command();
             processCommands.add("-jar");
             processCommands.add(location);

@@ -2,7 +2,6 @@ package be.uantwerpen.fti.ds.sc.smartracecar.simkernel;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.google.gson.reflect.TypeToken;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -15,23 +14,35 @@ import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
+/**
+ * Module that simulates the low level ROS element of the F1 car. It simulates all it's aspects.
+ */
 class SimKernel implements TCPListener {
 
-    private boolean debugWithoutRosServer = false; // debug parameter to stop attempts to send over sockets when ROSServer-Node is active.
-    private String restURL = "http://143.129.39.151:8084";
-    private static int serverPort = 5005;
-    private static int clientPort = 5006;
+    //Standard settings (without config file loaded)
+    private boolean debugWithoutRosServer = false; // debug parameter for using this module without a connected RosSever.
+    private String restURL = "http://143.129.39.151:8084"; // REST Service URL to RosServer
+    private static int serverPort = 5006;// Standard TCP Port to listen on for messages from Core.
+    private static int clientPort = 5005; // Standard TCP Port to send to messages to SimKernel/RosKernel.
 
+    //Help services
     private TCPUtils tcpUtils;
     private RESTUtils restUtils;
 
-    private Log log;
-    private boolean connected = false; // To verify socket connection to vehicle.
-    private Map map;
-    private WayPoint startPoint;
-    private Point currentPosition;
+    //variables
+    private Log log; // logging instance
+    private boolean connected = false; // To verify socket connection to vehicle's Core.
+    private Map map; // The currently used map.
+    private WayPoint startPoint; // The point where it's at the start. Received from the core at the start.
+    private Point currentPosition; // The point where it's currently positioned at or closest to.
 
-    SimKernel(int serverPort, int clientPort) throws InterruptedException {
+    /**
+     * Module that simulates the low level ROS element of the F1 car. It simulates all it's aspects.
+     *
+     * @param serverPort Port to listen for messages of  Core. Defined by input arguments of main method.
+     * @param clientPort Port to send messages to Core. Defined by input arguments of main method.
+     */
+    private SimKernel(int serverPort, int clientPort) throws InterruptedException {
         loadConfig();
         log.logConfig("SIMKERNEL","Startup parameters: TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
         restUtils = new RESTUtils(restURL);
@@ -43,6 +54,10 @@ class SimKernel implements TCPListener {
         }
     }
 
+    /**
+     * Help method to load all configuration parameters from the properties file with the same name as the class.
+     * If it's not found then it will use the default ones.
+     */
     @SuppressWarnings("Duplicates")
     private void loadConfig(){
         Properties prop = new Properties();
@@ -57,11 +72,7 @@ class SimKernel implements TCPListener {
                 decodedPath = decodedPath.replace("SimKernel.jar","");
                 input = new FileInputStream(decodedPath + "/simkernel.properties");
             }
-
-            // load a properties file
             prop.load(input);
-
-            // get the property value and print it out
             String debugLevel = prop.getProperty("debugLevel");
             switch (debugLevel) {
                 case "debug":
@@ -94,6 +105,14 @@ class SimKernel implements TCPListener {
         }
     }
 
+    /**
+     * Interfaced method to parse TCP message socket callback is triggered by incoming message.
+     * Used for messages about cost and timing requests, initial startup connection, the startpoint and current map
+     * settings, new job request information (next waypoint) or an mandatory update on the current position.
+     *
+     * @param message Received TCP socket message string
+     * @return A return answer to be send back over the socket to the Core.
+     */
     @Override
     public String parseTCP(String message) {
         if (JSONUtils.isJSONValid(message)) {
@@ -136,18 +155,31 @@ class SimKernel implements TCPListener {
         return null;
     }
 
+    /**
+     * Method called when a connection from the Core arrives. Sends a message back to the Core.
+     */
     private void connectReceive() {
         tcpUtils.sendUpdate(JSONUtils.keywordToJSONString("connect"));
         connected = true;
         Log.logInfo("SIMKERNEL", "Connected to Core.");
     }
 
+    /**
+     * Method used for sending the Core the message that a waypoint has been reached.
+     */
     private void wayPointReached() {
         tcpUtils.sendUpdate(JSONUtils.keywordToJSONString("arrivedWaypoint"));
         connected = true;
         Log.logInfo("SIMKERNEL", "Arrived at waypoint. Waiting for next order.");
     }
 
+    /**
+     * Method called for when a job request is received from the core. It contains the next waypoint to drive to.
+     * Given we are dealing with a simulated vehicle a request will be made to the RosServer to calculate how long
+     * the actual driving would take to the next waypoint. Then it will use this estimated time to simulate the driving
+     *
+     * @param nextPoint Coordinates of the next waypoint to drive to.      *
+     */
     private void jobRequest(WayPoint nextPoint){
         Log.logInfo("SIMKERNEL", "Job request to drive to " + nextPoint.getX() + "," + nextPoint.getY() + "," + nextPoint.getZ() + "," + nextPoint.getW() + ".");
         Cost cost = new Cost(false,5,5,(long)0);
@@ -174,29 +206,45 @@ class SimKernel implements TCPListener {
         currentPosition = new Point(nextPoint.getX(),nextPoint.getY(),nextPoint.getZ(),nextPoint.getW());
     }
 
-    private void calculateCost(ArrayList<Point> pointsTemp){
-        ArrayList<Point> points = new ArrayList<>();
-        points.add(currentPosition);
-        points.addAll(pointsTemp);
+    /**
+     * Method called for when a cost calculation request is received from the core. It contains a list of waypoints(2)
+     * to calculate the cost between. This is as simulated vehicle so it can't calculate this cost itself. It will do
+     * a REST request to the RosServer to calculate the estimated times between the current position and the starting
+     * location of the route, and between that starting location and the end location of the route.
+     *
+     * @param points List of the Point object class containing the 2 points to calculate the weights. (starting and end)
+     */
+    private void calculateCost(ArrayList<Point> points){
+        ArrayList<Point> allPoints = new ArrayList<>();
+        allPoints.add(currentPosition);
+        allPoints.addAll(points);
         Log.logInfo("SIMKERNEL", "Cost request received. Requesting calculation from ROS Server.");
         Cost cost = new Cost(false,5,5,(long)0);
         if(!debugWithoutRosServer){
             Type typeOfCost = new TypeToken<Cost>() {}.getType();
-            cost = (Cost) JSONUtils.getObjectWithKeyWord(restUtils.getJSONPostJSON("calcWeight",JSONUtils.arrayToJSONString(points)), typeOfCost);
+            cost = (Cost) JSONUtils.getObjectWithKeyWord(restUtils.getJSONPostJSON("calcWeight",JSONUtils.arrayToJSONString(allPoints)), typeOfCost);
         }
         Log.logInfo("SIMKERNEL", "Calculated cost between current and start: " + cost.getWeightToStart() + "s. Cost to end : " + cost.getWeight() + "s.");
         tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("cost",cost));
     }
 
-    private void calculateTiming(ArrayList<Point> pointsTemp){
-        ArrayList<Point> points = new ArrayList<>();
-        points.add(currentPosition);
-        points.addAll(pointsTemp);
+    /**
+     * Method called for when a timing calculation request is received from the core. It contains a list of waypoints(2)
+     * to calculate the cost between. This is as simulated vehicle so it can't calculate these timings itself.
+     * It will do a REST request to the RosServer to calculate the estimated times between the current position
+     * and the starting location of the route, and between that starting location and the end location of the route.
+     *
+     * @param points List of the Point object class containing the 2 points to calculate the timings. (starting and end)
+     */
+    private void calculateTiming(ArrayList<Point> points){
+        ArrayList<Point> allPoints = new ArrayList<>();
+        allPoints.add(currentPosition);
+        allPoints.addAll(points);
         Log.logInfo("SIMKERNEL", "Timing request received. Requesting calculation from ROS Server.");
         Cost cost = new Cost(false,5,5,(long)0);
         if(!debugWithoutRosServer){
             Type typeOfCost = new TypeToken<Cost>() {}.getType();
-            cost = (Cost) JSONUtils.getObjectWithKeyWord(restUtils.getJSONPostJSON("calcWeight",JSONUtils.arrayToJSONString(points)), typeOfCost);
+            cost = (Cost) JSONUtils.getObjectWithKeyWord(restUtils.getJSONPostJSON("calcWeight",JSONUtils.arrayToJSONString(allPoints)), typeOfCost);
         }
         Log.logInfo("SIMKERNEL", "Calculated timing between current and start: " + cost.getWeightToStart() + "s. Timing to end : " + cost.getWeight() + "s.");
         tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("costtiming",cost));

@@ -5,6 +5,9 @@ import org.apache.catalina.startup.Tomcat;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 
+/**
+ * Configuration class defining the build in TomCat Service.
+ */
 class TomCatLauncher {
 
     void start() throws Exception {

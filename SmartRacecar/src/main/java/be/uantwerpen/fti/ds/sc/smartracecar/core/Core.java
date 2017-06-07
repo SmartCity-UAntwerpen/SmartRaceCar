@@ -34,10 +34,9 @@ class Core implements TCPListener, MQTTListener {
     private String mqttBroker = "tcp://143.129.39.151:1883"; // MQTT Broker URL
     private String mqqtUsername = "root"; // MQTT Broker Username
     private String mqttPassword = "smartcity"; // MQTT Broker Password
-    private String restURL = "http://143.129.39.151:8081/carmanager"; // REST Service URL to Manager
-    //private String restURL = "http://localhost:8081/carmanager"; // REST Service URL to Manager
-    private static int serverPort = 5005; // Standard TCP Port to listen on for messages from ROS Node.
-    private static int clientPort = 5006; // Standard TCP Port to send to messages to ROS Node.
+    private String restURL = "http://localhost:8081/carmanager"; // REST Service URL to Manager
+    private static int serverPort = 5005; // Standard TCP Port to listen on for messages from SimKernel/RosKernel.
+    private static int clientPort = 5006; // Standard TCP Port to send to messages to SimKernel/RosKernel.
 
     //Help services
     private MQTTUtils mqttUtils;
@@ -84,6 +83,10 @@ class Core implements TCPListener, MQTTListener {
 
     }
 
+    /**
+     * Help method to load all configuration parameters from the properties file with the same name as the class.
+     * If it's not found then it will use the default ones.
+     */
     @SuppressWarnings("Duplicates")
     private void loadConfig(){
         Properties prop = new Properties();
@@ -98,11 +101,7 @@ class Core implements TCPListener, MQTTListener {
                 decodedPath = decodedPath.replace("Core.jar","");
                 input = new FileInputStream(decodedPath + "/core.properties");
             }
-
-            // load a properties file
             prop.load(input);
-
-            // get the property value and print it out
             String debugLevel = prop.getProperty("debugLevel");
             switch (debugLevel) {
                 case "debug":

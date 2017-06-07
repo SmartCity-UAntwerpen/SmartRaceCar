@@ -24,37 +24,52 @@ import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
+/**
+ * Module representing the management or dispatching module of the F1 service.
+ */
 @Path("carmanager")
 public class Manager implements MQTTListener {
 
+    //Standard settings (without config file loaded)
     private boolean debugWithoutBackBone = true; // debug parameter to stop attempts to send or recieve messages from backbone.
     private boolean debugWithoutMAAS = true; // debug parameter to stop attempts to send or recieve messages from MAAS
     private String mqttBroker = "tcp://143.129.39.151:1883"; // MQTT Broker URL
-    private String mqqtUsername = "root";
-    private String mqttPassword = "smartcity";
-    private String restURLMAAS = "http://localhost:8080/";
-    private String restURLBackBone = "http://143.129.39.151:10000";
+    private String mqqtUsername = "root"; // MQTT Broker Username
+    private String mqttPassword = "smartcity"; // MQTT Broker Password
+    private String restURLMAAS = "http://143.129.39.151:8090"; // REST Service URL to MAAS
+    private String restURLBackBone = "http://143.129.39.151:10000";// REST Service URL to BackBone.
 
+    //Help services
     private static MQTTUtils mqttUtils;
     private static RESTUtils restUtilsMAAS;
     private static RESTUtils restUtilsBackBone;
 
-    private Log log;
+    //variables
+    private Log log; // logging instance
     private static HashMap<Long, WayPoint> wayPoints = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
     private static HashMap<Long, Vehicle> vehicles = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
-    private static String currentMap;
-    private static String mapsPath;
-    private static ArrayList<Cost> costs = new ArrayList<>();
+    private static String currentMap; // Information on the currently used map.
+    private static String mapsPath; // Path to the location of the maps.xml file where maps are stored.
+    private static ArrayList<Cost> costs = new ArrayList<>(); // Contains all currently received calculated costs when a cost request was made.
 
+    /**
+     * Module representing the management or dispatching module of the F1 service. Empty constructor used by REST.
+     */
     public Manager() {
 
     }
 
+    /**
+     * Module representing the management or dispatching module of the F1 service.
+     *
+     * @param currentMap The currently used map (by input paramater)
+     * @param mapsPath The path to the location of the maps.xml file where maps are stored. (by input parameter)
+     */
     public Manager(String currentMap, String mapsPath) throws MqttException, IOException {
         loadConfig();
         Manager.currentMap = currentMap;
         Manager.mapsPath = mapsPath;
-        log.logConfig("MANAGER", "Startup parameters: Map: " + currentMap + " | Path to maps folder: " + mapsPath);
+        Log.logConfig("MANAGER", "Startup parameters: Map: " + currentMap + " | Path to maps folder: " + mapsPath);
 
         restUtilsMAAS = new RESTUtils(restURLMAAS);
         restUtilsBackBone = new RESTUtils(restURLBackBone);
@@ -63,6 +78,10 @@ public class Manager implements MQTTListener {
         mqttUtils.subscribeToTopic("racecar/#");
     }
 
+    /**
+     * Help method to load all configuration parameters from the properties file with the same name as the class.
+     * If it's not found then it will use the default ones.
+     */
     @SuppressWarnings("Duplicates")
     private void loadConfig(){
         Properties prop = new Properties();
@@ -76,11 +95,7 @@ public class Manager implements MQTTListener {
                 decodedPath = decodedPath.replace("Manager.jar","");
                 input = new FileInputStream(decodedPath + "/manager.properties");
             }
-
-            // load a properties file
             prop.load(input);
-
-            // get the property value and print it out
             String debugLevel = prop.getProperty("debugLevel");
             switch (debugLevel) {
                 case "debug":
@@ -118,8 +133,11 @@ public class Manager implements MQTTListener {
         }
     }
 
+    /**
+     * Request all possible waypoints from the BackBone through a REST Get request.
+     */
     private void loadWayPoints() {
-        if (debugWithoutBackBone) {
+        if (debugWithoutBackBone) { // Temp waypoints for when they can't be requested from back-end services.
             wayPoints.put((long) 46, new WayPoint(8, (float) 0.5, (float) 0, (float) -1, (float) 0.02));
             wayPoints.put((long) 47, new WayPoint(9, (float) -13.4, (float) -0.53, (float) 0.71, (float) 0.71));
             wayPoints.put((long) 48, new WayPoint(10, (float) -27.14, (float) -1.11, (float) -0.3, (float) 0.95));
@@ -138,6 +156,13 @@ public class Manager implements MQTTListener {
         Log.logInfo("CORE", "All possible waypoints(" + wayPoints.size() + ") received.");
     }
 
+    /**
+     * Interfaced method to parse MQTT message and topic after MQTT callback is triggered by incoming message.
+     * Used by messages coming from all vehicles.
+     *
+     * @param topic   received MQTT topic
+     * @param message received MQTT message string
+     */
     @Override
     public void parseMQTT(String topic, String message) {
         if (topic.matches("racecar/[0-9]+/route")) {
@@ -191,6 +216,12 @@ public class Manager implements MQTTListener {
         }
     }
 
+    /**
+     * Parses MQTT message received with specific route status update.
+     *
+     * @param ID ID of the vehicle.
+     * @param message Received MQTT message string to be parsed.
+     */
     private void routeUpdate(long ID, String message) {
         switch (message) {
             case "done":
@@ -212,6 +243,13 @@ public class Manager implements MQTTListener {
         }
     }
 
+    /**
+     * REST GET server service to register a vehicle. This in return does a REST GET request with the BackEnd service
+     * to request and ID for the registring vehicle from them.
+     *
+     * @param startWayPoint Starting waypoint of the vehicle
+     * @return REST response of the type Text Plain containing the ID.
+     */
     @GET
     @Path("register/{startwaypoint}")
     @Produces("text/plain")
@@ -237,6 +275,11 @@ public class Manager implements MQTTListener {
     }
 
 
+    /**
+     * REST GET server service get all vehicle positions.
+     *
+     * @return REST response of the type JSON containing all current locations of available vehicles.
+     */
     @GET
     @Path("posAll")
     @Produces("application/json")
@@ -259,6 +302,14 @@ public class Manager implements MQTTListener {
         return null;
     }
 
+    /**
+     * REST GET server service to get a calculation cost of all available vehicles. It requests from each vehicle a calculation
+     * of a possible route and returns a JSON containing all answers.
+     *
+     * @param  startId Starting waypoint ID.
+     * @param  endId Ending waypoint ID.
+     * @return REST response of the type JSON containg all calculated costs of each vehicle.
+     */
     @GET
     @Path("calcWeight/{idStart}/{idStop}")
     @Produces("application/json")
@@ -277,13 +328,13 @@ public class Manager implements MQTTListener {
                 }
             }
 
-            while (costs.size() != totalVehicles && timer != 100) {
+            while (costs.size() != totalVehicles && timer != 100) { // Wait for each vehicle to complete the request or timeout after 100 attempts.
                 Log.logInfo("MANAGER", "waiting for vehicles to complete request.");
                 Thread.sleep(200);
                 timer++;
             }
             ArrayList<Cost> costCopy = (ArrayList<Cost>) costs.clone();
-            this.costs.clear();
+            costs.clear();
             Log.logInfo("MANAGER", "Cost calculation request completed.");
             return Response.status(Response.Status.OK).
                     entity(JSONUtils.arrayToJSONString(costCopy)).
@@ -293,6 +344,11 @@ public class Manager implements MQTTListener {
         return null;
     }
 
+    /**
+     * REST GET server service to get the currently used map.
+     *
+     * @return REST response of the type Text Plain containing the mapname.
+     */
     @GET
     @Path("getmapname")
     @Produces("text/plain")
@@ -300,6 +356,12 @@ public class Manager implements MQTTListener {
         return currentMap;
     }
 
+    /**
+     * REST GET server service to delete a vehicle. It in returns does a REST GET request as well to the BackBone service
+     * to unregister the vehicle from them.
+     *
+     * @param id ID of the vehicle removing itself.
+     */
     @GET
     @Path("delete/{id}")
     @Produces("text/plain")
@@ -315,6 +377,11 @@ public class Manager implements MQTTListener {
         return null;
     }
 
+    /**
+     * REST GET server service to get all currently used waypoints by F1 vehicles.
+     *
+     * @return REST response of the type JSON containing all waypoints.
+     */
     @GET
     @Path("getwaypoints")
     @Produces("application/json")
@@ -323,6 +390,12 @@ public class Manager implements MQTTListener {
     }
 
 
+    /**
+     * REST GET server service to download a map's PGM file by name.
+     *
+     * @param mapname the name of the map
+     * @return REST response of the type Octet-stream containing the file.
+     */
     @GET
     @Path("getmappgm/{mapname}")
     @Produces("application/octet-stream")
@@ -334,7 +407,6 @@ public class Manager implements MQTTListener {
                 output.write(data);
                 output.flush();
             } catch (Exception e) {
-                log.logWarning("MANAGER", String.valueOf(e));
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, mapname + ".pgm not found");
             }
         };
@@ -345,6 +417,12 @@ public class Manager implements MQTTListener {
 
     }
 
+    /**
+     * REST GET server service to download a map's YAML file by name.
+     *
+     * @param mapname the name of the map
+     * @return REST response of the type Octet-stream containing the file.
+     */
     @GET
     @Path("getmapyaml/{mapname}")
     @Produces("application/octet-stream")
@@ -365,6 +443,15 @@ public class Manager implements MQTTListener {
                 .build();
     }
 
+    /**
+     * REST GET server service to make a vehicle do a job. It in return sends a MQTT message to the specified vehicle
+     * to execute the job.
+     *
+     * @param idJob ID of the job.
+     * @param idVehicle ID of the vehicle
+     * @param idStart ID of starting waypoint of the route
+     * @param idEnd ID of starting ending of the route
+     */
     @GET
     @Path("executeJob/{idJob}/{idVehicle}/{idStart}/{idEnd}")
     @Produces("text/plain")
@@ -401,6 +488,13 @@ public class Manager implements MQTTListener {
         return Response.status(Response.Status.OK).build();
     }
 
+    /**
+     * Method to send a MQTT message to a specified vehicle to execute a job.
+     *
+     * @param ID ID of the vehicle
+     * @param startID ID of starting waypoint of the route
+     * @param endID ID of endID waypoint of the route
+     */
     private void jobSend(long ID, long startID, long endID) {
         vehicles.get(ID).setOccupied(true);
         Log.logInfo("MANAGER", "Route job send to vehicle with ID " + ID + " from " + startID + " to " + endID + ".");
