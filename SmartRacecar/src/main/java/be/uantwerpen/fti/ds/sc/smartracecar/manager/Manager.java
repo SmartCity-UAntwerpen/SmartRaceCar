@@ -26,7 +26,7 @@ import java.util.logging.Level;
 @Path("carmanager")
 public class Manager implements MQTTListener {
 
-    private boolean debugWithoutBackBone = true; // debug parameter to stop attempts to send or recieve messages from backbone.
+    private boolean debugWithoutBackBone = false; // debug parameter to stop attempts to send or recieve messages from backbone.
     private boolean debugWithoutMAAS = true; // debug parameter to stop attempts to send or recieve messages from MAAS
     private static Log log;
     Level level = Level.INFO;
@@ -34,7 +34,7 @@ public class Manager implements MQTTListener {
     private final String mqqtUsername = "root";
     private final String mqttPassword = "smartcity";
     private final String restURLMAAS = "http://localhost:8080/";
-    private final String restURLBackBone = "http://143.129.39.151:10000/";
+    private final String restURLBackBone = "http://146.175.140.44:1994/";
 
     private static MQTTUtils mqttUtils;
     private static RESTUtils restUtilsMAAS;

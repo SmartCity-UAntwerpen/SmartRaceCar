@@ -18,8 +18,7 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.logging.Level;
@@ -79,6 +78,34 @@ class Core implements TCPListener, MQTTListener {
         sendStartPoint();
         loadedMaps = loadMaps(findMapsFolder());
         requestMap();
+        /*Properties prop = new Properties();
+        InputStream input = null;
+
+        try {
+
+            input = new FileInputStream("config.properties");
+
+            // load a properties file
+            prop.load(input);
+
+            // get the property value and print it out
+            System.out.println(prop.getProperty("database"));
+            System.out.println(prop.getProperty("dbuser"));
+            System.out.println(prop.getProperty("dbpassword"));
+
+        } catch (IOException ex) {
+            Log.logConfig("CORE", "Could not read config file: " + ex);
+
+            ex.printStackTrace();
+        } finally {
+            if (input != null) {
+                try {
+                    input.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }*/
     }
 
     /**
