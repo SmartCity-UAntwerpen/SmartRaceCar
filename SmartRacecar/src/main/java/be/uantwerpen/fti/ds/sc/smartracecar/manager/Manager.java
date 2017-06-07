@@ -71,7 +71,7 @@ public class Manager implements MQTTListener {
         InputStream input = null;
 
         try {
-            input = new FileInputStream("manager.properties");
+            input = new FileInputStream("./manager.properties");
 
             // load a properties file
             prop.load(input);

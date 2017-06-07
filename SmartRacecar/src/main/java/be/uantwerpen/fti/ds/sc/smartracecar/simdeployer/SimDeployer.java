@@ -39,7 +39,7 @@ class SimDeployer implements TCPListener {
         InputStream input = null;
 
         try {
-            input = new FileInputStream("simdeployer.properties");
+            input = new FileInputStream("./simdeployer.properties");
 
             // load a properties file
             prop.load(input);

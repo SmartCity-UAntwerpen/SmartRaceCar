@@ -47,7 +47,7 @@ class SimKernel implements TCPListener {
         InputStream input = null;
 
         try {
-            input = new FileInputStream("simkernel.properties");
+            input = new FileInputStream("./simkernel.properties");
 
             // load a properties file
             prop.load(input);

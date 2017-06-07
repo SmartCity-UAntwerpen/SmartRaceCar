@@ -89,7 +89,7 @@ class Core implements TCPListener, MQTTListener {
         InputStream input = null;
 
         try {
-            input = new FileInputStream("core.properties");
+            input = new FileInputStream("./core.properties");
 
             // load a properties file
             prop.load(input);
