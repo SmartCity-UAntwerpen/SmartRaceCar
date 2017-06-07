@@ -1,21 +1,13 @@
 #!/usr/bin/env python
 
-import socket
-import json
 import rospy
-import sys
-import signal
-from threading import Thread
 
-import tf
 from nav_msgs.msg import Path
+from std_msgs.msg import Int32
 from move_base_msgs.msg import MoveBaseActionFeedback
 from geometry_msgs.msg import PoseWithCovarianceStamped
 
 import handlers.calc_cost as calccost
-from handlers.location import Location
-
-rospy.init_node('javalinker', anonymous=True)
 
 array_poses_pp_navfn = None
 planner_distance = None
@@ -26,56 +18,61 @@ tf_mapbase = None
 
 
 def cb_plannerplan_navfn(data):
-    print "NavfnROS received!"
     handler_plannerplan(data)
 
 
 def cb_plannerplan_gp(data):
-    print "GlobalPlanner received!"
     handler_plannerplan(data)
 
 
 def handler_plannerplan(data):
     global array_poses_pp_navfn, planner_distance
 
+    print "[%][NAVFN] Plannerplan received"
     array_poses_pp_navfn = data.poses
-    print "[NAVFN] Derived poses from data"
+    print "[%][NAVFN] Derived poses from data"
 
     decimated_poses = calccost.decimate_path(array_poses_pp_navfn)
-    print "[NAVFN] Decimated path"
+    print "[%][NAVFN] Decimated path"
 
     planner_distance = calccost.get_distance(decimated_poses)
-    print "[NAVFN] Distance: " + str(planner_distance)
+    print "[%][NAVFN] Distance: " + str(planner_distance)
 
 
 def cb_feedback(data):
-    point = data.pose.pose.position
+    global previous_secs
+    if data.header.stamp.secs - previous_secs >= 1:
+        previous_secs = data.header.stamp.secs
 
-    dec_orig_array = calccost.decimate_path(array_poses_pp_navfn)
-    dist_orig_array = calccost.get_distance(dec_orig_array)
+        point = data.feedback.base_position.pose.position
 
-    index_array = calc_closest_point(array_poses_pp_navfn, point)
+        dec_orig_array = calccost.decimate_path(array_poses_pp_navfn)
+        dist_orig_array = calccost.get_distance(dec_orig_array)
 
-    interm_array = array_poses_pp_navfn[index_array:]
-    dec_interm_array= calccost.decimate_path(interm_array)
-    dist_interm_array = calccost.get_distance(dec_interm_array)
-    print "[FEEDBACK] Distance: %.5f" % dist_interm_array
+        index_array = calc_closest_point(array_poses_pp_navfn, point)
 
-    percentage = (dist_orig_array - dist_interm_array) / dist_orig_array * 100
-    print "[FEEDBACK] Percentage: %d%%" % percentage
+        interm_array = array_poses_pp_navfn[index_array:]
+        dec_interm_array= calccost.decimate_path(interm_array)
+        dist_interm_array = calccost.get_distance(dec_interm_array)
+        print "[%%][FEEDBACK] Distance: %.5f" % dist_interm_array
+
+        percentage = (dist_orig_array - dist_interm_array) / dist_orig_array * 100
+        print "[%%][FEEDBACK] Percentage: %d%%" % percentage
+
+        pub_percentage.publish(percentage)
 
 
 def calc_closest_point(path, point):
     precision = find_precision(len(path))
-    print "[FEEDBACK] Precision: %d" % precision
+    print "[%%][FEEDBACK] Precision: %d" % precision
 
     (best, best_length, best_distance) = coarse_approximation(precision, path, point)
-    print "[FEEDBACK] Coarse -- X: %.5f Y: %.5f - Length: %d - Dist: %.5f" % (best.x, best.y, best_length,
+    print "[%%][FEEDBACK] Coarse -- X: %.5f Y: %.5f - Length: %d - Dist: %.5f" % (best.x, best.y, best_length,
                                                                               best_distance)
 
     (best, best_length, best_distance) = accurate_approximation(precision, path, point, best, best_length,
                                                                 best_distance)
-    print "[FEEDBACK] Accurate -- X: %.5f Y: %.5f - Length: %d - Dist: %.5f" % (best.x, best.y, best_length,
+    print "[%%][FEEDBACK] Accurate -- X: %.5f Y: %.5f - Length: %d - Dist: %.5f" % (best.x, best.y, best_length,
                                                                               best_distance)
 
     return best_length
@@ -149,11 +146,14 @@ def calc_distance_2_point(x_path, y_path, x_point, y_point):
     dy = y_path - y_point
     return dx * dx + dy * dy
 
+pub_percentage = rospy.Publisher('/corelinker/percentage', Int32, queue_size=10)
+
+rospy.init_node('javalinker', anonymous=True)
 
 rospy.Subscriber('/move_base/NavfnROS/plan', Path, cb_plannerplan_navfn)
 rospy.Subscriber('/move_base/GlobalPlanner/plan', Path, cb_plannerplan_gp)
-# rospy.Subscriber('/move_base/feedback', Path, cb_feedback)
-rospy.Subscriber('initialpose', PoseWithCovarianceStamped, cb_feedback)
+rospy.Subscriber('/move_base/feedback', MoveBaseActionFeedback, cb_feedback)
+# rospy.Subscriber('initialpose', PoseWithCovarianceStamped, cb_feedback)
 
 rospy.spin()
 
