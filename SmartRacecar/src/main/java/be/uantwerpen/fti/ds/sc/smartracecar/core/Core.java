@@ -86,6 +86,7 @@ class Core implements TCPListener, MQTTListener {
      * It reads the maps.xml file with all the necessary information.
      *
      * @param mapFolder location of the maps.xml file.
+     * @return Returns a Hashmap<String,Map> where the String is the mapname. It contains all loaded maps.
      */
     private HashMap<String, Map> loadMaps(String mapFolder) {
         HashMap<String, Map> loadedMaps = new HashMap<>();
@@ -118,6 +119,8 @@ class Core implements TCPListener, MQTTListener {
 
     /**
      * Find the location of the maps.xml containing folder. Searches up to 3 levels deep.
+     *
+     * @return  returns a String containing the location of the maps.xml's absolute path.
      */
     private String findMapsFolder() {
         FileUtils fileUtils = new FileUtils();
@@ -384,6 +387,7 @@ class Core implements TCPListener, MQTTListener {
      * stopping/killing/starting/restarting vehicle, setting the startpoint or cost calculation response.
      *
      * @param message received TCP socket message string
+     * @return a return answer to be send back over the socket to the SimKernel/RosKernel
      */
     public String parseTCP(String message) {
         if (JSONUtils.isJSONValid(message)) {
