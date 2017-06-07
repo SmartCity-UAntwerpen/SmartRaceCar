@@ -191,8 +191,7 @@ public class Manager implements MQTTListener {
                 if (!debugWithoutMAAS) {
                     restUtilsMAAS.getTextPlain("completeJob/" + ID);
                 }
-                vehicles.get(ID).getLocation().setIdStart(vehicles.get(ID).getLocation().getIdEnd());
-                vehicles.get(ID).getLocation().setPercentage(0);
+                vehicles.get(ID).getLocation().setPercentage(100);
                 Log.logInfo("MANAGER", "Vehicle with ID " + ID + " has completed his route.");
                 break;
             case "error":
