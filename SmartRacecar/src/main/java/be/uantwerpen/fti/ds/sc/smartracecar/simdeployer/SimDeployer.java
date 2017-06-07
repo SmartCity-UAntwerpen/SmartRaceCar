@@ -15,7 +15,8 @@ import java.util.logging.Level;
 class SimDeployer implements TCPListener {
 
     private int serverPort = 9999;
-    private String restURL = "http://localhost:8081/carmanager"; // REST Service URL to Manager
+    //private String restURL = "http://localhost:8081/carmanager"; // REST Service URL to Manager
+    private String restURL = "http://143.129.39.151:8081/carmanager"; // REST Service URL to Manager
     private final String jarPath;
 
     private TCPUtils tcpUtils;

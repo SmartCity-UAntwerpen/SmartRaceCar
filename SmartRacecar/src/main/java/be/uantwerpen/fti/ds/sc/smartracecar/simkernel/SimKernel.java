@@ -16,7 +16,7 @@ import java.util.logging.Level;
 
 class SimKernel implements TCPListener {
 
-    private boolean debugWithoutRosServer = true; // debug parameter to stop attempts to send over sockets when ROSServer-Node is active.
+    private boolean debugWithoutRosServer = false; // debug parameter to stop attempts to send over sockets when ROSServer-Node is active.
     private String restURL = "http://143.129.39.151:8084";
     private static int serverPort = 5005;
     private static int clientPort = 5006;
