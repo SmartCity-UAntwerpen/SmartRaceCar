@@ -5,12 +5,13 @@ import json
 import rospy
 import sys
 import signal
-import tf
-# from tf import TransformListener
 from threading import Thread
+
+import tf
 from nav_msgs.msg import Path
-from tf2_msgs.msg import TFMessage
-from geometry_msgs.msg import Transform
+from move_base_msgs.msg import MoveBaseActionFeedback
+from geometry_msgs.msg import PoseWithCovarianceStamped
+
 import handlers.calc_cost as calccost
 from handlers.location import Location
 
@@ -47,136 +48,105 @@ def handler_plannerplan(data):
     print "[NAVFN] Distance: " + str(planner_distance)
 
 
-def cb_globalplan(data):
-    global previous_secs, array_poses_pp_navfn, tf_mapbase
-    if data.header.stamp.secs - previous_secs >= 1:
-        previous_secs = data.header.stamp.secs
-        #print "1 second past"
-        array_poses_gp = data.poses
-        array_poses_gp_new = []
-        indexes = []
-        # [(i, i + len(array_poses_gp)) for i in range(len(array_poses_pp_navfn)) if
-        #    array_poses_pp_navfn[i:i + len(array_poses_gp)] == array_poses_gp]
+def cb_feedback(data):
+    point = data.pose.pose.position
 
-        # print "[TRANS] X: %.5f Y: %.5f Z: %.5f" % (tf_mapbase.posx, tf_mapbase.posy, tf_mapbase.posz)
-        # print "[ROTAT] X: %.5f Y: %.5f Z: %.5f W: %.5f" % (tf_mapbase.orx, tf_mapbase.ory, tf_mapbase.orz,
-        #                                                    tf_mapbase.orw)
+    dec_orig_array = calccost.decimate_path(array_poses_pp_navfn)
+    dist_orig_array = calccost.get_distance(dec_orig_array)
 
-        for i in xrange(len(array_poses_gp)):
-            # loc = Location(array_poses_gp[i].pose.position.x + tf_mapbase.posx,
-            #                array_poses_gp[i].pose.position.y + tf_mapbase.posy,
-            #                array_poses_gp[i].pose.position.z + tf_mapbase.posz,
-            #                array_poses_gp[i].pose.orientation.x + tf_mapbase.orx,
-            #                array_poses_gp[i].pose.orientation.y + tf_mapbase.ory,
-            #                array_poses_gp[i].pose.orientation.z + tf_mapbase.orz,
-            #                array_poses_gp[i].pose.orientation.w + tf_mapbase.orw)
+    index_array = calc_closest_point(array_poses_pp_navfn, point)
 
-            # loc = Location(array_poses_gp[i].pose.position.x,
-            #                array_poses_gp[i].pose.position.y,
-            #                array_poses_gp[i].pose.position.z,
-            #                array_poses_gp[i].pose.orientation.x,
-            #                array_poses_gp[i].pose.orientation.y,
-            #                array_poses_gp[i].pose.orientation.z,
-            #                array_poses_gp[i].pose.orientation.w)
+    interm_array = array_poses_pp_navfn[index_array:]
+    dec_interm_array= calccost.decimate_path(interm_array)
+    dist_interm_array = calccost.get_distance(dec_interm_array)
+    print "[FEEDBACK] Distance: %.5f" % dist_interm_array
 
-            # array_poses_gp_new.append(loc)
-            # transf = TransformListener()
-            transf = tf.TransformerROS()
-            array_poses_gp_new.append(transf.transformPose('/odom', array_poses_gp[i]))
+    percentage = (dist_orig_array - dist_interm_array) / dist_orig_array * 100
+    print "[FEEDBACK] Percentage: %d%%" % percentage
 
-        for i in xrange(len(array_poses_gp)):
-            print "---"
-            print "X: %.5f Y: %.5f Z: %.5f" % (array_poses_gp[i].pose.position.x,
-                                               array_poses_gp[i].pose.position.y,
-                                               array_poses_gp[i].pose.position.z)
-            print "NX: %.5f NY: %.5f NZ: %.5f" % (array_poses_gp_new[i].pose.position.x,
-                                                  array_poses_gp_new[i].pose.position.y,
-                                                  array_poses_gp_new[i].pose.position.z)
-            print "TX: %.5f TY: %.5f TZ: %.5f" % (tf_mapbase.posx,
-                                                  tf_mapbase.posy,
-                                                  tf_mapbase.posz)
-            print "-"
-            print "%d / %d" % (i, len(array_poses_gp))
+def calc_closest_point(path, point):
+    precision = find_precision(len(path))
+    print "[PRECISION] %d" % precision
 
-        # print "%d" % len(array_poses_gp)
-        # for i in range(len(array_poses_pp_navfn)):
-            # if array_poses_pp_navfn[i:i + len(array_poses_gp_new)] == array_poses_gp:
-            # temp_array = array_poses_pp_navfn[i:i + len(array_poses_gp_new)]
-            # for j in range(len(array_poses_gp_new)):
-            # if check_equality_plan_global(array_poses_pp_navfn[i].pose, array_poses_gp_new[0]):
-            #     print "[--!-- HEUJ --!--] %d" % i
+    (best, best_length, best_distance) = coarse_approximation(precision, path, point)
+    print "[COARSE][BEST] X: %.5f Y: %.5f - Length: %d - Dist: %.5f" % (best.x, best.y, best_length, best_distance)
+
+    (best, best_length, best_distance) = accurate_approximation(precision, path, point, best, best_length,
+                                                                best_distance)
+    print "[ACCURATE][BEST] X: %.5f Y: %.5f - Length: %d - Dist: %.5f" % (best.x, best.y, best_length, best_distance)
+
+    return best_length
 
 
-def check_equality_plan_global(plannerplan_coord, globalplan_coord):
-    print "[EQUAL] X_GP: %.5f X_PP: %.5f" % (globalplan_coord.posx, plannerplan_coord.position.x)
-    print "[EQUAL] Y_GP: %.5f Y_PP: %.5f" % (globalplan_coord.posy, plannerplan_coord.position.y)
-    if abs(globalplan_coord.posx - plannerplan_coord.position.x) < 0.01:
-        print "X correct"
-        if abs(globalplan_coord.posy - plannerplan_coord.position.y) < 0.01:
-            print "Y correct"
-            return True
+def find_precision(total_length):
+    stop = False
+    i = 1
+    while not stop:
+        if i * 2 * 100 > total_length:
+            stop = True
+        else:
+            i *= 2
 
-    return False
-
-
-def loc_apply_transform(pose, transform):
-    loc = Location(pose.position.x + transform.translation.x,
-                   pose.position.y + transform.translation.y,
-                   pose.position.z + transform.translation.z,
-                   pose.orientation.x + transform.rotation.x,
-                   pose.orientation.y + transform.rotation.y,
-                   pose.orientation.z + transform.rotation.z,
-                   pose.orientation.w + transform.rotation.w)
+    return i
 
 
-def cb_localplan(data):
-    # print "local plan received!"
-    pass
+def coarse_approximation(precision, path, point):
+    path_length = len(path)
+    scan_length = 0
+
+    best = -1
+    best_length = -1
+    best_distance = float("inf")
+
+    while scan_length <= path_length:
+        scan = path[scan_length].pose.position
+        scan_distance = calc_distance_2_point(scan.x, scan.y, point.x, point.y)
+
+        if scan_distance < best_distance:
+            best = scan
+            best_length = scan_length
+            best_distance = scan_distance
+        scan_length += precision
+    return best, best_length, best_distance
+
+
+def accurate_approximation(precision, path, point, best, best_length, best_distance):
+    precision /= 2
+
+    while precision > 0.5:
+        before_length = best_length - precision
+        before = path[before_length].pose.position
+        before_distance = calc_distance_2_point(before.x, before.y, point.x, point.y)
+
+        after_length = best_length + precision
+        after = path[after_length].pose.position
+        after_distance = calc_distance_2_point(after.x, after.y, point.x, point.y)
+
+        if before_length >= 0 and before_distance < best_distance:
+            best = before
+            best_length = before_length
+            best_distance = before_distance
+        elif after_length <= len(path) and after_distance < best_distance:
+            best = after
+            best_length = after_length
+            best_distance = after_distance
+        else:
+            precision /= 2
+
+    return best, best_length, best_distance
+
+
+def calc_distance_2_point(x_path, y_path, x_point, y_point):
+    dx = x_path - x_point
+    dy = y_path - y_point
+    return dx * dx + dy * dy
+
 
 rospy.Subscriber('/move_base/NavfnROS/plan', Path, cb_plannerplan_navfn)
 rospy.Subscriber('/move_base/GlobalPlanner/plan', Path, cb_plannerplan_gp)
-rospy.Subscriber('/move_base/TrajectoryPlannerROS/global_plan', Path, cb_globalplan)
-rospy.Subscriber('/move_base/TrajectoryPlannerROS/local_plan', Path, cb_localplan)
+# rospy.Subscriber('/move_base/feedback', Path, cb_feedback)
+rospy.Subscriber('initialpose', PoseWithCovarianceStamped, cb_feedback)
 # rospy.Subscriber('/tf', TFMessage, cb_transform)
-
-
-class TFThread(Thread):
-    def __init__(self):
-        Thread.__init__(self)
-        self.stop_thread = False
-
-    def run(self):
-        global tf_mapbase
-
-        print "Starting Thread"
-        listener = tf.TransformListener()
-        rate = rospy.Rate(2.0)
-        while not self.stop_thread:
-            try:
-                (trans, rot) = listener.lookupTransform('/odom', '/map', rospy.Time(0))
-                # print "[TRANS] X: %.5f Y: %.5f Z: %.5f" % (trans[0], trans[1], trans[2])
-                # print "[ROTAT] X: %.5f Y: %.5f Z: %.5f W: %.5f" % (rot[0], rot[1], rot[2], rot[3])
-                tf_mapbase = Location(trans[0], trans[1], trans[2],
-                                      rot[0], rot[1], rot[2], rot[3])
-            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-                print "Error with lookuptransform"
-                continue
-
-    def stop_thread(self):
-        self.stop_thread = True
-
-
-def signal_handler(signal, frame):
-    global thread_tf
-    thread_tf.stop_thread()
-    sys.exit(0)
-
-
-thread_tf = TFThread()
-thread_tf.daemon = True
-thread_tf.start()
-
-signal.signal(signal.SIGINT, signal_handler)
 
 rospy.spin()
 
