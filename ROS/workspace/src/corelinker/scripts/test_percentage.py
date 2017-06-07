@@ -6,6 +6,7 @@ import rospy
 import sys
 import signal
 import tf
+# from tf import TransformListener
 from threading import Thread
 from nav_msgs.msg import Path
 from tf2_msgs.msg import TFMessage
@@ -57,60 +58,63 @@ def cb_globalplan(data):
         # [(i, i + len(array_poses_gp)) for i in range(len(array_poses_pp_navfn)) if
         #    array_poses_pp_navfn[i:i + len(array_poses_gp)] == array_poses_gp]
 
-        print "[TRANS] X: %.5f Y: %.5f Z: %.5f" % (tf_mapbase.posx, tf_mapbase.posy, tf_mapbase.posz)
-        print "[ROTAT] X: %.5f Y: %.5f Z: %.5f W: %.5f" % (tf_mapbase.orx, tf_mapbase.ory, tf_mapbase.orz,
-                                                           tf_mapbase.orw)
+        # print "[TRANS] X: %.5f Y: %.5f Z: %.5f" % (tf_mapbase.posx, tf_mapbase.posy, tf_mapbase.posz)
+        # print "[ROTAT] X: %.5f Y: %.5f Z: %.5f W: %.5f" % (tf_mapbase.orx, tf_mapbase.ory, tf_mapbase.orz,
+        #                                                    tf_mapbase.orw)
 
         for i in xrange(len(array_poses_gp)):
-            loc = Location(array_poses_gp[i].pose.position.x + tf_mapbase.posx,
-                           array_poses_gp[i].pose.position.y + tf_mapbase.posy,
-                           array_poses_gp[i].pose.position.z + tf_mapbase.posz,
-                           array_poses_gp[i].pose.orientation.x + tf_mapbase.orx,
-                           array_poses_gp[i].pose.orientation.y + tf_mapbase.ory,
-                           array_poses_gp[i].pose.orientation.z + tf_mapbase.orz,
-                           array_poses_gp[i].pose.orientation.w + tf_mapbase.orw)
+            # loc = Location(array_poses_gp[i].pose.position.x + tf_mapbase.posx,
+            #                array_poses_gp[i].pose.position.y + tf_mapbase.posy,
+            #                array_poses_gp[i].pose.position.z + tf_mapbase.posz,
+            #                array_poses_gp[i].pose.orientation.x + tf_mapbase.orx,
+            #                array_poses_gp[i].pose.orientation.y + tf_mapbase.ory,
+            #                array_poses_gp[i].pose.orientation.z + tf_mapbase.orz,
+            #                array_poses_gp[i].pose.orientation.w + tf_mapbase.orw)
 
-            array_poses_gp_new.append(loc)
+            # loc = Location(array_poses_gp[i].pose.position.x,
+            #                array_poses_gp[i].pose.position.y,
+            #                array_poses_gp[i].pose.position.z,
+            #                array_poses_gp[i].pose.orientation.x,
+            #                array_poses_gp[i].pose.orientation.y,
+            #                array_poses_gp[i].pose.orientation.z,
+            #                array_poses_gp[i].pose.orientation.w)
 
-        # for i in xrange(len(array_poses_gp)):
-        #     print "---"
-        #     print "X: %.5f Y: %.5f Z: %.5f" % (array_poses_gp[i].pose.position.x,
-        #                                        array_poses_gp[i].pose.position.y,
-        #                                        array_poses_gp[i].pose.position.z)
-        #     print "NX: %.5f NY: %.5f NZ: %.5f" % (array_poses_gp_new[i].posx,
-        #                                           array_poses_gp_new[i].posy,
-        #                                           array_poses_gp_new[i].posz)
-        #     print "TX: %.5f TY: %.5f TZ: %.5f" % (tf_mapodom.translation.x,
-        #                                           tf_mapodom.translation.y,
-        #                                           tf_mapodom.translation.z)
-        #     print "-"
-        #     print "X: %.5f Y: %.5f Z: %.5f W: %.5f" % (array_poses_gp[i].pose.orientation.x,
-        #                                                array_poses_gp[i].pose.orientation.y,
-        #                                                array_poses_gp[i].pose.orientation.z,
-        #                                                array_poses_gp[i].pose.orientation.w)
-        #     print "NX: %.5f NY: %.5f NZ: %.5f NW: %.5f" % (array_poses_gp_new[i].orx,
-        #                                                    array_poses_gp_new[i].ory,
-        #                                                    array_poses_gp_new[i].orz,
-        #                                                    array_poses_gp_new[i].orw)
-        #     print "-"
-        #     print "%d / %d" % (i, len(array_poses_gp))
+            # array_poses_gp_new.append(loc)
+            # transf = TransformListener()
+            transf = tf.TransformerROS()
+            array_poses_gp_new.append(transf.transformPose('/odom', array_poses_gp[i]))
+
+        for i in xrange(len(array_poses_gp)):
+            print "---"
+            print "X: %.5f Y: %.5f Z: %.5f" % (array_poses_gp[i].pose.position.x,
+                                               array_poses_gp[i].pose.position.y,
+                                               array_poses_gp[i].pose.position.z)
+            print "NX: %.5f NY: %.5f NZ: %.5f" % (array_poses_gp_new[i].pose.position.x,
+                                                  array_poses_gp_new[i].pose.position.y,
+                                                  array_poses_gp_new[i].pose.position.z)
+            print "TX: %.5f TY: %.5f TZ: %.5f" % (tf_mapbase.posx,
+                                                  tf_mapbase.posy,
+                                                  tf_mapbase.posz)
+            print "-"
+            print "%d / %d" % (i, len(array_poses_gp))
 
         # print "%d" % len(array_poses_gp)
-        for i in range(len(array_poses_pp_navfn)):
+        # for i in range(len(array_poses_pp_navfn)):
             # if array_poses_pp_navfn[i:i + len(array_poses_gp_new)] == array_poses_gp:
-            temp_array = array_poses_pp_navfn[i:i + len(array_poses_gp_new)]
-            if check_equality_plan_global(temp_array[0].pose, array_poses_gp_new[0]):
-                print "Heuj!"
+            # temp_array = array_poses_pp_navfn[i:i + len(array_poses_gp_new)]
+            # for j in range(len(array_poses_gp_new)):
+            # if check_equality_plan_global(array_poses_pp_navfn[i].pose, array_poses_gp_new[0]):
+            #     print "[--!-- HEUJ --!--] %d" % i
 
 
 def check_equality_plan_global(plannerplan_coord, globalplan_coord):
-    if globalplan_coord.posx == plannerplan_coord.position.x:
+    print "[EQUAL] X_GP: %.5f X_PP: %.5f" % (globalplan_coord.posx, plannerplan_coord.position.x)
+    print "[EQUAL] Y_GP: %.5f Y_PP: %.5f" % (globalplan_coord.posy, plannerplan_coord.position.y)
+    if abs(globalplan_coord.posx - plannerplan_coord.position.x) < 0.01:
         print "X correct"
-        if globalplan_coord.posy == plannerplan_coord.position.y:
+        if abs(globalplan_coord.posy - plannerplan_coord.position.y) < 0.01:
             print "Y correct"
-            if globalplan_coord.posz == plannerplan_coord.position.z:
-                print "Complete correct!"
-                return True
+            return True
 
     return False
 
@@ -123,37 +127,6 @@ def loc_apply_transform(pose, transform):
                    pose.orientation.y + transform.rotation.y,
                    pose.orientation.z + transform.rotation.z,
                    pose.orientation.w + transform.rotation.w)
-
-
-def cb_transform(data):
-    global tf_mapodom, tf_odombase
-
-    tf = data.transforms[0]
-    if tf.header.frame_id == "map":
-        tf_mapodom.translation.x = tf.transform.translation.x
-        tf_mapodom.translation.y = tf.transform.translation.y
-        tf_mapodom.translation.z = tf.transform.translation.z
-
-        tf_mapodom.rotation.x = tf.transform.rotation.x
-        tf_mapodom.rotation.y = tf.transform.rotation.y
-        tf_mapodom.rotation.z = tf.transform.rotation.z
-        tf_mapodom.rotation.w = tf.transform.rotation.w
-
-        # print "---"
-        # print "X: %.2f, Y: %.2f, Z: %.2f" % (tf_mapodom.translation.x, tf_mapodom.translation.y,
-        #                                      tf_mapodom.translation.z)
-        # print "X: %.2f, Y: %.2f, Z: %.2f, W: %.2f" % (tf_mapodom.rotation.x, tf_mapodom.rotation.y,
-        #                                               tf_mapodom.rotation.z, tf_mapodom.rotation.w)
-
-    if tf.header.frame_id == "odom":
-        tf_odombase.translation.x = tf.transform.translation.x
-        tf_odombase.translation.y = tf.transform.translation.y
-        tf_odombase.translation.z = tf.transform.translation.z
-
-        tf_odombase.rotation.x = tf.transform.rotation.x
-        tf_odombase.rotation.y = tf.transform.rotation.y
-        tf_odombase.rotation.z = tf.transform.rotation.z
-        tf_odombase.rotation.w = tf.transform.rotation.w
 
 
 def cb_localplan(data):
@@ -180,12 +153,12 @@ class TFThread(Thread):
         rate = rospy.Rate(2.0)
         while not self.stop_thread:
             try:
-                (trans, rot) = listener.lookupTransform('/map', '/base_frame', rospy.Time(0))
+                (trans, rot) = listener.lookupTransform('/odom', '/map', rospy.Time(0))
                 # print "[TRANS] X: %.5f Y: %.5f Z: %.5f" % (trans[0], trans[1], trans[2])
                 # print "[ROTAT] X: %.5f Y: %.5f Z: %.5f W: %.5f" % (rot[0], rot[1], rot[2], rot[3])
                 tf_mapbase = Location(trans[0], trans[1], trans[2],
                                       rot[0], rot[1], rot[2], rot[3])
-            except:
+            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 print "Error with lookuptransform"
                 continue
 
