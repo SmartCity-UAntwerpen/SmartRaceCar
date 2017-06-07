@@ -13,10 +13,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -69,7 +66,7 @@ public class Manager implements MQTTListener {
     private void loadConfig(){
         Properties prop = new Properties();
         InputStream input = null;
-
+        System.out.println(new File(".").getAbsolutePath());
         try {
             input = new FileInputStream("./manager.properties");
 

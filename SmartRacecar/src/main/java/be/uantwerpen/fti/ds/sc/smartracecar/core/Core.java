@@ -87,7 +87,7 @@ class Core implements TCPListener, MQTTListener {
     private void loadConfig(){
         Properties prop = new Properties();
         InputStream input = null;
-
+        System.out.println(new File(".").getAbsolutePath());
         try {
             input = new FileInputStream("./core.properties");
 

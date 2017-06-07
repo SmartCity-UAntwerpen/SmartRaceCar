@@ -3,6 +3,7 @@ package be.uantwerpen.fti.ds.sc.smartracecar.simdeployer;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.google.gson.reflect.TypeToken;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,7 +38,7 @@ class SimDeployer implements TCPListener {
     private void loadConfig(){
         Properties prop = new Properties();
         InputStream input = null;
-
+        System.out.println(new File(".").getAbsolutePath());
         try {
             input = new FileInputStream("./simdeployer.properties");
 

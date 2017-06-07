@@ -4,6 +4,7 @@ import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.google.gson.reflect.TypeToken;
 import com.sun.org.apache.xpath.internal.operations.Bool;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,7 +46,7 @@ class SimKernel implements TCPListener {
     private void loadConfig(){
         Properties prop = new Properties();
         InputStream input = null;
-
+        System.out.println(new File(".").getAbsolutePath());
         try {
             input = new FileInputStream("./simkernel.properties");
 
