@@ -138,10 +138,16 @@ def send_location(location):
 def calculate_cost(json_string, timing):
     global current_location
 
-    start_location = Location(json_string['cost'][0]['x'], json_string['cost'][0]['y'], 0.0, 0.0, 0.0,
-                              json_string['cost'][0]['z'], json_string['cost'][0]['w'])
-    goal_location = Location(json_string['cost'][1]['x'], json_string['cost'][1]['y'], 0.0, 0.0, 0.0,
-                             json_string['cost'][1]['z'], json_string['cost'][1]['w'])
+    if timing:
+        start_location = Location(json_string['costtiming'][0]['x'], json_string['costtiming'][0]['y'], 0.0, 0.0, 0.0,
+                                  json_string['costtiming'][0]['z'], json_string['costtiming'][0]['w'])
+        goal_location = Location(json_string['costtiming'][1]['x'], json_string['costtiming'][1]['y'], 0.0, 0.0, 0.0,
+                                 json_string['costtiming'][1]['z'], json_string['costtiming'][1]['w'])
+    else:
+        start_location = Location(json_string['cost'][0]['x'], json_string['cost'][0]['y'], 0.0, 0.0, 0.0,
+                                  json_string['cost'][0]['z'], json_string['cost'][0]['w'])
+        goal_location = Location(json_string['cost'][1]['x'], json_string['cost'][1]['y'], 0.0, 0.0, 0.0,
+                                 json_string['cost'][1]['z'], json_string['cost'][1]['w'])
 
     current_posestamped = rosmodule.pose_2_posestamped(rosmodule.location_2_pose(current_location))
     start_posestamped = rosmodule.pose_2_posestamped(rosmodule.location_2_pose(start_location))
@@ -236,7 +242,7 @@ def cb_movebase_status(data):
     status_list = data.status_list
     if len(status_list) != 0:
         status = status_list[len(status_list) - 1].status
-        logger.log_debug("[STATUS] Status: " + status_list[len(status_list) - 1].status)
+        logger.log_debug("[STATUS] Status: " + str(status_list[len(status_list) - 1].status))
 
         if status != cb_movebase_status_previous:
             cb_movebase_status_previous = status
@@ -261,6 +267,13 @@ def cb_movebase_feedback(data):
                          ", W: " + str(pose.orientation.w))
         current_location = Location(pose.position.x, pose.position.y, 0, 0, 0, pose.orientation.z, pose.orientation.w)
         send_location(current_location)
+
+
+def cb_percentage(data):
+    print "[JAVALINKER] Percentage: %d" % data.data
+    jsonmessage = {'percentage': {'idVehicle': 0, 'idStart': 0, 'idEnd': 0, 'percentage': data.data}}
+    json_string = json.dumps(jsonmessage)
+    javamodule.send_message(json_string)
 
 """
 ######################
@@ -300,9 +313,11 @@ if __name__ == "__main__":
         import rospy
         from actionlib_msgs.msg import GoalStatusArray
         from move_base_msgs.msg import MoveBaseActionFeedback
+        from std_msgs.msg import Int32
 
         rospy.Subscriber('move_base/status', GoalStatusArray, cb_movebase_status)
         rospy.Subscriber('move_base/feedback', MoveBaseActionFeedback, cb_movebase_feedback)
+        rospy.Subscriber('corelinker/percentage', Int32, cb_percentage)
         rosmodule.rospy_spin()
 
     else:

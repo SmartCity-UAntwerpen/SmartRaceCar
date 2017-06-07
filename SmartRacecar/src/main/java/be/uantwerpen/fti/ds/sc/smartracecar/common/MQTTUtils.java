@@ -13,8 +13,10 @@ public class MQTTUtils implements MqttCallback{
 
         options.setCleanSession(true);
         options.setKeepAliveInterval(0);
-        options.setUserName(username);
-        options.setPassword(password.toCharArray());
+        if(!username.equals("") && !password.equals("")){
+            options.setUserName(username);
+            options.setPassword(password.toCharArray());
+        }
 
         try {
             client = new MqttClient(brokerURL, MqttClient.generateClientId());

@@ -13,14 +13,15 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.lang.reflect.Type;
+import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Properties;
 import java.util.logging.Level;
 
 @Path("carmanager")
@@ -28,19 +29,17 @@ public class Manager implements MQTTListener {
 
     private boolean debugWithoutBackBone = true; // debug parameter to stop attempts to send or recieve messages from backbone.
     private boolean debugWithoutMAAS = true; // debug parameter to stop attempts to send or recieve messages from MAAS
-    private static Log log;
-    Level level = Level.INFO;
-    private final String mqttBroker = "tcp://143.129.39.151:1883";
-    private final String mqqtUsername = "root";
-    private final String mqttPassword = "smartcity";
-    private final String restURLMAAS = "http://localhost:8080/";
-    private final String restURLBackBone = "http://143.129.39.151:10000/";
+    private String mqttBroker = "tcp://143.129.39.151:1883"; // MQTT Broker URL
+    private String mqqtUsername = "root";
+    private String mqttPassword = "smartcity";
+    private String restURLMAAS = "http://localhost:8080/";
+    private String restURLBackBone = "http://143.129.39.151:10000";
 
     private static MQTTUtils mqttUtils;
     private static RESTUtils restUtilsMAAS;
     private static RESTUtils restUtilsBackBone;
 
-
+    private Log log;
     private static HashMap<Long, WayPoint> wayPoints = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
     private static HashMap<Long, Vehicle> vehicles = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
     private static String currentMap;
@@ -52,7 +51,7 @@ public class Manager implements MQTTListener {
     }
 
     public Manager(String currentMap, String mapsPath) throws MqttException, IOException {
-        log = new Log(this.getClass(), level);
+        loadConfig();
         Manager.currentMap = currentMap;
         Manager.mapsPath = mapsPath;
         log.logConfig("MANAGER", "Startup parameters: Map: " + currentMap + " | Path to maps folder: " + mapsPath);
@@ -64,12 +63,72 @@ public class Manager implements MQTTListener {
         mqttUtils.subscribeToTopic("racecar/#");
     }
 
+    @SuppressWarnings("Duplicates")
+    private void loadConfig(){
+        Properties prop = new Properties();
+        InputStream input = null;
+        System.out.println(new File(".").getAbsolutePath());
+        try {
+            try{
+                input = new FileInputStream("manager.properties");
+            }catch (IOException ex) {
+                String path = Manager.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+                String decodedPath = URLDecoder.decode(path, "UTF-8");
+                System.out.println(decodedPath);
+                decodedPath = decodedPath.replace("Manager.jar/","");
+                System.out.println(decodedPath);
+
+                System.out.println(decodedPath);
+                input = new FileInputStream(decodedPath + "/manager.properties");
+            }
+
+            // load a properties file
+            prop.load(input);
+
+            // get the property value and print it out
+            String debugLevel = prop.getProperty("debugLevel");
+            switch (debugLevel) {
+                case "debug":
+                    log = new Log(this.getClass(), Level.CONFIG);
+                    break;
+                case "info":
+                    log = new Log(this.getClass(), Level.INFO);
+                    break;
+                case "warning":
+                    log = new Log(this.getClass(), Level.WARNING);
+                    break;
+                case "severe":
+                    log = new Log(this.getClass(), Level.SEVERE);
+                    break;
+            }
+            debugWithoutBackBone = Boolean.parseBoolean(prop.getProperty("debugWithoutBackBone"));
+            debugWithoutMAAS = Boolean.parseBoolean(prop.getProperty("debugWithoutMAAS"));
+            mqttBroker = "tcp://" + prop.getProperty("mqttBroker");
+            mqqtUsername = prop.getProperty("mqqtUsername");
+            mqttPassword = prop.getProperty("mqttPassword");
+            restURLMAAS = prop.getProperty("restURLMAAS");
+            restURLBackBone = prop.getProperty("restURLBackBone");
+            Log.logInfo("MANAGER", "Config loaded");
+        } catch (IOException ex) {
+            log = new Log(this.getClass(), Level.INFO);
+            Log.logWarning("MANAGER", "Could not read config file: " + ex);
+        } finally {
+            if (input != null) {
+                try {
+                    input.close();
+                } catch (IOException e) {
+                    Log.logWarning("MANAGER", "Could not read config file: " + e);
+                }
+            }
+        }
+    }
+
     private void loadWayPoints() {
         if (debugWithoutBackBone) {
-            wayPoints.put((long) 8, new WayPoint(8, (float) 0.5, (float) 0, (float) -1, (float) 0.02));
-            wayPoints.put((long) 9, new WayPoint(9, (float) -13.4, (float) -0.53, (float) 0.71, (float) 0.71));
-            wayPoints.put((long) 10, new WayPoint(10, (float) -27.14, (float) -1.11, (float) -0.3, (float) 0.95));
-            wayPoints.put((long) 11, new WayPoint(11, (float) -28.25, (float) -9.19, (float) -0.71, (float) 0.71));
+            wayPoints.put((long) 46, new WayPoint(8, (float) 0.5, (float) 0, (float) -1, (float) 0.02));
+            wayPoints.put((long) 47, new WayPoint(9, (float) -13.4, (float) -0.53, (float) 0.71, (float) 0.71));
+            wayPoints.put((long) 48, new WayPoint(10, (float) -27.14, (float) -1.11, (float) -0.3, (float) 0.95));
+            wayPoints.put((long) 49, new WayPoint(11, (float) -28.25, (float) -9.19, (float) -0.71, (float) 0.71));
         } else {
             String jsonString = restUtilsBackBone.getJSON("map/stringmapjson/car");
             JSONUtils.isJSONValid(jsonString);
@@ -112,7 +171,18 @@ public class Manager implements MQTTListener {
             } else {
                 Log.logConfig("MANAGER", "Vehicle with ID " + ID + " doesn't exist. Cannot process cost answer.");
             }
-        } else if (topic.matches("racecar/[0-9]+/available")) {
+        } else if (topic.matches("racecar/[0-9]+/locationupdate")) {
+            long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
+            if (vehicles.containsKey(ID)) {
+                Log.logInfo("MANAGER", "Vehicle with ID " + ID + " has it's location changed to waypoint " + message + ".");
+                Location loc = vehicles.get(ID).getLocation();
+                loc.setIdStart(Long.parseLong(message));
+                loc.setIdEnd(Long.parseLong(message));
+                vehicles.get(ID).setLocation(loc);
+            } else {
+                Log.logConfig("MANAGER", "Vehicle with ID " + ID + " doesn't exist. Cannot set new location.");
+            }
+        }else if (topic.matches("racecar/[0-9]+/available")) {
             long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
             if (vehicles.containsKey(ID)) {
                 vehicles.get(ID).setAvailable(Boolean.parseBoolean(message));
@@ -133,8 +203,7 @@ public class Manager implements MQTTListener {
                 if (!debugWithoutMAAS) {
                     restUtilsMAAS.getTextPlain("completeJob/" + ID);
                 }
-                vehicles.get(ID).getLocation().setIdStart(vehicles.get(ID).getLocation().getIdEnd());
-                vehicles.get(ID).getLocation().setPercentage(0);
+                vehicles.get(ID).getLocation().setPercentage(100);
                 Log.logInfo("MANAGER", "Vehicle with ID " + ID + " has completed his route.");
                 break;
             case "error":
@@ -205,6 +274,7 @@ public class Manager implements MQTTListener {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "no vehicles registered yet");
         } else {
             int totalVehicles = 0;
+            int timer = 0;
             for (Vehicle vehicle : vehicles.values()) {
                 if (vehicle.isAvailable()) {
                     totalVehicles++;
@@ -212,9 +282,10 @@ public class Manager implements MQTTListener {
                 }
             }
 
-            while (costs.size() != totalVehicles) {
+            while (costs.size() != totalVehicles || timer != 100) {
                 Log.logInfo("MANAGER", "waiting for vehicles to complete request.");
                 Thread.sleep(200);
+                timer++;
             }
             ArrayList<Cost> costCopy = (ArrayList<Cost>) costs.clone();
             this.costs.clear();
