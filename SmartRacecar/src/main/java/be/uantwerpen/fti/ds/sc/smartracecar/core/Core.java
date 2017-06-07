@@ -27,13 +27,14 @@ import java.util.logging.Level;
  * Module representing the high-level of a vehicle.
  */
 class Core implements TCPListener, MQTTListener {
-    //Hardcoded settings
+
+    //Standard settings (without config file loaded)
     private boolean debugWithoutRosKernel = false; // debug parameter for using this module without a connected RosKernel/SimKernel
-    private Level level = Level.INFO; //Logging level. Best usages are LEVEL.INFO(for basic info) and LEVEL.CONFIG(for debug messages).
-    private final String mqttBroker = "tcp://143.129.39.151:1883"; // MQTT Broker URL
-    private final String mqqtUsername = "root"; // MQTT Broker Username
-    private final String mqttPassword = "smartcity"; // MQTT Broker Password
-    private final String restURL = "http://143.129.39.151:8081/carmanager"; // REST Service URL to Manager
+    private String mqttBroker = "tcp://broker.hivemq.com:1883"; // MQTT Broker URL
+    private String mqqtUsername = ""; // MQTT Broker Username
+    private String mqttPassword = ""; // MQTT Broker Password
+    //private final String restURL = "http://143.129.39.151:8081/carmanager"; // REST Service URL to Manager
+    private String restURL = "http://localhost:8081/carmanager"; // REST Service URL to Manager
     private static int serverPort = 5005; // Standard TCP Port to listen on for messages from ROS Node.
     private static int clientPort = 5006; // Standard TCP Port to send to messages to ROS Node.
 
@@ -44,6 +45,7 @@ class Core implements TCPListener, MQTTListener {
 
     //variables
     private long ID; // ID given by Manager to identify vehicle.
+    Log log; // logging instance
     private int routeSize = 0; // Current route's size.
     private static long startPoint; // Starting position on map. Given by main argument.
     private HashMap<String, Map> loadedMaps = new HashMap<>(); // Map of all loaded maps.
@@ -63,7 +65,7 @@ class Core implements TCPListener, MQTTListener {
      * @param clientPort Port to send messages to SimKernel/Roskernel. Defined by input arguments of main method.
      */
     private Core(long startPoint, int serverPort, int clientPort) throws InterruptedException, IOException {
-        Log log = new Log(this.getClass(), level);
+        loadConfig();
         Log.logConfig("CORE", "Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
         restUtils = new RESTUtils(restURL);
         requestWaypoints();
@@ -78,34 +80,54 @@ class Core implements TCPListener, MQTTListener {
         sendStartPoint();
         loadedMaps = loadMaps(findMapsFolder());
         requestMap();
-        /*Properties prop = new Properties();
+
+    }
+
+    @SuppressWarnings("Duplicates")
+    private void loadConfig(){
+        Properties prop = new Properties();
         InputStream input = null;
 
         try {
-
-            input = new FileInputStream("config.properties");
+            input = new FileInputStream("core.properties");
 
             // load a properties file
             prop.load(input);
 
             // get the property value and print it out
-            System.out.println(prop.getProperty("database"));
-            System.out.println(prop.getProperty("dbuser"));
-            System.out.println(prop.getProperty("dbpassword"));
-
+            String debugLevel = prop.getProperty("debugLevel");
+            switch (debugLevel) {
+                case "debug":
+                    log = new Log(this.getClass(), Level.CONFIG);
+                    break;
+                case "info":
+                    log = new Log(this.getClass(), Level.INFO);
+                    break;
+                case "warning":
+                    log = new Log(this.getClass(), Level.WARNING);
+                    break;
+                case "severe":
+                    log = new Log(this.getClass(), Level.SEVERE);
+                    break;
+            }
+            debugWithoutRosKernel = Boolean.getBoolean(prop.getProperty("debugWithoutRosKernel"));
+            mqttBroker = "tcp://" + prop.getProperty("mqttBroker");
+            mqqtUsername = prop.getProperty("mqqtUsername");
+            mqttPassword = prop.getProperty("mqttPassword");
+            restURL = prop.getProperty("restURL");
+            Log.logInfo("CORE", "Config loaded");
         } catch (IOException ex) {
-            Log.logConfig("CORE", "Could not read config file: " + ex);
-
-            ex.printStackTrace();
+            log = new Log(this.getClass(), Level.INFO);
+            Log.logWarning("CORE", "Could not read config file: " + ex);
         } finally {
             if (input != null) {
                 try {
                     input.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    Log.logWarning("CORE", "Could not read config file: " + e);
                 }
             }
-        }*/
+        }
     }
 
     /**

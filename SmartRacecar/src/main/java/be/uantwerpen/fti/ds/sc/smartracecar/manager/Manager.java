@@ -13,7 +13,9 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
@@ -21,26 +23,25 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Properties;
 import java.util.logging.Level;
 
 @Path("carmanager")
 public class Manager implements MQTTListener {
 
-    private boolean debugWithoutBackBone = false; // debug parameter to stop attempts to send or recieve messages from backbone.
+    private boolean debugWithoutBackBone = true; // debug parameter to stop attempts to send or recieve messages from backbone.
     private boolean debugWithoutMAAS = true; // debug parameter to stop attempts to send or recieve messages from MAAS
-    private static Log log;
-    Level level = Level.INFO;
-    private final String mqttBroker = "tcp://143.129.39.151:1883";
-    private final String mqqtUsername = "root";
-    private final String mqttPassword = "smartcity";
-    private final String restURLMAAS = "http://localhost:8080/";
-    private final String restURLBackBone = "http://146.175.140.44:1994/";
+    private String mqttBroker = "tcp://143.129.39.151:1883";
+    private String mqqtUsername = "root";
+    private String mqttPassword = "smartcity";
+    private String restURLMAAS = "http://localhost:8080/";
+    private String restURLBackBone = "http://146.175.140.44:1994/";
 
     private static MQTTUtils mqttUtils;
     private static RESTUtils restUtilsMAAS;
     private static RESTUtils restUtilsBackBone;
 
-
+    private Log log;
     private static HashMap<Long, WayPoint> wayPoints = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
     private static HashMap<Long, Vehicle> vehicles = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
     private static String currentMap;
@@ -52,7 +53,7 @@ public class Manager implements MQTTListener {
     }
 
     public Manager(String currentMap, String mapsPath) throws MqttException, IOException {
-        log = new Log(this.getClass(), level);
+        loadConfig();
         Manager.currentMap = currentMap;
         Manager.mapsPath = mapsPath;
         log.logConfig("MANAGER", "Startup parameters: Map: " + currentMap + " | Path to maps folder: " + mapsPath);
@@ -62,6 +63,55 @@ public class Manager implements MQTTListener {
         loadWayPoints();
         mqttUtils = new MQTTUtils(mqttBroker, mqqtUsername, mqttPassword, this);
         mqttUtils.subscribeToTopic("racecar/#");
+    }
+
+    @SuppressWarnings("Duplicates")
+    private void loadConfig(){
+        Properties prop = new Properties();
+        InputStream input = null;
+
+        try {
+            input = new FileInputStream("manager.properties");
+
+            // load a properties file
+            prop.load(input);
+
+            // get the property value and print it out
+            String debugLevel = prop.getProperty("debugLevel");
+            switch (debugLevel) {
+                case "debug":
+                    log = new Log(this.getClass(), Level.CONFIG);
+                    break;
+                case "info":
+                    log = new Log(this.getClass(), Level.INFO);
+                    break;
+                case "warning":
+                    log = new Log(this.getClass(), Level.WARNING);
+                    break;
+                case "severe":
+                    log = new Log(this.getClass(), Level.SEVERE);
+                    break;
+            }
+            debugWithoutBackBone = Boolean.getBoolean(prop.getProperty("debugWithoutBackBone"));
+            debugWithoutMAAS = Boolean.getBoolean(prop.getProperty("debugWithoutMAAS"));
+            mqttBroker = "tcp://" + prop.getProperty("mqttBroker");
+            mqqtUsername = prop.getProperty("mqqtUsername");
+            mqttPassword = prop.getProperty("mqttPassword");
+            restURLMAAS = prop.getProperty("restURLMAAS");
+            restURLBackBone = prop.getProperty("restURLBackBone");
+            Log.logInfo("CORE", "Config loaded");
+        } catch (IOException ex) {
+            log = new Log(this.getClass(), Level.INFO);
+            Log.logWarning("CORE", "Could not read config file: " + ex);
+        } finally {
+            if (input != null) {
+                try {
+                    input.close();
+                } catch (IOException e) {
+                    Log.logWarning("CORE", "Could not read config file: " + e);
+                }
+            }
+        }
     }
 
     private void loadWayPoints() {

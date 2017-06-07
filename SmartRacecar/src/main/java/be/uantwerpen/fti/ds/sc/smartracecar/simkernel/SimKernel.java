@@ -2,31 +2,35 @@ package be.uantwerpen.fti.ds.sc.smartracecar.simkernel;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.google.gson.reflect.TypeToken;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.logging.Level;
 
 class SimKernel implements TCPListener {
 
     private boolean debugWithoutRosServer = true; // debug parameter to stop attempts to send over sockets when ROSServer-Node is active.
-    private Log log;
-    private Level level = Level.INFO; //Debug level
-    private final String restURL = "http://143.129.39.151:8084";
+    private String restURL = "http://143.129.39.151:8084";
     private static int serverPort = 5005;
     private static int clientPort = 5006;
 
     private TCPUtils tcpUtils;
     private RESTUtils restUtils;
 
+    private Log log;
     private boolean connected = false; // To verify socket connection to vehicle.
     private Map map;
     private WayPoint startPoint;
     private Point currentPosition;
 
     SimKernel(int serverPort, int clientPort) throws InterruptedException {
-        log = new Log(this.getClass(), level);
+        loadConfig();
         log.logConfig("SIMKERNEL","Startup parameters: TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
         restUtils = new RESTUtils(restURL);
         tcpUtils = new TCPUtils(clientPort, serverPort, this,false);
@@ -34,6 +38,50 @@ class SimKernel implements TCPListener {
         while (!connected) {
             log.logWarning("SIMKERNEL","Waiting for connection with vehicle Core on port " + serverPort);
             Thread.sleep(1000);
+        }
+    }
+
+    @SuppressWarnings("Duplicates")
+    private void loadConfig(){
+        Properties prop = new Properties();
+        InputStream input = null;
+
+        try {
+            input = new FileInputStream("simkernel.properties");
+
+            // load a properties file
+            prop.load(input);
+
+            // get the property value and print it out
+            String debugLevel = prop.getProperty("debugLevel");
+            switch (debugLevel) {
+                case "debug":
+                    log = new Log(this.getClass(), Level.CONFIG);
+                    break;
+                case "info":
+                    log = new Log(this.getClass(), Level.INFO);
+                    break;
+                case "warning":
+                    log = new Log(this.getClass(), Level.WARNING);
+                    break;
+                case "severe":
+                    log = new Log(this.getClass(), Level.SEVERE);
+                    break;
+            }
+            restURL = prop.getProperty("restURL");
+            debugWithoutRosServer = Boolean.getBoolean(prop.getProperty("debugWithoutRosServer"));
+            Log.logInfo("CORE", "Config loaded");
+        } catch (IOException ex) {
+            log = new Log(this.getClass(), Level.INFO);
+            Log.logWarning("CORE", "Could not read config file: " + ex);
+        } finally {
+            if (input != null) {
+                try {
+                    input.close();
+                } catch (IOException e) {
+                    Log.logWarning("CORE", "Could not read config file: " + e);
+                }
+            }
         }
     }
 

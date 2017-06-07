@@ -3,35 +3,80 @@ package be.uantwerpen.fti.ds.sc.smartracecar.simdeployer;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.google.gson.reflect.TypeToken;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.util.HashMap;
+import java.util.Properties;
 import java.util.logging.Level;
 
 class SimDeployer implements TCPListener {
 
-    private final int serverPort = 9999;
-    private static Log log;
-    private Level level = Level.INFO;
-    private final String restURL = "http://143.129.39.151:8081/carmanager"; // REST Service URL to Manager
-    //private final String restURL = "http://localhost:8081/carmanager"; // REST Service URL to Manager
+    private int serverPort = 9999;
+    private String restURL = "http://localhost:8081/carmanager"; // REST Service URL to Manager
     private final String jarPath;
 
     private TCPUtils tcpUtils;
     private RESTUtils restUtils;
-    private int portCount = 1025;
 
+    private Log log;
     private HashMap<Long, SimulatedVehicle> simulatedVehicles = new HashMap<>();
     private HashMap<Long, WayPoint> wayPoints = new HashMap<>(); // Map of all loaded waypoints.
 
     private SimDeployer(String jarPath) throws IOException, InterruptedException {
+        loadConfig();
         this.jarPath = jarPath;
-        log = new Log(this.getClass(), level);
         restUtils = new RESTUtils(restURL);
         requestWaypoints();
         tcpUtils = new TCPUtils(serverPort, this, true);
         tcpUtils.start();
     }
+
+    @SuppressWarnings("Duplicates")
+    private void loadConfig(){
+        Properties prop = new Properties();
+        InputStream input = null;
+
+        try {
+            input = new FileInputStream("simdeployer.properties");
+
+            // load a properties file
+            prop.load(input);
+
+            // get the property value and print it out
+            String debugLevel = prop.getProperty("debugLevel");
+            switch (debugLevel) {
+                case "debug":
+                    log = new Log(this.getClass(), Level.CONFIG);
+                    break;
+                case "info":
+                    log = new Log(this.getClass(), Level.INFO);
+                    break;
+                case "warning":
+                    log = new Log(this.getClass(), Level.WARNING);
+                    break;
+                case "severe":
+                    log = new Log(this.getClass(), Level.SEVERE);
+                    break;
+            }
+            restURL = prop.getProperty("restURL");
+            serverPort = Integer.parseInt(prop.getProperty("serverPort"));
+            Log.logInfo("CORE", "Config loaded");
+        } catch (IOException ex) {
+            log = new Log(this.getClass(), Level.INFO);
+            Log.logWarning("CORE", "Could not read config file: " + ex);
+        } finally {
+            if (input != null) {
+                try {
+                    input.close();
+                } catch (IOException e) {
+                    Log.logWarning("CORE", "Could not read config file: " + e);
+                }
+            }
+        }
+    }
+
 
     //Request all possible waypoints from RaceCarManager
     private void requestWaypoints() {
