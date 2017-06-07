@@ -64,16 +64,19 @@ def cb_feedback(data):
     percentage = (dist_orig_array - dist_interm_array) / dist_orig_array * 100
     print "[FEEDBACK] Percentage: %d%%" % percentage
 
+
 def calc_closest_point(path, point):
     precision = find_precision(len(path))
-    print "[PRECISION] %d" % precision
+    print "[FEEDBACK] Precision: %d" % precision
 
     (best, best_length, best_distance) = coarse_approximation(precision, path, point)
-    print "[COARSE][BEST] X: %.5f Y: %.5f - Length: %d - Dist: %.5f" % (best.x, best.y, best_length, best_distance)
+    print "[FEEDBACK] Coarse -- X: %.5f Y: %.5f - Length: %d - Dist: %.5f" % (best.x, best.y, best_length,
+                                                                              best_distance)
 
     (best, best_length, best_distance) = accurate_approximation(precision, path, point, best, best_length,
                                                                 best_distance)
-    print "[ACCURATE][BEST] X: %.5f Y: %.5f - Length: %d - Dist: %.5f" % (best.x, best.y, best_length, best_distance)
+    print "[FEEDBACK] Accurate -- X: %.5f Y: %.5f - Length: %d - Dist: %.5f" % (best.x, best.y, best_length,
+                                                                              best_distance)
 
     return best_length
 
@@ -151,7 +154,6 @@ rospy.Subscriber('/move_base/NavfnROS/plan', Path, cb_plannerplan_navfn)
 rospy.Subscriber('/move_base/GlobalPlanner/plan', Path, cb_plannerplan_gp)
 # rospy.Subscriber('/move_base/feedback', Path, cb_feedback)
 rospy.Subscriber('initialpose', PoseWithCovarianceStamped, cb_feedback)
-# rospy.Subscriber('/tf', TFMessage, cb_transform)
 
 rospy.spin()
 
