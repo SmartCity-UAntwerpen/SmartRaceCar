@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<launch>  
+
+  <include file="$(find f1tenth_2dnav)/launch/tf_rossim.launch"/>
+  <include file="$(find f1tenth_2dnav)/launch/move_base_rossim.launch"/>
+
+  <!-- This node runs the REST-server located in ../scripts/ 
+       which is an executable bashscript -->
+  <node pkg="rossimulator" type="launch_python.sh" name="restserver" output="screen"/>
+
+</launch>
