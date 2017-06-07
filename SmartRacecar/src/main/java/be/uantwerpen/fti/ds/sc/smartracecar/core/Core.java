@@ -140,7 +140,7 @@ class Core implements TCPListener, MQTTListener {
     private HashMap<String, Map> loadMaps(String mapFolder) {
         HashMap<String, Map> loadedMaps = new HashMap<>();
         try {
-            File fXmlFile = new File(mapFolder + "/maps.xml");
+            File fXmlFile = new File(mapFolder);
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             Document doc = dBuilder.parse(fXmlFile);
