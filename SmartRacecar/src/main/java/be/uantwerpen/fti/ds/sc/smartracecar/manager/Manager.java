@@ -277,7 +277,7 @@ public class Manager implements MQTTListener {
                 }
             }
 
-            while (costs.size() != totalVehicles || timer != 100) {
+            while (costs.size() != totalVehicles && timer != 100) {
                 Log.logInfo("MANAGER", "waiting for vehicles to complete request.");
                 Thread.sleep(200);
                 timer++;
