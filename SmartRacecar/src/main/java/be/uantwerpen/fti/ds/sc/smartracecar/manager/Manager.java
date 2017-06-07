@@ -26,7 +26,7 @@ import java.util.logging.Level;
 @Path("carmanager")
 public class Manager implements MQTTListener {
 
-    private boolean debugWithoutBackBone = true; // debug parameter to stop attempts to send or recieve messages from backbone.
+    private boolean debugWithoutBackBone = false; // debug parameter to stop attempts to send or recieve messages from backbone.
     private boolean debugWithoutMAAS = true; // debug parameter to stop attempts to send or recieve messages from MAAS
     private String mqttBroker = "tcp://broker.hivemq.com:1883"; // MQTT Broker URL
     private String mqqtUsername = "";
