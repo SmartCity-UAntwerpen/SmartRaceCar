@@ -262,6 +262,13 @@ def cb_movebase_feedback(data):
         current_location = Location(pose.position.x, pose.position.y, 0, 0, 0, pose.orientation.z, pose.orientation.w)
         send_location(current_location)
 
+
+def cb_percentage(data):
+    print "[JAVALINKER] Percentage: %d" % data.data
+    jsonmessage = {'percentage': {'idVehicle': 0, 'idStart': 0, 'idEnd': 0, 'percentage': data.data}}
+    json_string = json.dumps(jsonmessage)
+    javamodule.send_message(json_string)
+
 """
 ######################
 ##  Main functions  ##
@@ -300,9 +307,11 @@ if __name__ == "__main__":
         import rospy
         from actionlib_msgs.msg import GoalStatusArray
         from move_base_msgs.msg import MoveBaseActionFeedback
+        from std_msgs.msg import Int32
 
         rospy.Subscriber('move_base/status', GoalStatusArray, cb_movebase_status)
         rospy.Subscriber('move_base/feedback', MoveBaseActionFeedback, cb_movebase_feedback)
+        rospy.Subscriber('corelinker/percentage', Int32, cb_percentage)
         rosmodule.rospy_spin()
 
     else:
