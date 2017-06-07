@@ -26,13 +26,13 @@ import java.util.logging.Level;
 @Path("carmanager")
 public class Manager implements MQTTListener {
 
-    private boolean debugWithoutBackBone = false; // debug parameter to stop attempts to send or recieve messages from backbone.
+    private boolean debugWithoutBackBone = true; // debug parameter to stop attempts to send or recieve messages from backbone.
     private boolean debugWithoutMAAS = true; // debug parameter to stop attempts to send or recieve messages from MAAS
     private String mqttBroker = "tcp://broker.hivemq.com:1883"; // MQTT Broker URL
     private String mqqtUsername = "";
     private String mqttPassword = "";
     private String restURLMAAS = "http://localhost:8080/";
-    private String restURLBackBone = "http://146.175.140.44:1994";
+    private String restURLBackBone = "http://143.129.39.151:10000";
 
     private static MQTTUtils mqttUtils;
     private static RESTUtils restUtilsMAAS;
