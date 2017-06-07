@@ -1,0 +1,5 @@
+<?xml version="1.0"?> 
+<launch>
+  <node pkg="corelinker" type="javalinker.py" name="javalinker" output="screen"/>
+  <node pkg="corelinker" type="percentage.py" name="percentage" output="screen"/>
+</launch>
