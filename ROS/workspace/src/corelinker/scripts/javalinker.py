@@ -138,10 +138,16 @@ def send_location(location):
 def calculate_cost(json_string, timing):
     global current_location
 
-    start_location = Location(json_string['cost'][0]['x'], json_string['cost'][0]['y'], 0.0, 0.0, 0.0,
-                              json_string['cost'][0]['z'], json_string['cost'][0]['w'])
-    goal_location = Location(json_string['cost'][1]['x'], json_string['cost'][1]['y'], 0.0, 0.0, 0.0,
-                             json_string['cost'][1]['z'], json_string['cost'][1]['w'])
+    if timing:
+        start_location = Location(json_string['costtiming'][0]['x'], json_string['costtiming'][0]['y'], 0.0, 0.0, 0.0,
+                                  json_string['costtiming'][0]['z'], json_string['costtiming'][0]['w'])
+        goal_location = Location(json_string['costtiming'][1]['x'], json_string['costtiming'][1]['y'], 0.0, 0.0, 0.0,
+                                 json_string['costtiming'][1]['z'], json_string['costtiming'][1]['w'])
+    else:
+        start_location = Location(json_string['cost'][0]['x'], json_string['cost'][0]['y'], 0.0, 0.0, 0.0,
+                                  json_string['cost'][0]['z'], json_string['cost'][0]['w'])
+        goal_location = Location(json_string['cost'][1]['x'], json_string['cost'][1]['y'], 0.0, 0.0, 0.0,
+                                 json_string['cost'][1]['z'], json_string['cost'][1]['w'])
 
     current_posestamped = rosmodule.pose_2_posestamped(rosmodule.location_2_pose(current_location))
     start_posestamped = rosmodule.pose_2_posestamped(rosmodule.location_2_pose(start_location))
