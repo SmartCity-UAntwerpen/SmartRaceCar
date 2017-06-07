@@ -114,19 +114,24 @@ def accurate_approximation(precision, path, point, best, best_length, best_dista
     precision /= 2
 
     while precision > 0.5:
+
+        # Assignment of the variables used in the comparisons
         before_length = best_length - precision
-        before = path[before_length].pose.position
-        before_distance = calc_distance_2_point(before.x, before.y, point.x, point.y)
+        if before_length >= 0:
+            before = path[before_length].pose.position
+            before_distance = calc_distance_2_point(before.x, before.y, point.x, point.y)
 
         after_length = best_length + precision
-        after = path[after_length].pose.position
-        after_distance = calc_distance_2_point(after.x, after.y, point.x, point.y)
+        if after_length < len(path):
+            after = path[after_length].pose.position
+            after_distance = calc_distance_2_point(after.x, after.y, point.x, point.y)
 
+        # The actual comparisons
         if before_length >= 0 and before_distance < best_distance:
             best = before
             best_length = before_length
             best_distance = before_distance
-        elif after_length <= len(path) and after_distance < best_distance:
+        elif after_length < len(path) and after_distance < best_distance:
             best = after
             best_length = after_length
             best_distance = after_distance
