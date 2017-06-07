@@ -74,6 +74,7 @@ public class Manager implements MQTTListener {
             }catch (IOException ex) {
                 String path = Manager.class.getProtectionDomain().getCodeSource().getLocation().getPath();
                 String decodedPath = URLDecoder.decode(path, "UTF-8");
+                decodedPath.replace("Manager.jar/","");
                 System.out.println(decodedPath);
                 input = new FileInputStream(decodedPath + "/manager.properties");
             }
@@ -270,6 +271,7 @@ public class Manager implements MQTTListener {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "no vehicles registered yet");
         } else {
             int totalVehicles = 0;
+            int timer = 0;
             for (Vehicle vehicle : vehicles.values()) {
                 if (vehicle.isAvailable()) {
                     totalVehicles++;
@@ -277,9 +279,10 @@ public class Manager implements MQTTListener {
                 }
             }
 
-            while (costs.size() != totalVehicles) {
+            while (costs.size() != totalVehicles || timer != 100) {
                 Log.logInfo("MANAGER", "waiting for vehicles to complete request.");
                 Thread.sleep(200);
+                timer++;
             }
             ArrayList<Cost> costCopy = (ArrayList<Cost>) costs.clone();
             this.costs.clear();
