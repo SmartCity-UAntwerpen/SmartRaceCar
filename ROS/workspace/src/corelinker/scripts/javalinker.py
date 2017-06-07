@@ -242,7 +242,7 @@ def cb_movebase_status(data):
     status_list = data.status_list
     if len(status_list) != 0:
         status = status_list[len(status_list) - 1].status
-        logger.log_debug("[STATUS] Status: " + status_list[len(status_list) - 1].status)
+        logger.log_debug("[STATUS] Status: " + str(status_list[len(status_list) - 1].status))
 
         if status != cb_movebase_status_previous:
             cb_movebase_status_previous = status
