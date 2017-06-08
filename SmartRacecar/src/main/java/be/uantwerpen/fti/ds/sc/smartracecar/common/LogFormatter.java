@@ -9,11 +9,18 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
 
-//Helper class to format the logging messages to a specific format of YEAR-MONTH-DAY HOUR:MINUTES:SECONDS:MILISECONDS [LEVEL] [TYPE] Message (+ errorprinttrace)
+/**
+ * Helper class to format the logging messages to a specific format of
+ * YEAR-MONTH-DAY HOUR:MINUTES:SECONDS:MILISECONDS [LEVEL] [TYPE] Message (+ errorprinttrace)
+ */
 class LogFormatter extends Formatter {
     // Create a DateFormat to format the logger timestamp.
     private static final DateFormat df = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
 
+
+    /**
+     * Format the log.
+     */
     public String format(LogRecord record) {
         StringBuilder builder = new StringBuilder(1000);
         builder.append(df.format(new Date(record.getMillis()))).append(" ");
