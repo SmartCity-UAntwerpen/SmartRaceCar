@@ -88,7 +88,6 @@ hs_err_pid*
 
 # End of https://www.gitignore.io/api/java,intellij
 Java-Core.iml
-src/test/
 target/
 ID-tcpbrokerhivemqcom1883/
 RACECAR-tcpbrokerhivemqcom1883/

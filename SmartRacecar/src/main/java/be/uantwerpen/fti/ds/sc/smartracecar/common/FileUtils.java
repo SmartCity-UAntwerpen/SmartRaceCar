@@ -10,7 +10,7 @@ import java.util.List;
 public class FileUtils {
 
     private String fileNameToSearch; // Name of the file that is being searched.
-    private List<String> result = new ArrayList<String>(); // List of all found files matching the searched files. Full path is stored.
+    private List<String> result = new ArrayList<>(); // List of all found files matching the searched files. Full path is stored.
 
     /**
        /* Get the name of the file being searched.
@@ -55,7 +55,6 @@ public class FileUtils {
         } else {
             Log.logSevere("FILESEARCH", "Not a directory. Cannot search.");
         }
-
     }
 
     /**

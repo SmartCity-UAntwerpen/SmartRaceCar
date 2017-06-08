@@ -147,30 +147,24 @@ public class TCPUtils extends Thread {
         while (!connected) {
             try {
                 clientSocket = new Socket("localhost", clientPort);
-
                 connected = true;
+                try {
+                    PrintStream os = new PrintStream(clientSocket.getOutputStream());
+                    os.println(inputLine.readLine());
+                    Log.logConfig("SOCKETS","Data Sent:" + data);
+                    os.close();
+                } catch (UnknownHostException e) {
+                    Log.logWarning("SOCKETS","Could not send. Trying to connect to unknown host: " + e);
+                } catch (IOException e) {
+                    Log.logSevere("SOCKETS","Could not send. IOException:  " + e);
+                }
             } catch (UnknownHostException e) {
                 Log.logSevere("SOCKETS","Cannot connect to receiver. Trying again." + e);
                 connected = false;
             } catch (IOException e) {
                 Log.logWarning("SOCKETS","Cannot connect to receiver to send   " + data + "   Trying again. Error:" + e);
                 connected = false;
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e1) {
-                    e1.printStackTrace();
-                }
             }
-        }
-        try {
-            PrintStream os = new PrintStream(clientSocket.getOutputStream());
-            os.println(inputLine.readLine());
-            Log.logConfig("SOCKETS","Data Sent:" + data);
-            os.close();
-        } catch (UnknownHostException e) {
-            Log.logWarning("SOCKETS","Could not send. Trying to connect to unknown host: " + e);
-        } catch (IOException e) {
-            Log.logSevere("SOCKETS","Could not send. IOException:  " + e);
         }
     }
 
@@ -194,6 +188,16 @@ public class TCPUtils extends Thread {
                 clientSocket = new Socket("localhost", port);
 
                 connected = true;
+                try {
+                    PrintStream os = new PrintStream(clientSocket.getOutputStream());
+                    os.println(inputLine.readLine());
+                    Log.logConfig("SOCKETS","Data Sent:" + data);
+                    os.close();
+                } catch (UnknownHostException e) {
+                    Log.logWarning("SOCKETS","Could not send. Trying to connect to unknown host: " + e);
+                } catch (IOException e) {
+                    Log.logSevere("SOCKETS","Could not send. IOException:  " + e);
+                }
             } catch (UnknownHostException e) {
                 Log.logSevere("SOCKETS","Cannot connect to receiver. Trying again." + e);
                 connected = false;
@@ -201,22 +205,7 @@ public class TCPUtils extends Thread {
                 Log.logWarning("SOCKETS","Cannot connect to receiver to send   " + data + "   Trying again(" + tryTimes + "/5). Error:" + e);
                 connected = false;
                 tryTimes++;
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e1) {
-                    e1.printStackTrace();
-                }
             }
-        }
-        try {
-            PrintStream os = new PrintStream(clientSocket.getOutputStream());
-            os.println(inputLine.readLine());
-            Log.logConfig("SOCKETS","Data Sent:" + data);
-            os.close();
-        } catch (UnknownHostException e) {
-            Log.logWarning("SOCKETS","Could not send. Trying to connect to unknown host: " + e);
-        } catch (IOException e) {
-            Log.logSevere("SOCKETS","Could not send. IOException:  " + e);
         }
     }
 

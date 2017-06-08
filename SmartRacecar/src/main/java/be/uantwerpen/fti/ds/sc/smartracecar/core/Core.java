@@ -148,7 +148,7 @@ class Core implements TCPListener, MQTTListener {
     private HashMap<String, Map> loadMaps(String mapFolder) {
         HashMap<String, Map> loadedMaps = new HashMap<>();
         try {
-            File fXmlFile = new File(mapFolder);
+            File fXmlFile = new File(mapFolder + "/maps.xml");
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             Document doc = dBuilder.parse(fXmlFile);
@@ -165,11 +165,11 @@ class Core implements TCPListener, MQTTListener {
                     Element eElement = (Element) nNode;
                     String name = eElement.getElementsByTagName("name").item(0).getTextContent();
                     loadedMaps.put(name, new Map(name));
-                    Log.logConfig("XML", "Added map: " + name + ".");
+                    Log.logConfig("CORE", "Added map: " + name + ".");
                 }
             }
         } catch (Exception e) {
-            Log.logSevere("XML", "Could not correctly load XML of maps." + e);
+            Log.logSevere("CORE", "Could not correctly load XML of maps." + e);
         }
         return loadedMaps;
     }

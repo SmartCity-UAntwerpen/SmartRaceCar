@@ -28,7 +28,7 @@ class SimDeployer implements TCPListener {
     private RESTUtils restUtils;
 
     private Log log; // logging instance
-    private String jarPath = ".\\release"; //Path where the jar files are located.
+    private String jarPath = ".\\release\\"; //Path where the jar files are located.
     private HashMap<Long, SimulatedVehicle> simulatedVehicles = new HashMap<>(); // Map of all simulated vehicles. Mapped by their ID.
     private HashMap<Long, WayPoint> wayPoints = new HashMap<>(); // Map of all loaded waypoints.
 
@@ -36,7 +36,7 @@ class SimDeployer implements TCPListener {
      * Module that handles all simulated vehicles and communicates with the SimWorker service to setup new
      * simulated F1 cars. It deploys and manages the '.jar' versions of the vehicle simulation.
      */
-    private SimDeployer() throws IOException, InterruptedException {
+    SimDeployer() throws IOException, InterruptedException {
         String asciiArt1 = FigletFont.convertOneLine("SmartCity");
         System.out.println(asciiArt1);
         System.out.println("-------------------------------------------------------------------");
@@ -173,7 +173,13 @@ class SimDeployer implements TCPListener {
                         return false;
                     }
                 case "speed":
-                    simulatedVehicles.get(simulationID).setSpeed(Float.parseFloat(argument));
+                    try{
+                        simulatedVehicles.get(simulationID).setSpeed(Float.parseFloat(argument));
+                    }catch(NumberFormatException ex) {
+                        Log.logWarning("SIMDEPLOYER", "Needs to be a float number as speed argument. Argument: " + argument);
+                        return false;
+                    }
+
                     Log.logInfo("SIMDEPLOYER", "Simulated Vehicle with simulation ID " + simulationID + " given speed " + argument + ".");
                     return true;
                 case "name":
@@ -218,9 +224,14 @@ class SimDeployer implements TCPListener {
      */
     private boolean stopVehicle(long simulationID) {
         if (simulatedVehicles.containsKey(simulationID)) {
-            simulatedVehicles.get(simulationID).stop();
-            Log.logInfo("SIMDEPLOYER", "Vehicle with ID " + simulationID + " Stopped.");
-            return true;
+            if(simulatedVehicles.get(simulationID).isDeployed()){
+                simulatedVehicles.get(simulationID).stop();
+                Log.logInfo("SIMDEPLOYER", "Vehicle with ID " + simulationID + " Stopped.");
+                return true;
+            }else{
+                Log.logWarning("SIMDEPLOYER", "Cannot stop vehicle with simulation ID " + simulationID + ". It isn't deployed yet.");
+                return false;
+            }
         } else {
             Log.logWarning("SIMDEPLOYER", "Cannot stop vehicle with simulation ID " + simulationID + ". It does not exist.");
             return false;
