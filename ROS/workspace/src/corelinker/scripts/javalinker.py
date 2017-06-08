@@ -283,7 +283,9 @@ def cb_percentage(data):
 
 
 def signal_handler(signal, frame):
+    print "Stopping javamodule"
     javamodule.stop()
+    print "Javamodule stopped"
     sys.exit(0)
 
 
