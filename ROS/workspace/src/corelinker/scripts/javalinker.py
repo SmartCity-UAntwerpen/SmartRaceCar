@@ -306,7 +306,7 @@ if __name__ == "__main__":
     #     time.sleep(0.1)
     # os.system("roslaunch f1tenth_2dnav move_base.launch map_name:=zbuilding.yaml speed:=1.4 ")
 
-    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
 
     if not DEBUG_WITHOUT_ROS:
         rosmodule.init_ros(logger)
