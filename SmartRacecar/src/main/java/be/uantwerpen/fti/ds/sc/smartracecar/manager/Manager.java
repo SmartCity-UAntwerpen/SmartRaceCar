@@ -258,10 +258,13 @@ public class Manager implements MQTTListener {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "Waypoint " + startWayPoint + " not found");
         } else {
             long id;
-            if (!debugWithoutBackBone) {
-                id = Long.parseLong(restUtilsBackBone.getJSON("bot/newBot/car"));
-            } else {
+            if (debugWithoutBackBone) {
                 id = (long) vehicles.size();
+                System.out.println("test");
+
+            } else {
+                id = Long.parseLong(restUtilsBackBone.getJSON("bot/newBot/car"));                System.out.println("test");
+                System.out.println("kaka");
             }
             vehicles.put(id, new Vehicle(id, startWayPoint));
             Log.logInfo("MANAGER", "New vehicle registered. Given ID " + id + ". Has starting waypoint " + startWayPoint + ".");
