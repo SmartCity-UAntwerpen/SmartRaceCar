@@ -20,7 +20,7 @@ class Vehicle {
      */
     Vehicle(Long ID,long startWayPoint){
         this.ID = ID;
-        location = new Location(ID,startWayPoint,startWayPoint,0);
+        location = new Location(ID,startWayPoint,startWayPoint,100);
     }
 
     /**
