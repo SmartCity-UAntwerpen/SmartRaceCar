@@ -48,8 +48,8 @@ public class Manager implements MQTTListener {
     private Log log; // logging instance
     private static HashMap<Long, WayPoint> wayPoints = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
     private static HashMap<Long, Vehicle> vehicles = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
-    private static String currentMap; // Information on the currently used map.
-    private static String mapsPath; // Path to the location of the maps.xml file where maps are stored.
+    private static String currentMap = "zbuilding"; // Information on the currently used map.
+    private static String mapsPath = ".\\release\\maps"; // Path to the location of the maps.xml file where maps are stored.
     private static ArrayList<Cost> costs = new ArrayList<>(); // Contains all currently received calculated costs when a cost request was made.
 
     /**
@@ -62,15 +62,11 @@ public class Manager implements MQTTListener {
     /**
      * Module representing the management or dispatching module of the F1 service.
      *
-     * @param currentMap The currently used map (by input paramater)
-     * @param mapsPath The path to the location of the maps.xml file where maps are stored. (by input parameter)
+     * @param start help parameter to make a distinction between the two constructors
      */
-    public Manager(String currentMap, String mapsPath) throws MqttException, IOException {
+    public Manager(Boolean start) throws MqttException, IOException {
         loadConfig();
-        Manager.currentMap = currentMap;
-        Manager.mapsPath = mapsPath;
         Log.logConfig("MANAGER", "Startup parameters: Map: " + currentMap + " | Path to maps folder: " + mapsPath);
-
         restUtilsMAAS = new RESTUtils(restURLMAAS);
         restUtilsBackBone = new RESTUtils(restURLBackBone);
         loadWayPoints();
@@ -83,18 +79,14 @@ public class Manager implements MQTTListener {
      * If it's not found then it will use the default ones.
      */
     @SuppressWarnings("Duplicates")
-    private void loadConfig(){
+    private void loadConfig() {
         Properties prop = new Properties();
         InputStream input = null;
         try {
-            try{
-                input = new FileInputStream("manager.properties");
-            }catch (IOException ex) {
-                String path = Manager.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-                String decodedPath = URLDecoder.decode(path, "UTF-8");
-                decodedPath = decodedPath.replace("Manager.jar","");
-                input = new FileInputStream(decodedPath + "/manager.properties");
-            }
+            String path = Manager.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+            String decodedPath = URLDecoder.decode(path, "UTF-8");
+            decodedPath = decodedPath.replace("Manager.jar", "");
+            input = new FileInputStream(decodedPath + "/manager.properties");
             prop.load(input);
             String debugLevel = prop.getProperty("debugLevel");
             switch (debugLevel) {
@@ -118,16 +110,18 @@ public class Manager implements MQTTListener {
             mqttPassword = prop.getProperty("mqttPassword");
             restURLMAAS = prop.getProperty("restURLMAAS");
             restURLBackBone = prop.getProperty("restURLBackBone");
+            currentMap = prop.getProperty("currentMap");
+            mapsPath = prop.getProperty("mapsPath");
             Log.logInfo("MANAGER", "Config loaded");
         } catch (IOException ex) {
             log = new Log(this.getClass(), Level.INFO);
-            Log.logWarning("MANAGER", "Could not read config file: " + ex);
+            Log.logWarning("MANAGER", "Could not read config file. Loading default settings. " + ex);
         } finally {
             if (input != null) {
                 try {
                     input.close();
                 } catch (IOException e) {
-                    Log.logWarning("MANAGER", "Could not read config file: " + e);
+                    Log.logWarning("MANAGER", "Could not read config file. Loading default settings. " + e);
                 }
             }
         }
@@ -202,7 +196,7 @@ public class Manager implements MQTTListener {
             } else {
                 Log.logConfig("MANAGER", "Vehicle with ID " + ID + " doesn't exist. Cannot set new location.");
             }
-        }else if (topic.matches("racecar/[0-9]+/available")) {
+        } else if (topic.matches("racecar/[0-9]+/available")) {
             long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
             if (vehicles.containsKey(ID)) {
                 vehicles.get(ID).setAvailable(Boolean.parseBoolean(message));
@@ -219,7 +213,7 @@ public class Manager implements MQTTListener {
     /**
      * Parses MQTT message received with specific route status update.
      *
-     * @param ID ID of the vehicle.
+     * @param ID      ID of the vehicle.
      * @param message Received MQTT message string to be parsed.
      */
     private void routeUpdate(long ID, String message) {
@@ -306,8 +300,8 @@ public class Manager implements MQTTListener {
      * REST GET server service to get a calculation cost of all available vehicles. It requests from each vehicle a calculation
      * of a possible route and returns a JSON containing all answers.
      *
-     * @param  startId Starting waypoint ID.
-     * @param  endId Ending waypoint ID.
+     * @param startId Starting waypoint ID.
+     * @param endId   Ending waypoint ID.
      * @return REST response of the type JSON containg all calculated costs of each vehicle.
      */
     @GET
@@ -447,10 +441,10 @@ public class Manager implements MQTTListener {
      * REST GET server service to make a vehicle do a job. It in return sends a MQTT message to the specified vehicle
      * to execute the job.
      *
-     * @param idJob ID of the job.
+     * @param idJob     ID of the job.
      * @param idVehicle ID of the vehicle
-     * @param idStart ID of starting waypoint of the route
-     * @param idEnd ID of starting ending of the route
+     * @param idStart   ID of starting waypoint of the route
+     * @param idEnd     ID of starting ending of the route
      */
     @GET
     @Path("executeJob/{idJob}/{idVehicle}/{idStart}/{idEnd}")
@@ -469,11 +463,11 @@ public class Manager implements MQTTListener {
                         jobSend(job.getIdVehicle(), job.getIdStart(), job.getIdEnd());
                         return Response.status(Response.Status.OK).build();
                     } else {
-                        response.sendError(HttpServletResponse.SC_NOT_FOUND,"No matching ending waypoint found");
+                        response.sendError(HttpServletResponse.SC_NOT_FOUND, "No matching ending waypoint found");
                         Log.logWarning("MANAGER", "Can't send route job as waypoints " + job.getIdStart() + " was not found.");
                     }
                 } else {
-                    response.sendError(HttpServletResponse.SC_NOT_FOUND,"No matching starting waypoint found");
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND, "No matching starting waypoint found");
                     Log.logWarning("MANAGER", "Can't send route job as waypoints " + job.getIdStart() + " was not found.");
                 }
             } else {
@@ -491,9 +485,9 @@ public class Manager implements MQTTListener {
     /**
      * Method to send a MQTT message to a specified vehicle to execute a job.
      *
-     * @param ID ID of the vehicle
+     * @param ID      ID of the vehicle
      * @param startID ID of starting waypoint of the route
-     * @param endID ID of endID waypoint of the route
+     * @param endID   ID of endID waypoint of the route
      */
     private void jobSend(long ID, long startID, long endID) {
         vehicles.get(ID).setOccupied(true);
@@ -502,13 +496,8 @@ public class Manager implements MQTTListener {
     }
 
     public static void main(String[] args) throws Exception {
-        if (args.length != 2) {
-            System.out.println("Need 2 arguments to run. Possible arguments: currentMap(String) mapsPath(String)");
-            System.exit(0);
-        } else if (args.length == 2) {
-            final Manager manager = new Manager(args[0], args[1]);
+            final Manager manager = new Manager(true);
             new TomCatLauncher().start();
 
-        }
     }
 }

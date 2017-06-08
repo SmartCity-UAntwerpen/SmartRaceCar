@@ -28,17 +28,15 @@ class SimDeployer implements TCPListener {
     private RESTUtils restUtils;
 
     private Log log; // logging instance
-    private final String jarPath; //Path where the jar files are located.
+    private String jarPath = ".\\release"; //Path where the jar files are located.
     private HashMap<Long, SimulatedVehicle> simulatedVehicles = new HashMap<>(); // Map of all simulated vehicles. Mapped by their ID.
     private HashMap<Long, WayPoint> wayPoints = new HashMap<>(); // Map of all loaded waypoints.
 
     /**
      * Module that handles all simulated vehicles and communicates with the SimWorker service to setup new
      * simulated F1 cars. It deploys and manages the '.jar' versions of the vehicle simulation.
-     *
-     * @param jarPath Path to where the jar files are located. (given by input parameter)
      */
-    private SimDeployer(String jarPath) throws IOException, InterruptedException {
+    private SimDeployer() throws IOException, InterruptedException {
         loadConfig();
         this.jarPath = jarPath;
         restUtils = new RESTUtils(restURL);
@@ -52,19 +50,15 @@ class SimDeployer implements TCPListener {
      * If it's not found then it will use the default ones.
      */
     @SuppressWarnings("Duplicates")
-    private void loadConfig(){
+    private void loadConfig() {
         Properties prop = new Properties();
         InputStream input = null;
         System.out.println(new File(".").getAbsolutePath());
         try {
-            try{
-                input = new FileInputStream("simdeployer.properties");
-            }catch (IOException ex) {
-                String path = SimDeployer.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-                String decodedPath = URLDecoder.decode(path, "UTF-8");
-                decodedPath = decodedPath.replace("SimDeployer.jar","");
-                input = new FileInputStream(decodedPath + "/simdeployer.properties");
-            }
+            String path = SimDeployer.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+            String decodedPath = URLDecoder.decode(path, "UTF-8");
+            decodedPath = decodedPath.replace("SimDeployer.jar", "");
+            input = new FileInputStream(decodedPath + "/simdeployer.properties");
             prop.load(input);
             String debugLevel = prop.getProperty("debugLevel");
             switch (debugLevel) {
@@ -82,17 +76,18 @@ class SimDeployer implements TCPListener {
                     break;
             }
             restURL = prop.getProperty("restURL");
+            jarPath = prop.getProperty("jarPath");
             serverPort = Integer.parseInt(prop.getProperty("serverPort"));
             Log.logInfo("SIMDEPLOYER", "Config loaded");
         } catch (IOException ex) {
             log = new Log(this.getClass(), Level.INFO);
-            Log.logWarning("SIMDEPLOYER", "Could not read config file: " + ex);
+            Log.logWarning("SIMDEPLOYER", "Could not read config file. Loading default settings. " + ex);
         } finally {
             if (input != null) {
                 try {
                     input.close();
                 } catch (IOException e) {
-                    Log.logWarning("SIMDEPLOYER", "Could not read config file: " + e);
+                    Log.logWarning("SIMDEPLOYER", "Could not read config file. Loading default settings. " + e);
                 }
             }
         }
@@ -152,8 +147,8 @@ class SimDeployer implements TCPListener {
      * Called when a simulated vehicle needs it's settings changed. Can be it's name, startpoint or speed.
      *
      * @param simulationID The ID of the vehicle that needs to be set.
-     * @param parameter The specific property parameter (name,startpoint or speed)
-     * @param argument the argument value of this property.
+     * @param parameter    The specific property parameter (name,startpoint or speed)
+     * @param argument     the argument value of this property.
      * @return A boolean to signify if the request could be handled or not. False means it could not be processed.
      */
     private boolean setVehicle(long simulationID, String parameter, String argument) {
@@ -164,7 +159,7 @@ class SimDeployer implements TCPListener {
                         simulatedVehicles.get(simulationID).setStartPoint(Long.parseLong(argument));
                         if (simulatedVehicles.get(simulationID).isDeployed()) {
                             simulatedVehicles.get(simulationID).setStartPoint(Long.parseLong(argument));
-                            if(!simulatedVehicles.get(simulationID).isAvailable())
+                            if (!simulatedVehicles.get(simulationID).isAvailable())
                                 simulatedVehicles.get(simulationID).setStartPoint();
                         }
                         Log.logInfo("SIMDEPLOYER", "Simulated Vehicle with simulation ID " + simulationID + " given starting point ID " + argument + ".");
@@ -307,12 +302,6 @@ class SimDeployer implements TCPListener {
 
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        if (args.length != 1) {
-            System.out.println("Need 1 arguments to run. Possible arguments: jarPath(String)");
-            System.exit(0);
-        } else if (args.length == 1) {
-            SimDeployer simDeployer = new SimDeployer(args[0]);
-        }
-
+            SimDeployer simDeployer = new SimDeployer();
     }
 }

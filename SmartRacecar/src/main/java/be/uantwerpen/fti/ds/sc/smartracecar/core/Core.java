@@ -88,19 +88,15 @@ class Core implements TCPListener, MQTTListener {
      * If it's not found then it will use the default ones.
      */
     @SuppressWarnings("Duplicates")
-    private void loadConfig(){
+    private void loadConfig() {
         Properties prop = new Properties();
         InputStream input = null;
         System.out.println(new File(".").getAbsolutePath());
         try {
-            try{
-                input = new FileInputStream("core.properties");
-            }catch (IOException ex) {
-                String path = Core.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-                String decodedPath = URLDecoder.decode(path, "UTF-8");
-                decodedPath = decodedPath.replace("Core.jar","");
-                input = new FileInputStream(decodedPath + "/core.properties");
-            }
+            String path = Core.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+            String decodedPath = URLDecoder.decode(path, "UTF-8");
+            decodedPath = decodedPath.replace("Core.jar", "");
+            input = new FileInputStream(decodedPath + "/core.properties");
             prop.load(input);
             String debugLevel = prop.getProperty("debugLevel");
             switch (debugLevel) {
@@ -125,13 +121,13 @@ class Core implements TCPListener, MQTTListener {
             Log.logInfo("CORE", "Config loaded");
         } catch (IOException ex) {
             log = new Log(this.getClass(), Level.INFO);
-            Log.logWarning("CORE", "Could not read config file: " + ex);
+            Log.logWarning("CORE", "Could not read config file. Loading default settings. " + ex);
         } finally {
             if (input != null) {
                 try {
                     input.close();
                 } catch (IOException e) {
-                    Log.logWarning("CORE", "Could not read config file: " + e);
+                    Log.logWarning("CORE", "Could not read config file. Loading default settings. " + e);
                 }
             }
         }
@@ -176,7 +172,7 @@ class Core implements TCPListener, MQTTListener {
     /**
      * Find the location of the maps.xml containing folder. Searches up to 3 levels deep.
      *
-     * @return  returns a String containing the location of the maps.xml's absolute path.
+     * @return returns a String containing the location of the maps.xml's absolute path.
      */
     private String findMapsFolder() {
         FileUtils fileUtils = new FileUtils();
@@ -616,7 +612,7 @@ class Core implements TCPListener, MQTTListener {
     public static void main(String[] args) throws IOException, InterruptedException {
 
         if (args.length == 0) {
-            System.out.println("Need 1 or 3 argument to run. Possible arguments: startpoint(int)(needed!) tcpclientport(int) tcpserverport(int)");
+            System.out.println("Need at least 1 or 3 argument to run. Possible arguments: startpoint(int)(needed!) tcpclientport(int) tcpserverport(int)");
             System.exit(0);
         } else if (args.length == 1) {
             if (!args[0].isEmpty()) startPoint = Long.parseLong(args[0]);
