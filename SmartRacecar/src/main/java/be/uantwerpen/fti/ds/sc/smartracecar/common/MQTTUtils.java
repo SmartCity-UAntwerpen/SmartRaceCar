@@ -12,6 +12,7 @@ public class MQTTUtils implements MqttCallback{
         this.listener = listener;
 
         options.setCleanSession(true);
+        options.setMaxInflight(100);
         options.setKeepAliveInterval(0);
         if(!username.equals("") && !password.equals("")){
             options.setUserName(username);
