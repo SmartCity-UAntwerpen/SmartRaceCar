@@ -1,5 +1,6 @@
 from location import Location
 
+import time
 import rospy
 from race.msg import drive_param
 from geometry_msgs.msg import PoseWithCovarianceStamped
@@ -62,6 +63,7 @@ def publish_initialpose(location):
 
         pub_initial_pose.publish(pose)
         i += 1
+        time.sleep(0.5)
 
     logger.log_debug("[ROSMODULE] Initial pose published three times")
     return
