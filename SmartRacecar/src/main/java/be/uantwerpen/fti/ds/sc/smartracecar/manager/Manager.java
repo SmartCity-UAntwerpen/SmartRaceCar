@@ -32,7 +32,7 @@ import java.util.logging.Level;
 public class Manager implements MQTTListener {
 
     //Standard settings (without config file loaded)
-    private boolean debugWithoutBackBone = true; // debug parameter to stop attempts to send or recieve messages from backbone.
+    private boolean debugWithoutBackBone = false; // debug parameter to stop attempts to send or recieve messages from backbone.
     private boolean debugWithoutMAAS = true; // debug parameter to stop attempts to send or recieve messages from MAAS
     private String mqttBroker = "tcp://143.129.39.151:1883"; // MQTT Broker URL
     private String mqqtUsername = "root"; // MQTT Broker Username
@@ -110,6 +110,7 @@ public class Manager implements MQTTListener {
                     break;
             }
             debugWithoutBackBone = Boolean.parseBoolean(prop.getProperty("debugWithoutBackBone"));
+            System.out.println(debugWithoutBackBone);
             debugWithoutMAAS = Boolean.parseBoolean(prop.getProperty("debugWithoutMAAS"));
             mqttBroker = "tcp://" + prop.getProperty("mqttBroker");
             mqqtUsername = prop.getProperty("mqqtUsername");
@@ -120,7 +121,7 @@ public class Manager implements MQTTListener {
             mapsPath = prop.getProperty("mapsPath");
             Log.logInfo("MANAGER", "Config loaded");
         } catch (IOException ex) {
-            log = new Log(this.getClass(), Level.INFO);
+            log = new Log(this.getClass(), Level.CONFIG);
             Log.logWarning("MANAGER", "Could not read config file. Loading default settings. " + ex);
         } finally {
             if (input != null) {
@@ -153,7 +154,7 @@ public class Manager implements MQTTListener {
                 Log.logConfig("MANAGER", "Added wayPoint with ID " + wayPoint.getID() + " and coordinates " + wayPoint.getX() + "," + wayPoint.getY() + "," + wayPoint.getZ() + "," + wayPoint.getW() + ".");
             }
         }
-        Log.logInfo("CORE", "All possible waypoints(" + wayPoints.size() + ") received.");
+        Log.logInfo("MANAGER", "All possible waypoints(" + wayPoints.size() + ") received.");
     }
 
     /**
