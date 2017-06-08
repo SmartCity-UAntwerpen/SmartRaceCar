@@ -32,13 +32,13 @@ import java.util.logging.Level;
 public class Manager implements MQTTListener {
 
     //Standard settings (without config file loaded)
-    private boolean debugWithoutBackBone = true; // debug parameter to stop attempts to send or recieve messages from backbone.
-    private boolean debugWithoutMAAS = true; // debug parameter to stop attempts to send or recieve messages from MAAS
+    private static boolean debugWithoutBackBone = true; // debug parameter to stop attempts to send or recieve messages from backbone.
+    private static boolean debugWithoutMAAS = true; // debug parameter to stop attempts to send or recieve messages from MAAS
     private String mqttBroker = "tcp://143.129.39.151:1883"; // MQTT Broker URL
     private String mqqtUsername = "root"; // MQTT Broker Username
     private String mqttPassword = "smartcity"; // MQTT Broker Password
-    private String restURLMAAS = "http://143.129.39.151:8090"; // REST Service URL to MAAS
-    private String restURLBackBone = "http://143.129.39.151:10000";// REST Service URL to BackBone.
+    private static String restURLMAAS = "http://143.129.39.151:8090"; // REST Service URL to MAAS
+    private static String restURLBackBone = "http://143.129.39.151:10000";// REST Service URL to BackBone.
 
     //Help services
     private static MQTTUtils mqttUtils;
