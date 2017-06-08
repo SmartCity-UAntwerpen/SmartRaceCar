@@ -120,7 +120,7 @@ public class Manager implements MQTTListener {
             mapsPath = prop.getProperty("mapsPath");
             Log.logInfo("MANAGER", "Config loaded");
         } catch (IOException ex) {
-            log = new Log(this.getClass(), Level.CONFIG);
+            log = new Log(this.getClass(), Level.INFO);
             Log.logWarning("MANAGER", "Could not read config file. Loading default settings. " + ex);
         } finally {
             if (input != null) {
@@ -370,7 +370,7 @@ public class Manager implements MQTTListener {
     @Produces("text/plain")
     public Response deleteVehicle(@PathParam("id") final long id, @Context HttpServletResponse response) throws IOException {
         if (vehicles.containsKey(id)) {
-            if (!debugWithoutBackBone) restUtilsBackBone.getTextPlain("delete/" + id);
+            if (!debugWithoutBackBone) restUtilsBackBone.getTextPlain("bot/delete/" + id);
             vehicles.remove(id);
             Log.logInfo("MANAGER", "Vehicle with ID " + id + " stopped. ID removed.");
             return Response.status(Response.Status.OK).build();
