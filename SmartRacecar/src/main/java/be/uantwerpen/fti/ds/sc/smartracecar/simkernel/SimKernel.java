@@ -1,6 +1,7 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.simkernel;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
+import com.github.lalyos.jfiglet.FigletFont;
 import com.google.gson.reflect.TypeToken;
 
 import java.io.File;
@@ -42,7 +43,12 @@ class SimKernel implements TCPListener {
      * @param serverPort Port to listen for messages of  Core. Defined by input arguments of main method.
      * @param clientPort Port to send messages to Core. Defined by input arguments of main method.
      */
-    private SimKernel(int serverPort, int clientPort) throws InterruptedException {
+    private SimKernel(int serverPort, int clientPort) throws InterruptedException, IOException {
+        String asciiArt1 = FigletFont.convertOneLine("SmartCity");
+        System.out.println(asciiArt1);
+        System.out.println("-------------------------------------------------------------------");
+        System.out.println("------------------ F1 Racecar SimKernel - v1.0 --------------------");
+        System.out.println("-------------------------------------------------------------------");
         loadConfig();
         log.logConfig("SIMKERNEL", "Startup parameters: TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
         restUtils = new RESTUtils(restURL);
@@ -62,7 +68,6 @@ class SimKernel implements TCPListener {
     private void loadConfig() {
         Properties prop = new Properties();
         InputStream input = null;
-        System.out.println(new File(".").getAbsolutePath());
         try {
             String path = SimKernel.class.getProtectionDomain().getCodeSource().getLocation().getPath();
             String decodedPath = URLDecoder.decode(path, "UTF-8");

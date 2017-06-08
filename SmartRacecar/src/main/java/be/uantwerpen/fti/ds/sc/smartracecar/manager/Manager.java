@@ -1,6 +1,7 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.manager;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
+import com.github.lalyos.jfiglet.FigletFont;
 import com.google.gson.reflect.TypeToken;
 import org.eclipse.paho.client.mqttv3.MqttException;
 
@@ -64,7 +65,12 @@ public class Manager implements MQTTListener {
      *
      * @param start help parameter to make a distinction between the two constructors
      */
-    public Manager(Boolean start) throws MqttException, IOException {
+    public Manager(Boolean start) throws MqttException, IOException, InterruptedException {
+        String asciiArt1 = FigletFont.convertOneLine("SmartCity");
+        System.out.println(asciiArt1);
+        System.out.println("-------------------------------------------------------------------");
+        System.out.println("-------------------- F1 Racecar Manager - v1.0 --------------------");
+        System.out.println("-------------------------------------------------------------------");
         loadConfig();
         Log.logConfig("MANAGER", "Startup parameters: Map: " + currentMap + " | Path to maps folder: " + mapsPath);
         restUtilsMAAS = new RESTUtils(restURLMAAS);

@@ -1,6 +1,7 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.simdeployer;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
+import com.github.lalyos.jfiglet.FigletFont;
 import com.google.gson.reflect.TypeToken;
 
 import java.io.File;
@@ -37,6 +38,11 @@ class SimDeployer implements TCPListener {
      * simulated F1 cars. It deploys and manages the '.jar' versions of the vehicle simulation.
      */
     private SimDeployer() throws IOException, InterruptedException {
+        String asciiArt1 = FigletFont.convertOneLine("SmartCity");
+        System.out.println(asciiArt1);
+        System.out.println("-------------------------------------------------------------------");
+        System.out.println("----------------- F1 Racecar SimDeployer - v1.0 -------------------");
+        System.out.println("-------------------------------------------------------------------");
         loadConfig();
         this.jarPath = jarPath;
         restUtils = new RESTUtils(restURL);
@@ -53,7 +59,6 @@ class SimDeployer implements TCPListener {
     private void loadConfig() {
         Properties prop = new Properties();
         InputStream input = null;
-        System.out.println(new File(".").getAbsolutePath());
         try {
             String path = SimDeployer.class.getProtectionDomain().getCodeSource().getLocation().getPath();
             String decodedPath = URLDecoder.decode(path, "UTF-8");

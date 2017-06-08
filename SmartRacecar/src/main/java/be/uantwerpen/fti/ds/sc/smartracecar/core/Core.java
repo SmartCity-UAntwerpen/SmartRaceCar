@@ -2,6 +2,7 @@ package be.uantwerpen.fti.ds.sc.smartracecar.core;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.Map;
+import com.github.lalyos.jfiglet.FigletFont;
 import com.google.gson.reflect.TypeToken;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -65,6 +66,11 @@ class Core implements TCPListener, MQTTListener {
      * @param clientPort Port to send messages to SimKernel/Roskernel. Defined by input arguments of main method.
      */
     private Core(long startPoint, int serverPort, int clientPort) throws InterruptedException, IOException {
+        String asciiArt1 = FigletFont.convertOneLine("SmartCity");
+        System.out.println(asciiArt1);
+        System.out.println("------------------------------------------------------------------");
+        System.out.println("--------------------- F1 Racecar Core - v1.0 ---------------------");
+        System.out.println("------------------------------------------------------------------");
         loadConfig();
         Log.logConfig("CORE", "Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
         restUtils = new RESTUtils(restURL);
@@ -91,7 +97,6 @@ class Core implements TCPListener, MQTTListener {
     private void loadConfig() {
         Properties prop = new Properties();
         InputStream input = null;
-        System.out.println(new File(".").getAbsolutePath());
         try {
             String path = Core.class.getProtectionDomain().getCodeSource().getLocation().getPath();
             String decodedPath = URLDecoder.decode(path, "UTF-8");
