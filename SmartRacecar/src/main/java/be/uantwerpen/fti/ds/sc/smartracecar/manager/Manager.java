@@ -32,7 +32,7 @@ import java.util.logging.Level;
 public class Manager implements MQTTListener {
 
     //Standard settings (without config file loaded)
-    private boolean debugWithoutBackBone = false; // debug parameter to stop attempts to send or recieve messages from backbone.
+    private boolean debugWithoutBackBone = true; // debug parameter to stop attempts to send or recieve messages from backbone.
     private boolean debugWithoutMAAS = true; // debug parameter to stop attempts to send or recieve messages from MAAS
     private String mqttBroker = "tcp://143.129.39.151:1883"; // MQTT Broker URL
     private String mqqtUsername = "root"; // MQTT Broker Username
@@ -110,7 +110,6 @@ public class Manager implements MQTTListener {
                     break;
             }
             debugWithoutBackBone = Boolean.parseBoolean(prop.getProperty("debugWithoutBackBone"));
-            System.out.println(debugWithoutBackBone);
             debugWithoutMAAS = Boolean.parseBoolean(prop.getProperty("debugWithoutMAAS"));
             mqttBroker = "tcp://" + prop.getProperty("mqttBroker");
             mqqtUsername = prop.getProperty("mqqtUsername");
