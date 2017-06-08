@@ -16,7 +16,7 @@ public class Cost {
      * @param status Status describing the availabity of the vehicle.
      * @param weightToStart Weight from current position to start position of route. In Seconds.
      * @param weight Weight from start position to end position of route. In Seconds.
-     * @param idVehicle ID of the vehicle being requested.
+     * @param idVehicle ID of the vehicle being requested.f
      */
     public Cost(boolean status, int weightToStart, int weight, Long idVehicle){
         this.status = status;

@@ -4,7 +4,6 @@ import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.github.lalyos.jfiglet.FigletFont;
 import com.google.gson.reflect.TypeToken;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -52,7 +51,7 @@ class SimKernel implements TCPListener {
         loadConfig();
         log.logConfig("SIMKERNEL", "Startup parameters: TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
         restUtils = new RESTUtils(restURL);
-        tcpUtils = new TCPUtils(clientPort, serverPort, this, false);
+        tcpUtils = new TCPUtils(clientPort, serverPort, this);
         tcpUtils.start();
         while (!connected) {
             log.logWarning("SIMKERNEL", "Waiting for connection with vehicle Core on port " + serverPort);
@@ -195,7 +194,7 @@ class SimKernel implements TCPListener {
             points.add(nextPoint);
             Type typeOfCost = new TypeToken<Cost>() {
             }.getType();
-            cost = (Cost) JSONUtils.getObjectWithKeyWord(restUtils.getJSONPostJSON("calcWeight", JSONUtils.arrayToJSONString(points)), typeOfCost);
+            cost = (Cost) JSONUtils.getObjectWithKeyWord(restUtils.postJSONGetJSON("calcWeight", JSONUtils.arrayToJSONString(points)), typeOfCost);
         }
         Log.logInfo("SIMKERNEL", "Travel time to destination is " + cost.getWeight() + "s.");
         for (int i = 0; i <= 10; i++) {
@@ -229,7 +228,7 @@ class SimKernel implements TCPListener {
         if (!debugWithoutRosServer) {
             Type typeOfCost = new TypeToken<Cost>() {
             }.getType();
-            cost = (Cost) JSONUtils.getObjectWithKeyWord(restUtils.getJSONPostJSON("calcWeight", JSONUtils.arrayToJSONString(allPoints)), typeOfCost);
+            cost = (Cost) JSONUtils.getObjectWithKeyWord(restUtils.postJSONGetJSON("calcWeight", JSONUtils.arrayToJSONString(allPoints)), typeOfCost);
         }
         Log.logInfo("SIMKERNEL", "Calculated cost between current and start: " + cost.getWeightToStart() + "s. Cost to end : " + cost.getWeight() + "s.");
         tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("cost", cost));
@@ -252,7 +251,7 @@ class SimKernel implements TCPListener {
         if (!debugWithoutRosServer) {
             Type typeOfCost = new TypeToken<Cost>() {
             }.getType();
-            cost = (Cost) JSONUtils.getObjectWithKeyWord(restUtils.getJSONPostJSON("calcWeight", JSONUtils.arrayToJSONString(allPoints)), typeOfCost);
+            cost = (Cost) JSONUtils.getObjectWithKeyWord(restUtils.postJSONGetJSON("calcWeight", JSONUtils.arrayToJSONString(allPoints)), typeOfCost);
         }
         Log.logInfo("SIMKERNEL", "Calculated timing between current and start: " + cost.getWeightToStart() + "s. Timing to end : " + cost.getWeight() + "s.");
         tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("costtiming", cost));

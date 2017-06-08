@@ -10,16 +10,30 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 
+/**
+ * Help model to deal with REST client requests. Uses Jersey library.
+ */
 public class RESTUtils {
 
-    private WebTarget webTarget;
+    private WebTarget webTarget; // URL to the domain of the REST service that is being connected to.
 
 
+    /**
+     * Help model to deal with REST client requests. Uses Jersey library.
+     *
+     * @param URL to the REST service that is being connected to.
+     */
     public RESTUtils(String URL) {
         Client client = ClientBuilder.newClient();
         webTarget = client.target(URL);
     }
 
+    /**
+     * REST GET request to receive a response of the type Text Plain.
+     *
+     * @param URL Path of the GET request.
+     * @return  REST response of the type Text Plain.
+     */
     public String getTextPlain(String URL) {
         WebTarget resourceWebTarget = webTarget.path(URL);
         Invocation.Builder invocationBuilder = resourceWebTarget.request("text/plain");
@@ -37,6 +51,11 @@ public class RESTUtils {
         return responseString;
     }
 
+    /**
+     * REST GET request. Doesn't expect any return.
+     *
+     * @param URL Path of the GET request.
+     */
     public void getCall(String URL) {
         WebTarget resourceWebTarget = webTarget.path(URL);
         Invocation.Builder invocationBuilder = resourceWebTarget.request("text/plain");
@@ -51,6 +70,14 @@ public class RESTUtils {
         checkForError(response,resourceWebTarget.getUri());
     }
 
+    /**
+     * REST GET request to receive a response of the type Text Plain.
+     * Uses queryParams.
+     *
+     * @param URL Path of the GET request.
+     * @param queryParams A HashMap of all query parameters.
+     * @return  REST response of the type Text Plain.
+     */
     public String getTextPlain(String URL,HashMap<String,String> queryParams) {
         WebTarget resourceWebTarget = webTarget.path(URL);
         for (HashMap.Entry<String, String> entry : queryParams.entrySet()) {
@@ -72,6 +99,12 @@ public class RESTUtils {
         return responseString;
     }
 
+    /**
+     * REST GET request to receive a response of the type JSON.
+     *
+     * @param URL Path of the GET request.
+     * @return  REST response of the type JSON.
+     */
     public String getJSON(String URL){
         WebTarget resourceWebTarget = webTarget.path(URL);
         Invocation.Builder invocationBuilder = resourceWebTarget.request("application/json");
@@ -89,7 +122,14 @@ public class RESTUtils {
         return responseString;
     }
 
-    public String getJSONPostJSON(String URL,String jsonString){
+    /**
+     * REST POST request of the type JSON to receive a response of the type JSON.
+     *
+     * @param URL Path of the GET request.
+     * @param jsonString The JSON string to be posted.
+     * @return  REST response of the type JSON.
+     */
+    public String postJSONGetJSON(String URL, String jsonString){
         WebTarget resourceWebTarget = webTarget.path(URL);
         Invocation.Builder invocationBuilder =  resourceWebTarget.request("application/json");
         Log.logConfig("REST","Attempting POST(JSON) request with URL:" + resourceWebTarget.getUri() + " and with json:" + jsonString);
@@ -106,6 +146,14 @@ public class RESTUtils {
         return responseString;
     }
 
+    /**
+     * REST GET request of the receive a response of the Octet-stream to download a file.
+     *
+     * @param URL Path of the GET request.
+     * @param folder The path to download the file towards.
+     * @param fileName Filename the downloaded file should get.
+     * @param fileExtention File extention the downloaded file should get.
+     */
     public void getFile(String URL,String folder, String fileName,String fileExtention){
         java.nio.file.Path out = Paths.get(folder + "/" + fileName + "." + fileExtention);
         WebTarget resourceWebTarget = webTarget.path(URL);
@@ -127,6 +175,13 @@ public class RESTUtils {
         }
     }
 
+    /**
+     * Help function to analyze the REST response to get the HTTP status and check which code it was. If it was an
+     * error code this method will throw the right exception.
+     *
+     * @param response The REST response.
+     * @param url The URL that was being reached.
+     */
     private void checkForError(Response response,java.net.URI url) {
         if (response.getStatus() != Response.Status.OK.getStatusCode()) {
             Response.Status status = Response.Status.fromStatusCode(response.getStatus());

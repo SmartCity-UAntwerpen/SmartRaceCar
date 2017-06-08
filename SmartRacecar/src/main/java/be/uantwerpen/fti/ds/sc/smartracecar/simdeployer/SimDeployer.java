@@ -4,7 +4,6 @@ import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.github.lalyos.jfiglet.FigletFont;
 import com.google.gson.reflect.TypeToken;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,7 +46,7 @@ class SimDeployer implements TCPListener {
         this.jarPath = jarPath;
         restUtils = new RESTUtils(restURL);
         requestWaypoints();
-        tcpUtils = new TCPUtils(serverPort, this, true);
+        tcpUtils = new TCPUtils(serverPort, this);
         tcpUtils.start();
     }
 

@@ -78,7 +78,7 @@ class Core implements TCPListener, MQTTListener {
         register();
         mqttUtils = new MQTTUtils(mqttBroker, mqqtUsername, mqttPassword, this);
         mqttUtils.subscribeToTopic("racecar/" + ID + "/#");
-        tcpUtils = new TCPUtils(clientPort, serverPort, this, false);
+        tcpUtils = new TCPUtils(clientPort, serverPort, this);
         tcpUtils.start();
         if (!debugWithoutRosKernel) {
             connectSend();
