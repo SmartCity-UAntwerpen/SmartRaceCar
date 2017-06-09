@@ -180,7 +180,7 @@ class SimKernel implements TCPListener {
     /**
      * Method called for when a job request is received from the core. It contains the next waypoint to drive to.
      * Given we are dealing with a simulated vehicle a request will be made to the RosServer to calculate how long
-     * the actual driving would take to the next waypoint. Then it will use this estimated time to simulate the driving
+     * the actual driving would take to the next waypoint. Then it will use this estimated time to simulate the driving.
      *
      * @param nextPoint Coordinates of the next waypoint to drive to.      *
      */
