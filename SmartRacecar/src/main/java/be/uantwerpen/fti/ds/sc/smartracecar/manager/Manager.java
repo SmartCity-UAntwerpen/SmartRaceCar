@@ -281,11 +281,9 @@ public class Manager implements MQTTListener {
             long id;
             if (debugWithoutBackBone) {
                 id = (long) vehicles.size();
-                System.out.println("test");
 
             } else {
-                id = Long.parseLong(restUtilsBackBone.getJSON("bot/newBot/car"));                System.out.println("test");
-                System.out.println("kaka");
+                id = Long.parseLong(restUtilsBackBone.getJSON("bot/newBot/car"));
             }
             vehicles.put(id, new Vehicle(id, startWayPoint));
             Log.logInfo("MANAGER", "New vehicle registered. Given ID " + id + ". Has starting waypoint " + startWayPoint + ".");
@@ -317,7 +315,7 @@ public class Manager implements MQTTListener {
                     locations.add(vehicle.getLocation());
                 }
             }
-            Log.logInfo("MANAGER", "All vehicle Locations request has been completed.");
+            Log.logConfig("MANAGER", "All vehicle Locations request has been completed.");
             return Response.status(Response.Status.OK).
                     entity(JSONUtils.arrayToJSONString(locations)).
                     type("application/json").
