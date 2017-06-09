@@ -159,10 +159,10 @@ public class Manager implements MQTTListener {
      */
     private void loadWayPoints() {
         if (debugWithoutBackBone) { // Temp waypoints for when they can't be requested from back-end services.
-            wayPoints.put((long) 46, new WayPoint(8, (float) 0.5, (float) 0, (float) -1, (float) 0.02));
-            wayPoints.put((long) 47, new WayPoint(9, (float) -13.4, (float) -0.53, (float) 0.71, (float) 0.71));
-            wayPoints.put((long) 48, new WayPoint(10, (float) -27.14, (float) -1.11, (float) -0.3, (float) 0.95));
-            wayPoints.put((long) 49, new WayPoint(11, (float) -28.25, (float) -9.19, (float) -0.71, (float) 0.71));
+            wayPoints.put((long) 46, new WayPoint(46, (float) 0.5, (float) 0, (float) -1, (float) 0.02));
+            wayPoints.put((long) 47, new WayPoint(47, (float) -13.4, (float) -0.53, (float) 0.71, (float) 0.71));
+            wayPoints.put((long) 48, new WayPoint(48, (float) -27.14, (float) -1.11, (float) -0.3, (float) 0.95));
+            wayPoints.put((long) 49, new WayPoint(49, (float) -28.25, (float) -9.19, (float) -0.71, (float) 0.71));
         } else {
             String jsonString = restUtilsBackBone.getJSON("map/stringmapjson/car");
             JSONUtils.isJSONValid(jsonString);
