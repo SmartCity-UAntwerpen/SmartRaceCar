@@ -256,15 +256,14 @@ class Core implements TCPListener, MQTTListener {
      */
     private void requestMap() throws IOException {
         String mapName = restUtils.getTextPlain("getmapname");
-        //String mapName = "zbuilding";
         if (loadedMaps.containsKey(mapName)) {
             Log.logInfo("CORE", "Current used map '" + mapName + "' found in folder, setting as current map.");
             if (!debugWithoutRosKernel)
                 tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", loadedMaps.get(mapName)));
         } else {
             Log.logConfig("CORE", "Current used map '" + mapName + "' not found. Downloading...");
-            restUtils.getFile("getmappgm/" + findMapsFolder(), "maps", mapName, "pgm");
-            restUtils.getFile("getmapyaml/" + findMapsFolder(), "maps", mapName, "yaml");
+            restUtils.getFile("getmappgm/" + mapName, findMapsFolder(), mapName, "pgm");
+            restUtils.getFile("getmapyaml/" + mapName, findMapsFolder(), mapName, "yaml");
             Map map = new Map(mapName);
             try {
                 DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
