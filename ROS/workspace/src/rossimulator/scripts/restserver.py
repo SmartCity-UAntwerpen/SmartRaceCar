@@ -65,8 +65,8 @@ class CalculateCost:
         print "[CALCCOST][6] Posestamped calculated"
         print "------"
 
-        time_curstart = calccostsim.delegate_cost(current_posestamped, start_posestamped, 0.3, 4.0)
-        time_startgoal = calccostsim.delegate_cost(start_posestamped, goal_posestamped, 0.3, 4.0)
+        time_curstart = calccostsim.delegate_cost(current_posestamped, start_posestamped, 0.3, 1.5)
+        time_startgoal = calccostsim.delegate_cost(start_posestamped, goal_posestamped, 0.3, 1.5)
 
         print "[CALCCOST][7] Time current start: " + str(time_curstart)
         print "[CALCCOST][8] Time start goal: " + str(time_startgoal)
