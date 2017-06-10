@@ -180,7 +180,7 @@ class SimKernel implements TCPListener {
     /**
      * Method called for when a job request is received from the core. It contains the next waypoint to drive to.
      * Given we are dealing with a simulated vehicle a request will be made to the RosServer to calculate how long
-     * the actual driving would take to the next waypoint. Then it will use this estimated time to simulate the driving
+     * the actual driving would take to the next waypoint. Then it will use this estimated time to simulate the driving.
      *
      * @param nextPoint Coordinates of the next waypoint to drive to.      *
      */
@@ -197,14 +197,16 @@ class SimKernel implements TCPListener {
             cost = (Cost) JSONUtils.getObjectWithKeyWord(restUtils.postJSONGetJSON("calcWeight", JSONUtils.arrayToJSONString(points)), typeOfCost);
         }
         Log.logInfo("SIMKERNEL", "Travel time to destination is " + cost.getWeight() + "s.");
-        for (int i = 0; i <= 10; i++) {
-            try {
-                Thread.sleep((cost.getWeight() * 1000) / 10);
-                Location location = new Location(0, 0, 0, i * 10);
-                tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("percentage", location));
-                Log.logInfo("SIMKERNEL", "travelled " + i * 10 + "% of total route.");
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        if (cost.getWeight() != 0) {
+            for (int i = 0; i <= 20; i++) {
+                try {
+                    Thread.sleep((cost.getWeight() * 1000) / 20);
+                    Location location = new Location(0, 0, 0, i * 5);
+                    tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("percentage", location));
+                    Log.logInfo("SIMKERNEL", "travelled " + i * 5 + "% of total route.");
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
         wayPointReached();
