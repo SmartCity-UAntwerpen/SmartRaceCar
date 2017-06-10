@@ -43,7 +43,7 @@ currentz = 3
 currentw = 4
 
 navplan_tolerance = 0.5
-navplan_speed = 4.0
+navplan_speed = 1.5
 
 navstack_speed = 4.0
 
