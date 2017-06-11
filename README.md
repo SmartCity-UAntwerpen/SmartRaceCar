@@ -1,5 +1,5 @@
 # SmartRacecar
-Project for the SmartCity-project.
+Project for the SmartCity-project developing all systems for the F1 RaceCar that is self-driving using offline maps and LIDAR.
 
 ## Infrastructure
 The SmartCar consists of a set of Java-Modules which contain the management, simulation of a RaceCar and high-level Core modules of the RaceCar. The RaceCar itself is a ROS operated vehicle. 
