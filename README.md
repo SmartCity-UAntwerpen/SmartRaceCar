@@ -1,7 +1,7 @@
-![F1 RaceCar](http://i.imgur.com/fB1RHbZ.png)
 <p align="center"> 
 <img src="http://i.imgur.com/fB1RHbZ.png">
 </p>
+
 # SmartRacecar
 Project for the SmartCity-project developing all systems for the F1 RaceCar that is self-driving using offline maps and LIDAR.
 
