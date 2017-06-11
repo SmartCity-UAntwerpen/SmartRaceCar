@@ -15,6 +15,7 @@ The high level modules that will handle all high level functions of the smartrac
  - Has 4 build .jar's for the Core and Manager modules in release folder. Build with Maven. 
  - Has external properties files found in the release folder for when Jar's are used outside of Intelij. (When used in IntelliJ it will default to hardcoded parameters defined in the class).
  - Requires startup parameter of the startlocation (number ID of waypoint) and listener(server) and sending(client) ports for the Core, and listener(server) and sending(client) ports for the Simkernel.
+ - JavaDoc is included in the JavaDoc folder to explain all classes,variables and methods in detail.
  
 ## Developed by
 
