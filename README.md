@@ -15,3 +15,10 @@ The SmartCar consists of a set of Java-Modules which contain the management, sim
 ## What is in this GIT
 * A IntelliJ IDEA project for all Java modules (Manager,SimDeployer, SimKernel and Core). Using Maven for dependencies and building. All runconfigurations and configuration files are included. 
 * ROS nodes for the JavaLinker and ROS-Server.
+
+## Developed by
+
+Jansen Wouter,
+Jens de Hoog
+
+University of Antwerp - 2017
