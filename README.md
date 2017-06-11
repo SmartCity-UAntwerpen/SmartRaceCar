@@ -1,5 +1,5 @@
 <p align="center"> 
-<img src="http://i.imgur.com/fB1RHbZ.png" style="width: 200px;">
+<img src="http://i.imgur.com/fB1RHbZ.png" style="width: 50px;">
 </p>
 
 # SmartRacecar
