@@ -155,7 +155,7 @@ public class RESTUtils {
      * @param fileExtention File extention the downloaded file should get.
      */
     public void getFile(String URL,String folder, String fileName,String fileExtention){
-        java.nio.file.Path out = Paths.get(folder + "/" + fileName + "." + fileExtention);
+        java.nio.file.Path out = Paths.get(folder);
         WebTarget resourceWebTarget = webTarget.path(URL);
         Invocation.Builder invocationBuilder = resourceWebTarget.request("application/octet-stream");
         Response response;
