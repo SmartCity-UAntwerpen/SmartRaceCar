@@ -51,4 +51,8 @@ class Job {
     Long getIdVehicle() {
         return idVehicle;
     }
+
+    public Long getIdJob() {
+        return idJob;
+    }
 }

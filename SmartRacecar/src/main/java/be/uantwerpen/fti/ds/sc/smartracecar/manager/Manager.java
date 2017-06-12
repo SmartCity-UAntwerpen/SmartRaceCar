@@ -248,7 +248,7 @@ public class Manager implements MQTTListener {
             case "done":
                 vehicles.get(ID).setOccupied(false);
                 if (!debugWithoutMAAS) {
-                    restUtilsMAAS.getTextPlain("completeJob/" + ID);
+                    restUtilsMAAS.getTextPlain("completeJob/" + vehicles.get(ID).getJob().getIdJob());
                 }
                 vehicles.get(ID).getLocation().setPercentage(100);
                 Log.logInfo("MANAGER", "Vehicle with ID " + ID + " has completed his route.");
@@ -483,6 +483,7 @@ public class Manager implements MQTTListener {
             if (!vehicles.get(job.getIdVehicle()).getOccupied() && vehicles.get(job.getIdVehicle()).isAvailable()) {
                 if (wayPoints.containsKey(job.getIdStart())) {
                     if (wayPoints.containsKey(job.getIdEnd())) {
+                        vehicles.get(job.getIdVehicle()).setJob(job);
                         Location location = vehicles.get(job.getIdVehicle()).getLocation();
                         location.setIdStart(job.getIdStart());
                         location.setIdEnd(job.getIdEnd());

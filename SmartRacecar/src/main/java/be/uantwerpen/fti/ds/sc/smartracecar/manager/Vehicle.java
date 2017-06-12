@@ -11,7 +11,7 @@ class Vehicle {
     private Location location; // Location of the vehicle. Containing information on it's route progress.
     private boolean occupied = false; // If the vehicle is occupied by a current route job.
     private boolean available = true; // If the vehicle is available for jobs or other requests.
-
+    private Job job;
     /**
      * Model that describes a F1 vehicle.
      *
@@ -84,5 +84,13 @@ class Vehicle {
      */
     boolean isAvailable() {
         return available;
+    }
+
+    public Job getJob() {
+        return job;
+    }
+
+    public void setJob(Job job) {
+        this.job = job;
     }
 }
