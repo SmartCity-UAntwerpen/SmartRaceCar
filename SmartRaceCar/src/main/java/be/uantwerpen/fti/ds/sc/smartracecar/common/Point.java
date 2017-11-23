@@ -60,4 +60,17 @@ public class Point {
     public float getZ() {
         return z;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Point point = (Point) o;
+
+        if (Float.compare(point.x, x) != 0) return false;
+        if (Float.compare(point.y, y) != 0) return false;
+        if (Float.compare(point.z, z) != 0) return false;
+        return Float.compare(point.w, w) == 0;
+    }
 }

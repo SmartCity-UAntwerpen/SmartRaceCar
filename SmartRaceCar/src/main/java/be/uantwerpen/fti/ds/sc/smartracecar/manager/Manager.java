@@ -36,11 +36,11 @@ public class Manager implements MQTTListener {
     //Standard settings (without config file loaded)
     private static boolean debugWithoutBackBone = true; // debug parameter to stop attempts to send or recieve messages from backbone.
     private static boolean debugWithoutMAAS = true; // debug parameter to stop attempts to send or recieve messages from MAAS
-    private String mqttBroker = "tcp://143.129.39.151:1883"; // MQTT Broker URL
+    private String mqttBroker = "tcp://143.129.39.155:1883"; // MQTT Broker URL
     private String mqqtUsername = "root"; // MQTT Broker Username
     private String mqttPassword = "smartcity"; // MQTT Broker Password
-    private static String restURLMAAS = "http://143.129.39.151:8090"; // REST Service URL to MAAS
-    private static String restURLBackBone = "http://143.129.39.151:10000";// REST Service URL to BackBone.
+    private static String restURLMAAS = "http://143.129.39.155:8090"; // REST Service URL to MAAS
+    private static String restURLBackBone = "http://143.129.39.155:10000";// REST Service URL to BackBone.
 
     //Help services
     private static MQTTUtils mqttUtils;
@@ -52,7 +52,7 @@ public class Manager implements MQTTListener {
     private static HashMap<Long, WayPoint> wayPoints = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
     private static HashMap<Long, Vehicle> vehicles = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
     private static String currentMap = "zbuilding"; // Information on the currently used map.
-    private static String mapsPath = ".\\release\\maps"; // Path to the location of the maps.xml file where maps are stored.
+    private static String mapsPath = "C:\\maps"; // Path to the location of the maps.xml file where maps are stored. TODO: relative pad maken
     private static ArrayList<Cost> costs = new ArrayList<>(); // Contains all currently received calculated costs when a cost request was made.
 
     /**
@@ -429,6 +429,7 @@ public class Manager implements MQTTListener {
                 output.write(data);
                 output.flush();
             } catch (Exception e) {
+                System.out.println("error " + e);
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, mapname + ".pgm not found");
             }
         };

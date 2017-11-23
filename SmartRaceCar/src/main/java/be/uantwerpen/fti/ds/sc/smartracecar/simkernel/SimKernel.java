@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -21,7 +22,7 @@ class SimKernel implements TCPListener {
 
     //Standard settings (without config file loaded)
     private boolean debugWithoutRosServer = false; // debug parameter for using this module without a connected RosSever.
-    private String restURL = "http://143.129.39.151:8084"; // REST Service URL to RosServer
+    private String restURL = "http://143.129.39.155:8084"; // REST Service URL to RosServer
     private static int serverPort = 5006;// Standard TCP Port to listen on for messages from Core.
     private static int clientPort = 5005; // Standard TCP Port to send to messages to SimKernel/RosKernel.
 
@@ -35,6 +36,7 @@ class SimKernel implements TCPListener {
     private Map map; // The currently used map.
     private WayPoint startPoint; // The point where it's at the start. Received from the core at the start.
     private Point currentPosition; // The point where it's currently positioned at or closest to.
+    private HashMap<ArrayList<Point>, Cost> calculatedCosts; //The costs between two waypoints that were previously calculated
 
     /**
      * Module that simulates the low level ROS element of the F1 car. It simulates all it's aspects.
@@ -53,6 +55,7 @@ class SimKernel implements TCPListener {
         restUtils = new RESTUtils(restURL);
         tcpUtils = new TCPUtils(clientPort, serverPort, this);
         tcpUtils.start();
+        calculatedCosts = new HashMap<>();
         while (!connected) {
             log.logWarning("SIMKERNEL", "Waiting for connection with vehicle Core on port " + serverPort);
             Thread.sleep(1000);
@@ -138,6 +141,7 @@ class SimKernel implements TCPListener {
                     break;
                 case "currentMap":
                     map = (Map) JSONUtils.getObjectWithKeyWord(message, Map.class);
+                    calculatedCosts.clear();
                     Log.logInfo("SIMKERNEL", "Map set to '" + map.getName() + "'.");
                     break;
                 case "nextWayPoint":
@@ -222,16 +226,7 @@ class SimKernel implements TCPListener {
      * @param points List of the Point object class containing the 2 points to calculate the weights. (starting and end)
      */
     private void calculateCost(ArrayList<Point> points) {
-        ArrayList<Point> allPoints = new ArrayList<>();
-        allPoints.add(currentPosition);
-        allPoints.addAll(points);
-        Log.logInfo("SIMKERNEL", "Cost request received. Requesting calculation from ROS Server.");
-        Cost cost = new Cost(false, 5, 5, (long) 0);
-        if (!debugWithoutRosServer) {
-            Type typeOfCost = new TypeToken<Cost>() {
-            }.getType();
-            cost = (Cost) JSONUtils.getObjectWithKeyWord(restUtils.postJSONGetJSON("calcWeight", JSONUtils.arrayToJSONString(allPoints)), typeOfCost);
-        }
+        Cost cost = calcWeightROS(points);
         Log.logInfo("SIMKERNEL", "Calculated cost between current and start: " + cost.getWeightToStart() + "s. Cost to end : " + cost.getWeight() + "s.");
         tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("cost", cost));
     }
@@ -245,18 +240,42 @@ class SimKernel implements TCPListener {
      * @param points List of the Point object class containing the 2 points to calculate the timings. (starting and end)
      */
     private void calculateTiming(ArrayList<Point> points) {
+        Cost cost = calcWeightROS(points);
+        Log.logInfo("SIMKERNEL", "Calculated timing between current and start: " + cost.getWeightToStart() + "s. Timing to end : " + cost.getWeight() + "s.");
+        tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("costtiming", cost));
+    }
+
+    /**
+     * This method is used by calculateCost en calculateTiming to request the weight between waypoints from a Ros server.
+     * If the same request was made previously, the cost will be returned from a local list.
+     * @param points List of the Point object class containing the 2 points to calculate the timings. (starting and end)
+     * @return object of the Cost class which contains the calculated costs
+     */
+    private Cost calcWeightROS(ArrayList<Point> points)
+    {
         ArrayList<Point> allPoints = new ArrayList<>();
         allPoints.add(currentPosition);
         allPoints.addAll(points);
-        Log.logInfo("SIMKERNEL", "Timing request received. Requesting calculation from ROS Server.");
+        Log.logInfo("SIMKERNEL", "Cost request received. Requesting calculation from ROS Server.");
         Cost cost = new Cost(false, 5, 5, (long) 0);
         if (!debugWithoutRosServer) {
-            Type typeOfCost = new TypeToken<Cost>() {
-            }.getType();
-            cost = (Cost) JSONUtils.getObjectWithKeyWord(restUtils.postJSONGetJSON("calcWeight", JSONUtils.arrayToJSONString(allPoints)), typeOfCost);
+            for (ArrayList<Point> list: calculatedCosts.keySet()) { // The containsKey method from the HashMap class doesn't correctly compare two ArrayLists
+                if(list.equals(allPoints)) {
+                    allPoints = list;
+                    break; }
+            }
+            if(calculatedCosts.containsKey(allPoints)) { //a request to the ROSkernel is intensive and needs to be avoided if possible
+                Log.logConfig("SIMKERNEL", "Loaded cost locally from previously calculated costs");
+                cost=calculatedCosts.get(allPoints);
+            }else {
+                Type typeOfCost = new TypeToken<Cost>() {
+                }.getType();
+                cost = (Cost) JSONUtils.getObjectWithKeyWord(restUtils.postJSONGetJSON("calcWeight", JSONUtils.arrayToJSONString(allPoints)), typeOfCost);
+                calculatedCosts.put(allPoints,cost);
+                Log.logConfig("SIMKERNEL", "Cost was requested from ROSserver and added to local costs.");
+            }
         }
-        Log.logInfo("SIMKERNEL", "Calculated timing between current and start: " + cost.getWeightToStart() + "s. Timing to end : " + cost.getWeight() + "s.");
-        tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("costtiming", cost));
+        return cost;
     }
 
     public static void main(String[] args) throws Exception {

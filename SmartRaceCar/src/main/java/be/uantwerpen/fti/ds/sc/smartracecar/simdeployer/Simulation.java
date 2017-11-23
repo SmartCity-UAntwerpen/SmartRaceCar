@@ -31,6 +31,7 @@ class Simulation {
      */
     boolean start(List<String> runArguments) {
         this.runArguments = runArguments;
+        System.out.println(runArguments);
         if (!running) {
             thread = new Thread(new CoreProcess());
             thread.start();

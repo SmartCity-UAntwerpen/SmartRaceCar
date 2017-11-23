@@ -60,4 +60,18 @@ public class Cost {
     public int getWeight() {
         return weight;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Cost cost = (Cost) o;
+
+        if (status != cost.status) return false;
+        if (weightToStart != cost.weightToStart) return false;
+        if (weight != cost.weight) return false;
+        return idVehicle.equals(cost.idVehicle);
+    }
+
 }
