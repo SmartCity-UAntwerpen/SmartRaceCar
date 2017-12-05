@@ -52,7 +52,7 @@ public class Manager implements MQTTListener {
     private static HashMap<Long, WayPoint> wayPoints = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
     private static HashMap<Long, Vehicle> vehicles = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
     private static String currentMap = "zbuilding"; // Information on the currently used map.
-    private static String mapsPath = "C:\\maps"; // Path to the location of the maps.xml file where maps are stored. TODO: relative pad maken
+    private static String mapsPath = ".\\release\\maps"; //"C:\\maps"; // Path to the location of the maps.xml file where maps are stored.
     private static ArrayList<Cost> costs = new ArrayList<>(); // Contains all currently received calculated costs when a cost request was made.
 
     /**
