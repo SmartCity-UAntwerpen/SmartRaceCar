@@ -36,11 +36,11 @@ public class Manager implements MQTTListener {
     //Standard settings (without config file loaded)
     private static boolean debugWithoutBackBone = true; // debug parameter to stop attempts to send or recieve messages from backbone.
     private static boolean debugWithoutMAAS = true; // debug parameter to stop attempts to send or recieve messages from MAAS
-    private String mqttBroker = "tcp://143.129.39.155:1883"; // MQTT Broker URL
+    private String mqttBroker = "tcp://smartcity.ddns.net:1883"; // MQTT Broker URL
     private String mqqtUsername = "root"; // MQTT Broker Username
     private String mqttPassword = "smartcity"; // MQTT Broker Password
-    private static String restURLMAAS = "http://143.129.39.155:8090"; // REST Service URL to MAAS
-    private static String restURLBackBone = "http://143.129.39.155:10000";// REST Service URL to BackBone.
+    private static String restURLMAAS = "http://smartcity.ddns.net:8090"; // REST Service URL to MAAS
+    private static String restURLBackBone = "http://smartcity.ddns.net:10000";// REST Service URL to BackBone.
 
     //Help services
     private static MQTTUtils mqttUtils;

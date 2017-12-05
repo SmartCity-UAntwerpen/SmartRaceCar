@@ -22,7 +22,7 @@ class SimKernel implements TCPListener {
 
     //Standard settings (without config file loaded)
     private boolean debugWithoutRosServer = false; // debug parameter for using this module without a connected RosSever.
-    private String restURL = "http://143.129.39.155:8084"; // REST Service URL to RosServer
+    private String restURL = "http://smartcity.ddns.net:8084"; // REST Service URL to RosServer
     private static int serverPort = 5006;// Standard TCP Port to listen on for messages from Core.
     private static int clientPort = 5005; // Standard TCP Port to send to messages to SimKernel/RosKernel.
 

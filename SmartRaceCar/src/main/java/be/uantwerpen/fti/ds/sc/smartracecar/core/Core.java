@@ -31,11 +31,11 @@ import java.util.logging.Level;
 class Core implements TCPListener, MQTTListener {
 
     //Standard settings (without config file loaded)
-    private boolean debugWithoutRosKernel = false; // debug parameter for using this module without a connected RosKernel/SimKernel
-    private String mqttBroker = "tcp://143.129.39.155:1883"; // MQTT Broker URL
+    private boolean debugWithoutRosKernel = true; // debug parameter for using this module without a connected RosKernel/SimKernel
+    private String mqttBroker = "tcp://smartcity.ddns.net:1883"; // MQTT Broker URL
     private String mqqtUsername = "root"; // MQTT Broker Username
     private String mqttPassword = "smartcity"; // MQTT Broker Password
-    private String restURL = "http://localhost:8081/carmanager"; // REST Service URL to Manager
+    private String restURL = "http://smartcity.ddns.net:8081/carmanager"; // REST Service URL to Manager
     private static int serverPort = 5005; // Standard TCP Port to listen on for messages from SimKernel/RosKernel.
     private static int clientPort = 5006; // Standard TCP Port to send to messages to SimKernel/RosKernel.
 
@@ -83,10 +83,9 @@ class Core implements TCPListener, MQTTListener {
         if (!debugWithoutRosKernel) {
             connectSend();
         }
-        sendStartPoint();
         loadedMaps = loadMaps(findMapsFolder());
         requestMap();
-
+        sendStartPoint();
     }
 
     /**
