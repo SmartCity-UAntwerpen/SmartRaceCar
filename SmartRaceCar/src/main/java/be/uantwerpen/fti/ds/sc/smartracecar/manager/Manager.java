@@ -528,7 +528,7 @@ public class Manager implements MQTTListener {
         if(f.exists() && !f.isDirectory()) {
             for(long ID : vehicles.keySet()) {
                 log.logInfo("MANAGER", "change map command send to vehicle with ID: " + ID);
-                mqttUtils.publishMessage("racecar/" + ID + "changeMap", mapName);
+                mqttUtils.publishMessage("racecar/" + ID + "/changeMap", mapName);
             }
             return "Command was executed to change map";
         }
