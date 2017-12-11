@@ -526,6 +526,7 @@ public class Manager implements MQTTListener {
     {
         File f = new File(mapsPath + "/" + mapName + ".yaml");
         if(f.exists() && !f.isDirectory()) {
+            currentMap=mapName;
             for(long ID : vehicles.keySet()) {
                 log.logInfo("MANAGER", "change map command send to vehicle with ID: " + ID);
                 mqttUtils.publishMessage("racecar/" + ID + "/changeMap", mapName);
