@@ -13,10 +13,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.lang.reflect.Type;
 import java.net.URLDecoder;
 import java.nio.file.Files;
@@ -158,11 +155,16 @@ public class Manager implements MQTTListener {
      * Request all possible waypoints from the BackBone through a REST Get request.
      */
     private void loadWayPoints() {
-        if (debugWithoutBackBone) { // Temp waypoints for when they can't be requested from back-end services.
-            wayPoints.put((long) 46, new WayPoint(46, (float) 0.5, (float) 0, (float) -1, (float) 0.02));
+        if (debugWithoutBackBone) { // Temp waypoints for when they can't be requested from back-end services. zbuilding
+            /*wayPoints.put((long) 46, new WayPoint(46, (float) 0.5, (float) 0, (float) -1, (float) 0.02));
             wayPoints.put((long) 47, new WayPoint(47, (float) -13.4, (float) -0.53, (float) 0.71, (float) 0.71));
             wayPoints.put((long) 48, new WayPoint(48, (float) -27.14, (float) -1.11, (float) -0.3, (float) 0.95));
             wayPoints.put((long) 49, new WayPoint(49, (float) -28.25, (float) -9.19, (float) -0.71, (float) 0.71));
+            */ //waypoints for V314
+            wayPoints.put((long) 46, new WayPoint(46, (float) -3.0, (float) -1.5, (float) 0.07, (float) 1.00));
+            wayPoints.put((long) 47, new WayPoint(47, (float) 1.10, (float) -1.20, (float) 0.07, (float) 1.00));
+            wayPoints.put((long) 48, new WayPoint(48, (float) 4.0, (float) -0.90, (float) -0.68, (float) 0.73));
+            wayPoints.put((long) 49, new WayPoint(49, (float) 4.54, (float) -4.49, (float) -0.60, (float) 0.80));
         } else {
             String jsonString = restUtilsBackBone.getJSON("map/stringmapjson/car");
             JSONUtils.isJSONValid(jsonString);
@@ -513,6 +515,31 @@ public class Manager implements MQTTListener {
     }
 
     /**
+     * Rest command that can be called to change the map used by the racecars at runtime
+     * @param mapName name of the new map
+     * @return
+     */
+    @GET
+    @Path("changeMap/{mapName}")
+    @Produces("text/plain")
+    public String changeMap(@PathParam("mapName") String mapName)
+    {
+        File f = new File(mapsPath + "/" + mapName + ".yaml");
+        if(f.exists() && !f.isDirectory()) {
+            for(long ID : vehicles.keySet()) {
+                log.logInfo("MANAGER", "change map command send to vehicle with ID: " + ID);
+                mqttUtils.publishMessage("racecar/" + ID + "changeMap", mapName);
+            }
+            return "Command was executed to change map";
+        }
+        else {
+            log.logWarning("MANAGER", "Map cannot be changed as the map does not exist");
+            return "Map was not changed as map does not exist";
+        }
+
+    }
+
+    /**
      * Method to send a MQTT message to a specified vehicle to execute a job.
      *
      * @param ID      ID of the vehicle
@@ -524,6 +551,8 @@ public class Manager implements MQTTListener {
         Log.logInfo("MANAGER", "Route job send to vehicle with ID " + ID + " from " + startID + " to " + endID + ".");
         mqttUtils.publishMessage("racecar/" + ID + "/job", Long.toString(startID) + " " + Long.toString(endID));
     }
+
+
 
     public static void main(String[] args) throws Exception {
             final Manager manager = new Manager(true);

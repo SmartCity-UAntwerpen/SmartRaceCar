@@ -435,6 +435,13 @@ class Core implements TCPListener, MQTTListener {
             } catch (NumberFormatException e) {
                 Log.logWarning("CORE", "Parsing MQTT gives bad result: " + e);
             }
+        } else if (topic.matches("racecar/[0-9]+/changeMap")) {
+            try {
+                requestMap();
+            } catch (IOException e)
+            {
+                log.logWarning("CORE", "Map could not be changed: "+ e);
+            }
         }
     }
 
