@@ -1,4 +1,4 @@
-package be.uantwerpen.fti.ds.sc.smartracecar.manager;
+package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.Location;
 

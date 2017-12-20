@@ -1,4 +1,4 @@
-package be.uantwerpen.fti.ds.sc.smartracecar.manager;
+package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
 /**
  * Model that describes a job request.

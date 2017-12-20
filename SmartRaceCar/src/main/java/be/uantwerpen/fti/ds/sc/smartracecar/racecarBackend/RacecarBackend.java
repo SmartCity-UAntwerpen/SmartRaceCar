@@ -1,4 +1,4 @@
-package be.uantwerpen.fti.ds.sc.smartracecar.manager;
+package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.github.lalyos.jfiglet.FigletFont;
@@ -31,8 +31,8 @@ import java.util.logging.Level;
 public class RacecarBackend implements MQTTListener {
 
     //Standard settings (without config file loaded)
-    private static boolean debugWithoutBackBone = true; // debug parameter to stop attempts to send or recieve messages from backbone.
-    private static boolean debugWithoutMAAS = true; // debug parameter to stop attempts to send or recieve messages from MAAS
+    private static boolean debugWithoutBackBone = false; // debug parameter to stop attempts to send or recieve messages from backbone.
+    private static boolean debugWithoutMAAS = false; // debug parameter to stop attempts to send or recieve messages from MAAS
     private String mqttBroker = "tcp://smartcity.ddns.net:1883"; // MQTT Broker URL
     private String mqqtUsername = "root"; // MQTT Broker Username
     private String mqttPassword = "smartcity"; // MQTT Broker Password
@@ -48,7 +48,7 @@ public class RacecarBackend implements MQTTListener {
     private Log log; // logging instance
     private static HashMap<Long, WayPoint> wayPoints = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
     private static HashMap<Long, Vehicle> vehicles = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
-    private static String currentMap = "zbuilding"; // Information on the currently used map.
+    private static String currentMap = "gangV"; // Information on the currently used map.
     private static String mapsPath = ".\\release\\maps"; //"C:\\maps"; // Path to the location of the maps.xml file where maps are stored.
     private static ArrayList<Cost> costs = new ArrayList<>(); // Contains all currently received calculated costs when a cost request was made.
 
@@ -138,7 +138,7 @@ public class RacecarBackend implements MQTTListener {
             mapsPath = prop.getProperty("mapsPath");
             Log.logInfo("RACECAR_BACKEND", "Config loaded");
         } catch (IOException ex) {
-            log = new Log(this.getClass(), Level.INFO);
+            log = new Log(this.getClass(), Level.CONFIG);
             Log.logWarning("RACECAR_BACKEND", "Could not read config file. Loading default settings. " + ex);
         } finally {
             if (input != null) {

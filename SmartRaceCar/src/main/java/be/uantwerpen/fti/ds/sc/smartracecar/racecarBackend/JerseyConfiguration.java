@@ -1,4 +1,4 @@
-package be.uantwerpen.fti.ds.sc.smartracecar.manager;
+package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
 import org.glassfish.jersey.server.ResourceConfig;
 
@@ -8,6 +8,6 @@ import org.glassfish.jersey.server.ResourceConfig;
 class JerseyConfiguration extends ResourceConfig {
 
     JerseyConfiguration() {
-        packages("be.uantwerpen.fti.ds.sc.smartracecar.manager");
+        packages("be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend");
     }
 }

@@ -1,6 +1,6 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.simdeployer;
 
-import be.uantwerpen.fti.ds.sc.smartracecar.manager.RacecarBackend;
+import be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend.RacecarBackend;
 import org.junit.Assert;
 import org.junit.Test;
 

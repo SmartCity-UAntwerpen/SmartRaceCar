@@ -1,4 +1,4 @@
-package be.uantwerpen.fti.ds.sc.smartracecar.manager;
+package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
 import org.apache.catalina.Context;
 import org.apache.catalina.startup.Tomcat;
