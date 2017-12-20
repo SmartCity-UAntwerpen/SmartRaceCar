@@ -31,7 +31,7 @@ import java.util.logging.Level;
 class Core implements TCPListener, MQTTListener {
 
     //Standard settings (without config file loaded)
-    private boolean debugWithoutRosKernel = true; // debug parameter for using this module without a connected RosKernel/SimKernel
+    private boolean debugWithoutRosKernel = false; // debug parameter for using this module without a connected RosKernel/SimKernel
     private String mqttBroker = "tcp://smartcity.ddns.net:1883"; // MQTT Broker URL
     private String mqqtUsername = "root"; // MQTT Broker Username
     private String mqttPassword = "smartcity"; // MQTT Broker Password

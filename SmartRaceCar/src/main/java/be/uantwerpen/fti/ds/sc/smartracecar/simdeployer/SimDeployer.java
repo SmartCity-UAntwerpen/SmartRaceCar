@@ -21,14 +21,14 @@ class SimDeployer implements TCPListener {
 
     //Standard settings (without config file loaded)
     private int serverPort = 9999; // Port to communicate to SimWorker over.
-    private String restURL = "http://localhost:8081/carmanager"; // REST Service URL to Manager
+    private String restURL = "http://smartcity.ddns.net:8081/carmanager"; // REST Service URL to Manager
 
     //Help services
     private TCPUtils tcpUtils;
     private RESTUtils restUtils;
 
     private Log log; // logging instance
-    private String jarPath = ".\\release\\"; //Path where the jar files are located.
+    private String jarPath = ".\\release\\";//"C:\\release\\";  //Path where the jar files are located.
     private HashMap<Long, SimulatedVehicle> simulatedVehicles = new HashMap<>(); // Map of all simulated vehicles. Mapped by their ID.
     private HashMap<Long, WayPoint> wayPoints = new HashMap<>(); // Map of all loaded waypoints.
 
@@ -44,6 +44,7 @@ class SimDeployer implements TCPListener {
         System.out.println("-------------------------------------------------------------------");
         loadConfig();
         this.jarPath = jarPath;
+        System.out.println(jarPath);
         restUtils = new RESTUtils(restURL);
         requestWaypoints();
         tcpUtils = new TCPUtils(serverPort, this);
@@ -84,7 +85,7 @@ class SimDeployer implements TCPListener {
             serverPort = Integer.parseInt(prop.getProperty("serverPort"));
             Log.logInfo("SIMDEPLOYER", "Config loaded");
         } catch (IOException ex) {
-            log = new Log(this.getClass(), Level.INFO);
+            log = new Log(this.getClass(), Level.CONFIG);
             Log.logWarning("SIMDEPLOYER", "Could not read config file. Loading default settings. " + ex);
         } finally {
             if (input != null) {
