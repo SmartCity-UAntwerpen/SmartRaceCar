@@ -21,7 +21,7 @@ class SimDeployer implements TCPListener {
 
     //Standard settings (without config file loaded)
     private int serverPort = 9999; // Port to communicate to SimWorker over.
-    private String restURL = "http://smartcity.ddns.net:8081/carmanager"; // REST Service URL to Manager
+    private String restURL = "http://smartcity.ddns.net:8081/carmanager"; // REST Service URL to RacecarBackend
 
     //Help services
     private TCPUtils tcpUtils;
@@ -100,7 +100,7 @@ class SimDeployer implements TCPListener {
 
 
     /**
-     * Request all possible waypoints from the Manager through a REST GET request.
+     * Request all possible waypoints from the RacecarBackend through a REST GET request.
      */
     private void requestWaypoints() {
         Type typeOfHashMap = new TypeToken<HashMap<Long, WayPoint>>() {

@@ -1,6 +1,6 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.simdeployer;
 
-import be.uantwerpen.fti.ds.sc.smartracecar.manager.Manager;
+import be.uantwerpen.fti.ds.sc.smartracecar.manager.RacecarBackend;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -9,7 +9,7 @@ public class SimDeployerTest {
 
     @Test
     public void test() throws Exception {
-        Manager manager = new Manager(true);
+        RacecarBackend racecarBackend = new RacecarBackend(true);
         SimDeployer simDeployer = new SimDeployer();
         Assert.assertEquals(simDeployer.parseTCP(""),"NACK");
         Assert.assertEquals(simDeployer.parseTCP("test"),"NACK");

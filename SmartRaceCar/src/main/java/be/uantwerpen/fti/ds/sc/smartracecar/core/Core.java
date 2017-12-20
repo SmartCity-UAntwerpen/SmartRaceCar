@@ -35,7 +35,7 @@ class Core implements TCPListener, MQTTListener {
     private String mqttBroker = "tcp://smartcity.ddns.net:1883"; // MQTT Broker URL
     private String mqqtUsername = "root"; // MQTT Broker Username
     private String mqttPassword = "smartcity"; // MQTT Broker Password
-    private String restURL = "http://smartcity.ddns.net:8081/carmanager"; // REST Service URL to Manager
+    private String restURL = "http://smartcity.ddns.net:8081/carmanager"; // REST Service URL to RacecarBackend
     private static int serverPort = 5005; // Standard TCP Port to listen on for messages from SimKernel/RosKernel.
     private static int clientPort = 5006; // Standard TCP Port to send to messages to SimKernel/RosKernel.
 
@@ -45,7 +45,7 @@ class Core implements TCPListener, MQTTListener {
     private RESTUtils restUtils;
 
     //variables
-    private long ID; // ID given by Manager to identify vehicle.
+    private long ID; // ID given by RacecarBackend to identify vehicle.
     Log log; // logging instance
     private int routeSize = 0; // Current route's size.
     private static long startPoint; // Starting position on map. Given by main argument.
@@ -219,7 +219,7 @@ class Core implements TCPListener, MQTTListener {
 
 
     /**
-     * Register vehicle with Manager over REST.
+     * Register vehicle with RacecarBackend over REST.
      */
     private void register() {
         String id = restUtils.getTextPlain("register/" + Long.toString(startPoint));
@@ -251,7 +251,7 @@ class Core implements TCPListener, MQTTListener {
     }
 
     /**
-     * REST GET request to Manager to request the name of the current map. If this map is not found in the offline available maps, it does another
+     * REST GET request to RacecarBackend to request the name of the current map. If this map is not found in the offline available maps, it does another
      * REST GET request to download the map files and store it in the mapfolder and add it to the maps.xml file.
      * After that it sends this information to the vehicle SimKernel/SimKernel over the socket connection.
      */
@@ -335,7 +335,7 @@ class Core implements TCPListener, MQTTListener {
 
     /**
      * When all waypoints have been completed the vehicle becomes unoccupied again.
-     * Sends MQTT message to Manager to update the vehicle status.
+     * Sends MQTT message to RacecarBackend to update the vehicle status.
      */
     private void routeCompleted() {
         Log.logInfo("CORE", "Route Completed.");
@@ -345,7 +345,7 @@ class Core implements TCPListener, MQTTListener {
 
     /**
      * When all a requested route job can't be done by the vehicle.
-     * Sends MQTT message to Manager to update the route status.
+     * Sends MQTT message to RacecarBackend to update the route status.
      */
     private void routeError() {
         Log.logWarning("CORE", "Route error. Route Cancelled");
@@ -355,7 +355,7 @@ class Core implements TCPListener, MQTTListener {
 
     /**
      * When all a requested route job can't be done by the vehicle as it's still completing a route.
-     * Sends MQTT message to Manager to update the route status.
+     * Sends MQTT message to RacecarBackend to update the route status.
      */
     private void routeNotComplete() {
         occupied = false;
@@ -396,7 +396,7 @@ class Core implements TCPListener, MQTTListener {
 
     /**
      * Interfaced method to parse MQTT message and topic after MQTT callback is triggered by incoming message.
-     * Used by messages coming from Manager to request a route job or a cost calculation request.
+     * Used by messages coming from RacecarBackend to request a route job or a cost calculation request.
      *
      * @param topic   received MQTT topic
      * @param message received MQTT message string
@@ -503,7 +503,7 @@ class Core implements TCPListener, MQTTListener {
     }
 
     /**
-     * Set availability status of vehicle in the Manager by sending MQTT message.
+     * Set availability status of vehicle in the RacecarBackend by sending MQTT message.
      *
      * @param state state to be send. (available=true, unavailable=false)
      */
@@ -513,7 +513,7 @@ class Core implements TCPListener, MQTTListener {
     }
 
     /**
-     * Closes all connections (TCP & MQTT), unregisters the vehicle with the Manager and shut the module down.
+     * Closes all connections (TCP & MQTT), unregisters the vehicle with the RacecarBackend and shut the module down.
      */
     private void killCar() {
         Log.logInfo("CORE", "Vehicle kill request. Closing connections and shutting down...");
@@ -580,7 +580,7 @@ class Core implements TCPListener, MQTTListener {
     }
 
     /**
-     * Event call over interface for when MQTT connection receives new route job requests from the Manager.
+     * Event call over interface for when MQTT connection receives new route job requests from the RacecarBackend.
      * Adds all requested waypoints to route queue one by one.
      * Sets the vehicle to occupied. Ignores the request if vehicle is already occupied.
      * Then triggers the first waypoint to be send to the RosKernel/SimKernel.
