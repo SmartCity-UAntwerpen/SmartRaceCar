@@ -187,11 +187,7 @@ public class Manager implements MQTTListener {
                     wayPoints.put((long) 49, new WayPoint(49, (float) -28.25, (float) -9.19, (float) -0.71, (float) 0.71));
             }
         } else {
-            String jsonString = "";
-            if(currentMap.equals("zbuilding"))
-                jsonString = restUtilsBackBone.getJSON("map/stringmapjson/carZ");
-            else if(currentMap.equals("gangV"))
-                jsonString = restUtilsBackBone.getJSON("map/stringmapjson/carV");
+            String jsonString = restUtilsBackBone.getJSON("map/stringmapjson/car"); //when the map is changed, another map needs to be manually loaded in the backbone database
             JSONUtils.isJSONValid(jsonString);
             Type typeOfWayPointArray = new TypeToken<ArrayList<WayPoint>>() {
             }.getType();
