@@ -491,6 +491,9 @@ class Core implements TCPListener, MQTTListener {
                 case "costtiming":
                     timeComplete((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
                     break;
+                case "location":
+                    Log.logInfo("CORE", "Car is at coordinates: " + (String) JSONUtils.getObjectWithKeyWord(message, String.class));
+                    break;
                 default:
                     Log.logWarning("CORE", "No matching keyword when parsing JSON from Sockets. Data: " + message);
                     break;

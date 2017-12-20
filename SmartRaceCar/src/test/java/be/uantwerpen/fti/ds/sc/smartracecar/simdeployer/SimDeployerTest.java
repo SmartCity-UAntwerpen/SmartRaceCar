@@ -15,7 +15,7 @@ public class SimDeployerTest {
         Assert.assertEquals(simDeployer.parseTCP("test"),"NACK");
         Assert.assertEquals(simDeployer.parseTCP("create 1"),"ACK");
         Assert.assertEquals(simDeployer.parseTCP("create 1 test"),"NACK");
-        Assert.assertEquals(simDeployer.parseTCP("create 1"),"NACK");/*
+        Assert.assertEquals(simDeployer.parseTCP("create 1"),"NACK");
         Assert.assertEquals(simDeployer.parseTCP("create qdf"),"NACK");
         Assert.assertEquals(simDeployer.parseTCP("set 1 startpoint 46"),"ACK");
         Assert.assertEquals(simDeployer.parseTCP("set 2 startpoint 46"),"NACK");
@@ -36,7 +36,7 @@ public class SimDeployerTest {
         Assert.assertEquals(simDeployer.parseTCP("restart é"),"NACK");
         Assert.assertEquals(simDeployer.parseTCP("kill 1"),"ACK");
         Assert.assertEquals(simDeployer.parseTCP("kill 2"),"NACK");
-        Assert.assertEquals(simDeployer.parseTCP("kill é"),"NACK");*/
+        Assert.assertEquals(simDeployer.parseTCP("kill é"),"NACK");
     }
 
 }

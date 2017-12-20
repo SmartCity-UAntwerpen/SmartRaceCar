@@ -71,4 +71,6 @@ public class Location {
     public int getPercentage() {
         return percentage;
     }
+
+
 }
