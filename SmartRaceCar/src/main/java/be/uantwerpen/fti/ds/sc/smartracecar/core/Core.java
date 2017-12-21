@@ -492,7 +492,8 @@ class Core implements TCPListener, MQTTListener {
                     timeComplete((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
                     break;
                 case "location":
-                    Log.logInfo("CORE", "Car is at coordinates: " + (String) JSONUtils.getObjectWithKeyWord(message, String.class));
+                    //Log.logInfo("CORE", "Car is at coordinates: " + (String) JSONUtils.getObjectWithKeyWord(message, String.class));
+                    // the current location is published but is not useful for the smartcityproject, the percentage updates are used
                     break;
                 default:
                     Log.logWarning("CORE", "No matching keyword when parsing JSON from Sockets. Data: " + message);
