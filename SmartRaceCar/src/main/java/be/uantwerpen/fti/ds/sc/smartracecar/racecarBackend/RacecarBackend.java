@@ -18,10 +18,7 @@ import java.lang.reflect.Type;
 import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import java.util.logging.Level;
 
 /**
@@ -46,8 +43,8 @@ public class RacecarBackend implements MQTTListener {
 
     //variables
     private Log log; // logging instance
-    private static HashMap<Long, WayPoint> wayPoints = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
-    private static HashMap<Long, Vehicle> vehicles = new HashMap<>(); // ArrayList of all vehicles mapped by ID.
+    private static HashMap<Long, WayPoint> wayPoints = new HashMap<>(); // Hashmap of all vehicles mapped by ID.
+    private static HashMap<Long, Vehicle> vehicles = new HashMap<>(); // Hashmap of all vehicles mapped by ID.
     private static String currentMap = "gangV"; // Information on the currently used map.
     private static String mapsPath = ".\\release\\maps"; //"C:\\maps"; // Path to the location of the maps.xml file where maps are stored.
     private static ArrayList<Cost> costs = new ArrayList<>(); // Contains all currently received calculated costs when a cost request was made.
@@ -200,6 +197,11 @@ public class RacecarBackend implements MQTTListener {
         Log.logInfo("RACECAR_BACKEND", "All possible waypoints(" + wayPoints.size() + ") received.");
     }
 
+    private void startHeartbeatChecker(){
+        HeartbeatChecker checker = new HeartbeatChecker(this);
+        checker.start();
+    }
+
     /**
      * Interfaced method to parse MQTT message and topic after MQTT callback is triggered by incoming message.
      * Used by messages coming from all vehicles.
@@ -208,7 +210,7 @@ public class RacecarBackend implements MQTTListener {
      * @param message received MQTT message string
      */
     @Override
-    public void parseMQTT(String topic, String message) {
+    public void parseMQTT(String topic, String message) { //todo: case statement van maken
         if (topic.matches("racecar/[0-9]+/route")) {
             long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
             if (vehicles.containsKey(ID)) {
@@ -257,8 +259,21 @@ public class RacecarBackend implements MQTTListener {
             } else {
                 Log.logConfig("RACECAR_BACKEND", "Vehicle with ID " + ID + " doesn't exist. Cannot set availability.");
             }
+        } else if (topic.matches("racecar/[0-9]+/heartbeat")) { //todo status kan meegestuurd worden in heartbeat
+            long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
+            Date timestamp = new Date(); //time is allocated in the constructor with millisecond precision
+            if(vehicles.containsKey(ID))
+            {
+                Vehicle vehicle = vehicles.get(ID);
+                vehicle.setHeartbeat(timestamp);
+                vehicles.put(ID,vehicle); //replaces the previous value
+                log.logConfig("RACECAR_BACKEND", "Heartbeat of vehicle with ID " + ID + " updated to: " + timestamp);
+            }
+            else
+                log.logConfig("RACECAR_BACKEND", "Heartbeat of vehicle with ID " + ID + "could not be updated as it does not exist");
         }
     }
+
 
     /**
      * Parses MQTT message received with specific route status update.
@@ -412,7 +427,8 @@ public class RacecarBackend implements MQTTListener {
     @Produces("text/plain")
     public Response deleteVehicle(@PathParam("id") final long id, @Context HttpServletResponse response) throws IOException {
         if (vehicles.containsKey(id)) {
-            if (!debugWithoutBackBone) restUtilsBackBone.getTextPlain("bot/delete/" + id);
+            if (!debugWithoutBackBone)
+                restUtilsBackBone.getTextPlain("bot/delete/" + id);
             vehicles.remove(id);
             Log.logInfo("RACECAR_BACKEND", "Vehicle with ID " + id + " stopped. ID removed.");
             return Response.status(Response.Status.OK).build();
@@ -420,6 +436,17 @@ public class RacecarBackend implements MQTTListener {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, " vehicle with id " + id + "  not found");
         }
         return null;
+    }
+
+    public void deleteVehicle(final long id)
+    {
+        if (vehicles.containsKey(id)) {
+            if (!debugWithoutBackBone)
+                restUtilsBackBone.getTextPlain("bot/delete/" + id);
+            vehicles.remove(id);
+            Log.logInfo("RACECAR_BACKEND", "Vehicle with ID " + id + " stopped. ID removed.");
+        } else
+            Log.logWarning("RACECAR_BACKEND", "Vehicle with ID " +  id + " could not be deleted as it does not exist");
     }
 
     /**
@@ -575,7 +602,9 @@ public class RacecarBackend implements MQTTListener {
         mqttUtils.publishMessage("racecar/" + ID + "/job", Long.toString(startID) + " " + Long.toString(endID));
     }
 
-
+    public static HashMap<Long, Vehicle> getVehicles() {
+        return vehicles;
+    }
 
     public static void main(String[] args) throws Exception {
             final RacecarBackend racecarBackend = new RacecarBackend(true);

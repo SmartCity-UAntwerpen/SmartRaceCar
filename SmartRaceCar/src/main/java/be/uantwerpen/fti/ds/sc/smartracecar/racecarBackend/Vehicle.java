@@ -2,6 +2,8 @@ package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.Location;
 
+import java.util.Date;
+
 /**
  * Model that describes a F1 vehicle.
  */
@@ -12,6 +14,7 @@ class Vehicle {
     private boolean occupied = false; // If the vehicle is occupied by a current route job.
     private boolean available = true; // If the vehicle is available for jobs or other requests.
     private Job job;
+    private Date heartbeat; //last known heartbeat of the vehicle
     /**
      * Model that describes a F1 vehicle.
      *
@@ -21,6 +24,7 @@ class Vehicle {
     Vehicle(Long ID,long startWayPoint){
         this.ID = ID;
         location = new Location(ID,startWayPoint,startWayPoint,100);
+        heartbeat = new Date();
     }
 
     /**
@@ -75,6 +79,14 @@ class Vehicle {
      */
     void setAvailable(boolean available) {
         this.available = available;
+    }
+
+    public Date getHeartbeat() {
+        return heartbeat;
+    }
+
+    public void setHeartbeat(Date heartbeat) {
+        this.heartbeat = heartbeat;
     }
 
     /**
