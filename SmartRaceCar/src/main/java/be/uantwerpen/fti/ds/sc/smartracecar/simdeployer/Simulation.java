@@ -9,6 +9,7 @@ class Simulation {
 
     private String location; // Location of the jar file
     private boolean running; // Parameter to know if it's already running
+    private boolean showSimulatedOutput; // boolean that controls whether or not the simulated output is shown
     private Thread thread; // Thread containing the simulation
     private List<String> runArguments; // All arguments used to star the jar.
 
@@ -17,10 +18,11 @@ class Simulation {
      *
      * @param location location of the jar.
      */
-    Simulation(String location) {
+    Simulation(String location, boolean showSimulatedOutput) {
         this.location = location;
         this.running = false;
         this.thread = null;
+        this.showSimulatedOutput=showSimulatedOutput;
     }
 
     /**
@@ -63,8 +65,10 @@ class Simulation {
         public void run() {
             //Create process
             ProcessBuilder processBuilder = new ProcessBuilder("java");
-            processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-            processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
+            if(showSimulatedOutput) {
+                processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+                processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
+            }
             List<String> processCommands = processBuilder.command();
             processCommands.add("-jar");
             processCommands.add(location);

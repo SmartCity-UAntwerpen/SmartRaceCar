@@ -25,10 +25,10 @@ class SimulatedVehicle{
      * @param simulationID The ID the vehicle will be receiving.
      * @param jarPath Path where the jar files to be simulated can be found.
      */
-    SimulatedVehicle(long simulationID,String jarPath) {
+    SimulatedVehicle(long simulationID,String jarPath, boolean showSimulatedOutput) {
         name = "SimCar" + simulationID;
-        this.simulatedCore = new Simulation(jarPath + "Core.jar");
-        this.simulatedSimKernel = new Simulation(jarPath + "SimKernel.jar");
+        this.simulatedCore = new Simulation(jarPath + "Core.jar",showSimulatedOutput);
+        this.simulatedSimKernel = new Simulation(jarPath + "SimKernel.jar",showSimulatedOutput);
     }
 
     /**

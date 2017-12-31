@@ -31,6 +31,7 @@ class SimDeployer implements TCPListener {
     private String jarPath = ".\\release\\";//"C:\\release\\";  //Path where the jar files are located.
     private HashMap<Long, SimulatedVehicle> simulatedVehicles = new HashMap<>(); // Map of all simulated vehicles. Mapped by their ID.
     private HashMap<Long, WayPoint> wayPoints = new HashMap<>(); // Map of all loaded waypoints.
+    private Boolean showSimulatedOutput = false;
 
     /**
      * Module that handles all simulated vehicles and communicates with the SimWorker service to setup new
@@ -83,6 +84,7 @@ class SimDeployer implements TCPListener {
             restURL = prop.getProperty("restURL");
             jarPath = prop.getProperty("jarPath");
             serverPort = Integer.parseInt(prop.getProperty("serverPort"));
+            showSimulatedOutput = Boolean.parseBoolean(prop.getProperty("showSimulatedOutput"));
             Log.logInfo("SIMDEPLOYER", "Config loaded");
         } catch (IOException ex) {
             log = new Log(this.getClass(), Level.CONFIG);
@@ -206,7 +208,7 @@ class SimDeployer implements TCPListener {
      */
     private boolean createVehicle(long simulationID) {
         if (!simulatedVehicles.containsKey(simulationID)) {
-            simulatedVehicles.put(simulationID, new SimulatedVehicle(simulationID, jarPath));
+            simulatedVehicles.put(simulationID, new SimulatedVehicle(simulationID, jarPath, showSimulatedOutput));
             Log.logInfo("SIMDEPLOYER", "New simulated vehicle registered with simulation ID " + simulationID + ".");
             return true;
         } else {
