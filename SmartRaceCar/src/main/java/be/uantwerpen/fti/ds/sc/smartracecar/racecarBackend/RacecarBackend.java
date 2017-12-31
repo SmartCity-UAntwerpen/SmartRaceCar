@@ -210,7 +210,7 @@ public class RacecarBackend implements MQTTListener {
      * @param message received MQTT message string
      */
     @Override
-    public void parseMQTT(String topic, String message) { //todo: case statement van maken
+    public void parseMQTT(String topic, String message) {
         if (topic.matches("racecar/[0-9]+/route")) {
             long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
             if (vehicles.containsKey(ID)) {
@@ -259,7 +259,7 @@ public class RacecarBackend implements MQTTListener {
             } else {
                 Log.logConfig("RACECAR_BACKEND", "Vehicle with ID " + ID + " doesn't exist. Cannot set availability.");
             }
-        } else if (topic.matches("racecar/[0-9]+/heartbeat")) { //todo status kan meegestuurd worden in heartbeat
+        } else if (topic.matches("racecar/[0-9]+/heartbeat")) { //status can also be send along in the message part
             long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
             Date timestamp = new Date(); //time is allocated in the constructor with millisecond precision
             if(vehicles.containsKey(ID))
@@ -286,7 +286,7 @@ public class RacecarBackend implements MQTTListener {
             case "done":
                 vehicles.get(ID).setOccupied(false);
                 if (!debugWithoutMAAS) {
-                    restUtilsMAAS.getTextPlain("completeJob/" + vehicles.get(ID).getJob().getIdJob());
+                    restUtilsMAAS.getTextPlain("completeJob/" + vehicles.get(ID).getJob().getIdJob()); //TODO: deze methode verplaatsen naar de backbone
                 }
                 vehicles.get(ID).getLocation().setPercentage(100);
                 Log.logInfo("RACECAR_BACKEND", "Vehicle with ID " + ID + " has completed his route.");

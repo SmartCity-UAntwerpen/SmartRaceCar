@@ -43,6 +43,7 @@ class Core implements TCPListener, MQTTListener {
     private MQTTUtils mqttUtils;
     private TCPUtils tcpUtils;
     private RESTUtils restUtils;
+    private HeartbeatPublisher heartbeatPublisher;
 
     //variables
     private long ID; // ID given by RacecarBackend to identify vehicle.
@@ -76,6 +77,11 @@ class Core implements TCPListener, MQTTListener {
         restUtils = new RESTUtils(restURL);
         requestWaypoints();
         register();
+        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+            public void run() {
+                killCar();
+            }
+        }));
         mqttUtils = new MQTTUtils(mqttBroker, mqqtUsername, mqttPassword, this);
         mqttUtils.subscribeToTopic("racecar/" + ID + "/#");
         tcpUtils = new TCPUtils(clientPort, serverPort, this);
@@ -86,8 +92,11 @@ class Core implements TCPListener, MQTTListener {
         loadedMaps = loadMaps(findMapsFolder());
         requestMap();
         Log.logConfig("CORE", "Giving the map 10s to load.");
-        Thread.sleep(10000);
+        Thread.sleep(10000); //10 seconds delay so the map can load before publishing the startpoint
         sendStartPoint();
+        heartbeatPublisher = new HeartbeatPublisher(mqttUtils,ID);
+        heartbeatPublisher.start();
+        Log.logInfo("CORE", "Heartbeat publisher was started.");
     }
 
     /**
