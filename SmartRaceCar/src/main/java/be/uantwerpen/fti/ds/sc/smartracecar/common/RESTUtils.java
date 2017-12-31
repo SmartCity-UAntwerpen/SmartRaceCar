@@ -43,7 +43,7 @@ public class RESTUtils {
             response = invocationBuilder.get();
         } catch (ProcessingException e) {
             Log.logSevere("REST", "Cannot connect to REST service: " + e);
-            System.exit(0);
+            System.exit(0); //make sure the correct mode is selected (debugwithoutBackbone/debugwithoutMAAS)
         }
         checkForError(response,resourceWebTarget.getUri());
         String responseString = response.readEntity(String.class);

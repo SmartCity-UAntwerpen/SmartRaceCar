@@ -218,6 +218,8 @@ public class TCPUtils extends Thread {
             socket.close();
         } catch (IOException e) {
             Log.logSevere("SOCKETS","Could not close Socket connection. IOException:  " + e);
+        } catch (Exception e ) {
+            Log.logSevere("SOCKTS", "Could not close Socket connection: ");
         }
     }
 }
