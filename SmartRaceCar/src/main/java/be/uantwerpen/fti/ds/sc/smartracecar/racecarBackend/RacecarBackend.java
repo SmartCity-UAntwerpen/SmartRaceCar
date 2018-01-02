@@ -1,6 +1,7 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
+import be.uantwerpen.fti.ds.sc.smartracecar.core.HeartbeatPublisher;
 import com.github.lalyos.jfiglet.FigletFont;
 import com.google.gson.reflect.TypeToken;
 
@@ -40,6 +41,7 @@ public class RacecarBackend implements MQTTListener {
     private static MQTTUtils mqttUtils;
     private static RESTUtils restUtilsMAAS;
     private static RESTUtils restUtilsBackBone;
+    private static HeartbeatChecker heartbeatChecker;
 
     //variables
     private Log log; // logging instance
@@ -75,6 +77,8 @@ public class RacecarBackend implements MQTTListener {
         loadWayPoints();
         mqttUtils = new MQTTUtils(mqttBroker, mqqtUsername, mqttPassword, this);
         mqttUtils.subscribeToTopic("racecar/#");
+        heartbeatChecker = new HeartbeatChecker(this);
+        heartbeatChecker.start();
     }
 
     /**
