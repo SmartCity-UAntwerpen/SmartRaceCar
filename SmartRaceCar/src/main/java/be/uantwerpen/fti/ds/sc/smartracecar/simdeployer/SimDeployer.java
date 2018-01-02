@@ -31,7 +31,7 @@ class SimDeployer implements TCPListener {
     private String jarPath = ".\\release\\";//"C:\\release\\";  //Path where the jar files are located.
     private HashMap<Long, SimulatedVehicle> simulatedVehicles = new HashMap<>(); // Map of all simulated vehicles. Mapped by their ID.
     private HashMap<Long, WayPoint> wayPoints = new HashMap<>(); // Map of all loaded waypoints.
-    private Boolean showSimulatedOutput = false;
+    private Boolean showSimulatedOutput = true;
 
     /**
      * Module that handles all simulated vehicles and communicates with the SimWorker service to setup new

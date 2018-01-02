@@ -27,6 +27,7 @@ class HeartbeatChecker extends Thread {
      */
     public void run() {
         while(true) {
+            Log.logConfig("RACECAR_BACKEND", "Heartbeatchecker was started");
             try {
                 Thread.sleep(30000); //Sleep for 30s
                 Log.logConfig("RACECAR_BACKEND", "Heartbeats are being checked...");
