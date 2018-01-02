@@ -97,3 +97,4 @@ RACECAR-tcpbrokerhivemqcom1883/
 src/main/resources/
 /dependency-reduced-pom.xml
 /.gitignore
+!/.gitignore
