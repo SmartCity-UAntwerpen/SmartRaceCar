@@ -201,11 +201,6 @@ public class RacecarBackend implements MQTTListener {
         Log.logInfo("RACECAR_BACKEND", "All possible waypoints(" + wayPoints.size() + ") received.");
     }
 
-    private void startHeartbeatChecker(){
-        HeartbeatChecker checker = new HeartbeatChecker(this);
-        checker.start();
-    }
-
     /**
      * Interfaced method to parse MQTT message and topic after MQTT callback is triggered by incoming message.
      * Used by messages coming from all vehicles.
