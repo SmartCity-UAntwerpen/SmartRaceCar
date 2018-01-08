@@ -227,7 +227,6 @@ class Core implements TCPListener, MQTTListener {
         Log.logInfo("CORE", "Connected to car.");
     }
 
-
     /**
      * Register vehicle with RacecarBackend over REST.
      */
@@ -383,7 +382,6 @@ class Core implements TCPListener, MQTTListener {
             tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("drive", new Drive(steer, throttle)));
         Log.logInfo("CORE", "Sending wheel state Throttle:" + throttle + ", Steer:" + steer + ".");
     }
-
 
     /**
      * When vehicle's RosKernel/SimKernel sends update on route completion it needs to be transformed to the completion amount for the total route.
@@ -635,6 +633,12 @@ class Core implements TCPListener, MQTTListener {
         }
     }
 
+    /**
+     * Main method, used to create a Core object and run it.
+     * @param args required arguments: startpoint, tcpclientport and tcpserverport
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public static void main(String[] args) throws IOException, InterruptedException {
 
         if (args.length == 0) {
