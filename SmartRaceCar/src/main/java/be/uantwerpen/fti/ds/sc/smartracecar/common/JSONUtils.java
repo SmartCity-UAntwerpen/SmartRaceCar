@@ -3,6 +3,7 @@ package be.uantwerpen.fti.ds.sc.smartracecar.common;
 import com.google.gson.*;
 
 import java.lang.reflect.Type;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;

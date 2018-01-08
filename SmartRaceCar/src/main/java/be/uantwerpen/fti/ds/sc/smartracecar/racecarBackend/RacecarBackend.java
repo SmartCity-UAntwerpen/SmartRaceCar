@@ -36,6 +36,7 @@ public class RacecarBackend implements MQTTListener {
     private String mqttPassword = "smartcity"; // MQTT Broker Password
     private static String restURLMAAS = "http://smartcity.ddns.net:8090"; // REST Service URL to MAAS
     private static String restURLBackBone = "http://smartcity.ddns.net:10000";// REST Service URL to BackBone.
+    private static String restURLBackend = "http://smartcity.ddns.net:8081/carmanager"; // REST Service URL to own REST service, used to create the heartbeatchecker
 
     //Help services
     private static MQTTUtils mqttUtils;
@@ -77,7 +78,7 @@ public class RacecarBackend implements MQTTListener {
         loadWayPoints();
         mqttUtils = new MQTTUtils(mqttBroker, mqqtUsername, mqttPassword, this);
         mqttUtils.subscribeToTopic("racecar/#");
-        heartbeatChecker = new HeartbeatChecker(this);
+        heartbeatChecker = new HeartbeatChecker(restURLBackend);
         heartbeatChecker.start();
     }
 
@@ -273,7 +274,6 @@ public class RacecarBackend implements MQTTListener {
         }
     }
 
-
     /**
      * Parses MQTT message received with specific route status update.
      *
@@ -333,7 +333,6 @@ public class RacecarBackend implements MQTTListener {
         return null;
     }
 
-
     /**
      * REST GET server service get all vehicle positions.
      *
@@ -359,6 +358,18 @@ public class RacecarBackend implements MQTTListener {
                     build();
         }
         return null;
+    }
+
+    /**
+     * REST GET server service get all vehicles.
+     *
+     * @return REST response of the type JSON containing all vehicles.
+     */
+    @GET
+    @Path("getVehicles")
+    @Produces("application/json")
+    public String getVehicles() {
+        return JSONUtils.objectToJSONStringWithKeyWord("vehicles", vehicles);
     }
 
     /**
@@ -425,27 +436,30 @@ public class RacecarBackend implements MQTTListener {
     @Path("delete/{id}")
     @Produces("text/plain")
     public Response deleteVehicle(@PathParam("id") final long id, @Context HttpServletResponse response) throws IOException {
-        if (vehicles.containsKey(id)) {
-            if (!debugWithoutBackBone)
-                restUtilsBackBone.getTextPlain("bot/delete/" + id);
-            vehicles.remove(id);
-            Log.logInfo("RACECAR_BACKEND", "Vehicle with ID " + id + " stopped. ID removed.");
+        if(deleteVehicle(id))
             return Response.status(Response.Status.OK).build();
-        } else {
+        else
             response.sendError(HttpServletResponse.SC_NOT_FOUND, " vehicle with id " + id + "  not found");
-        }
         return null;
     }
 
-    public void deleteVehicle(final long id)
+    /**
+     * Method called to delete a vehicle from the backend
+     * called from the backend
+     *
+     * @param id ID of the vehicle that is to be deleted
+     */
+    public boolean deleteVehicle(final long id)
     {
         if (vehicles.containsKey(id)) {
             if (!debugWithoutBackBone)
                 restUtilsBackBone.getTextPlain("bot/delete/" + id);
             vehicles.remove(id);
             Log.logInfo("RACECAR_BACKEND", "Vehicle with ID " + id + " stopped. ID removed.");
+            return true;
         } else
             Log.logWarning("RACECAR_BACKEND", "Vehicle with ID " +  id + " could not be deleted as it does not exist");
+        return false;
     }
 
     /**
@@ -599,10 +613,6 @@ public class RacecarBackend implements MQTTListener {
         vehicles.get(ID).setOccupied(true);
         Log.logInfo("RACECAR_BACKEND", "Route job send to vehicle with ID " + ID + " from " + startID + " to " + endID + ".");
         mqttUtils.publishMessage("racecar/" + ID + "/job", Long.toString(startID) + " " + Long.toString(endID));
-    }
-
-    public static HashMap<Long, Vehicle> getVehicles() {
-        return vehicles;
     }
 
     public static void main(String[] args) throws Exception {
