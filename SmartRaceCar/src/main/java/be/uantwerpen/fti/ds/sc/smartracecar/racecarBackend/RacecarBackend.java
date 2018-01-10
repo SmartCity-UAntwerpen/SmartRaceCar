@@ -29,8 +29,8 @@ import java.util.logging.Level;
 public class RacecarBackend implements MQTTListener {
 
     //Standard settings (without config file loaded)
-    private static boolean debugWithoutBackBone = false; // debug parameter to stop attempts to send or recieve messages from backbone.
-    private static boolean debugWithoutMAAS = false; // debug parameter to stop attempts to send or recieve messages from MAAS
+    private static boolean debugWithoutBackBone = true; // debug parameter to stop attempts to send or recieve messages from backbone.
+    private static boolean debugWithoutMAAS = true; // debug parameter to stop attempts to send or recieve messages from MAAS
     private String mqttBroker = "tcp://smartcity.ddns.net:1883"; // MQTT Broker URL
     private String mqqtUsername = "root"; // MQTT Broker Username
     private String mqttPassword = "smartcity"; // MQTT Broker Password
@@ -436,30 +436,17 @@ public class RacecarBackend implements MQTTListener {
     @Path("delete/{id}")
     @Produces("text/plain")
     public Response deleteVehicle(@PathParam("id") final long id, @Context HttpServletResponse response) throws IOException {
-        if(deleteVehicle(id))
-            return Response.status(Response.Status.OK).build();
-        else
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, " vehicle with id " + id + "  not found");
-        return null;
-    }
-
-    /**
-     * Method called to delete a vehicle from the backend
-     * called from the backend
-     *
-     * @param id ID of the vehicle that is to be deleted
-     */
-    public boolean deleteVehicle(final long id)
-    {
         if (vehicles.containsKey(id)) {
             if (!debugWithoutBackBone)
                 restUtilsBackBone.getTextPlain("bot/delete/" + id);
             vehicles.remove(id);
             Log.logInfo("RACECAR_BACKEND", "Vehicle with ID " + id + " stopped. ID removed.");
-            return true;
-        } else
+            return Response.status(Response.Status.OK).build();
+        } else{
             Log.logWarning("RACECAR_BACKEND", "Vehicle with ID " +  id + " could not be deleted as it does not exist");
-        return false;
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, " vehicle with id " + id + "  not found");
+        }
+        return null;
     }
 
     /**
