@@ -9,7 +9,7 @@ public class SimDeployerTest {
 
     @Test
     public void test() throws Exception {
-        /*RacecarBackend racecarBackend = new RacecarBackend(true);
+        //RacecarBackend racecarBackend = new RacecarBackend(true);
         SimDeployer simDeployer = new SimDeployer();
         Assert.assertEquals(simDeployer.parseTCP(""),"NACK");
         Assert.assertEquals(simDeployer.parseTCP("test"),"NACK");
@@ -36,7 +36,7 @@ public class SimDeployerTest {
         Assert.assertEquals(simDeployer.parseTCP("restart é"),"NACK");
         Assert.assertEquals(simDeployer.parseTCP("kill 1"),"ACK");
         Assert.assertEquals(simDeployer.parseTCP("kill 2"),"NACK");
-        Assert.assertEquals(simDeployer.parseTCP("kill é"),"NACK");*/
+        Assert.assertEquals(simDeployer.parseTCP("kill é"),"NACK");
     }
 
 }

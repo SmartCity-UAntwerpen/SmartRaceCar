@@ -72,5 +72,4 @@ public class Location {
         return percentage;
     }
 
-
 }

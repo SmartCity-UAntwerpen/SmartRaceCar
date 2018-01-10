@@ -3,7 +3,7 @@ package be.uantwerpen.fti.ds.sc.smartracecar.simdeployer;
 import java.util.Scanner;
 
 /**
- * class to locally test the simdeployer class
+ * Helper class to locally test the SimDeployer class
  */
 public class Commands {
     public static void main(String[] args) throws Exception{

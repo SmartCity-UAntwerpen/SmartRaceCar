@@ -462,7 +462,6 @@ public class RacecarBackend implements MQTTListener {
         return JSONUtils.objectToJSONStringWithKeyWord("wayPoints", wayPoints);
     }
 
-
     /**
      * REST GET server service to download a map's PGM file by name.
      *
@@ -603,6 +602,11 @@ public class RacecarBackend implements MQTTListener {
         mqttUtils.publishMessage("racecar/" + ID + "/job", Long.toString(startID) + " " + Long.toString(endID));
     }
 
+    /**
+     * Main method to create an object of this class and run as a jar file
+     * @param args no arguments required
+     * @throws Exception
+     */
     public static void main(String[] args) throws Exception {
             final RacecarBackend racecarBackend = new RacecarBackend(true);
 

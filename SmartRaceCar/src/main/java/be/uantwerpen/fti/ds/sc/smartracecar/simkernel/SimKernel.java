@@ -278,6 +278,11 @@ class SimKernel implements TCPListener {
         return cost;
     }
 
+    /**
+     * Main method to run this class as a separate jar file
+     * @param args tcpclientport and tcpserverport required
+     * @throws Exception
+     */
     public static void main(String[] args) throws Exception {
 
         if (args.length != 2) {

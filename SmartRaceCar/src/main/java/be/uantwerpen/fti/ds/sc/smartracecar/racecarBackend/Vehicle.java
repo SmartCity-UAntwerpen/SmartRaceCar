@@ -15,6 +15,8 @@ class Vehicle {
     private boolean available = true; // If the vehicle is available for jobs or other requests.
     private Job job;
     private Date heartbeat; //last known heartbeat of the vehicle
+
+
     /**
      * Model that describes a F1 vehicle.
      *

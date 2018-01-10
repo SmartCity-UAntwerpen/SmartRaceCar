@@ -61,6 +61,11 @@ public class Point {
         return z;
     }
 
+    /**
+     * Method to compare two objects of this class
+     * @param o object that is to be compared
+     * @return true if both objects are equal
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

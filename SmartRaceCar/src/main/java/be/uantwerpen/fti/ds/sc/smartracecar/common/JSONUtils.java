@@ -48,7 +48,6 @@ public class JSONUtils {
         return jsonInString;
     }
 
-
     /**
      * Get the object after the keyword of the JSON object. This is always the package of the message.
      * Converts it to the correct requested Java Object type.

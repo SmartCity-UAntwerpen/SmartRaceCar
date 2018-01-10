@@ -10,6 +10,10 @@ import org.glassfish.jersey.servlet.ServletContainer;
  */
 class TomCatLauncher {
 
+    /**
+     * run the launcher
+     * @throws Exception
+     */
     void start() throws Exception {
 
         String contextPath = "";

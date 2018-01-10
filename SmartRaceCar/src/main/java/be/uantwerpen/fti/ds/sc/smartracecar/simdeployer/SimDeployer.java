@@ -100,7 +100,6 @@ class SimDeployer implements TCPListener {
         }
     }
 
-
     /**
      * Request all possible waypoints from the RacecarBackend through a REST GET request.
      */
@@ -114,7 +113,6 @@ class SimDeployer implements TCPListener {
         }
         Log.logInfo("SIMDEPLOYER", "All possible waypoints(" + wayPoints.size() + ") received.");
     }
-
 
     /**
      * Interfaced method to parse TCP message socket callback is triggered by incoming message. Used to
@@ -318,7 +316,12 @@ class SimDeployer implements TCPListener {
         }
     }
 
-
+    /**
+     * Main method to run this class as a jar
+     * @param args no arguments required
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public static void main(String[] args) throws IOException, InterruptedException {
             SimDeployer simDeployer = new SimDeployer();
     }
