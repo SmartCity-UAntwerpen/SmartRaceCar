@@ -136,6 +136,7 @@ public class RacecarBackend implements MQTTListener {
             mqttPassword = prop.getProperty("mqttPassword");
             restURLMAAS = prop.getProperty("restURLMAAS");
             restURLBackBone = prop.getProperty("restURLBackBone");
+            restURLBackend = prop.getProperty("restURLBackend");
             currentMap = prop.getProperty("currentMap");
             mapsPath = prop.getProperty("mapsPath");
             Log.logInfo("RACECAR_BACKEND", "Config loaded");
