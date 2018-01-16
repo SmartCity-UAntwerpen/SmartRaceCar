@@ -77,9 +77,23 @@ class Core implements TCPListener, MQTTListener {
         restUtils = new RESTUtils(restURL);
         requestWaypoints();
         register();
-        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-            public void run() {
-                killCar();
+        Runtime.getRuntime().addShutdownHook(
+                new Thread(new Runnable() {public void run() {
+                    Thread thread = new Thread(new Runnable() {public void run(){
+                        killCar();
+                    }});
+                    thread.start();
+                    long endTimeMillis = System.currentTimeMillis() + 10000; //10 second timeout
+                    while (thread.isAlive()) {
+                        if (System.currentTimeMillis() > endTimeMillis) {
+                            Log.logWarning("CORE", "Timeout was exceeded on exiting the system");
+                            System.exit(1);
+                        }
+                        try {
+                            Thread.sleep(500);
+                        }
+                        catch (InterruptedException t) {}
+                    }
             }
         }));
         mqttUtils = new MQTTUtils(mqttBroker, mqqtUsername, mqttPassword, this);
