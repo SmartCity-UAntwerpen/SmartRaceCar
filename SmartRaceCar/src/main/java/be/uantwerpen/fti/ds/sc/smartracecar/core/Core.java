@@ -77,7 +77,7 @@ class Core implements TCPListener, MQTTListener {
         restUtils = new RESTUtils(restURL);
         requestWaypoints();
         register();
-        Runtime.getRuntime().addShutdownHook(
+        /*Runtime.getRuntime().addShutdownHook(
                 new Thread(new Runnable() {public void run() {
                     Thread thread = new Thread(new Runnable() {public void run(){
                         killCar();
@@ -95,7 +95,7 @@ class Core implements TCPListener, MQTTListener {
                         catch (InterruptedException t) {}
                     }
             }
-        }));
+        }));*/
         mqttUtils = new MQTTUtils(mqttBroker, mqqtUsername, mqttPassword, this);
         mqttUtils.subscribeToTopic("racecar/" + ID + "/#");
         tcpUtils = new TCPUtils(clientPort, serverPort, this);
