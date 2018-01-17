@@ -4,7 +4,7 @@ The high level modules that will handle all high level functions of the smartrac
 
 ## Modules
  - Core: Java-module that runs on the racecar itself. In charge of passing on messages to the vehicles ROS nodes. Communicates with the Manager module to register, receive route job requests and handles these to give instructions to the ROS nodes.
- - Manager : Java-module that runs on the backend servers. Registers all racecars and manages them. Receives job requests from backend SmartCity and processes these to the vehicles. 
+ - RacecarBackend : Java-module that runs on the backend servers. Registers all racecars and manages them. Receives job requests from backbone SmartCity and processes these to the vehicles. 
  - SimDeployer: Management of simulation vehicles. Receives tasks of SimWorker module to create, edit and stop new simulated RaceCars. Dynamically deploys the simulated vehicles.
  - SimKernel: The simulated version of a ROS-Node in Java. To simulate multiple vehicles a simulated variant of the ROS-Node was made. It acts as if it was a real driving ROS vehicle. It communicates the exact same way to a Core as a ROS-Node would. To realistically mimic a ROS self-driving vehicle it communicates with a ROS-Server to make it do the ROS-based calculations. 
 
@@ -21,5 +21,10 @@ The high level modules that will handle all high level functions of the smartrac
 
 Jansen Wouter,
 Jens de Hoog
+
+## Extended by
+
+Robrecht Daems
+
 
 University of Antwerp - 2017
