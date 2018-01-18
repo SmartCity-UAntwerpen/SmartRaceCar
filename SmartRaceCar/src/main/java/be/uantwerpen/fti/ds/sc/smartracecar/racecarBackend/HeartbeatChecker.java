@@ -42,10 +42,10 @@ class HeartbeatChecker extends Thread {
                 HashMap<Long, Vehicle> vehicles = (HashMap<Long, Vehicle>) JSONUtils.getObjectWithKeyWord(restUtils.getJSON("getVehicles"), typeOfHashMap);
                 Date currentTime = new Date();
                 for (Long ID : vehicles.keySet()) {
-                    if ((currentTime.getTime() - vehicles.get(ID).getHeartbeat().getTime()) > 30000) //longer than 30 seconds
+                    if ((currentTime.getTime() - vehicles.get(ID).getHeartbeat().getTime()) > 90000) //longer than 90 seconds
                     {
                         restUtils.getCall("delete/" + ID);
-                        Log.logWarning("RACECAR_BACKEND", "Vehicle with ID: " + ID + " was removed since it hasn't responded for over 30s");
+                        Log.logWarning("RACECAR_BACKEND", "Vehicle with ID: " + ID + " was removed since it hasn't responded for over 90s");
                     }
                 }
                 Log.logConfig("RACECAR_BACKEND", "All heartbeats were checked.");

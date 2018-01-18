@@ -109,7 +109,7 @@ class Core implements TCPListener, MQTTListener {
         Thread.sleep(10000); //10 seconds delay so the map can load before publishing the startpoint
         sendStartPoint();
         Log.logConfig("CORE", "Startpoint was send");
-        heartbeatPublisher = new HeartbeatPublisher(mqttUtils,ID);
+        heartbeatPublisher = new HeartbeatPublisher(new MQTTUtils(mqttBroker, mqqtUsername, mqttPassword, this),ID);
         heartbeatPublisher.start();
         Log.logInfo("CORE", "Heartbeat publisher was started.");
     }
