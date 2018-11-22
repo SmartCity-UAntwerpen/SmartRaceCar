@@ -51,4 +51,6 @@ public class WeightManager
 		cost.setIdVehicle(this.core.getID());
 		this.core.getMqttUtils().publishMessage("racecar/" + this.core.getID() + "/costanswer", JSONUtils.objectToJSONString(cost));
 	}
+
+
 }
