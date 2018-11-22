@@ -13,18 +13,13 @@ public class VehicleManager implements MQTTListener
 {
     private static class MQTTConstants
     {
-        //todo: Use Parameter objects
-        private static final String BROKER = "tcp://smartcity.ddns.net:1883";
-        private static final String USERNAME = "root";
-        private static final String PASSWORD = "smartcity";
-        private static final String TOPIC = "racecar/#";
-
         private static final Pattern PERCENTAGE_UPDATE_REGEX = Pattern.compile("racecar/[0-9]+/percentage");
         private static final Pattern AVAILABILITY_UPDATE_REGEX = Pattern.compile("racecar/[0-9]+/available");
     }
 
     private static final Type LOCATION_TYPE = (new TypeToken<Location>(){}).getType();
 
+    private Parameters parameters;
     private LogbackWrapper log;
     private MQTTUtils mqttUtils;
     private NavigationManager navigationManager;
@@ -47,12 +42,13 @@ public class VehicleManager implements MQTTListener
         return matcher.matches();
     }
 
-    public VehicleManager()
+    public VehicleManager(Parameters parameters)
     {
+        this.parameters = parameters;
         this.log = new LogbackWrapper();
-        this.mqttUtils = new MQTTUtils(MQTTConstants.BROKER, MQTTConstants.USERNAME, MQTTConstants.PASSWORD, this);
-        this.mqttUtils.subscribeToTopic(MQTTConstants.TOPIC);
-        this.navigationManager = new NavigationManager(this);
+        this.mqttUtils = new MQTTUtils(this.parameters.getMqttBroker(), this.parameters.getMqttUserName(), this.parameters.getMqttBroker(), this);
+        this.mqttUtils.subscribeToTopic(this.parameters.getMqttTopic());
+        this.navigationManager = new NavigationManager(this, parameters);
         this.vehicles = new HashMap<>();
     }
 
