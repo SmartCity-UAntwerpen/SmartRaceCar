@@ -80,6 +80,7 @@ class SimKernel implements TCPListener
             input = new FileInputStream(decodedPath + "/simkernel.properties");
             prop.load(input);
             String debugLevel = prop.getProperty("debugLevel");
+
             switch (debugLevel)
             {
                 case "debug":
@@ -95,23 +96,27 @@ class SimKernel implements TCPListener
                     log = new Log(this.getClass(), Level.SEVERE);
                     break;
             }
-            restURL = prop.getProperty("restURL");
-            debugWithoutRosServer = Boolean.parseBoolean(prop.getProperty("debugWithoutRosServer"));
+
+            this.restURL = prop.getProperty("restURL");
+            this.debugWithoutRosServer = Boolean.parseBoolean(prop.getProperty("debugWithoutRosServer"));
             Log.logInfo("SIMKERNEL", "Config loaded");
-        } catch (IOException ex)
+        }
+        catch (IOException ex)
         {
             log = new Log(this.getClass(), Level.INFO);
             Log.logWarning("SIMKERNEL", "Could not read config file. Loading default settings. " + ex);
-        } finally
+        }
+        finally
         {
             if (input != null)
             {
                 try
                 {
                     input.close();
-                } catch (IOException e)
+                }
+                catch (IOException e)
                 {
-                    Log.logWarning("SIMKERNEL", "Could not read config file. Loading default settings. " + e);
+                    Log.logWarning("SIMKERNEL", "Could not close config file. Loading default settings. " + e);
                 }
             }
         }
@@ -134,15 +139,11 @@ class SimKernel implements TCPListener
             switch (JSONUtils.getFirst(message))
             {
                 case "cost":
-                    Type typeOfPoints = new TypeToken<ArrayList<Point>>()
-                    {
-                    }.getType();
+                    Type typeOfPoints = new TypeToken<ArrayList<Point>>(){}.getType();
                     calculateCost((ArrayList<Point>) JSONUtils.getObjectWithKeyWord(message, typeOfPoints));
                     break;
                 case "costtiming":
-                    Type typeOfPointss = new TypeToken<ArrayList<Point>>()
-                    {
-                    }.getType();
+                    Type typeOfPointss = new TypeToken<ArrayList<Point>>(){}.getType();
                     calculateTiming((ArrayList<Point>) JSONUtils.getObjectWithKeyWord(message, typeOfPointss));
                     break;
                 case "connect":
@@ -156,18 +157,14 @@ class SimKernel implements TCPListener
                 case "currentMap":
                     this.map = (Map) JSONUtils.getObjectWithKeyWord(message, Map.class);
                     this.calculatedCosts.clear();
-                    Log.logInfo("SIMKERNEL", "Map set to '" + map.getName() + "'.");
+                    Log.logInfo("SIMKERNEL", "Map set to '" + this.map.getName() + "'.");
                     break;
                 case "nextWayPoint":
-                    Type typeOfWayPoint = new TypeToken<WayPoint>()
-                    {
-                    }.getType();
+                    Type typeOfWayPoint = new TypeToken<WayPoint>(){}.getType();
                     jobRequest((WayPoint) JSONUtils.getObjectWithKeyWord(message, typeOfWayPoint));
                     break;
                 case "currentPosition":
-                    Type typeOfWayPoint2 = new TypeToken<WayPoint>()
-                    {
-                    }.getType();
+                    Type typeOfWayPoint2 = new TypeToken<WayPoint>(){}.getType();
                     this.currentPosition = (WayPoint) JSONUtils.getObjectWithKeyWord(message, typeOfWayPoint2);
                     Log.logInfo("SIMKERNEL", "Current position set to " + currentPosition.getX() + "," + currentPosition.getY() + "," + currentPosition.getZ() + "," + currentPosition.getW() + ".");
                     break;
