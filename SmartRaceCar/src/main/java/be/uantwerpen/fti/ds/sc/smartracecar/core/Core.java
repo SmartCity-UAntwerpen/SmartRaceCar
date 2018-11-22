@@ -33,10 +33,6 @@ class Core implements TCPListener, MQTTListener
 
     //Standard settings (without config file loaded)
     private boolean debugWithoutRosKernel = false; 							// debug parameter for using this module without a connected RosKernel/SimKernel
-    private String mqttBroker = "tcp://smartcity.ddns.net:1883"; 			// MQTT Broker URL
-    private String mqqtUsername = "root"; 									// MQTT Broker Username
-    private String mqttPassword = "smartcity"; 								// MQTT Broker Password
-    private String restURL = "http://smartcity.ddns.net:8081/carmanager"; 	// REST Service URL to RacecarBackend
     private static int serverPort = 5005; 									// Standard TCP Port to listen on for messages from SimKernel/RosKernel.
     private static int clientPort = 5006;									// Standard TCP Port to send to messages to SimKernel/RosKernel.
 
@@ -86,7 +82,7 @@ class Core implements TCPListener, MQTTListener
 
         loadConfig();
         Log.logConfig("CORE", "Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
-        this.restUtils = new RESTUtils(this.restURL);
+        this.restUtils = new RESTUtils(this.params.getRestURL());
         requestWaypoints();
         register();
         /*Runtime.getRuntime().addShutdownHook(
@@ -108,7 +104,7 @@ class Core implements TCPListener, MQTTListener
                     }
             }
         }));*/
-        this.mqttUtils = new MQTTUtils(this.mqttBroker, this.mqqtUsername, this.mqttPassword, this);
+        this.mqttUtils = new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this);
         this.mqttUtils.subscribeToTopic("racecar/" + ID + "/#");
 
         this.tcpUtils = new TCPUtils(clientPort, serverPort, this);
@@ -124,7 +120,7 @@ class Core implements TCPListener, MQTTListener
         Thread.sleep(10000); //10 seconds delay so the map can load before publishing the startpoint
         sendStartPoint();
         Log.logConfig("CORE", "Startpoint was send");
-        this.heartbeatPublisher = new HeartbeatPublisher(new MQTTUtils(this.mqttBroker, this.mqqtUsername, this.mqttPassword, this),this.ID);
+        this.heartbeatPublisher = new HeartbeatPublisher(new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this),this.ID);
         this.heartbeatPublisher.start();
         Log.logInfo("CORE", "Heartbeat publisher was started.");
 
@@ -202,11 +198,11 @@ class Core implements TCPListener, MQTTListener
                     log = new Log(this.getClass(), Level.SEVERE);
                     break;
             }
-            this.debugWithoutRosKernel = Boolean.parseBoolean(prop.getProperty("debugWithoutRosKernel"));
-            this.mqttBroker = "tcp://" + prop.getProperty("mqttBroker");
-            this.mqqtUsername = prop.getProperty("mqqtUsername");
-            this.mqttPassword = prop.getProperty("mqttPassword");
-            this.restURL = prop.getProperty("restURL");
+            this.params.setDebug(Boolean.parseBoolean(prop.getProperty("debugWithoutRosKernel")));
+			this.params.setMqttBroker("tcp://" + prop.getProperty("mqttBroker"));
+			this.params.setMqttUserName(prop.getProperty("mqqtUsername"));
+			this.params.setMqttPassword(prop.getProperty("mqttPassword"));
+			this.params.setRestURL(prop.getProperty("restURL"));
             Log.logInfo("CORE", "Config loaded");
         }
         catch (IOException ex)
