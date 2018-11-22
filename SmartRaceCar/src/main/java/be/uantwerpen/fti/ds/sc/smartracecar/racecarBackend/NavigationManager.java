@@ -15,7 +15,11 @@ public class NavigationManager implements MQTTListener
 {
     private static class MQTTConstants
     {
-        private static final Pattern CAR_ID_REGEX = Pattern.compile("racecar/([0-9]+)/.*");
+        //todo: Use Parameter objects
+        private static final String MQTT_BROKER = "tcp://smartcity.ddns.net:1883";
+        private static final String MQTT_USERNAME = "root";
+        private static final String MQTT_PASSWORD = "smartcity";
+
         private static final Pattern COST_ANSWER_REGEX = Pattern.compile("racecar/[0-9]+/costanswer");
         private static final Pattern LOCATION_UPDATE_REGEX = Pattern.compile("racecar/[0-9]+/locationupdate");
     }
@@ -23,6 +27,7 @@ public class NavigationManager implements MQTTListener
     private static final Type COST_TYPE = (new TypeToken<Cost>(){}).getType();
 
     private LogbackWrapper log;
+    private MQTTUtils mqttUtils;
     private List<Cost> costList;
 
     private boolean isCostAnswer(String topic)
@@ -37,49 +42,17 @@ public class NavigationManager implements MQTTListener
         return matcher.matches();
     }
 
-    /**
-     * Extracts the car's id from any topic.
-     * If the topic doesn't match a racecar topic, -1 is returned
-     * @param topic
-     * @return
-     */
-    private int getCarId(String topic)
-    {
-        Matcher matcher = MQTTConstants.CAR_ID_REGEX.matcher(topic);
-
-        if (matcher.matches())
-        {
-            // Group 0 matches the entire string, so real capture groups start at index 1
-            String idString = matcher.group(1);
-
-            try
-            {
-                int id = Integer.parseInt(idString);
-                return id;
-            }
-            catch (NumberFormatException nfe)
-            {
-                log.error("Extracted invalid integer ('" + idString + "') from racecar topic ('" + topic + "').");
-                return -1;
-            }
-        }
-        else
-        {
-            log.warning("Failed to extract car id from topic: '" + topic + "'");
-            return -1;
-        }
-    }
-
     public NavigationManager()
     {
         this.log = new LogbackWrapper();
+        this.mqttUtils = new MQTTUtils(MQTTConstants.MQTT_BROKER, MQTTConstants.MQTT_USERNAME, MQTTConstants.MQTT_PASSWORD, this);
         this.costList = new ArrayList<>();
     }
 
     @Override
     public void parseMQTT(String topic, String message)
     {
-        int id = this.getCarId(topic);
+        int id = TopicUtils.getCarId(topic);
 
         if (id != -1)
         {
