@@ -22,6 +22,7 @@ public class VehicleManager implements MQTTListener
         private static final String MQTT_PASSWORD = "smartcity";
 
         private static final Pattern PERCENTAGE_UPDATE_REGEX = Pattern.compile("racecar/[0-9]+/percentage");
+        private static final Pattern AVAILABILITY_UPDATE_REGEX = Pattern.compile("racecar/[0-9]+/available");
     }
 
     private static final Type LOCATION_TYPE = (new TypeToken<Location>(){}).getType();
@@ -30,9 +31,20 @@ public class VehicleManager implements MQTTListener
     private NavigationManager navigationManager;
     private Map<Integer, Vehicle> vehicles;
 
+    private String getAvailabilityString(boolean available)
+    {
+        return available ? "Available" : "Not Available";
+    }
+
     private boolean isPercentageUpdate(String topic)
     {
         Matcher matcher = MQTTConstants.PERCENTAGE_UPDATE_REGEX.matcher(topic);
+        return matcher.matches();
+    }
+
+    private boolean isAvailabilityUpdate(String topic)
+    {
+        Matcher matcher = MQTTConstants.AVAILABILITY_UPDATE_REGEX.matcher(topic);
         return matcher.matches();
     }
 
@@ -76,13 +88,20 @@ public class VehicleManager implements MQTTListener
     {
         int id = TopicUtils.getCarId(topic);
 
-        if (id != -1)
+        if ((id != -1) && (this.exists(id)))
         {
             if (this.isPercentageUpdate(topic))
             {
                 //todo: Refactor JSON message to only have percentage and no other location information
                 Location location = (Location) JSONUtils.getObject(message, LOCATION_TYPE);
-                vehicles.get(id).getLocation().setPercentage(location.getPercentage());
+                this.vehicles.get(id).getLocation().setPercentage(location.getPercentage());
+                log.info("Received Percentage update for vehicle " + Integer.toString(id) + ", Status: " + Integer.toString(location.getPercentage()) + "%.");
+            }
+            else if (this.isAvailabilityUpdate(topic))
+            {
+                boolean availability = Boolean.parseBoolean(message);
+                this.vehicles.get(id).setAvailable(availability);
+                log.info("Received Availability update for vehicle " + Integer.toString(id) + ", Status: " + this.getAvailabilityString(availability));
             }
         }
         else

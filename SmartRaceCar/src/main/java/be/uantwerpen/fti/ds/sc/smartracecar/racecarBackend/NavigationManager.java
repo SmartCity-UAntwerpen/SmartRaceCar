@@ -10,7 +10,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 // Route Update
-// Costs
+// Cost Answers
 public class NavigationManager implements MQTTListener
 {
     private static class MQTTConstants
