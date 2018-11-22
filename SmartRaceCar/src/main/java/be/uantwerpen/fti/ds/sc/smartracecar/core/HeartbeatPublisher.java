@@ -10,7 +10,8 @@ import java.util.HashMap;
 /**
  * Helper class where the heartbeat is published every 10 seconds in a separate thread
  */
-public class HeartbeatPublisher extends Thread{
+public class HeartbeatPublisher extends Thread
+{
     private MQTTUtils mqttUtils;
     private long ID;
 
@@ -19,7 +20,8 @@ public class HeartbeatPublisher extends Thread{
      * @param mqttUtils The MQTTUtils class used by the Core class
      * @param ID Id of the Core class that creates this thread
      */
-    public HeartbeatPublisher(MQTTUtils mqttUtils, long ID) {
+    public HeartbeatPublisher(MQTTUtils mqttUtils, long ID)
+	{
         this.mqttUtils=mqttUtils;
         this.ID=ID;
     }
@@ -27,13 +29,18 @@ public class HeartbeatPublisher extends Thread{
     /**
      * start the thread
      */
-    public void run() {
-        while (true) {
-            try {
+    public void run()
+    {
+        while (true)
+        {
+            try
+			{
                 Thread.sleep(10000); //Sleep for 10s
                 Log.logConfig("CORE", "Publishing Heartbeat...");
-                mqttUtils.publishMessage("racecar/" + ID + "/heartbeat", "heartbeat"); //status can also be send in this message
-            } catch (InterruptedException e) {
+                this.mqttUtils.publishMessage("racecar/" + this.ID + "/heartbeat", "heartbeat"); //status can also be send in this message
+            }
+            catch (InterruptedException e)
+			{
                 e.printStackTrace();
             }
         }
