@@ -76,7 +76,7 @@ class Core implements TCPListener, MQTTListener
         System.out.println("------------------------------------------------------------------");
         loadConfig();
         Log.logConfig("CORE", "Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
-        restUtils = new RESTUtils(restURL);
+        this.restUtils = new RESTUtils(this.restURL);
         requestWaypoints();
         register();
         /*Runtime.getRuntime().addShutdownHook(
@@ -98,22 +98,22 @@ class Core implements TCPListener, MQTTListener
                     }
             }
         }));*/
-        mqttUtils = new MQTTUtils(mqttBroker, mqqtUsername, mqttPassword, this);
-        mqttUtils.subscribeToTopic("racecar/" + ID + "/#");
-        tcpUtils = new TCPUtils(clientPort, serverPort, this);
-        tcpUtils.start();
-        if (!debugWithoutRosKernel)
+        this.mqttUtils = new MQTTUtils(this.mqttBroker, this.mqqtUsername, this.mqttPassword, this);
+        this.mqttUtils.subscribeToTopic("racecar/" + ID + "/#");
+        this.tcpUtils = new TCPUtils(clientPort, serverPort, this);
+        this.tcpUtils.start();
+        if (!this.debugWithoutRosKernel)
         {
             connectSend();
         }
-        loadedMaps = loadMaps(findMapsFolder());
+        this.loadedMaps = loadMaps(findMapsFolder());
         requestMap();
         Log.logConfig("CORE", "Giving the map 10s to load.");
         Thread.sleep(10000); //10 seconds delay so the map can load before publishing the startpoint
         sendStartPoint();
         Log.logConfig("CORE", "Startpoint was send");
-        heartbeatPublisher = new HeartbeatPublisher(new MQTTUtils(mqttBroker, mqqtUsername, mqttPassword, this),ID);
-        heartbeatPublisher.start();
+        this.heartbeatPublisher = new HeartbeatPublisher(new MQTTUtils(this.mqttBroker, this.mqqtUsername, this.mqttPassword, this),this.ID);
+        this.heartbeatPublisher.start();
         Log.logInfo("CORE", "Heartbeat publisher was started.");
     }
 
@@ -149,16 +149,16 @@ class Core implements TCPListener, MQTTListener
                     log = new Log(this.getClass(), Level.SEVERE);
                     break;
             }
-            debugWithoutRosKernel = Boolean.parseBoolean(prop.getProperty("debugWithoutRosKernel"));
-            mqttBroker = "tcp://" + prop.getProperty("mqttBroker");
-            mqqtUsername = prop.getProperty("mqqtUsername");
-            mqttPassword = prop.getProperty("mqttPassword");
-            restURL = prop.getProperty("restURL");
+            this.debugWithoutRosKernel = Boolean.parseBoolean(prop.getProperty("debugWithoutRosKernel"));
+            this.mqttBroker = "tcp://" + prop.getProperty("mqttBroker");
+            this.mqqtUsername = prop.getProperty("mqqtUsername");
+            this.mqttPassword = prop.getProperty("mqttPassword");
+            this.restURL = prop.getProperty("restURL");
             Log.logInfo("CORE", "Config loaded");
         }
         catch (IOException ex)
 		{
-            log = new Log(this.getClass(), Level.INFO);
+            this.log = new Log(this.getClass(), Level.INFO);
             Log.logWarning("CORE", "Could not read config file. Loading default settings. " + ex);
         }
         finally
@@ -258,7 +258,7 @@ class Core implements TCPListener, MQTTListener
      */
     private void connectSend()
 	{
-        tcpUtils.sendUpdate(JSONUtils.keywordToJSONString("connect"));
+        this.tcpUtils.sendUpdate(JSONUtils.keywordToJSONString("connect"));
     }
 
     /**
@@ -274,9 +274,9 @@ class Core implements TCPListener, MQTTListener
      */
     private void register()
 	{
-        String id = restUtils.getTextPlain("register/" + Long.toString(startPoint));
-        ID = Long.parseLong(id, 10);
-        Log.logInfo("CORE", "Vehicle received ID " + ID + ".");
+        String id = this.restUtils.getTextPlain("register/" + Long.toString(this.startPoint));
+        this.ID = Long.parseLong(id, 10);
+        Log.logInfo("CORE", "Vehicle received ID " + this.ID + ".");
     }
 
     /**
@@ -287,13 +287,13 @@ class Core implements TCPListener, MQTTListener
         Type typeOfHashMap = new TypeToken<HashMap<Long, WayPoint>>()
 		{
         }.getType();
-        wayPoints = (HashMap<Long, WayPoint>) JSONUtils.getObjectWithKeyWord(restUtils.getJSON("getwaypoints"), typeOfHashMap);
-        assert wayPoints != null;
-        for (WayPoint wayPoint : wayPoints.values())
+        this.wayPoints = (HashMap<Long, WayPoint>) JSONUtils.getObjectWithKeyWord(restUtils.getJSON("getwaypoints"), typeOfHashMap);
+        assert this.wayPoints != null;
+        for (WayPoint wayPoint : this.wayPoints.values())
         {
             Log.logConfig("CORE", "Waypoint " + wayPoint.getID() + " added: " + wayPoint.getX() + "," + wayPoint.getY() + "," + wayPoint.getZ() + "," + wayPoint.getW());
         }
-        Log.logInfo("CORE", "All possible waypoints(" + wayPoints.size() + ") received.");
+        Log.logInfo("CORE", "All possible waypoints(" + this.wayPoints.size() + ") received.");
     }
 
     /**
@@ -302,8 +302,8 @@ class Core implements TCPListener, MQTTListener
     private void sendStartPoint()
 	{
         Log.logInfo("CORE", "Starting point set as waypoint with ID " + startPoint + ".");
-        if (!debugWithoutRosKernel)
-            tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("startPoint", wayPoints.get(startPoint)));
+        if (!this.debugWithoutRosKernel)
+            this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("startPoint", this.wayPoints.get(this.startPoint)));
     }
 
     /**
@@ -313,18 +313,18 @@ class Core implements TCPListener, MQTTListener
      */
     private void requestMap()
 	{
-        String mapName = restUtils.getTextPlain("getmapname");
-        if (loadedMaps.containsKey(mapName))
+        String mapName = this.restUtils.getTextPlain("getmapname");
+        if (this.loadedMaps.containsKey(mapName))
         {
             Log.logInfo("CORE", "Current used map '" + mapName + "' found in folder, setting as current map.");
-            if (!debugWithoutRosKernel)
-                tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", loadedMaps.get(mapName)));
+            if (!this.debugWithoutRosKernel)
+                this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", this.loadedMaps.get(mapName)));
         }
         else
 		{
             Log.logConfig("CORE", "Current used map '" + mapName + "' not found. Downloading...");
-            restUtils.getFile("getmappgm/" + mapName, findMapsFolder(), mapName, "pgm");
-            restUtils.getFile("getmapyaml/" + mapName, findMapsFolder(), mapName, "yaml");
+            this.restUtils.getFile("getmappgm/" + mapName, findMapsFolder(), mapName, "pgm");
+            this.restUtils.getFile("getmapyaml/" + mapName, findMapsFolder(), mapName, "yaml");
             Map map = new Map(mapName);
             try
 			{
@@ -356,11 +356,11 @@ class Core implements TCPListener, MQTTListener
 			{
                 Log.logWarning("CORE", "Could not add map to XML of maps." + e);
             }
-            loadedMaps.put(mapName, map);
+            this.loadedMaps.put(mapName, map);
             Log.logConfig("CORE", "Added downloaded map : " + mapName + ".");
             Log.logInfo("CORE", "Current map '" + mapName + "' downloaded and set as current map.");
-            if (!debugWithoutRosKernel)
-                tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", loadedMaps.get(mapName)));
+            if (!this.debugWithoutRosKernel)
+                this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", this.loadedMaps.get(mapName)));
         }
     }
 
@@ -370,13 +370,13 @@ class Core implements TCPListener, MQTTListener
      */
     private void updateRoute()
 	{
-        if (!currentRoute.isEmpty())
+        if (!this.currentRoute.isEmpty())
         {
-            WayPoint nextWayPoint = wayPoints.get(currentRoute.poll());
-            if (!debugWithoutRosKernel)
-                tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("nextWayPoint", nextWayPoint));
-            Log.logInfo("CORE", "Sending next waypoint with ID " + nextWayPoint.getID() + " (" + (routeSize - currentRoute.size()) + "/" + routeSize + ")");
-            if (debugWithoutRosKernel)
+            WayPoint nextWayPoint = this.wayPoints.get(this.currentRoute.poll());
+            if (!this.debugWithoutRosKernel)
+                this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("nextWayPoint", nextWayPoint));
+            Log.logInfo("CORE", "Sending next waypoint with ID " + nextWayPoint.getID() + " (" + (this.routeSize - this.currentRoute.size()) + "/" + this.routeSize + ")");
+            if (this.debugWithoutRosKernel)
             { //Debug code to go over all waypoints with a 3s sleep in between.
                 try
 				{
@@ -412,8 +412,8 @@ class Core implements TCPListener, MQTTListener
     private void routeCompleted()
 	{
         Log.logInfo("CORE", "Route Completed.");
-        occupied = false;
-        mqttUtils.publishMessage("racecar/" + ID + "/route", "done");
+        this.occupied = false;
+        this.mqttUtils.publishMessage("racecar/" + this.ID + "/route", "done");
     }
 
     /**
@@ -423,8 +423,8 @@ class Core implements TCPListener, MQTTListener
     private void routeError()
 	{
         Log.logWarning("CORE", "Route error. Route Cancelled");
-        occupied = false;
-        mqttUtils.publishMessage("racecar/" + ID + "/route", "error");
+        this.occupied = false;
+        this.mqttUtils.publishMessage("racecar/" + this.ID + "/route", "error");
     }
 
     /**
@@ -433,8 +433,8 @@ class Core implements TCPListener, MQTTListener
      */
     private void routeNotComplete()
 	{
-        occupied = false;
-        mqttUtils.publishMessage("racecar/" + ID + "/route", "notcomplete");
+        this.occupied = false;
+        this.mqttUtils.publishMessage("racecar/" + this.ID + "/route", "notcomplete");
     }
 
     /**
@@ -445,8 +445,8 @@ class Core implements TCPListener, MQTTListener
      */
     private void sendWheelStates(float throttle, float steer)
 	{
-        if (!debugWithoutRosKernel)
-            tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("drive", new Drive(steer, throttle)));
+        if (!this.debugWithoutRosKernel)
+            this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("drive", new Drive(steer, throttle)));
         Log.logInfo("CORE", "Sending wheel state Throttle:" + throttle + ", Steer:" + steer + ".");
     }
 
@@ -458,18 +458,18 @@ class Core implements TCPListener, MQTTListener
      */
     private void locationUpdate(Location location)
 	{
-        if (currentRoute.size() == 0)
+        if (this.currentRoute.size() == 0)
         {
-            float weight = (float) CostStartToEndTiming / (float) (CostCurrentToStartTiming + CostStartToEndTiming);
+            float weight = (float) this.CostStartToEndTiming / (float) (this.CostCurrentToStartTiming + this.CostStartToEndTiming);
             location.setPercentage(Math.round((1 - weight) * 100 + location.getPercentage() * weight));
         }
-        else if (currentRoute.size() == 1)
+        else if (this.currentRoute.size() == 1)
         {
-            float weight = (float) CostCurrentToStartTiming / (float) (CostCurrentToStartTiming + CostStartToEndTiming);
+            float weight = (float) this.CostCurrentToStartTiming / (float) (this.CostCurrentToStartTiming + this.CostStartToEndTiming);
             location.setPercentage(Math.round(location.getPercentage() * weight));
         }
         Log.logInfo("CORE", "Location Updated. Vehicle has " + location.getPercentage() + "% of route completed");
-        mqttUtils.publishMessage("racecar/" + ID + "/percentage", JSONUtils.objectToJSONString(location));
+        this.mqttUtils.publishMessage("racecar/" + ID + "/percentage", JSONUtils.objectToJSONString(location));
     }
 
     /**
@@ -489,7 +489,7 @@ class Core implements TCPListener, MQTTListener
             }
             else
 			{
-                if (!occupied)
+                if (!this.occupied)
                 {
                     String[] wayPointStringValues = message.split(" ");
                     try
@@ -569,13 +569,13 @@ class Core implements TCPListener, MQTTListener
                     sendAvailability(true);
                     break;
                 case "startpoint":
-                    startPoint = (long) JSONUtils.getObjectWithKeyWord(message, Long.class);
-                    mqttUtils.publishMessage("racecar/" + ID + "/locationupdate", Long.toString((Long) JSONUtils.getObjectWithKeyWord(message, Long.class)));
+                    this.startPoint = (long) JSONUtils.getObjectWithKeyWord(message, Long.class);
+                    this.mqttUtils.publishMessage("racecar/" + ID + "/locationupdate", Long.toString((Long) JSONUtils.getObjectWithKeyWord(message, Long.class)));
                     Log.logInfo("CORE", "Setting new starting point with ID " + JSONUtils.getObjectWithKeyWord(message, Long.class));
                     break;
                 case "restart":
                     sendAvailability(true);
-                    tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentPosition", wayPoints.get(startPoint)));
+                    this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentPosition", this.wayPoints.get(Core.startPoint)));
                     Log.logInfo("CORE", "Vehicle restarted.");
                     break;
                 case "cost":
@@ -603,7 +603,7 @@ class Core implements TCPListener, MQTTListener
      */
     private void sendAvailability(boolean state)
 	{
-        mqttUtils.publishMessage("racecar/" + ID + "/available", Boolean.toString(state));
+        this.mqttUtils.publishMessage("racecar/" + ID + "/available", Boolean.toString(state));
         Log.logInfo("CORE", "Vehicle's availability status set to " + state + '.');
     }
 
@@ -613,9 +613,11 @@ class Core implements TCPListener, MQTTListener
     private void killCar()
 	{
         Log.logInfo("CORE", "Vehicle kill request. Closing connections and shutting down...");
-        restUtils.getCall("delete/" + ID);
-        if (!debugWithoutRosKernel) tcpUtils.closeTCP();
-        mqttUtils.closeMQTT();
+        this.restUtils.getCall("delete/" + this.ID);
+        if (!this.debugWithoutRosKernel) this.tcpUtils.closeTCP();
+		{
+			this.mqttUtils.closeMQTT();
+		}
         System.exit(0);
     }
 
@@ -627,15 +629,15 @@ class Core implements TCPListener, MQTTListener
     private void costRequest(long[] wayPointIDs)
 	{
         List<Point> points = new ArrayList<>();
-        points.add(wayPoints.get(wayPointIDs[0]));
-        points.add(wayPoints.get(wayPointIDs[1]));
-        if (!debugWithoutRosKernel)
+        points.add(this.wayPoints.get(wayPointIDs[0]));
+        points.add(this.wayPoints.get(wayPointIDs[1]));
+        if (!this.debugWithoutRosKernel)
         {
-            tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("cost", points));
+            this.tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("cost", points));
         }
         else
 		{
-            costComplete(new Cost(false, 5, 5, ID));
+            costComplete(new Cost(false, 5, 5, this.ID));
         }
         Log.logInfo("CORE", "Cost request received between waypoints " + wayPointIDs[0] + " and " + wayPointIDs[1] + ". Calculating.");
     }
@@ -648,9 +650,9 @@ class Core implements TCPListener, MQTTListener
     private void costComplete(Cost cost)
 	{
         Log.logInfo("CORE", "Cost request calculated.");
-        cost.setStatus(occupied);
-        cost.setIdVehicle(ID);
-        mqttUtils.publishMessage("racecar/" + ID + "/costanswer", JSONUtils.objectToJSONString(cost));
+        cost.setStatus(this.occupied);
+        cost.setIdVehicle(this.ID);
+        this.mqttUtils.publishMessage("racecar/" + this.ID + "/costanswer", JSONUtils.objectToJSONString(cost));
     }
 
     /**
@@ -661,15 +663,15 @@ class Core implements TCPListener, MQTTListener
     private void timeRequest(long[] wayPointIDs)
 	{
         List<Point> points = new ArrayList<>();
-        points.add(wayPoints.get(wayPointIDs[0]));
-        points.add(wayPoints.get(wayPointIDs[1]));
-        if (!debugWithoutRosKernel)
+        points.add(this.wayPoints.get(wayPointIDs[0]));
+        points.add(this.wayPoints.get(wayPointIDs[1]));
+        if (!this.debugWithoutRosKernel)
         {
-            tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("costtiming", points));
+            this.tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("costtiming", points));
         }
         else
 		{
-            costComplete(new Cost(false, 5, 5, ID));
+            costComplete(new Cost(false, 5, 5, this.ID));
         }
     }
 
@@ -681,8 +683,8 @@ class Core implements TCPListener, MQTTListener
      */
     private void timeComplete(Cost cost)
 	{
-        CostCurrentToStartTiming = cost.getWeightToStart();
-        CostStartToEndTiming = cost.getWeight();
+        this.CostCurrentToStartTiming = cost.getWeightToStart();
+        this.CostStartToEndTiming = cost.getWeight();
     }
 
     /**
@@ -697,11 +699,11 @@ class Core implements TCPListener, MQTTListener
 	{
         Log.logInfo("CORE", "Route request received.");
         Boolean error = false;
-        if (!occupied)
+        if (!this.occupied)
         {
-            occupied = true;
+            this.occupied = true;
             timeRequest(wayPointIDs);
-            while (CostCurrentToStartTiming == -1 && CostStartToEndTiming == -1)
+            while (this.CostCurrentToStartTiming == -1 && this.CostStartToEndTiming == -1)
             {
                 try
 				{
@@ -714,21 +716,21 @@ class Core implements TCPListener, MQTTListener
             }
             for (long wayPointID : wayPointIDs)
             {
-                if (wayPoints.containsKey(wayPointID))
+                if (this.wayPoints.containsKey(wayPointID))
                 {
-                    currentRoute.add(wayPointID);
+                    this.currentRoute.add(wayPointID);
                     Log.logInfo("CORE", "Added waypoint with ID " + wayPointID + " to route.");
                 }
                 else
 				{
                     Log.logWarning("CORE", "Waypoint with ID '" + wayPointID + "' not found.");
-                    currentRoute.clear();
+                    this.currentRoute.clear();
                     error = true;
                 }
             }
             if (!error) {
-                routeSize = currentRoute.size();
-                Log.logInfo("CORE", "All waypoints(" + routeSize + ") of route added. Starting route.");
+                this.routeSize = this.currentRoute.size();
+                Log.logInfo("CORE", "All waypoints(" + this.routeSize + ") of route added. Starting route.");
                 updateRoute();
             }
             else
