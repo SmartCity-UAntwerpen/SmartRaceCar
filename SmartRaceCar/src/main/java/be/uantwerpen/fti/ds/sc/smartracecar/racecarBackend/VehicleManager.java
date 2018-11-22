@@ -67,6 +67,16 @@ public class VehicleManager implements MQTTListener
     }
 
     /**
+     * Register a vehicle with the vehicle manager
+     * @param id
+     * @param vehicle
+     */
+    public void regsiter(int id, Vehicle vehicle)
+    {
+        this.vehicles.put(id, vehicle);
+    }
+
+    /**
      *
      * @param vehicleId
      * @return
@@ -104,10 +114,6 @@ public class VehicleManager implements MQTTListener
                 this.vehicles.get(id).setAvailable(availability);
                 log.info("Received Availability update for vehicle " + Integer.toString(id) + ", Status: " + this.getAvailabilityString(availability));
             }
-        }
-        else
-        {
-            log.warning("Failed to parse MQTT message. topic: '" + topic + "', message: '" + message + "'");
         }
     }
 }

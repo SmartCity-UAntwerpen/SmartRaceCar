@@ -84,9 +84,5 @@ public class NavigationManager implements MQTTListener
                 }
             }
         }
-        else
-        {
-            log.warning("Failed to parse MQTT message. topic: '" + topic + "', message: '" + message + "'");
-        }
     }
 }
