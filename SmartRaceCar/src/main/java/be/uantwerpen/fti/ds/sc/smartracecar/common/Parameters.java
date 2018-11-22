@@ -7,7 +7,7 @@ public class Parameters
 	private String mqttPassword;
 	private String mqttTopic;
 
-	private String restURL;
+	private String restCarmanagerURL;
 
 	public Parameters()
 	{
@@ -20,14 +20,14 @@ public class Parameters
 		);
 	}
 
-	public Parameters(String mqttBroker, String mqttUserName, String mqttPassword, String mqttTopic, String restURL)
+	public Parameters(String mqttBroker, String mqttUserName, String mqttPassword, String mqttTopic, String restCarmanagerURL)
 	{
 		this.mqttBroker = mqttBroker;
 		this.mqttUserName = mqttUserName;
 		this.mqttPassword = mqttPassword;
 		this.mqttTopic = mqttTopic;
 
-		this.restURL = restURL;
+		this.restCarmanagerURL = restCarmanagerURL;
 	}
 
 	public String getMqttBroker()
@@ -60,14 +60,14 @@ public class Parameters
 		this.mqttPassword = mqttPassword;
 	}
 
-	public String getRestURL()
+	public String getRestCarmanagerURL()
 	{
-		return this.restURL;
+		return this.restCarmanagerURL;
 	}
 
-	public void setRestURL(String restURL)
+	public void setRestCarmanagerURL(String restCarmanagerURL)
 	{
-		this.restURL = restURL;
+		this.restCarmanagerURL = restCarmanagerURL;
 	}
 
 	public String getMqttTopic()
