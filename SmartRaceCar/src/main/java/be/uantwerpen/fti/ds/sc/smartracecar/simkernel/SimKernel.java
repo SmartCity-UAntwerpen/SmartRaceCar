@@ -23,8 +23,8 @@ class SimKernel implements TCPListener
     //Standard settings (without config file loaded)
     private boolean debugWithoutRosServer = false; // debug parameter for using this module without a connected RosSever.
     private String restURL = "http://smartcity.ddns.net:8084"; // REST Service URL to RosServer
-    private static int serverPort = 5006;// Standard TCP Port to listen on for messages from Core.
-    private static int clientPort = 5005; // Standard TCP Port to send to messages to SimKernel/RosKernel.
+    //private static int serverPort = 5006;// Standard TCP Port to listen on for messages from Core.
+    //private static int clientPort = 5005; // Standard TCP Port to send to messages to SimKernel/RosKernel.
 
     //Help services
     private TCPUtils tcpUtils;
@@ -52,15 +52,15 @@ class SimKernel implements TCPListener
         System.out.println("------------------ F1 Racecar SimKernel - v1.0 --------------------");
         System.out.println("-------------------------------------------------------------------");
         loadConfig();
-        log.logConfig("SIMKERNEL", "Startup parameters: TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
-        restUtils = new RESTUtils(restURL);
-        tcpUtils = new TCPUtils(clientPort, serverPort, this);
-        tcpUtils.start();
-        calculatedCosts = new HashMap<>();
+        Log.logConfig("SIMKERNEL", "Startup parameters: TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
+        this.restUtils = new RESTUtils(restURL);
+        this.tcpUtils = new TCPUtils(clientPort, serverPort, this);
+        this.tcpUtils.start();
+        this.calculatedCosts = new HashMap<>();
 
-        while (!connected)
+        while (!this.connected)
         {
-            log.logWarning("SIMKERNEL", "Waiting for connection with vehicle Core on port " + serverPort);
+            Log.logWarning("SIMKERNEL", "Waiting for connection with vehicle Core on port " + serverPort);
             Thread.sleep(1000);
         }
     }
@@ -151,13 +151,13 @@ class SimKernel implements TCPListener
                     connectReceive();
                     break;
                 case "startPoint":
-                    startPoint = (WayPoint) JSONUtils.getObjectWithKeyWord(message, WayPoint.class);
+                    this.startPoint = (WayPoint) JSONUtils.getObjectWithKeyWord(message, WayPoint.class);
                     Log.logInfo("SIMKERNEL", "Startpoint set to " + startPoint.getX() + "," + startPoint.getY() + "," + startPoint.getZ() + "," + startPoint.getW() + ".");
-                    currentPosition = new Point(startPoint.getX(), startPoint.getY(), startPoint.getZ(), startPoint.getW());
+                    this.currentPosition = new Point(startPoint.getX(), startPoint.getY(), startPoint.getZ(), startPoint.getW());
                     break;
                 case "currentMap":
-                    map = (Map) JSONUtils.getObjectWithKeyWord(message, Map.class);
-                    calculatedCosts.clear();
+                    this.map = (Map) JSONUtils.getObjectWithKeyWord(message, Map.class);
+                    this.calculatedCosts.clear();
                     Log.logInfo("SIMKERNEL", "Map set to '" + map.getName() + "'.");
                     break;
                 case "nextWayPoint":
@@ -170,7 +170,7 @@ class SimKernel implements TCPListener
                     Type typeOfWayPoint2 = new TypeToken<WayPoint>()
                     {
                     }.getType();
-                    currentPosition = (WayPoint) JSONUtils.getObjectWithKeyWord(message, typeOfWayPoint2);
+                    this.currentPosition = (WayPoint) JSONUtils.getObjectWithKeyWord(message, typeOfWayPoint2);
                     Log.logInfo("SIMKERNEL", "Current position set to " + currentPosition.getX() + "," + currentPosition.getY() + "," + currentPosition.getZ() + "," + currentPosition.getW() + ".");
                     break;
                 default:
@@ -186,8 +186,8 @@ class SimKernel implements TCPListener
      */
     private void connectReceive()
     {
-        tcpUtils.sendUpdate(JSONUtils.keywordToJSONString("connect"));
-        connected = true;
+        this.tcpUtils.sendUpdate(JSONUtils.keywordToJSONString("connect"));
+        this.connected = true;
         Log.logInfo("SIMKERNEL", "Connected to Core.");
     }
 
@@ -196,8 +196,8 @@ class SimKernel implements TCPListener
      */
     private void wayPointReached()
     {
-        tcpUtils.sendUpdate(JSONUtils.keywordToJSONString("arrivedWaypoint"));
-        connected = true;
+        this.tcpUtils.sendUpdate(JSONUtils.keywordToJSONString("arrivedWaypoint"));
+        this.connected = true;
         Log.logInfo("SIMKERNEL", "Arrived at waypoint. Waiting for next order.");
     }
 
@@ -212,16 +212,16 @@ class SimKernel implements TCPListener
     {
         Log.logInfo("SIMKERNEL", "Job request to drive to " + nextPoint.getX() + "," + nextPoint.getY() + "," + nextPoint.getZ() + "," + nextPoint.getW() + ".");
         Cost cost = new Cost(false, 5, 5, (long) 0);
-        if (!debugWithoutRosServer)
+        if (!this.debugWithoutRosServer)
         {
             List<Point> points = new ArrayList<>();
-            points.add(currentPosition);
-            points.add(currentPosition);
+            points.add(this.currentPosition);
+            points.add(this.currentPosition);
             points.add(nextPoint);
             Type typeOfCost = new TypeToken<Cost>()
             {
             }.getType();
-            cost = (Cost) JSONUtils.getObjectWithKeyWord(restUtils.postJSONGetJSON("calcWeight", JSONUtils.arrayToJSONString(points)), typeOfCost);
+            cost = (Cost) JSONUtils.getObjectWithKeyWord(this.restUtils.postJSONGetJSON("calcWeight", JSONUtils.arrayToJSONString(points)), typeOfCost);
         }
         Log.logInfo("SIMKERNEL", "Travel time to destination is " + cost.getWeight() + "s.");
         if (cost.getWeight() != 0)
@@ -232,7 +232,7 @@ class SimKernel implements TCPListener
                 {
                     Thread.sleep((cost.getWeight() * 1000) / 20);
                     Location location = new Location(0, 0, 0, i * 5);
-                    tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("percentage", location));
+                    this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("percentage", location));
                     Log.logInfo("SIMKERNEL", "travelled " + i * 5 + "% of total route.");
                 } catch (InterruptedException e)
                 {
@@ -241,7 +241,7 @@ class SimKernel implements TCPListener
             }
         }
         wayPointReached();
-        currentPosition = new Point(nextPoint.getX(), nextPoint.getY(), nextPoint.getZ(), nextPoint.getW());
+        this.currentPosition = new Point(nextPoint.getX(), nextPoint.getY(), nextPoint.getZ(), nextPoint.getW());
     }
 
     /**
@@ -256,7 +256,7 @@ class SimKernel implements TCPListener
     {
         Cost cost = calcWeightROS(points);
         Log.logInfo("SIMKERNEL", "Calculated cost between current and start: " + cost.getWeightToStart() + "s. Cost to end : " + cost.getWeight() + "s.");
-        tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("cost", cost));
+        this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("cost", cost));
     }
 
     /**
@@ -271,7 +271,7 @@ class SimKernel implements TCPListener
     {
         Cost cost = calcWeightROS(points);
         Log.logInfo("SIMKERNEL", "Calculated timing between current and start: " + cost.getWeightToStart() + "s. Timing to end : " + cost.getWeight() + "s.");
-        tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("costtiming", cost));
+        this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("costtiming", cost));
     }
 
     /**
@@ -284,13 +284,13 @@ class SimKernel implements TCPListener
     private Cost calcWeightROS(ArrayList<Point> points)
     {
         ArrayList<Point> allPoints = new ArrayList<>();
-        allPoints.add(currentPosition);
+        allPoints.add(this.currentPosition);
         allPoints.addAll(points);
         Log.logInfo("SIMKERNEL", "Cost request received. Requesting calculation from ROS Server.");
         Cost cost = new Cost(false, 5, 5, (long) 0);
-        if (!debugWithoutRosServer)
+        if (!this.debugWithoutRosServer)
         {
-            for (ArrayList<Point> list : calculatedCosts.keySet())
+            for (ArrayList<Point> list : this.calculatedCosts.keySet())
             { // The containsKey method from the HashMap class doesn't correctly compare two ArrayLists
                 if (list.equals(allPoints))
                 {
@@ -298,18 +298,18 @@ class SimKernel implements TCPListener
                     break;
                 }
             }
-            if (calculatedCosts.containsKey(allPoints))
+            if (this.calculatedCosts.containsKey(allPoints))
             { //a request to the ROSkernel is intensive and needs to be avoided if possible
                 Log.logConfig("SIMKERNEL", "Loaded cost locally from previously calculated costs");
-                cost = calculatedCosts.get(allPoints);
+                cost = this.calculatedCosts.get(allPoints);
             }
             else
             {
                 Type typeOfCost = new TypeToken<Cost>()
                 {
                 }.getType();
-                cost = (Cost) JSONUtils.getObjectWithKeyWord(restUtils.postJSONGetJSON("calcWeight", JSONUtils.arrayToJSONString(allPoints)), typeOfCost);
-                calculatedCosts.put(allPoints, cost);
+                cost = (Cost) JSONUtils.getObjectWithKeyWord(this.restUtils.postJSONGetJSON("calcWeight", JSONUtils.arrayToJSONString(allPoints)), typeOfCost);
+                this.calculatedCosts.put(allPoints, cost);
                 Log.logConfig("SIMKERNEL", "Cost was requested from ROSserver and added to local costs.");
             }
         }
@@ -324,14 +324,16 @@ class SimKernel implements TCPListener
      */
     public static void main(String[] args) throws Exception
     {
-
         if (args.length != 2)
         {
             System.out.println("Need 2 arguments to run. Possible arguments: tcpclientport(int) tcpserverport(int)");
-            System.exit(0);
+            //System.exit(0);
         }
         else if (args.length == 2)
         {
+            int serverPort = 0;
+            int clientPort = 0;
+
             if (!args[0].isEmpty())
             {
                 serverPort = Integer.parseInt(args[0]);
@@ -340,7 +342,8 @@ class SimKernel implements TCPListener
             {
                 clientPort = Integer.parseInt(args[1]);
             }
+
+            final SimKernel simKernel = new SimKernel(serverPort, clientPort);
         }
-        final SimKernel simKernel = new SimKernel(serverPort, clientPort);
     }
 }
