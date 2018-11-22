@@ -7,8 +7,8 @@ import java.util.Date;
 /**
  * Model that describes a F1 vehicle.
  */
-class Vehicle {
-
+public class Vehicle
+{
     private Long ID; // ID of the vehicle.
     private Location location; // Location of the vehicle. Containing information on it's route progress.
     private boolean occupied = false; // If the vehicle is occupied by a current route job.
@@ -23,7 +23,8 @@ class Vehicle {
      * @param ID ID of the vehicle
      * @param startWayPoint ID of the waypoint where the vehicle starts.
      */
-    Vehicle(Long ID,long startWayPoint){
+    public Vehicle(Long ID,long startWayPoint)
+    {
         this.ID = ID;
         location = new Location(ID,startWayPoint,startWayPoint,100);
         heartbeat = new Date();

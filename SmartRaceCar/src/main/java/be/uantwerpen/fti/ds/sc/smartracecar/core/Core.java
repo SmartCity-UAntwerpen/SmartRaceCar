@@ -80,7 +80,7 @@ class Core implements TCPListener, MQTTListener
 
         loadConfig();
         Log.logConfig("CORE", "Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
-        this.restUtils = new RESTUtils(this.params.getRestCarmanagerURL());
+        this.restUtils = new RESTUtils(this.params.getRESTCarmanagerURL());
         requestWaypoints();
         register();
         /*Runtime.getRuntime().addShutdownHook(
