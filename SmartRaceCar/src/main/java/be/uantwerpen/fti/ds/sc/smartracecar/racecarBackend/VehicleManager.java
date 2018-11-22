@@ -1,8 +1,12 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
+import be.uantwerpen.fti.ds.sc.smartracecar.common.JSONUtils;
+import be.uantwerpen.fti.ds.sc.smartracecar.common.Location;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.LogbackWrapper;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.MQTTListener;
+import com.google.gson.reflect.TypeToken;
 
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -20,6 +24,8 @@ public class VehicleManager implements MQTTListener
         private static final Pattern PERCENTAGE_UPDATE_REGEX = Pattern.compile("racecar/[0-9]+/percentage");
     }
 
+    private static final Type LOCATION_TYPE = (new TypeToken<Location>(){}).getType();
+
     private LogbackWrapper log;
     private NavigationManager navigationManager;
     private Map<Integer, Vehicle> vehicles;
@@ -33,8 +39,36 @@ public class VehicleManager implements MQTTListener
     public VehicleManager()
     {
         this.log = new LogbackWrapper();
-        this.navigationManager = new NavigationManager();
+        this.navigationManager = new NavigationManager(this);
         this.vehicles = new HashMap<>();
+    }
+
+    /**
+     * Checks whether or not a vehicle exists.
+     * @param vehicleId The id of the vehicle to be checked
+     * @return
+     */
+    public boolean exists(int vehicleId)
+    {
+        return this.vehicles.containsKey(vehicleId);
+    }
+
+    /**
+     *
+     * @param vehicleId
+     * @return
+     * @throws Exception    When a non-existent vehicle is queried, an exception is thrown
+     */
+    public Vehicle get(int vehicleId) throws Exception
+    {
+        if (this.exists(vehicleId))
+        {
+            return this.vehicles.get(vehicleId);
+        }
+        else
+        {
+            throw new Exception("Tried to access vehicle that doesn't exist!");
+        }
     }
 
     @Override
@@ -46,7 +80,9 @@ public class VehicleManager implements MQTTListener
         {
             if (this.isPercentageUpdate(topic))
             {
-
+                //todo: Refactor JSON message to only have percentage and no other location information
+                Location location = (Location) JSONUtils.getObject(message, LOCATION_TYPE);
+                vehicles.get(id).getLocation().setPercentage(location.getPercentage());
             }
         }
         else

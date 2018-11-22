@@ -29,6 +29,7 @@ public class NavigationManager implements MQTTListener
     private LogbackWrapper log;
     private MQTTUtils mqttUtils;
     private List<Cost> costList;
+    private VehicleManager vehicleManager;
 
     private boolean isCostAnswer(String topic)
     {
@@ -42,11 +43,12 @@ public class NavigationManager implements MQTTListener
         return matcher.matches();
     }
 
-    public NavigationManager()
+    public NavigationManager(VehicleManager vehicleManager)
     {
         this.log = new LogbackWrapper();
         this.mqttUtils = new MQTTUtils(MQTTConstants.MQTT_BROKER, MQTTConstants.MQTT_USERNAME, MQTTConstants.MQTT_PASSWORD, this);
         this.costList = new ArrayList<>();
+        this.vehicleManager = vehicleManager;
     }
 
     @Override
@@ -54,20 +56,30 @@ public class NavigationManager implements MQTTListener
     {
         int id = TopicUtils.getCarId(topic);
 
-        if (id != -1)
+        // id == -1 means the topic wasn't valid
+        // It's also possible that the topic was valid, but the vehicle just doesn't exist
+        if ((id != -1) && (this.vehicleManager.exists(id)))
         {
+            // We received an MQTT cost answer
             if (this.isCostAnswer(topic))
             {
-                //todo: Get a hold of the VehicleManager
                 Cost cost = (Cost)JSONUtils.getObject("value", COST_TYPE);
                 this.costList.add(cost);
             }
+            // We received an MQTT location update
             else if (this.isLocationUpdate(topic))
             {
-               long locationId = Long.parseLong(message);
-
-               //todo: Get a hold of VehicleManager
-               Location location = new Location(id, locationId, locationId, 0);
+                try
+                {
+                    long locationId = Long.parseLong(message);
+                    int percentage = this.vehicleManager.get(id).getLocation().getPercentage();
+                    Location location = new Location(id, locationId, locationId, percentage);
+                    this.vehicleManager.get(id).setLocation(location);
+                }
+                catch (Exception vehicleNotFoundException)
+                {
+                    log.error("Tried to update location on non-existent vehicle.");
+                }
             }
         }
         else
