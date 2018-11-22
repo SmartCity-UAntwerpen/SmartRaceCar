@@ -28,7 +28,6 @@ import java.util.logging.Level;
 @Path("carmanager")
 public class RacecarBackend implements MQTTListener
 {
-
     //Standard settings (without config file loaded)
     private static boolean debugWithoutBackBone = true; // debug parameter to stop attempts to send or recieve messages from backbone.
     private static boolean debugWithoutMAAS = true; // debug parameter to stop attempts to send or recieve messages from MAAS
@@ -56,10 +55,11 @@ public class RacecarBackend implements MQTTListener
     /**
      * Module representing the management or dispatching module of the F1 service. Empty constructor used by REST.
      */
+    /*
     public RacecarBackend()
     {
-
     }
+    */
 
     /**
      * Module representing the management or dispatching module of the F1 service.
@@ -97,10 +97,12 @@ public class RacecarBackend implements MQTTListener
                 try
                 {
                     new TomCatLauncher().start();
-                } catch (InterruptedException v)
+                }
+                catch (InterruptedException v)
                 {
                     System.out.println(v);
-                } catch (Exception e)
+                }
+                catch (Exception e)
                 {
                     e.printStackTrace();
                 }
@@ -152,11 +154,13 @@ public class RacecarBackend implements MQTTListener
             currentMap = prop.getProperty("currentMap");
             mapsPath = prop.getProperty("mapsPath");
             Log.logInfo("RACECAR_BACKEND", "Config loaded");
-        } catch (IOException ex)
+        }
+        catch (IOException ex)
         {
             log = new Log(this.getClass(), Level.CONFIG);
             Log.logWarning("RACECAR_BACKEND", "Could not read config file. Loading default settings. " + ex);
-        } finally
+        }
+        finally
         {
             if (input != null)
             {
@@ -214,9 +218,7 @@ public class RacecarBackend implements MQTTListener
         {
             String jsonString = restUtilsBackBone.getJSON("map/stringmapjson/car"); //when the map is changed, another map needs to be manually loaded in the backbone database
             JSONUtils.isJSONValid(jsonString);
-            Type typeOfWayPointArray = new TypeToken<ArrayList<WayPoint>>()
-            {
-            }.getType();
+            Type typeOfWayPointArray = new TypeToken<ArrayList<WayPoint>>(){}.getType();
             ArrayList<WayPoint> wayPointsTemp = (ArrayList<WayPoint>) JSONUtils.getObject(jsonString, typeOfWayPointArray);
             for (WayPoint wayPoint : wayPointsTemp)
             {
@@ -604,7 +606,8 @@ public class RacecarBackend implements MQTTListener
                 byte[] data = Files.readAllBytes(path);
                 output.write(data);
                 output.flush();
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, mapname + ".yaml not found");
             }
@@ -728,6 +731,5 @@ public class RacecarBackend implements MQTTListener
     public static void main(String[] args) throws Exception
     {
         final RacecarBackend racecarBackend = new RacecarBackend(true);
-
     }
 }
