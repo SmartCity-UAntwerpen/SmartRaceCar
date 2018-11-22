@@ -1,8 +1,14 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
+import be.uantwerpen.fti.ds.sc.smartracecar.common.Cost;
+import be.uantwerpen.fti.ds.sc.smartracecar.common.JSONUtils;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.LogbackWrapper;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.MQTTListener;
+import com.google.gson.reflect.TypeToken;
 
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,7 +22,10 @@ public class NavigationManager implements MQTTListener
         private static final Pattern COSTANSWER_REGEX = Pattern.compile("racecar/[0-9]+/costanswer");
     }
 
+    private static final Type COST_TYPE = (new TypeToken<Cost>(){}).getType();
+
     private LogbackWrapper log;
+    private List<Cost> costList;
 
     private boolean isCostAnswer(String topic)
     {
@@ -27,6 +36,7 @@ public class NavigationManager implements MQTTListener
     public NavigationManager()
     {
         this.log = new LogbackWrapper();
+        this.costList = new ArrayList<>();
     }
 
     /**
@@ -41,8 +51,19 @@ public class NavigationManager implements MQTTListener
 
         if (matcher.matches())
         {
-            int id = Integer.parseInt(matcher.group(0));
-            return id;
+            // Group 0 matches the entire string, so real capture groups start at index 1
+            String idString = matcher.group(1);
+
+            try
+            {
+                int id = Integer.parseInt(idString);
+                return id;
+            }
+            catch (NumberFormatException nfe)
+            {
+                log.error("Extracted invalid integer ('" + idString + "') from racecar topic ('" + topic + "').");
+                return -1;
+            }
         }
         else
         {
@@ -56,9 +77,14 @@ public class NavigationManager implements MQTTListener
     {
         int id = this.getCarId(topic);
 
-        if (this.getCarId(topic) != -1)
+        if (id != -1)
         {
-
+            if (this.isCostAnswer(topic))
+            {
+                //todo: Get a hold of the VehicleManager
+                Cost cost = (Cost)JSONUtils.getObject("value", COST_TYPE);
+                this.costList.add(cost);
+            }
         }
         else
         {
