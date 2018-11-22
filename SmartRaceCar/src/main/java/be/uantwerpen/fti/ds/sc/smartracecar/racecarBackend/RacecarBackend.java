@@ -26,7 +26,8 @@ import java.util.logging.Level;
  * Module representing the management or dispatching module of the F1 service.
  */
 @Path("carmanager")
-public class RacecarBackend implements MQTTListener {
+public class RacecarBackend implements MQTTListener
+{
 
     //Standard settings (without config file loaded)
     private static boolean debugWithoutBackBone = true; // debug parameter to stop attempts to send or recieve messages from backbone.
@@ -55,7 +56,8 @@ public class RacecarBackend implements MQTTListener {
     /**
      * Module representing the management or dispatching module of the F1 service. Empty constructor used by REST.
      */
-    public RacecarBackend() {
+    public RacecarBackend()
+    {
 
     }
 
@@ -64,7 +66,8 @@ public class RacecarBackend implements MQTTListener {
      *
      * @param start help parameter to make a distinction between the two constructors
      */
-    public RacecarBackend(Boolean start) throws Exception {
+    public RacecarBackend(Boolean start) throws Exception
+    {
         String asciiArt1 = FigletFont.convertOneLine("SmartCity");
         System.out.println(asciiArt1);
         System.out.println("-------------------------------------------------------------------");
@@ -85,14 +88,20 @@ public class RacecarBackend implements MQTTListener {
     /**
      * Start the build-in TomCat Server.
      */
-    private void startTomCatServer(){
-        Thread tomcat = new Thread() {
-            public void run() {
-                try {
+    private void startTomCatServer()
+    {
+        Thread tomcat = new Thread()
+        {
+            public void run()
+            {
+                try
+                {
                     new TomCatLauncher().start();
-                } catch(InterruptedException v) {
+                } catch (InterruptedException v)
+                {
                     System.out.println(v);
-                } catch (Exception e) {
+                } catch (Exception e)
+                {
                     e.printStackTrace();
                 }
             }
@@ -105,17 +114,20 @@ public class RacecarBackend implements MQTTListener {
      * If it's not found then it will use the default ones.
      */
     @SuppressWarnings("Duplicates")
-    private void loadConfig() {
+    private void loadConfig()
+    {
         Properties prop = new Properties();
         InputStream input = null;
-        try {
+        try
+        {
             String path = RacecarBackend.class.getProtectionDomain().getCodeSource().getLocation().getPath();
             String decodedPath = URLDecoder.decode(path, "UTF-8");
             decodedPath = decodedPath.replace("RacecarBackend.jar", "");
             input = new FileInputStream(decodedPath + "/racecarbackend.properties");
             prop.load(input);
             String debugLevel = prop.getProperty("debugLevel");
-            switch (debugLevel) {
+            switch (debugLevel)
+            {
                 case "debug":
                     log = new Log(this.getClass(), Level.CONFIG);
                     break;
@@ -140,14 +152,19 @@ public class RacecarBackend implements MQTTListener {
             currentMap = prop.getProperty("currentMap");
             mapsPath = prop.getProperty("mapsPath");
             Log.logInfo("RACECAR_BACKEND", "Config loaded");
-        } catch (IOException ex) {
+        } catch (IOException ex)
+        {
             log = new Log(this.getClass(), Level.CONFIG);
             Log.logWarning("RACECAR_BACKEND", "Could not read config file. Loading default settings. " + ex);
-        } finally {
-            if (input != null) {
-                try {
+        } finally
+        {
+            if (input != null)
+            {
+                try
+                {
                     input.close();
-                } catch (IOException e) {
+                } catch (IOException e)
+                {
                     Log.logWarning("RACECAR_BACKEND", "Could not read config file. Loading default settings. " + e);
                 }
             }
@@ -157,10 +174,13 @@ public class RacecarBackend implements MQTTListener {
     /**
      * Request all possible waypoints from the BackBone through a REST Get request.
      */
-    private void loadWayPoints() {
+    private void loadWayPoints()
+    {
         wayPoints.clear();
-        if (debugWithoutBackBone) { // Temp waypoints for when they can't be requested from back-end services.
-            switch(currentMap) {
+        if (debugWithoutBackBone)
+        { // Temp waypoints for when they can't be requested from back-end services.
+            switch (currentMap)
+            {
                 case "zbuilding":
                     log.logConfig("RACECAR_BACKEND", "Loading waypoints for " + currentMap);
                     wayPoints.put((long) 46, new WayPoint(46, (float) 0.5, (float) 0, (float) -1, (float) 0.02));
@@ -189,13 +209,17 @@ public class RacecarBackend implements MQTTListener {
                     wayPoints.put((long) 48, new WayPoint(48, (float) -27.14, (float) -1.11, (float) -0.3, (float) 0.95));
                     wayPoints.put((long) 49, new WayPoint(49, (float) -28.25, (float) -9.19, (float) -0.71, (float) 0.71));
             }
-        } else {
+        }
+        else
+        {
             String jsonString = restUtilsBackBone.getJSON("map/stringmapjson/car"); //when the map is changed, another map needs to be manually loaded in the backbone database
             JSONUtils.isJSONValid(jsonString);
-            Type typeOfWayPointArray = new TypeToken<ArrayList<WayPoint>>() {
+            Type typeOfWayPointArray = new TypeToken<ArrayList<WayPoint>>()
+            {
             }.getType();
             ArrayList<WayPoint> wayPointsTemp = (ArrayList<WayPoint>) JSONUtils.getObject(jsonString, typeOfWayPointArray);
-            for (WayPoint wayPoint : wayPointsTemp) {
+            for (WayPoint wayPoint : wayPointsTemp)
+            {
                 wayPoints.put(wayPoint.getID(), wayPoint);
                 Log.logConfig("RACECAR_BACKEND", "Added wayPoint with ID " + wayPoint.getID() + " and coordinates " + wayPoint.getX() + "," + wayPoint.getY() + "," + wayPoint.getZ() + "," + wayPoint.getW() + ".");
             }
@@ -211,67 +235,102 @@ public class RacecarBackend implements MQTTListener {
      * @param message received MQTT message string
      */
     @Override
-    public void parseMQTT(String topic, String message) {
-        if (topic.matches("racecar/[0-9]+/route")) {
+    public void parseMQTT(String topic, String message)
+    {
+        if (topic.matches("racecar/[0-9]+/route"))
+        {
             long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
-            if (vehicles.containsKey(ID)) {
+            if (vehicles.containsKey(ID))
+            {
                 routeUpdate(ID, message);
-            } else {
+            }
+            else
+            {
                 Log.logConfig("RACECAR_BACKEND", "Vehicle with ID " + ID + " doesn't exist. Cant update route information.");
             }
-        } else if (topic.matches("racecar/[0-9]+/percentage")) {
+        }
+        else if (topic.matches("racecar/[0-9]+/percentage"))
+        {
             long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
-            if (vehicles.containsKey(ID)) {
-                Type typeOfLocation = new TypeToken<Location>() {
+            if (vehicles.containsKey(ID))
+            {
+                Type typeOfLocation = new TypeToken<Location>()
+                {
                 }.getType();
                 Location location = (Location) JSONUtils.getObject(message, typeOfLocation);
                 vehicles.get(ID).getLocation().setPercentage(location.getPercentage());
-            } else {
+            }
+            else
+            {
                 Log.logConfig("RACECAR_BACKEND", "Vehicle with ID " + ID + " doesn't exist. Cant update route percentage.");
             }
-        } else if (topic.matches("racecar/[0-9]+/costanswer")) {
+        }
+        else if (topic.matches("racecar/[0-9]+/costanswer"))
+        {
             long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
-            if (vehicles.containsKey(ID)) {
-                Type typeOfCost = new TypeToken<Cost>() {
+            if (vehicles.containsKey(ID))
+            {
+                Type typeOfCost = new TypeToken<Cost>()
+                {
                 }.getType();
                 costs.add((Cost) JSONUtils.getObject(message, typeOfCost));
-            } else {
+            }
+            else
+            {
                 Log.logConfig("RACECAR_BACKEND", "Vehicle with ID " + ID + " doesn't exist. Cannot process cost answer.");
             }
-        } else if (topic.matches("racecar/[0-9]+/locationupdate")) {
+        }
+        else if (topic.matches("racecar/[0-9]+/locationupdate"))
+        {
             long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
-            if (vehicles.containsKey(ID)) {
+            if (vehicles.containsKey(ID))
+            {
                 Log.logInfo("RACECAR_BACKEND", "Vehicle with ID " + ID + " has it's location changed to waypoint " + message + ".");
                 Location loc = vehicles.get(ID).getLocation();
                 loc.setIdStart(Long.parseLong(message));
                 loc.setIdEnd(Long.parseLong(message));
                 vehicles.get(ID).setLocation(loc);
-            } else {
+            }
+            else
+            {
                 Log.logConfig("RACECAR_BACKEND", "Vehicle with ID " + ID + " doesn't exist. Cannot set new location.");
             }
-        } else if (topic.matches("racecar/[0-9]+/available")) {
+        }
+        else if (topic.matches("racecar/[0-9]+/available"))
+        {
             long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
-            if (vehicles.containsKey(ID)) {
+            if (vehicles.containsKey(ID))
+            {
                 vehicles.get(ID).setAvailable(Boolean.parseBoolean(message));
                 if (vehicles.get(ID).isAvailable())
+                {
                     Log.logInfo("RACECAR_BACKEND", "Vehicle with ID " + ID + " set to be available.");
+                }
                 else
+                {
                     Log.logInfo("RACECAR_BACKEND", "Vehicle with ID " + ID + " set to be no longer available.");
-            } else {
+                }
+            }
+            else
+            {
                 Log.logConfig("RACECAR_BACKEND", "Vehicle with ID " + ID + " doesn't exist. Cannot set availability.");
             }
-        } else if (topic.matches("racecar/[0-9]+/heartbeat")) { //status can also be send along in the message part
+        }
+        else if (topic.matches("racecar/[0-9]+/heartbeat"))
+        { //status can also be send along in the message part
             long ID = Long.parseLong(topic.replaceAll("\\D+", ""));
             Date timestamp = new Date(); //time is allocated in the constructor with millisecond precision
-            if(vehicles.containsKey(ID))
+            if (vehicles.containsKey(ID))
             {
                 Vehicle vehicle = vehicles.get(ID);
                 vehicle.setHeartbeat(timestamp);
-                vehicles.put(ID,vehicle); //replaces the previous value
+                vehicles.put(ID, vehicle); //replaces the previous value
                 log.logConfig("RACECAR_BACKEND", "Heartbeat of vehicle with ID " + ID + " updated to: " + timestamp);
             }
             else
+            {
                 log.logConfig("RACECAR_BACKEND", "Heartbeat of vehicle with ID " + ID + "could not be updated as it does not exist");
+            }
         }
     }
 
@@ -281,11 +340,14 @@ public class RacecarBackend implements MQTTListener {
      * @param ID      ID of the vehicle.
      * @param message Received MQTT message string to be parsed.
      */
-    private void routeUpdate(long ID, String message) {
-        switch (message) {
+    private void routeUpdate(long ID, String message)
+    {
+        switch (message)
+        {
             case "done":
                 vehicles.get(ID).setOccupied(false);
-                if (!debugWithoutMAAS) {
+                if (!debugWithoutMAAS)
+                {
                     restUtilsMAAS.getTextPlain("completeJob/" + vehicles.get(ID).getJob().getIdJob()); //TODO: deze methode verplaatsen naar de backbone
                 }
                 vehicles.get(ID).getLocation().setPercentage(100);
@@ -312,15 +374,22 @@ public class RacecarBackend implements MQTTListener {
     @GET
     @Path("register/{startwaypoint}")
     @Produces("text/plain")
-    public Response register(@PathParam("startwaypoint") long startWayPoint, @Context HttpServletResponse response) throws IOException {
-        if (!wayPoints.containsKey(startWayPoint)) {
+    public Response register(@PathParam("startwaypoint") long startWayPoint, @Context HttpServletResponse response) throws IOException
+    {
+        if (!wayPoints.containsKey(startWayPoint))
+        {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "Waypoint " + startWayPoint + " not found");
-        } else {
+        }
+        else
+        {
             long id;
-            if (debugWithoutBackBone) {
+            if (debugWithoutBackBone)
+            {
                 id = (long) vehicles.size();
 
-            } else {
+            }
+            else
+            {
                 id = Long.parseLong(restUtilsBackBone.getJSON("bot/newBot/car"));
             }
             vehicles.put(id, new Vehicle(id, startWayPoint));
@@ -342,13 +411,19 @@ public class RacecarBackend implements MQTTListener {
     @GET
     @Path("posAll")
     @Produces("application/json")
-    public Response getPositions(@Context HttpServletResponse response) throws IOException {
-        if (vehicles.isEmpty()) {
+    public Response getPositions(@Context HttpServletResponse response) throws IOException
+    {
+        if (vehicles.isEmpty())
+        {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "no vehicles registered yet");
-        } else {
+        }
+        else
+        {
             List<Location> locations = new ArrayList<>();
-            for (Vehicle vehicle : vehicles.values()) {
-                if (vehicle.isAvailable()) {
+            for (Vehicle vehicle : vehicles.values())
+            {
+                if (vehicle.isAvailable())
+                {
                     locations.add(vehicle.getLocation());
                 }
             }
@@ -369,7 +444,8 @@ public class RacecarBackend implements MQTTListener {
     @GET
     @Path("getVehicles")
     @Produces("application/json")
-    public String getVehicles() {
+    public String getVehicles()
+    {
         return JSONUtils.objectToJSONStringWithKeyWord("vehicles", vehicles);
     }
 
@@ -384,22 +460,31 @@ public class RacecarBackend implements MQTTListener {
     @GET
     @Path("calcWeight/{idStart}/{idStop}")
     @Produces("application/json")
-    public Response calculateCostsRequest(@PathParam("idStart") long startId, @PathParam("idStop") long endId, @Context HttpServletResponse response) throws IOException, InterruptedException {
-        if (!wayPoints.containsKey(startId) || !wayPoints.containsKey(endId)) {
+    public Response calculateCostsRequest(@PathParam("idStart") long startId, @PathParam("idStop") long endId, @Context HttpServletResponse response) throws IOException, InterruptedException
+    {
+        if (!wayPoints.containsKey(startId) || !wayPoints.containsKey(endId))
+        {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "start or end waypoint not found");
-        } else if (vehicles.isEmpty()) {
+        }
+        else if (vehicles.isEmpty())
+        {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "no vehicles registered yet");
-        } else {
+        }
+        else
+        {
             int totalVehicles = 0;
             int timer = 0;
-            for (Vehicle vehicle : vehicles.values()) {
-                if (vehicle.isAvailable()) {
+            for (Vehicle vehicle : vehicles.values())
+            {
+                if (vehicle.isAvailable())
+                {
                     totalVehicles++;
                     mqttUtils.publishMessage("racecar/" + Long.toString(vehicle.getID()) + "/costrequest", Long.toString(startId) + " " + Long.toString(endId));
                 }
             }
 
-            while (costs.size() != totalVehicles && timer != 100) { // Wait for each vehicle to complete the request or timeout after 100 attempts.
+            while (costs.size() != totalVehicles && timer != 100)
+            { // Wait for each vehicle to complete the request or timeout after 100 attempts.
                 Log.logInfo("RACECAR_BACKEND", "waiting for vehicles to complete request.");
                 Thread.sleep(200);
                 timer++;
@@ -423,7 +508,8 @@ public class RacecarBackend implements MQTTListener {
     @GET
     @Path("getmapname")
     @Produces("text/plain")
-    public String getMapName() {
+    public String getMapName()
+    {
         return currentMap;
     }
 
@@ -436,15 +522,21 @@ public class RacecarBackend implements MQTTListener {
     @GET
     @Path("delete/{id}")
     @Produces("text/plain")
-    public Response deleteVehicle(@PathParam("id") final long id, @Context HttpServletResponse response) throws IOException {
-        if (vehicles.containsKey(id)) {
+    public Response deleteVehicle(@PathParam("id") final long id, @Context HttpServletResponse response) throws IOException
+    {
+        if (vehicles.containsKey(id))
+        {
             if (!debugWithoutBackBone)
+            {
                 restUtilsBackBone.getTextPlain("bot/delete/" + id);
+            }
             vehicles.remove(id);
             Log.logInfo("RACECAR_BACKEND", "Vehicle with ID " + id + " stopped. ID removed.");
             return Response.status(Response.Status.OK).build();
-        } else{
-            Log.logWarning("RACECAR_BACKEND", "Vehicle with ID " +  id + " could not be deleted as it does not exist");
+        }
+        else
+        {
+            Log.logWarning("RACECAR_BACKEND", "Vehicle with ID " + id + " could not be deleted as it does not exist");
             response.sendError(HttpServletResponse.SC_NOT_FOUND, " vehicle with id " + id + "  not found");
         }
         return null;
@@ -458,7 +550,8 @@ public class RacecarBackend implements MQTTListener {
     @GET
     @Path("getwaypoints")
     @Produces("application/json")
-    public String getWayPoints() {
+    public String getWayPoints()
+    {
         return JSONUtils.objectToJSONStringWithKeyWord("wayPoints", wayPoints);
     }
 
@@ -471,14 +564,17 @@ public class RacecarBackend implements MQTTListener {
     @GET
     @Path("getmappgm/{mapname}")
     @Produces("application/octet-stream")
-    public Response getMapPGM(@PathParam("mapname") final String mapname, @Context HttpServletResponse response) throws UnsupportedEncodingException {
+    public Response getMapPGM(@PathParam("mapname") final String mapname, @Context HttpServletResponse response) throws UnsupportedEncodingException
+    {
         StreamingOutput fileStream = output -> {
-            try {
+            try
+            {
                 java.nio.file.Path path = Paths.get(mapsPath + "/" + mapname + ".pgm");
                 byte[] data = Files.readAllBytes(path);
                 output.write(data);
                 output.flush();
-            } catch (Exception e) {
+            } catch (Exception e)
+            {
                 System.out.println("error " + e);
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, mapname + ".pgm not found");
             }
@@ -499,14 +595,17 @@ public class RacecarBackend implements MQTTListener {
     @GET
     @Path("getmapyaml/{mapname}")
     @Produces("application/octet-stream")
-    public Response getMapYAML(@PathParam("mapname") final String mapname, @Context HttpServletResponse response) {
+    public Response getMapYAML(@PathParam("mapname") final String mapname, @Context HttpServletResponse response)
+    {
         StreamingOutput fileStream = output -> {
-            try {
+            try
+            {
                 java.nio.file.Path path = Paths.get(mapsPath + "/" + mapname + ".yaml");
                 byte[] data = Files.readAllBytes(path);
                 output.write(data);
                 output.flush();
-            } catch (Exception e) {
+            } catch (Exception e)
+            {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, mapname + ".yaml not found");
             }
         };
@@ -528,12 +627,17 @@ public class RacecarBackend implements MQTTListener {
     @GET
     @Path("executeJob/{idJob}/{idVehicle}/{idStart}/{idEnd}")
     @Produces("text/plain")
-    public Response jobRequest(@PathParam("idJob") long idJob, @PathParam("idVehicle") long idVehicle, @PathParam("idStart") long idStart, @PathParam("idEnd") long idEnd, String data, @Context HttpServletResponse response) throws IOException {
+    public Response jobRequest(@PathParam("idJob") long idJob, @PathParam("idVehicle") long idVehicle, @PathParam("idStart") long idStart, @PathParam("idEnd") long idEnd, String data, @Context HttpServletResponse response) throws IOException
+    {
         Job job = new Job(idJob, idStart, idEnd, idVehicle);
-        if (vehicles.containsKey(job.getIdVehicle())) {
-            if (!vehicles.get(job.getIdVehicle()).getOccupied() && vehicles.get(job.getIdVehicle()).isAvailable()) {
-                if (wayPoints.containsKey(job.getIdStart())) {
-                    if (wayPoints.containsKey(job.getIdEnd())) {
+        if (vehicles.containsKey(job.getIdVehicle()))
+        {
+            if (!vehicles.get(job.getIdVehicle()).getOccupied() && vehicles.get(job.getIdVehicle()).isAvailable())
+            {
+                if (wayPoints.containsKey(job.getIdStart()))
+                {
+                    if (wayPoints.containsKey(job.getIdEnd()))
+                    {
                         vehicles.get(job.getIdVehicle()).setJob(job);
                         Location location = vehicles.get(job.getIdVehicle()).getLocation();
                         location.setIdStart(job.getIdStart());
@@ -542,20 +646,28 @@ public class RacecarBackend implements MQTTListener {
                         vehicles.get(job.getIdVehicle()).setLocation(location);
                         jobSend(job.getIdVehicle(), job.getIdStart(), job.getIdEnd());
                         return Response.status(Response.Status.OK).build();
-                    } else {
+                    }
+                    else
+                    {
                         response.sendError(HttpServletResponse.SC_NOT_FOUND, "No matching ending waypoint found");
                         Log.logWarning("RACECAR_BACKEND", "Can't send route job as waypoints " + job.getIdStart() + " was not found.");
                     }
-                } else {
+                }
+                else
+                {
                     response.sendError(HttpServletResponse.SC_NOT_FOUND, "No matching starting waypoint found");
                     Log.logWarning("RACECAR_BACKEND", "Can't send route job as waypoints " + job.getIdStart() + " was not found.");
                 }
-            } else {
+            }
+            else
+            {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN, "This vehicle is busy or occupied");
                 Log.logWarning("RACECAR_BACKEND", "Vehicle with ID " + job.getIdVehicle() + " is occupied or not available. Cant send route job.");
             }
 
-        } else {
+        }
+        else
+        {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "This vehicle doesn't exist");
             Log.logWarning("RACECAR_BACKEND", "Vehicle with ID " + job.getIdVehicle() + " doesn't exist. Cant send route job.");
         }
@@ -564,6 +676,7 @@ public class RacecarBackend implements MQTTListener {
 
     /**
      * Rest command that can be called to change the map used by the racecars at runtime
+     *
      * @param mapName name of the new map
      * @return
      */
@@ -573,16 +686,19 @@ public class RacecarBackend implements MQTTListener {
     public String changeMap(@PathParam("mapName") String mapName)
     {
         File f = new File(mapsPath + "/" + mapName + ".yaml");
-        if(f.exists() && !f.isDirectory()) {
-            currentMap=mapName;
-            for(long ID : vehicles.keySet()) {
+        if (f.exists() && !f.isDirectory())
+        {
+            currentMap = mapName;
+            for (long ID : vehicles.keySet())
+            {
                 log.logInfo("RACECAR_BACKEND", "change map command send to vehicle with ID: " + ID);
                 mqttUtils.publishMessage("racecar/" + ID + "/changeMap", mapName);
                 loadWayPoints();
             }
             return "Command was executed to change map";
         }
-        else {
+        else
+        {
             log.logWarning("RACECAR_BACKEND", "Map cannot be changed as the map does not exist");
             return "Map was not changed as map does not exist";
         }
@@ -596,7 +712,8 @@ public class RacecarBackend implements MQTTListener {
      * @param startID ID of starting waypoint of the route
      * @param endID   ID of endID waypoint of the route
      */
-    private void jobSend(long ID, long startID, long endID) {
+    private void jobSend(long ID, long startID, long endID)
+    {
         vehicles.get(ID).setOccupied(true);
         Log.logInfo("RACECAR_BACKEND", "Route job send to vehicle with ID " + ID + " from " + startID + " to " + endID + ".");
         mqttUtils.publishMessage("racecar/" + ID + "/job", Long.toString(startID) + " " + Long.toString(endID));
@@ -604,11 +721,13 @@ public class RacecarBackend implements MQTTListener {
 
     /**
      * Main method to create an object of this class and run as a jar file
+     *
      * @param args no arguments required
      * @throws Exception
      */
-    public static void main(String[] args) throws Exception {
-            final RacecarBackend racecarBackend = new RacecarBackend(true);
+    public static void main(String[] args) throws Exception
+    {
+        final RacecarBackend racecarBackend = new RacecarBackend(true);
 
     }
 }
