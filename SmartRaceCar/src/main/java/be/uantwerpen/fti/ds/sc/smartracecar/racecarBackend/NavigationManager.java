@@ -1,9 +1,6 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
-import be.uantwerpen.fti.ds.sc.smartracecar.common.Cost;
-import be.uantwerpen.fti.ds.sc.smartracecar.common.JSONUtils;
-import be.uantwerpen.fti.ds.sc.smartracecar.common.LogbackWrapper;
-import be.uantwerpen.fti.ds.sc.smartracecar.common.MQTTListener;
+import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
@@ -19,7 +16,8 @@ public class NavigationManager implements MQTTListener
     private static class MQTTConstants
     {
         private static final Pattern CAR_ID_REGEX = Pattern.compile("racecar/([0-9]+)/.*");
-        private static final Pattern COSTANSWER_REGEX = Pattern.compile("racecar/[0-9]+/costanswer");
+        private static final Pattern COST_ANSWER_REGEX = Pattern.compile("racecar/[0-9]+/costanswer");
+        private static final Pattern LOCATION_UPDATE_REGEX = Pattern.compile("racecar/[0-9]+/locationupdate");
     }
 
     private static final Type COST_TYPE = (new TypeToken<Cost>(){}).getType();
@@ -29,14 +27,14 @@ public class NavigationManager implements MQTTListener
 
     private boolean isCostAnswer(String topic)
     {
-        Matcher matcher = MQTTConstants.COSTANSWER_REGEX.matcher(topic);
+        Matcher matcher = MQTTConstants.COST_ANSWER_REGEX.matcher(topic);
         return matcher.matches();
     }
 
-    public NavigationManager()
+    private boolean isLocationUpdate(String topic)
     {
-        this.log = new LogbackWrapper();
-        this.costList = new ArrayList<>();
+        Matcher matcher = MQTTConstants.LOCATION_UPDATE_REGEX.matcher(topic);
+        return matcher.matches();
     }
 
     /**
@@ -45,7 +43,7 @@ public class NavigationManager implements MQTTListener
      * @param topic
      * @return
      */
-    public int getCarId(String topic)
+    private int getCarId(String topic)
     {
         Matcher matcher = MQTTConstants.CAR_ID_REGEX.matcher(topic);
 
@@ -72,6 +70,12 @@ public class NavigationManager implements MQTTListener
         }
     }
 
+    public NavigationManager()
+    {
+        this.log = new LogbackWrapper();
+        this.costList = new ArrayList<>();
+    }
+
     @Override
     public void parseMQTT(String topic, String message)
     {
@@ -84,6 +88,13 @@ public class NavigationManager implements MQTTListener
                 //todo: Get a hold of the VehicleManager
                 Cost cost = (Cost)JSONUtils.getObject("value", COST_TYPE);
                 this.costList.add(cost);
+            }
+            else if (this.isLocationUpdate(topic))
+            {
+               long locationId = Long.parseLong(message);
+
+               //todo: Get a hold of VehicleManager
+               Location location = new Location(id, locationId, locationId, 0);
             }
         }
         else
