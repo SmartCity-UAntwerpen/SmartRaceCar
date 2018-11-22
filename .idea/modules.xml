@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/ROS/ROS.iml" filepath="$PROJECT_DIR$/ROS/ROS.iml" />
       <module fileurl="file://$PROJECT_DIR$/SmartRaceCar/SmartRaceCar.iml" filepath="$PROJECT_DIR$/SmartRaceCar/SmartRaceCar.iml" />
     </modules>
   </component>
