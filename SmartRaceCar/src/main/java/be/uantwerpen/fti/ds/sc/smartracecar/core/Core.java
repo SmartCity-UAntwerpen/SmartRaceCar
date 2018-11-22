@@ -32,13 +32,13 @@ class Core implements TCPListener, MQTTListener
 {
 
     //Standard settings (without config file loaded)
-    private boolean debugWithoutRosKernel = false; // debug parameter for using this module without a connected RosKernel/SimKernel
-    private String mqttBroker = "tcp://smartcity.ddns.net:1883"; // MQTT Broker URL
-    private String mqqtUsername = "root"; // MQTT Broker Username
-    private String mqttPassword = "smartcity"; // MQTT Broker Password
-    private String restURL = "http://smartcity.ddns.net:8081/carmanager"; // REST Service URL to RacecarBackend
-    private static int serverPort = 5005; // Standard TCP Port to listen on for messages from SimKernel/RosKernel.
-    private static int clientPort = 5006; // Standard TCP Port to send to messages to SimKernel/RosKernel.
+    private boolean debugWithoutRosKernel = false; 							// debug parameter for using this module without a connected RosKernel/SimKernel
+    private String mqttBroker = "tcp://smartcity.ddns.net:1883"; 			// MQTT Broker URL
+    private String mqqtUsername = "root"; 									// MQTT Broker Username
+    private String mqttPassword = "smartcity"; 								// MQTT Broker Password
+    private String restURL = "http://smartcity.ddns.net:8081/carmanager"; 	// REST Service URL to RacecarBackend
+    private static int serverPort = 5005; 									// Standard TCP Port to listen on for messages from SimKernel/RosKernel.
+    private static int clientPort = 5006;									// Standard TCP Port to send to messages to SimKernel/RosKernel.
 
     //Help services
     private MQTTUtils mqttUtils;
@@ -47,17 +47,17 @@ class Core implements TCPListener, MQTTListener
     private HeartbeatPublisher heartbeatPublisher;
 
     //variables
-    private long ID; // ID given by RacecarBackend to identify vehicle.
-    Log log; // logging instance
-    private int routeSize = 0; // Current route's size.
-    private static long startPoint; // Starting position on map. Given by main argument.
-    private HashMap<String, Map> loadedMaps = new HashMap<>(); // Map of all loaded maps.
-    private HashMap<Long, WayPoint> wayPoints = new HashMap<>(); // Map of all loaded waypoints.
-    private Queue<Long> currentRoute = new LinkedList<>(); // All waypoint IDs to be handled in the current route.
-    private int CostCurrentToStartTiming = -1; // Time in seconds from current position to start position of route.
-    private int CostStartToEndTiming = -1; // Time in seconds from start position to end position of route.
-    private boolean connected = false; // To verify socket connection to vehicle.
-    private boolean occupied = false; // To verify if racecar is currently occupied by a route job.
+    private long ID; 														// ID given by RacecarBackend to identify vehicle.
+    private Log log; 														// logging instance
+    private int routeSize = 0; 												// Current route's size.
+    private static long startPoint; 										// Starting position on map. Given by main argument.
+    private HashMap<String, Map> loadedMaps; 								// Map of all loaded maps.
+    private HashMap<Long, WayPoint> wayPoints; 								// Map of all loaded waypoints.
+    private Queue<Long> currentRoute; 										// All waypoint IDs to be handled in the current route.
+    private int costCurrentToStartTiming; 									// Time in seconds from current position to start position of route.
+    private int costStartToEndTiming; 										// Time in seconds from start position to end position of route.
+    private boolean connected = false; 										// To verify socket connection to vehicle.
+    private boolean occupied; 												// To verify if racecar is currently occupied by a route job.
 
 
     /**
@@ -74,6 +74,14 @@ class Core implements TCPListener, MQTTListener
         System.out.println("------------------------------------------------------------------");
         System.out.println("--------------------- F1 Racecar Core - v1.0 ---------------------");
         System.out.println("------------------------------------------------------------------");
+
+        this.loadedMaps = new HashMap<>();
+        this.wayPoints = new HashMap<>();
+        this.currentRoute = new LinkedList<>();
+        this.costCurrentToStartTiming = -1;
+        this.costStartToEndTiming = -1;
+        this.occupied = false;
+
         loadConfig();
         Log.logConfig("CORE", "Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
         this.restUtils = new RESTUtils(this.restURL);
@@ -460,12 +468,12 @@ class Core implements TCPListener, MQTTListener
 	{
         if (this.currentRoute.size() == 0)
         {
-            float weight = (float) this.CostStartToEndTiming / (float) (this.CostCurrentToStartTiming + this.CostStartToEndTiming);
+            float weight = (float) this.costStartToEndTiming / (float) (this.costCurrentToStartTiming + this.costStartToEndTiming);
             location.setPercentage(Math.round((1 - weight) * 100 + location.getPercentage() * weight));
         }
         else if (this.currentRoute.size() == 1)
         {
-            float weight = (float) this.CostCurrentToStartTiming / (float) (this.CostCurrentToStartTiming + this.CostStartToEndTiming);
+            float weight = (float) this.costCurrentToStartTiming / (float) (this.costCurrentToStartTiming + this.costStartToEndTiming);
             location.setPercentage(Math.round(location.getPercentage() * weight));
         }
         Log.logInfo("CORE", "Location Updated. Vehicle has " + location.getPercentage() + "% of route completed");
@@ -677,14 +685,14 @@ class Core implements TCPListener, MQTTListener
 
     /**
      * When vehicle has completed cost calculation for the locationUpdate() function it's sets the variables
-     * CostCurrentToStartTiming and CostStartToEndTiming of the Core to be used by locationUpdate().
+     * costCurrentToStartTiming and costStartToEndTiming of the Core to be used by locationUpdate().
      *
      * @param cost Cost object containing the weights of the sub-routes.
      */
     private void timeComplete(Cost cost)
 	{
-        this.CostCurrentToStartTiming = cost.getWeightToStart();
-        this.CostStartToEndTiming = cost.getWeight();
+        this.costCurrentToStartTiming = cost.getWeightToStart();
+        this.costStartToEndTiming = cost.getWeight();
     }
 
     /**
@@ -703,7 +711,7 @@ class Core implements TCPListener, MQTTListener
         {
             this.occupied = true;
             timeRequest(wayPointIDs);
-            while (this.CostCurrentToStartTiming == -1 && this.CostStartToEndTiming == -1)
+            while (this.costCurrentToStartTiming == -1 && this.costStartToEndTiming == -1)
             {
                 try
 				{
