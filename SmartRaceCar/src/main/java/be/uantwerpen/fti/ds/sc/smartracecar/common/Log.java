@@ -7,17 +7,18 @@ import java.util.logging.Level;
 /**
  * Model of a Log using Java Logger.
  */
-public class Log {
-
+public class Log
+{
     private static java.util.logging.Logger logging = null; // THe Java Logger being used.
 
     /**
      * Model of a Log using Java Logger.
      *
-     * @param t Class where the logger is being initiated.
+     * @param t     Class where the logger is being initiated.
      * @param level Level of the debugging log.
      */
-    public Log(Class t, Level level){
+    public Log(Class t, Level level)
+    {
         logging = java.util.logging.Logger.getLogger(t.getName());
         setLogger(level);
     }
@@ -26,9 +27,10 @@ public class Log {
      * Execute a log to console of the level INFO.
      *
      * @param category Which module is being used is defined here.
-     * @param message The  log message.
+     * @param message  The  log message.
      */
-    public static void logInfo(String category, String message){
+    public static void logInfo(String category, String message)
+    {
         logging.info("[" + category + "] " + message);
     }
 
@@ -36,9 +38,10 @@ public class Log {
      * Execute a log to console of the level WARNING.
      *
      * @param category Which module is being used is defined here.
-     * @param message The  log message.
+     * @param message  The  log message.
      */
-    public static void logWarning(String category, String message){
+    public static void logWarning(String category, String message)
+    {
         logging.warning("[" + category + "] " + message);
     }
 
@@ -46,9 +49,10 @@ public class Log {
      * Execute a log to console of the level SEVERE.
      *
      * @param category Which module is being used is defined here.
-     * @param message The  log message.
+     * @param message  The  log message.
      */
-    public static void logSevere(String category, String message){
+    public static void logSevere(String category, String message)
+    {
         logging.severe("[" + category + "] " + message);
     }
 
@@ -56,9 +60,10 @@ public class Log {
      * Execute a log to console of the level CONFIG.
      *
      * @param category Which module is being used is defined here.
-     * @param message The  log message.
+     * @param message  The  log message.
      */
-    public static void logConfig(String category, String message){
+    public static void logConfig(String category, String message)
+    {
         logging.config("[" + category + "] " + message);
     }
 
@@ -67,7 +72,8 @@ public class Log {
      *
      * @param level The level to be used.
      */
-    private void setLogger(Level level){
+    private void setLogger(Level level)
+    {
         Handler handlerObj = new ConsoleHandler();
         handlerObj.setLevel(Level.ALL);
         LogFormatter logFormatter = new LogFormatter();
