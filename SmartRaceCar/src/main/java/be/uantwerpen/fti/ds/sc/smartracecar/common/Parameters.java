@@ -60,7 +60,7 @@ public class Parameters
 		this.mqttPassword = mqttPassword;
 	}
 
-	public String getRestCarmanagerURL()
+	public String getRESTCarmanagerURL()
 	{
 		return this.restCarmanagerURL;
 	}

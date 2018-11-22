@@ -20,9 +20,10 @@ public class VehicleManager implements MQTTListener
 
     private static final Type LOCATION_TYPE = (new TypeToken<Location>(){}).getType();
 
-    private Parameters parameters;
+    private VehicleManagerParameters parameters;
     private LogbackWrapper log;
     private MQTTUtils mqttUtils;
+    private RESTUtils MaaSRestUtils;
     private NavigationManager navigationManager;
     private Map<Long, Vehicle> vehicles;
 
@@ -54,9 +55,19 @@ public class VehicleManager implements MQTTListener
         switch (mqttMessage)
         {
             case "done":
-                this.vehicles.get(vehicleId).setOccupied(false);
+                Vehicle vehicle = this.vehicles.get(vehicleId);
+                vehicle.setOccupied(false);
 
+                if (!this.parameters.isMaaSDisabled())
+                {
 
+                    long jobId = vehicle.getJob().getIdJob();
+                    this.MaaSRestUtils.getTextPlain("completeJob/" + Long.toString(jobId));
+                }
+
+                vehicle.getLocation().setPercentage(100);
+
+                log.info("Vehicle " + Long.toString(vehicleId) + " completed its route.");
 
                 break;
 
@@ -72,12 +83,13 @@ public class VehicleManager implements MQTTListener
         }
     }
 
-    public VehicleManager(Parameters parameters)
+    public VehicleManager(VehicleManagerParameters parameters)
     {
         this.parameters = parameters;
         this.log = new LogbackWrapper();
         this.mqttUtils = new MQTTUtils(this.parameters.getMqttBroker(), this.parameters.getMqttUserName(), this.parameters.getMqttPassword(), this);
         this.mqttUtils.subscribeToTopic(this.parameters.getMqttTopic());
+        this.MaaSRestUtils = new RESTUtils(parameters.getRESTCarmanagerURL());
         this.navigationManager = new NavigationManager(this, parameters);
         this.vehicles = new HashMap<>();
     }
@@ -142,8 +154,8 @@ public class VehicleManager implements MQTTListener
             }
             else if (this.isRouteUpdate(topic))
             {
-                this.updateRoute(id, message);
                 log.info("Received Route Update for vehicle " + Long.toString(id) + "");
+                this.updateRoute(id, message);
             }
         }
     }
