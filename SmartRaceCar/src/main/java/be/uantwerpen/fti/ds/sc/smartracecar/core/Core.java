@@ -30,15 +30,12 @@ import java.util.logging.Level;
  */
 class Core implements TCPListener, MQTTListener
 {
+	private static long startPoint; 										// Starting position on map. Given by main argument.
 
-    //Standard settings (without config file loaded)
+	//Standard settings (without config file loaded)
     private boolean debugWithoutRosKernel = false; 							// debug parameter for using this module without a connected RosKernel/SimKernel
-    private static int serverPort = 5005; 									// Standard TCP Port to listen on for messages from SimKernel/RosKernel.
-    private static int clientPort = 5006;									// Standard TCP Port to send to messages to SimKernel/RosKernel.
-
 
 	private boolean occupied; 												// To verify if racecar is currently occupied by a route job.
-
 
 	//Help services
     private MQTTUtils mqttUtils;
@@ -49,7 +46,6 @@ class Core implements TCPListener, MQTTListener
     //variables
     private long ID; 														// ID given by RacecarBackend to identify vehicle.
     private Log log; 														// logging instance
-    private static long startPoint; 										// Starting position on map. Given by main argument.
     private HashMap<String, Map> loadedMaps; 								// Map of all loaded maps.
     private HashMap<Long, WayPoint> wayPoints; 								// Map of all loaded waypoints.
     private boolean connected = false; 										// To verify socket connection to vehicle.
@@ -76,13 +72,15 @@ class Core implements TCPListener, MQTTListener
 
 		this.params = params;
 
+		Core.startPoint = startPoint;
+
         this.loadedMaps = new HashMap<>();
         this.wayPoints = new HashMap<>();
         this.occupied = false;
 
         loadConfig();
         Log.logConfig("CORE", "Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
-        this.restUtils = new RESTUtils(this.params.getRestURL());
+        this.restUtils = new RESTUtils(this.params.getRestCarmanagerURL());
         requestWaypoints();
         register();
         /*Runtime.getRuntime().addShutdownHook(
@@ -104,6 +102,7 @@ class Core implements TCPListener, MQTTListener
                     }
             }
         }));*/
+
         this.mqttUtils = new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this);
         this.mqttUtils.subscribeToTopic("racecar/" + ID + "/#");
 
@@ -114,6 +113,7 @@ class Core implements TCPListener, MQTTListener
         {
             connectSend();
         }
+
         this.loadedMaps = loadMaps(findMapsFolder());
         requestMap();
         Log.logConfig("CORE", "Giving the map 10s to load.");
@@ -167,10 +167,29 @@ class Core implements TCPListener, MQTTListener
 	}
 
 	/**
+	 * Called by incoming timing calculation requests. Sends the request further to the RosKernel/SimKernel.
+	 *
+	 * @param wayPointIDs Array of waypoint ID's to have their timing calculated.
+	 */
+	public void timeRequest(long[] wayPointIDs)
+	{
+		List<Point> points = new ArrayList<>();
+		points.add(this.wayPoints.get(wayPointIDs[0]));
+		points.add(this.wayPoints.get(wayPointIDs[1]));
+		if (!this.params.isDebug())
+		{
+			this.tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("costtiming", points));
+		}
+		else
+		{
+			this.weightManager.costComplete(new Cost(false, 5, 5, this.ID));
+		}
+	}
+
+	/**
      * Help method to load all configuration parameters from the properties file with the same name as the class.
      * If it's not found then it will use the default ones.
      */
-    @SuppressWarnings("Duplicates")
     private void loadConfig()
 	{
         Properties prop = new Properties();
@@ -202,7 +221,7 @@ class Core implements TCPListener, MQTTListener
 			this.params.setMqttBroker("tcp://" + prop.getProperty("mqttBroker"));
 			this.params.setMqttUserName(prop.getProperty("mqqtUsername"));
 			this.params.setMqttPassword(prop.getProperty("mqttPassword"));
-			this.params.setRestURL(prop.getProperty("restURL"));
+			this.params.setRestCarmanagerURL(prop.getProperty("restURL"));
             Log.logInfo("CORE", "Config loaded");
         }
         catch (IOException ex)
@@ -510,26 +529,6 @@ class Core implements TCPListener, MQTTListener
         return null;
     }
 
-	/**
-	 * Called by incoming timing calculation requests. Sends the request further to the RosKernel/SimKernel.
-	 *
-	 * @param wayPointIDs Array of waypoint ID's to have their timing calculated.
-	 */
-	public void timeRequest(long[] wayPointIDs)
-	{
-		List<Point> points = new ArrayList<>();
-		points.add(this.wayPoints.get(wayPointIDs[0]));
-		points.add(this.wayPoints.get(wayPointIDs[1]));
-		if (!this.debugWithoutRosKernel)
-		{
-			this.tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("costtiming", points));
-		}
-		else
-		{
-			this.weightManager.costComplete(new Cost(false, 5, 5, this.ID));
-		}
-	}
-
     /**
      * Set availability status of vehicle in the RacecarBackend by sending MQTT message.
      *
@@ -576,6 +575,9 @@ class Core implements TCPListener, MQTTListener
      */
     public static void main(String[] args) throws IOException, InterruptedException
 	{
+		int clientPort = 5005;
+		int serverPort = 5006;
+		long startPoint = 0;
 
         if (args.length == 0)
         {
@@ -597,5 +599,4 @@ class Core implements TCPListener, MQTTListener
         }
         final Core core = new Core(startPoint, serverPort, clientPort, new CoreParameters(false));
     }
-
 }
