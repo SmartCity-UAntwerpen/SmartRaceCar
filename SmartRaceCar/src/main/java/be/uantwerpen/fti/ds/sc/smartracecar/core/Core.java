@@ -40,7 +40,11 @@ class Core implements TCPListener, MQTTListener
     private static int serverPort = 5005; 									// Standard TCP Port to listen on for messages from SimKernel/RosKernel.
     private static int clientPort = 5006;									// Standard TCP Port to send to messages to SimKernel/RosKernel.
 
-    //Help services
+
+	private boolean occupied; 												// To verify if racecar is currently occupied by a route job.
+
+
+	//Help services
     private MQTTUtils mqttUtils;
     private TCPUtils tcpUtils;
     private RESTUtils restUtils;
@@ -49,15 +53,14 @@ class Core implements TCPListener, MQTTListener
     //variables
     private long ID; 														// ID given by RacecarBackend to identify vehicle.
     private Log log; 														// logging instance
-    private int routeSize = 0; 												// Current route's size.
     private static long startPoint; 										// Starting position on map. Given by main argument.
     private HashMap<String, Map> loadedMaps; 								// Map of all loaded maps.
     private HashMap<Long, WayPoint> wayPoints; 								// Map of all loaded waypoints.
-    private Queue<Long> currentRoute; 										// All waypoint IDs to be handled in the current route.
-    private int costCurrentToStartTiming; 									// Time in seconds from current position to start position of route.
-    private int costStartToEndTiming; 										// Time in seconds from start position to end position of route.
     private boolean connected = false; 										// To verify socket connection to vehicle.
-    private boolean occupied; 												// To verify if racecar is currently occupied by a route job.
+
+	private Navigator navigator;
+	private WeightManager weightManager;
+	private CoreParameters params;
 
 
     /**
@@ -67,7 +70,7 @@ class Core implements TCPListener, MQTTListener
      * @param serverPort Port to listen for messages of SimKernel/Roskernel. Defined by input arguments of main method.
      * @param clientPort Port to send messages to SimKernel/Roskernel. Defined by input arguments of main method.
      */
-    private Core(long startPoint, int serverPort, int clientPort) throws InterruptedException, IOException
+    private Core(long startPoint, int serverPort, int clientPort, CoreParameters params) throws InterruptedException, IOException
 	{
         String asciiArt1 = FigletFont.convertOneLine("SmartCity");
         System.out.println(asciiArt1);
@@ -75,11 +78,10 @@ class Core implements TCPListener, MQTTListener
         System.out.println("--------------------- F1 Racecar Core - v1.0 ---------------------");
         System.out.println("------------------------------------------------------------------");
 
+		this.params = params;
+
         this.loadedMaps = new HashMap<>();
         this.wayPoints = new HashMap<>();
-        this.currentRoute = new LinkedList<>();
-        this.costCurrentToStartTiming = -1;
-        this.costStartToEndTiming = -1;
         this.occupied = false;
 
         loadConfig();
@@ -108,8 +110,10 @@ class Core implements TCPListener, MQTTListener
         }));*/
         this.mqttUtils = new MQTTUtils(this.mqttBroker, this.mqqtUsername, this.mqttPassword, this);
         this.mqttUtils.subscribeToTopic("racecar/" + ID + "/#");
+
         this.tcpUtils = new TCPUtils(clientPort, serverPort, this);
         this.tcpUtils.start();
+
         if (!this.debugWithoutRosKernel)
         {
             connectSend();
@@ -123,9 +127,50 @@ class Core implements TCPListener, MQTTListener
         this.heartbeatPublisher = new HeartbeatPublisher(new MQTTUtils(this.mqttBroker, this.mqqtUsername, this.mqttPassword, this),this.ID);
         this.heartbeatPublisher.start();
         Log.logInfo("CORE", "Heartbeat publisher was started.");
+
+		this.navigator = new Navigator(this);
+		Log.logInfo("CORE", "Navigator was started.");
+
+		this.weightManager = new WeightManager(this);
+		Log.logInfo("CORE", "Weightmanager was started");
     }
 
-    /**
+    public HashMap<Long, WayPoint> getWayPoints()
+	{
+		return this.wayPoints;
+	}
+
+    public long getID()
+	{
+		return this.ID;
+	}
+
+	public CoreParameters getParams()
+	{
+		return this.params;
+	}
+
+	public TCPUtils getTcpUtils()
+	{
+		return this.tcpUtils;
+	}
+
+	public MQTTUtils getMqttUtils()
+	{
+		return this.mqttUtils;
+	}
+
+	public boolean isOccupied()
+	{
+		return this.occupied;
+	}
+
+	public void setOccupied(boolean occupied)
+	{
+		this.occupied = occupied;
+	}
+
+	/**
      * Help method to load all configuration parameters from the properties file with the same name as the class.
      * If it's not found then it will use the default ones.
      */
@@ -373,114 +418,6 @@ class Core implements TCPListener, MQTTListener
     }
 
     /**
-     * To be used when when a new waypoint has to be send to the vehicle or to check if route is completed.
-     * Sends information of the next waypoint over the socket connection to the vehicle's SimKernel/RosKernel.
-     */
-    private void updateRoute()
-	{
-        if (!this.currentRoute.isEmpty())
-        {
-            WayPoint nextWayPoint = this.wayPoints.get(this.currentRoute.poll());
-            if (!this.debugWithoutRosKernel)
-                this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("nextWayPoint", nextWayPoint));
-            Log.logInfo("CORE", "Sending next waypoint with ID " + nextWayPoint.getID() + " (" + (this.routeSize - this.currentRoute.size()) + "/" + this.routeSize + ")");
-            if (this.debugWithoutRosKernel)
-            { //Debug code to go over all waypoints with a 3s sleep in between.
-                try
-				{
-                    Thread.sleep(3000);
-                }
-                catch (InterruptedException e)
-				{
-                    e.printStackTrace();
-                }
-                wayPointReached();
-            }
-
-        }
-        else
-		{
-            routeCompleted();
-        }
-    }
-
-    /**
-     * Event call over interface to be used when socket connection received message that waypoint has been reached.
-     */
-    private void wayPointReached()
-	{
-        Log.logInfo("CORE", "Waypoint reached.");
-        updateRoute();
-    }
-
-    /**
-     * When all waypoints have been completed the vehicle becomes unoccupied again.
-     * Sends MQTT message to RacecarBackend to update the vehicle status.
-     */
-    private void routeCompleted()
-	{
-        Log.logInfo("CORE", "Route Completed.");
-        this.occupied = false;
-        this.mqttUtils.publishMessage("racecar/" + this.ID + "/route", "done");
-    }
-
-    /**
-     * When all a requested route job can't be done by the vehicle.
-     * Sends MQTT message to RacecarBackend to update the route status.
-     */
-    private void routeError()
-	{
-        Log.logWarning("CORE", "Route error. Route Cancelled");
-        this.occupied = false;
-        this.mqttUtils.publishMessage("racecar/" + this.ID + "/route", "error");
-    }
-
-    /**
-     * When all a requested route job can't be done by the vehicle as it's still completing a route.
-     * Sends MQTT message to RacecarBackend to update the route status.
-     */
-    private void routeNotComplete()
-	{
-        this.occupied = false;
-        this.mqttUtils.publishMessage("racecar/" + this.ID + "/route", "notcomplete");
-    }
-
-    /**
-     * Send wheel states to the vehicle over the socket connection. useful for emergency stops and other specific requests.
-     *
-     * @param throttle throttle value for the vehicle wheels.
-     * @param steer    rotation value for the vehicle wheels.
-     */
-    private void sendWheelStates(float throttle, float steer)
-	{
-        if (!this.debugWithoutRosKernel)
-            this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("drive", new Drive(steer, throttle)));
-        Log.logInfo("CORE", "Sending wheel state Throttle:" + throttle + ", Steer:" + steer + ".");
-    }
-
-    /**
-     * When vehicle's RosKernel/SimKernel sends update on route completion it needs to be transformed to the completion amount for the total route.
-     * To do this it receives a cost calculation from the RosServer that it requested and uses this to determine the size of each waypoint's sub-route.
-     *
-     * @param location Location object containing the current percentage value.
-     */
-    private void locationUpdate(Location location)
-	{
-        if (this.currentRoute.size() == 0)
-        {
-            float weight = (float) this.costStartToEndTiming / (float) (this.costCurrentToStartTiming + this.costStartToEndTiming);
-            location.setPercentage(Math.round((1 - weight) * 100 + location.getPercentage() * weight));
-        }
-        else if (this.currentRoute.size() == 1)
-        {
-            float weight = (float) this.costCurrentToStartTiming / (float) (this.costCurrentToStartTiming + this.costStartToEndTiming);
-            location.setPercentage(Math.round(location.getPercentage() * weight));
-        }
-        Log.logInfo("CORE", "Location Updated. Vehicle has " + location.getPercentage() + "% of route completed");
-        this.mqttUtils.publishMessage("racecar/" + ID + "/percentage", JSONUtils.objectToJSONString(location));
-    }
-
-    /**
      * Interfaced method to parse MQTT message and topic after MQTT callback is triggered by incoming message.
      * Used by messages coming from RacecarBackend to request a route job or a cost calculation request.
      *
@@ -491,34 +428,7 @@ class Core implements TCPListener, MQTTListener
 	{
         if (topic.matches("racecar/[0-9]+/job"))
         {
-            if (message.equals("stop"))
-            {
-                sendWheelStates(0, 0);
-            }
-            else
-			{
-                if (!this.occupied)
-                {
-                    String[] wayPointStringValues = message.split(" ");
-                    try
-					{
-                        long[] wayPointValues = new long[wayPointStringValues.length];
-                        for (int index = 0; index < wayPointStringValues.length; index++)
-                        {
-                            wayPointValues[index] = Integer.parseInt(wayPointStringValues[index]);
-                        }
-                        jobRequest(wayPointValues);
-                    } catch (NumberFormatException e)
-					{
-                        Log.logWarning("CORE", "Parsing MQTT gives bad result: " + e);
-                    }
-                }
-                else
-				{
-                    Log.logWarning("CORE", "Current Route not completed. Not adding waypoints.");
-                    routeNotComplete();
-                }
-            }
+        	this.navigator.handleJobRequest(message);
         }
         else if (topic.matches("racecar/[0-9]+/costrequest"))
         {
@@ -530,7 +440,7 @@ class Core implements TCPListener, MQTTListener
 
                     wayPointValues[index] = Integer.parseInt(wayPointStringValues[index]);
                 }
-                costRequest(wayPointValues);
+                this.weightManager.costRequest(wayPointValues);
             }
             catch (NumberFormatException e)
 			{
@@ -559,22 +469,22 @@ class Core implements TCPListener, MQTTListener
             switch (JSONUtils.getFirst(message))
 			{
                 case "percentage":
-                    locationUpdate((Location) JSONUtils.getObjectWithKeyWord(message, Location.class));
+                    this.navigator.locationUpdate((Location) JSONUtils.getObjectWithKeyWord(message, Location.class));
                     break;
                 case "arrivedWaypoint":
-                    wayPointReached();
+                    this.navigator.wayPointReached();
                     break;
                 case "connect":
-                    connectReceive();
+                    this.connectReceive();
                     break;
                 case "kill":
-                    killCar();
+                    this.killCar();
                     break;
                 case "stop":
-                    sendAvailability(false);
+                    this.sendAvailability(false);
                     break;
                 case "start":
-                    sendAvailability(true);
+                    this.sendAvailability(true);
                     break;
                 case "startpoint":
                     this.startPoint = (long) JSONUtils.getObjectWithKeyWord(message, Long.class);
@@ -582,15 +492,15 @@ class Core implements TCPListener, MQTTListener
                     Log.logInfo("CORE", "Setting new starting point with ID " + JSONUtils.getObjectWithKeyWord(message, Long.class));
                     break;
                 case "restart":
-                    sendAvailability(true);
+                    this.sendAvailability(true);
                     this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentPosition", this.wayPoints.get(Core.startPoint)));
                     Log.logInfo("CORE", "Vehicle restarted.");
                     break;
                 case "cost":
-                    costComplete((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
+                    this.weightManager.costComplete((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
                     break;
                 case "costtiming":
-                    timeComplete((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
+                    this.timeComplete((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
                     break;
                 case "location":
                     //Log.logInfo("CORE", "Car is at coordinates: " + (String) JSONUtils.getObjectWithKeyWord(message, String.class));
@@ -603,6 +513,26 @@ class Core implements TCPListener, MQTTListener
         }
         return null;
     }
+
+	/**
+	 * Called by incoming timing calculation requests. Sends the request further to the RosKernel/SimKernel.
+	 *
+	 * @param wayPointIDs Array of waypoint ID's to have their timing calculated.
+	 */
+	public void timeRequest(long[] wayPointIDs)
+	{
+		List<Point> points = new ArrayList<>();
+		points.add(this.wayPoints.get(wayPointIDs[0]));
+		points.add(this.wayPoints.get(wayPointIDs[1]));
+		if (!this.debugWithoutRosKernel)
+		{
+			this.tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("costtiming", points));
+		}
+		else
+		{
+			this.weightManager.costComplete(new Cost(false, 5, 5, this.ID));
+		}
+	}
 
     /**
      * Set availability status of vehicle in the RacecarBackend by sending MQTT message.
@@ -629,129 +559,17 @@ class Core implements TCPListener, MQTTListener
         System.exit(0);
     }
 
-    /**
-     * Called by incoming cost calculation requests. Sends the request further to the RosKernel/SimKernel.
-     *
-     * @param wayPointIDs Array of waypoint ID's to have their cost calculated.
-     */
-    private void costRequest(long[] wayPointIDs)
-	{
-        List<Point> points = new ArrayList<>();
-        points.add(this.wayPoints.get(wayPointIDs[0]));
-        points.add(this.wayPoints.get(wayPointIDs[1]));
-        if (!this.debugWithoutRosKernel)
-        {
-            this.tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("cost", points));
-        }
-        else
-		{
-            costComplete(new Cost(false, 5, 5, this.ID));
-        }
-        Log.logInfo("CORE", "Cost request received between waypoints " + wayPointIDs[0] + " and " + wayPointIDs[1] + ". Calculating.");
-    }
 
     /**
-     * Called by received response from SimKernel/RosKernel of cost calculation request.
-     *
-     * @param cost Cost object containing the calculated weights.
-     */
-    private void costComplete(Cost cost)
-	{
-        Log.logInfo("CORE", "Cost request calculated.");
-        cost.setStatus(this.occupied);
-        cost.setIdVehicle(this.ID);
-        this.mqttUtils.publishMessage("racecar/" + this.ID + "/costanswer", JSONUtils.objectToJSONString(cost));
-    }
-
-    /**
-     * Called by incoming timing calculation requests. Sends the request further to the RosKernel/SimKernel.
-     *
-     * @param wayPointIDs Array of waypoint ID's to have their timing calculated.
-     */
-    private void timeRequest(long[] wayPointIDs)
-	{
-        List<Point> points = new ArrayList<>();
-        points.add(this.wayPoints.get(wayPointIDs[0]));
-        points.add(this.wayPoints.get(wayPointIDs[1]));
-        if (!this.debugWithoutRosKernel)
-        {
-            this.tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("costtiming", points));
-        }
-        else
-		{
-            costComplete(new Cost(false, 5, 5, this.ID));
-        }
-    }
-
-    /**
-     * When vehicle has completed cost calculation for the locationUpdate() function it's sets the variables
+     * When vehicle has completed cost calculation for the locationUpdate() function it sets the variables
      * costCurrentToStartTiming and costStartToEndTiming of the Core to be used by locationUpdate().
      *
      * @param cost Cost object containing the weights of the sub-routes.
      */
     private void timeComplete(Cost cost)
 	{
-        this.costCurrentToStartTiming = cost.getWeightToStart();
-        this.costStartToEndTiming = cost.getWeight();
-    }
-
-    /**
-     * Event call over interface for when MQTT connection receives new route job requests from the RacecarBackend.
-     * Adds all requested waypoints to route queue one by one.
-     * Sets the vehicle to occupied. Ignores the request if vehicle is already occupied.
-     * Then triggers the first waypoint to be send to the RosKernel/SimKernel.
-     *
-     * @param wayPointIDs Array of waypoint ID's that are on the route to be completed.
-     */
-    private void jobRequest(long[] wayPointIDs)
-	{
-        Log.logInfo("CORE", "Route request received.");
-        Boolean error = false;
-        if (!this.occupied)
-        {
-            this.occupied = true;
-            timeRequest(wayPointIDs);
-            while (this.costCurrentToStartTiming == -1 && this.costStartToEndTiming == -1)
-            {
-                try
-				{
-                    Thread.sleep(1000);
-                }
-                catch (InterruptedException e)
-				{
-                    e.printStackTrace();
-                }
-            }
-            for (long wayPointID : wayPointIDs)
-            {
-                if (this.wayPoints.containsKey(wayPointID))
-                {
-                    this.currentRoute.add(wayPointID);
-                    Log.logInfo("CORE", "Added waypoint with ID " + wayPointID + " to route.");
-                }
-                else
-				{
-                    Log.logWarning("CORE", "Waypoint with ID '" + wayPointID + "' not found.");
-                    this.currentRoute.clear();
-                    error = true;
-                }
-            }
-            if (!error) {
-                this.routeSize = this.currentRoute.size();
-                Log.logInfo("CORE", "All waypoints(" + this.routeSize + ") of route added. Starting route.");
-                updateRoute();
-            }
-            else
-			{
-                Log.logWarning("CORE", "Certain waypoints not found. Route cancelled.");
-                routeError();
-            }
-        }
-        else
-		{
-            Log.logWarning("CORE", "Current Route not completed. Not adding waypoints.");
-            routeNotComplete();
-        }
+        this.navigator.setCostCurrentToStartTiming(cost.getWeightToStart());
+        this.navigator.setCostStartToEndTiming(cost.getWeight());
     }
 
     /**
@@ -781,7 +599,7 @@ class Core implements TCPListener, MQTTListener
             if (!args[1].isEmpty()) serverPort = Integer.parseInt(args[1]);
             if (!args[2].isEmpty()) clientPort = Integer.parseInt(args[2]);
         }
-        final Core core = new Core(startPoint, serverPort, clientPort);
+        final Core core = new Core(startPoint, serverPort, clientPort, new CoreParameters(false));
     }
 
 }
