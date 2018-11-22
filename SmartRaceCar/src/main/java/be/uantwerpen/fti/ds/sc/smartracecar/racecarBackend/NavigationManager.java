@@ -1,5 +1,6 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
+import be.uantwerpen.fti.ds.sc.smartracecar.common.LogbackWrapper;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.MQTTListener;
 
 import java.util.regex.Matcher;
@@ -15,10 +16,17 @@ public class NavigationManager implements MQTTListener
         private static final Pattern COSTANSWER_REGEX = Pattern.compile("racecar/[0-9]+/costanswer");
     }
 
+    private LogbackWrapper log;
+
     private boolean isCostAnswer(String topic)
     {
         Matcher matcher = MQTTConstants.COSTANSWER_REGEX.matcher(topic);
         return matcher.matches();
+    }
+
+    public NavigationManager()
+    {
+        this.log = new LogbackWrapper();
     }
 
     /**
@@ -38,6 +46,7 @@ public class NavigationManager implements MQTTListener
         }
         else
         {
+            log.warning("Failed to extract car id from topic: '" + topic + "'");
             return -1;
         }
     }
@@ -53,7 +62,7 @@ public class NavigationManager implements MQTTListener
         }
         else
         {
-
+            log.warning("Failed to parse MQTT message. topic: '" + topic + "', message: '" + message + "'");
         }
     }
 }
