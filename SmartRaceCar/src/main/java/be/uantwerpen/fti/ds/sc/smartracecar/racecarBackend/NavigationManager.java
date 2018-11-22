@@ -15,18 +15,13 @@ public class NavigationManager implements MQTTListener
 {
     private static class MQTTConstants
     {
-        //todo: Use Parameter objects
-        private static final String BROKER = "tcp://smartcity.ddns.net:1883";
-        private static final String USERNAME = "root";
-        private static final String PASSWORD = "smartcity";
-        private static final String TOPIC = "racecar/#";
-
         private static final Pattern COST_ANSWER_REGEX = Pattern.compile("racecar/[0-9]+/costanswer");
         private static final Pattern LOCATION_UPDATE_REGEX = Pattern.compile("racecar/[0-9]+/locationupdate");
     }
 
     private static final Type COST_TYPE = (new TypeToken<Cost>(){}).getType();
 
+    private Parameters parameters;
     private LogbackWrapper log;
     private MQTTUtils mqttUtils;
     private List<Cost> costList;
@@ -44,11 +39,12 @@ public class NavigationManager implements MQTTListener
         return matcher.matches();
     }
 
-    public NavigationManager(VehicleManager vehicleManager)
+    public NavigationManager(VehicleManager vehicleManager, Parameters parameters)
     {
+        this.parameters = parameters;
         this.log = new LogbackWrapper();
-        this.mqttUtils = new MQTTUtils(MQTTConstants.BROKER, MQTTConstants.USERNAME, MQTTConstants.PASSWORD, this);
-        this.mqttUtils.subscribeToTopic(MQTTConstants.TOPIC);
+        this.mqttUtils = new MQTTUtils(this.parameters.getMqttBroker(), this.parameters.getMqttUserName(), this.parameters.getMqttPassword(), this);
+        this.mqttUtils.subscribeToTopic(this.parameters.getMqttTopic());
         this.costList = new ArrayList<>();
         this.vehicleManager = vehicleManager;
     }
