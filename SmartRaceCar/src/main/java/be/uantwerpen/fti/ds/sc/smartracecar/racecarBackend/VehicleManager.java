@@ -15,6 +15,7 @@ public class VehicleManager implements MQTTListener
     {
         private static final Pattern PERCENTAGE_UPDATE_REGEX = Pattern.compile("racecar/[0-9]+/percentage");
         private static final Pattern AVAILABILITY_UPDATE_REGEX = Pattern.compile("racecar/[0-9]+/available");
+        private static final Pattern ROUTE_UPDATE_REGEX = Pattern.compile("racecar/[0-9]+/route");
     }
 
     private static final Type LOCATION_TYPE = (new TypeToken<Location>(){}).getType();
@@ -23,7 +24,7 @@ public class VehicleManager implements MQTTListener
     private LogbackWrapper log;
     private MQTTUtils mqttUtils;
     private NavigationManager navigationManager;
-    private Map<Integer, Vehicle> vehicles;
+    private Map<Long, Vehicle> vehicles;
 
     private String getAvailabilityString(boolean available)
     {
@@ -42,11 +43,40 @@ public class VehicleManager implements MQTTListener
         return matcher.matches();
     }
 
+    private boolean isRouteUpdate(String topic)
+    {
+        Matcher matcher = MQTTConstants.ROUTE_UPDATE_REGEX.matcher(topic);
+        return matcher.matches();
+    }
+
+    private void updateRoute(long vehicleId, String mqttMessage)
+    {
+        switch (mqttMessage)
+        {
+            case "done":
+                this.vehicles.get(vehicleId).setOccupied(false);
+
+
+
+                break;
+
+            case "error":
+                this.vehicles.get(vehicleId).setOccupied(false);
+                log.info("Vehicle " + Long.toString(vehicleId) + " completed its route with errors.");
+                break;
+
+            case "notcomplete":
+                this.vehicles.get(vehicleId).setOccupied(true);
+                log.info("Vehicle " + Long.toString(vehicleId) + " hasn't completed its route yet.");
+                break;
+        }
+    }
+
     public VehicleManager(Parameters parameters)
     {
         this.parameters = parameters;
         this.log = new LogbackWrapper();
-        this.mqttUtils = new MQTTUtils(this.parameters.getMqttBroker(), this.parameters.getMqttUserName(), this.parameters.getMqttBroker(), this);
+        this.mqttUtils = new MQTTUtils(this.parameters.getMqttBroker(), this.parameters.getMqttUserName(), this.parameters.getMqttPassword(), this);
         this.mqttUtils.subscribeToTopic(this.parameters.getMqttTopic());
         this.navigationManager = new NavigationManager(this, parameters);
         this.vehicles = new HashMap<>();
@@ -57,7 +87,7 @@ public class VehicleManager implements MQTTListener
      * @param vehicleId The id of the vehicle to be checked
      * @return
      */
-    public boolean exists(int vehicleId)
+    public boolean exists(long vehicleId)
     {
         return this.vehicles.containsKey(vehicleId);
     }
@@ -67,7 +97,7 @@ public class VehicleManager implements MQTTListener
      * @param id
      * @param vehicle
      */
-    public void regsiter(int id, Vehicle vehicle)
+    public void regsiter(long id, Vehicle vehicle)
     {
         this.vehicles.put(id, vehicle);
     }
@@ -78,7 +108,7 @@ public class VehicleManager implements MQTTListener
      * @return
      * @throws Exception    When a non-existent vehicle is queried, an exception is thrown
      */
-    public Vehicle get(int vehicleId) throws Exception
+    public Vehicle get(long vehicleId) throws Exception
     {
         if (this.exists(vehicleId))
         {
@@ -93,7 +123,7 @@ public class VehicleManager implements MQTTListener
     @Override
     public void parseMQTT(String topic, String message)
     {
-        int id = TopicUtils.getCarId(topic);
+        long id = TopicUtils.getCarId(topic);
 
         if ((id != -1) && (this.exists(id)))
         {
@@ -102,13 +132,18 @@ public class VehicleManager implements MQTTListener
                 //todo: Refactor JSON message to only have percentage and no other location information
                 Location location = (Location) JSONUtils.getObject(message, LOCATION_TYPE);
                 this.vehicles.get(id).getLocation().setPercentage(location.getPercentage());
-                log.info("Received Percentage update for vehicle " + Integer.toString(id) + ", Status: " + Integer.toString(location.getPercentage()) + "%.");
+                log.info("Received Percentage update for vehicle " + Long.toString(id) + ", Status: " + Integer.toString(location.getPercentage()) + "%.");
             }
             else if (this.isAvailabilityUpdate(topic))
             {
                 boolean availability = Boolean.parseBoolean(message);
                 this.vehicles.get(id).setAvailable(availability);
-                log.info("Received Availability update for vehicle " + Integer.toString(id) + ", Status: " + this.getAvailabilityString(availability));
+                log.info("Received Availability update for vehicle " + Long.toString(id) + ", Status: " + this.getAvailabilityString(availability));
+            }
+            else if (this.isRouteUpdate(topic))
+            {
+                this.updateRoute(id, message);
+                log.info("Received Route Update for vehicle " + Long.toString(id) + "");
             }
         }
     }

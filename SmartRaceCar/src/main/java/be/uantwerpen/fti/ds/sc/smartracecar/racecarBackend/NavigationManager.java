@@ -52,7 +52,7 @@ public class NavigationManager implements MQTTListener
     @Override
     public void parseMQTT(String topic, String message)
     {
-        int id = TopicUtils.getCarId(topic);
+        long id = TopicUtils.getCarId(topic);
 
         // id == -1 means the topic wasn't valid
         // It's also possible that the topic was valid, but the vehicle just doesn't exist

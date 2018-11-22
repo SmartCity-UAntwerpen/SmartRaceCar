@@ -18,7 +18,7 @@ public class TopicUtils
      * @param topic
      * @return
      */
-    public static int getCarId(String topic)
+    public static long getCarId(String topic)
     {
         LogbackWrapper log = new LogbackWrapper();
         Matcher matcher = MQTTConstants.CAR_ID_REGEX.matcher(topic);
@@ -30,7 +30,7 @@ public class TopicUtils
 
             try
             {
-                int id = Integer.parseInt(idString);
+                long id = Long.parseLong(idString);
                 return id;
             }
             catch (NumberFormatException nfe)
