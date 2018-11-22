@@ -1,9 +1,6 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
-import be.uantwerpen.fti.ds.sc.smartracecar.common.JSONUtils;
-import be.uantwerpen.fti.ds.sc.smartracecar.common.Location;
-import be.uantwerpen.fti.ds.sc.smartracecar.common.LogbackWrapper;
-import be.uantwerpen.fti.ds.sc.smartracecar.common.MQTTListener;
+import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
@@ -17,9 +14,10 @@ public class VehicleManager implements MQTTListener
     private static class MQTTConstants
     {
         //todo: Use Parameter objects
-        private static final String MQTT_BROKER = "tcp://smartcity.ddns.net:1883";
-        private static final String MQTT_USERNAME = "root";
-        private static final String MQTT_PASSWORD = "smartcity";
+        private static final String BROKER = "tcp://smartcity.ddns.net:1883";
+        private static final String USERNAME = "root";
+        private static final String PASSWORD = "smartcity";
+        private static final String TOPIC = "racecar/#";
 
         private static final Pattern PERCENTAGE_UPDATE_REGEX = Pattern.compile("racecar/[0-9]+/percentage");
         private static final Pattern AVAILABILITY_UPDATE_REGEX = Pattern.compile("racecar/[0-9]+/available");
@@ -28,6 +26,7 @@ public class VehicleManager implements MQTTListener
     private static final Type LOCATION_TYPE = (new TypeToken<Location>(){}).getType();
 
     private LogbackWrapper log;
+    private MQTTUtils mqttUtils;
     private NavigationManager navigationManager;
     private Map<Integer, Vehicle> vehicles;
 
@@ -51,6 +50,8 @@ public class VehicleManager implements MQTTListener
     public VehicleManager()
     {
         this.log = new LogbackWrapper();
+        this.mqttUtils = new MQTTUtils(MQTTConstants.BROKER, MQTTConstants.USERNAME, MQTTConstants.PASSWORD, this);
+        this.mqttUtils.subscribeToTopic(MQTTConstants.TOPIC);
         this.navigationManager = new NavigationManager(this);
         this.vehicles = new HashMap<>();
     }

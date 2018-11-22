@@ -16,9 +16,10 @@ public class NavigationManager implements MQTTListener
     private static class MQTTConstants
     {
         //todo: Use Parameter objects
-        private static final String MQTT_BROKER = "tcp://smartcity.ddns.net:1883";
-        private static final String MQTT_USERNAME = "root";
-        private static final String MQTT_PASSWORD = "smartcity";
+        private static final String BROKER = "tcp://smartcity.ddns.net:1883";
+        private static final String USERNAME = "root";
+        private static final String PASSWORD = "smartcity";
+        private static final String TOPIC = "racecar/#";
 
         private static final Pattern COST_ANSWER_REGEX = Pattern.compile("racecar/[0-9]+/costanswer");
         private static final Pattern LOCATION_UPDATE_REGEX = Pattern.compile("racecar/[0-9]+/locationupdate");
@@ -46,7 +47,8 @@ public class NavigationManager implements MQTTListener
     public NavigationManager(VehicleManager vehicleManager)
     {
         this.log = new LogbackWrapper();
-        this.mqttUtils = new MQTTUtils(MQTTConstants.MQTT_BROKER, MQTTConstants.MQTT_USERNAME, MQTTConstants.MQTT_PASSWORD, this);
+        this.mqttUtils = new MQTTUtils(MQTTConstants.BROKER, MQTTConstants.USERNAME, MQTTConstants.PASSWORD, this);
+        this.mqttUtils.subscribeToTopic(MQTTConstants.TOPIC);
         this.costList = new ArrayList<>();
         this.vehicleManager = vehicleManager;
     }
