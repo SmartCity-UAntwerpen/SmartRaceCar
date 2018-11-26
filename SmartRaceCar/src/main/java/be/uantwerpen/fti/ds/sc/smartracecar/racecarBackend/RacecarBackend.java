@@ -35,7 +35,7 @@ public class RacecarBackend implements MQTTListener
     private String mqqtUsername = "root"; // MQTT Broker Username
     private String mqttPassword = "smartcity"; // MQTT Broker Password
     private static String restURLMAAS = "http://smartcity.ddns.net:8090"; // REST Service URL to MAAS
-    private static String restURLBackBone = "http://smartcity.ddns.net:10000";// REST Service URL to BackBone.
+    private static String restURLBackBone = "";// REST Service URL to BackBone.
     private static String restURLBackend = "http://smartcity.ddns.net:8081/carmanager"; // REST Service URL to own REST service, used to create the heartbeatchecker
 
     //Help services

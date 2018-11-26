@@ -15,7 +15,8 @@ import java.util.HashMap;
 /**
  * Helper class to check the heartbeat of all registered vehicles periodically
  */
-class HeartbeatChecker extends Thread {
+class HeartbeatChecker extends Thread
+{
     private RESTUtils restUtils;
     private String restURL = "http://smartcity.ddns.net:8081/carmanager"; // REST Service URL to RacecarBackend
 
@@ -32,16 +33,22 @@ class HeartbeatChecker extends Thread {
     /**
      * start the Checker thread
      */
-    public void run() {
+    public void run()
+    {
         Log.logConfig("RACECAR_BACKEND", "Heartbeatchecker was started");
-        while(true) {
-            try {
+        while (true)
+        {
+            try
+            {
                 Thread.sleep(30000); //Sleep for 30s
                 Log.logConfig("RACECAR_BACKEND", "Heartbeats are being checked...");
-                Type typeOfHashMap = new TypeToken<HashMap<Long, Vehicle>>() {}.getType();
+                Type typeOfHashMap = new TypeToken<HashMap<Long, Vehicle>>()
+                {
+                }.getType();
                 HashMap<Long, Vehicle> vehicles = (HashMap<Long, Vehicle>) JSONUtils.getObjectWithKeyWord(restUtils.getJSON("getVehicles"), typeOfHashMap);
                 Date currentTime = new Date();
-                for (Long ID : vehicles.keySet()) {
+                for (Long ID : vehicles.keySet())
+                {
                     if ((currentTime.getTime() - vehicles.get(ID).getHeartbeat().getTime()) > 90000) //longer than 90 seconds
                     {
                         restUtils.getCall("delete/" + ID);
@@ -50,7 +57,8 @@ class HeartbeatChecker extends Thread {
                 }
                 Log.logConfig("RACECAR_BACKEND", "All heartbeats were checked.");
 
-            } catch (InterruptedException e) {
+            } catch (InterruptedException e)
+            {
                 e.printStackTrace();
             }
         }

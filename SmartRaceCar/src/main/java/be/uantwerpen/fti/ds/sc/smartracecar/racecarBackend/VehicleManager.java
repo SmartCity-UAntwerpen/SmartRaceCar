@@ -25,6 +25,7 @@ public class VehicleManager implements MQTTListener
     private MQTTUtils mqttUtils;
     private RESTUtils MaaSRestUtils;
     private NavigationManager navigationManager;
+    private HeartbeatChecker heartbeatChecker;
     private Map<Long, Vehicle> vehicles;
 
     private String getAvailabilityString(boolean available)
@@ -91,7 +92,9 @@ public class VehicleManager implements MQTTListener
         this.mqttUtils.subscribeToTopic(this.parameters.getMqttTopic());
         this.MaaSRestUtils = new RESTUtils(parameters.getRESTCarmanagerURL());
         this.navigationManager = new NavigationManager(this, parameters);
+        this.heartbeatChecker = new HeartbeatChecker("dummy");
         this.vehicles = new HashMap<>();
+        this.heartbeatChecker.start();
     }
 
     /**
@@ -109,7 +112,7 @@ public class VehicleManager implements MQTTListener
      * @param id
      * @param vehicle
      */
-    public void regsiter(long id, Vehicle vehicle)
+    public void register(long id, Vehicle vehicle)
     {
         this.vehicles.put(id, vehicle);
     }
