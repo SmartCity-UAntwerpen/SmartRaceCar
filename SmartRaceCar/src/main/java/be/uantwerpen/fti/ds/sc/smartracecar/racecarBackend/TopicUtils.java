@@ -35,13 +35,13 @@ public class TopicUtils
             }
             catch (NumberFormatException nfe)
             {
-                log.error("Extracted invalid integer ('" + idString + "') from racecar topic ('" + topic + "').");
+                log.error("TopicUtils","Extracted invalid integer ('" + idString + "') from racecar topic ('" + topic + "').");
                 return -1;
             }
         }
         else
         {
-            log.warning("Failed to extract car id from topic: '" + topic + "'");
+            log.warning("TopicUtils", "Failed to extract car id from topic: '" + topic + "'");
             return -1;
         }
     }

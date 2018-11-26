@@ -12,18 +12,23 @@ public class LogbackWrapper
         this.logger = LoggerFactory.getLogger(LogbackWrapper.class);
     }
 
-    public void info(String message)
+    public void info(String category, String message)
     {
-        this.logger.info(message);
+        this.logger.info(this.format(category, message));
     }
 
-    public void warning(String message)
+    public void warning(String category, String message)
     {
-        this.logger.warn(message);
+        this.logger.warn(this.format(category, message));
     }
 
-    public void error(String message)
+    public void error(String category, String message)
     {
-        this.logger.error(message);
+        this.logger.error(this.format(category, message));
     }
+
+    private String format(String category, String message)
+	{
+		return "[" + category + "]\t" + message;
+	}
 }

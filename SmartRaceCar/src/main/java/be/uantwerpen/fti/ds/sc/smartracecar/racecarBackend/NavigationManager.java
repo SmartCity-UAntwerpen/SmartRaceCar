@@ -76,7 +76,7 @@ public class NavigationManager implements MQTTListener
                 }
                 catch (Exception vehicleNotFoundException)
                 {
-                    log.error("Tried to update location on non-existent vehicle.");
+                    this.log.error("NAV-MANAGER", "Tried to update location on non-existent vehicle.");
                 }
             }
         }

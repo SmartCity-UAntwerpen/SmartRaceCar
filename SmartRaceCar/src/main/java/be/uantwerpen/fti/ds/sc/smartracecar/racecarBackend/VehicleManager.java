@@ -67,18 +67,18 @@ public class VehicleManager implements MQTTListener
 
                 vehicle.getLocation().setPercentage(100);
 
-                log.info("Vehicle " + Long.toString(vehicleId) + " completed its route.");
+                log.info("VEH-MANAGER", "Vehicle " + Long.toString(vehicleId) + " completed its route.");
 
                 break;
 
             case "error":
                 this.vehicles.get(vehicleId).setOccupied(false);
-                log.info("Vehicle " + Long.toString(vehicleId) + " completed its route with errors.");
+                log.info("VEH-MANAGER","Vehicle " + Long.toString(vehicleId) + " completed its route with errors.");
                 break;
 
             case "notcomplete":
                 this.vehicles.get(vehicleId).setOccupied(true);
-                log.info("Vehicle " + Long.toString(vehicleId) + " hasn't completed its route yet.");
+                log.info("VEH-MANAGER","Vehicle " + Long.toString(vehicleId) + " hasn't completed its route yet.");
                 break;
         }
     }
@@ -144,17 +144,17 @@ public class VehicleManager implements MQTTListener
                 //todo: Refactor JSON message to only have percentage and no other location information
                 Location location = (Location) JSONUtils.getObject(message, LOCATION_TYPE);
                 this.vehicles.get(id).getLocation().setPercentage(location.getPercentage());
-                log.info("Received Percentage update for vehicle " + Long.toString(id) + ", Status: " + Integer.toString(location.getPercentage()) + "%.");
+                log.info("VEH-MANAGER","Received Percentage update for vehicle " + Long.toString(id) + ", Status: " + Integer.toString(location.getPercentage()) + "%.");
             }
             else if (this.isAvailabilityUpdate(topic))
             {
                 boolean availability = Boolean.parseBoolean(message);
                 this.vehicles.get(id).setAvailable(availability);
-                log.info("Received Availability update for vehicle " + Long.toString(id) + ", Status: " + this.getAvailabilityString(availability));
+                log.info("VEH-MANAGER","Received Availability update for vehicle " + Long.toString(id) + ", Status: " + this.getAvailabilityString(availability));
             }
             else if (this.isRouteUpdate(topic))
             {
-                log.info("Received Route Update for vehicle " + Long.toString(id) + "");
+                log.info("VEH-MANAGER","Received Route Update for vehicle " + Long.toString(id) + "");
                 this.updateRoute(id, message);
             }
         }
