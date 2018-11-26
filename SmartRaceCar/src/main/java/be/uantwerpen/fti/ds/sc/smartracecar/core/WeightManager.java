@@ -1,9 +1,6 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.core;
 
-import be.uantwerpen.fti.ds.sc.smartracecar.common.Cost;
-import be.uantwerpen.fti.ds.sc.smartracecar.common.JSONUtils;
-import be.uantwerpen.fti.ds.sc.smartracecar.common.Log;
-import be.uantwerpen.fti.ds.sc.smartracecar.common.Point;
+import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,9 +9,12 @@ public class WeightManager
 {
 	private Core core;
 
+	private LogbackWrapper log;
+
 
 	public WeightManager(Core core)
 	{
+		this.log = new LogbackWrapper();
 		this.core = core;
 	}
 
@@ -36,7 +36,7 @@ public class WeightManager
 		{
 			costComplete(new Cost(false, 5, 5, this.core.getID()));
 		}
-		Log.logInfo("CORE", "Cost request received between waypoints " + wayPointIDs[0] + " and " + wayPointIDs[1] + ". Calculating.");
+		this.log.info("WEIGHT-MANAGER", "Cost request received between waypoints " + wayPointIDs[0] + " and " + wayPointIDs[1] + ". Calculating.");
 	}
 
 	/**
@@ -46,7 +46,7 @@ public class WeightManager
 	 */
 	public void costComplete(Cost cost)
 	{
-		Log.logInfo("CORE", "Cost request calculated.");
+		this.log.info("WEIGHT-MANAGER", "Cost request calculated.");
 		cost.setStatus(this.core.isOccupied());
 		cost.setIdVehicle(this.core.getID());
 		this.core.getMqttUtils().publishMessage("racecar/" + this.core.getID() + "/costanswer", JSONUtils.objectToJSONString(cost));

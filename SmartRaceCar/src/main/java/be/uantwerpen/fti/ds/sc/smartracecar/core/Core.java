@@ -1,24 +1,8 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.core;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
-import be.uantwerpen.fti.ds.sc.smartracecar.common.Map;
 import com.github.lalyos.jfiglet.FigletFont;
 import com.google.gson.reflect.TypeToken;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.net.URLDecoder;
@@ -30,6 +14,8 @@ import java.util.logging.Level;
  */
 class Core implements TCPListener, MQTTListener
 {
+	private Log oldlog;
+
 	private static long startPoint; 										// Starting position on map. Given by main argument.
 
 	//Standard settings (without config file loaded)
@@ -45,14 +31,14 @@ class Core implements TCPListener, MQTTListener
 
     //variables
     private long ID; 														// ID given by RacecarBackend to identify vehicle.
-    private Log log; 														// logging instance
-    private HashMap<String, Map> loadedMaps; 								// Map of all loaded maps.
+    private LogbackWrapper log; 														// logging instance
     private HashMap<Long, WayPoint> wayPoints; 								// Map of all loaded waypoints.
     private boolean connected = false; 										// To verify socket connection to vehicle.
 
 	private Navigator navigator;
 	private WeightManager weightManager;
 	private CoreParameters params;
+	private MapManager mapManager;
 
 
     /**
@@ -70,16 +56,19 @@ class Core implements TCPListener, MQTTListener
         System.out.println("--------------------- F1 Racecar Core - v1.0 ---------------------");
         System.out.println("------------------------------------------------------------------");
 
-		this.params = params;
+        this.mapManager = new MapManager(this);
+
+        this.params = params;
+
+        this.log = new LogbackWrapper();
 
 		Core.startPoint = startPoint;
 
-        this.loadedMaps = new HashMap<>();
         this.wayPoints = new HashMap<>();
         this.occupied = false;
 
         loadConfig();
-        Log.logConfig("CORE", "Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
+        this.log.info("CORE", "Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
         this.restUtils = new RESTUtils(this.params.getRESTCarmanagerURL());
         requestWaypoints();
         register();
@@ -114,21 +103,21 @@ class Core implements TCPListener, MQTTListener
             connectSend();
         }
 
-        this.loadedMaps = loadMaps(findMapsFolder());
-        requestMap();
-        Log.logConfig("CORE", "Giving the map 10s to load.");
+
+        this.mapManager.requestMap();
+        this.log.info("CORE", "Giving the map 10s to load.");
         Thread.sleep(10000); //10 seconds delay so the map can load before publishing the startpoint
         sendStartPoint();
-        Log.logConfig("CORE", "Startpoint was send");
+        this.log.info("CORE", "Startpoint was send");
         this.heartbeatPublisher = new HeartbeatPublisher(new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this),this.ID);
         this.heartbeatPublisher.start();
-        Log.logInfo("CORE", "Heartbeat publisher was started.");
+        this.log.info("CORE", "Heartbeat publisher was started.");
 
 		this.navigator = new Navigator(this);
-		Log.logInfo("CORE", "Navigator was started.");
+		this.log.info("CORE", "Navigator was started.");
 
 		this.weightManager = new WeightManager(this);
-		Log.logInfo("CORE", "Weightmanager was started");
+		this.log.info("CORE", "Weightmanager was started");
     }
 
     public HashMap<Long, WayPoint> getWayPoints()
@@ -164,6 +153,11 @@ class Core implements TCPListener, MQTTListener
 	public void setOccupied(boolean occupied)
 	{
 		this.occupied = occupied;
+	}
+
+	public RESTUtils getRestUtils()
+	{
+		return this.restUtils;
 	}
 
 	/**
@@ -202,19 +196,20 @@ class Core implements TCPListener, MQTTListener
             input = new FileInputStream(decodedPath + "/core.properties");
             prop.load(input);
             String debugLevel = prop.getProperty("debugLevel");
+
             switch (debugLevel)
 			{
                 case "debug":
-                    log = new Log(this.getClass(), Level.CONFIG);
+                    oldlog = new Log(this.getClass(), Level.CONFIG);
                     break;
                 case "info":
-                    log = new Log(this.getClass(), Level.INFO);
+                    oldlog = new Log(this.getClass(), Level.INFO);
                     break;
                 case "warning":
-                    log = new Log(this.getClass(), Level.WARNING);
+                    oldlog = new Log(this.getClass(), Level.WARNING);
                     break;
                 case "severe":
-                    log = new Log(this.getClass(), Level.SEVERE);
+                    oldlog = new Log(this.getClass(), Level.SEVERE);
                     break;
             }
             this.params.setDebug(Boolean.parseBoolean(prop.getProperty("debugWithoutRosKernel")));
@@ -222,12 +217,12 @@ class Core implements TCPListener, MQTTListener
 			this.params.setMqttUserName(prop.getProperty("mqqtUsername"));
 			this.params.setMqttPassword(prop.getProperty("mqttPassword"));
 			this.params.setRestCarmanagerURL(prop.getProperty("restURL"));
-            Log.logInfo("CORE", "Config loaded");
+            this.log.info("CORE", "Config loaded");
         }
         catch (IOException ex)
 		{
-            this.log = new Log(this.getClass(), Level.INFO);
-            Log.logWarning("CORE", "Could not read config file. Loading default settings. " + ex);
+			oldlog = new Log(this.getClass(), Level.SEVERE);
+            this.log.warning("CORE", "Could not read config file. Loading default settings. " + ex);
         }
         finally
 		{
@@ -239,87 +234,12 @@ class Core implements TCPListener, MQTTListener
                 }
                 catch (IOException e)
 				{
-                    Log.logWarning("CORE", "Could not read config file. Loading default settings. " + e);
+                    this.log.warning("CORE", "Could not read config file. Loading default settings. " + e);
                 }
             }
         }
     }
 
-    /**
-     * Load all current available offline maps from the /mapFolder folder.
-     * It reads the maps.xml file with all the necessary information.
-     *
-     * @param mapFolder location of the maps.xml file.
-     * @return Returns a Hashmap<String,Map> where the String is the mapname. It contains all loaded maps.
-     */
-    private HashMap<String, Map> loadMaps(String mapFolder)
-	{
-        HashMap<String, Map> loadedMaps = new HashMap<>();
-        try
-		{
-            File fXmlFile = new File(mapFolder);
-            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-            Document doc = dBuilder.parse(fXmlFile);
-            doc.getDocumentElement().normalize();
-
-            NodeList nList = doc.getElementsByTagName("map");
-
-            for (int temp = 0; temp < nList.getLength(); temp++)
-            {
-
-                Node nNode = nList.item(temp);
-
-                if (nNode.getNodeType() == Node.ELEMENT_NODE)
-                {
-
-                    Element eElement = (Element) nNode;
-                    String name = eElement.getElementsByTagName("name").item(0).getTextContent();
-                    loadedMaps.put(name, new Map(name));
-                    Log.logConfig("CORE", "Added map: " + name + ".");
-                }
-            }
-        }
-        catch (Exception e)
-		{
-            Log.logSevere("CORE", "Could not correctly load XML of maps." + e);
-        }
-        return loadedMaps;
-    }
-
-    /**
-     * Find the location of the maps.xml containing folder. Searches up to 3 levels deep.
-     *
-     * @return returns a String containing the location of the maps.xml's absolute path.
-     */
-    private String findMapsFolder()
-	{
-        FileUtils fileUtils = new FileUtils();
-        fileUtils.searchDirectory(new File(".."), "maps.xml");
-        if (fileUtils.getResult().size() == 0)
-        {
-            fileUtils.searchDirectory(new File("./.."), "maps.xml");
-            if (fileUtils.getResult().size() == 0)
-            {
-                fileUtils.searchDirectory(new File("./../.."), "maps.xml");
-                if (fileUtils.getResult().size() == 0)
-                {
-                    fileUtils.searchDirectory(new File("./../../.."), "maps.xml");
-                    if (fileUtils.getResult().size() == 0)
-                    {
-                        Log.logSevere("CORE", "maps.xml not found. Make sure it exists in some folder (maximum 3 levels deep).");
-                        System.exit(0);
-                    }
-                }
-            }
-        }
-        String output = null;
-        for (String matched : fileUtils.getResult())
-        {
-            output = matched;
-        }
-        return output;
-    }
 
     /**
      * Send connection request over sockets to RosKernel/SimKernel.
@@ -344,7 +264,7 @@ class Core implements TCPListener, MQTTListener
 	{
         String id = this.restUtils.getTextPlain("register/" + Long.toString(this.startPoint));
         this.ID = Long.parseLong(id, 10);
-        Log.logInfo("CORE", "Vehicle received ID " + this.ID + ".");
+        this.log.info("CORE", "Vehicle received ID " + this.ID + ".");
     }
 
     /**
@@ -359,9 +279,9 @@ class Core implements TCPListener, MQTTListener
         assert this.wayPoints != null;
         for (WayPoint wayPoint : this.wayPoints.values())
         {
-            Log.logConfig("CORE", "Waypoint " + wayPoint.getID() + " added: " + wayPoint.getX() + "," + wayPoint.getY() + "," + wayPoint.getZ() + "," + wayPoint.getW());
+            this.log.info("CORE", "Waypoint " + wayPoint.getID() + " added: " + wayPoint.getX() + "," + wayPoint.getY() + "," + wayPoint.getZ() + "," + wayPoint.getW());
         }
-        Log.logInfo("CORE", "All possible waypoints(" + this.wayPoints.size() + ") received.");
+        this.log.info("CORE", "All possible waypoints(" + this.wayPoints.size() + ") received.");
     }
 
     /**
@@ -374,63 +294,7 @@ class Core implements TCPListener, MQTTListener
             this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("startPoint", this.wayPoints.get(this.startPoint)));
     }
 
-    /**
-     * REST GET request to RacecarBackend to request the name of the current map. If this map is not found in the offline available maps, it does another
-     * REST GET request to download the map files and store it in the mapfolder and add it to the maps.xml file.
-     * After that it sends this information to the vehicle SimKernel/SimKernel over the socket connection.
-     */
-    private void requestMap()
-	{
-        String mapName = this.restUtils.getTextPlain("getmapname");
-        if (this.loadedMaps.containsKey(mapName))
-        {
-            Log.logInfo("CORE", "Current used map '" + mapName + "' found in folder, setting as current map.");
-            if (!this.debugWithoutRosKernel)
-                this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", this.loadedMaps.get(mapName)));
-        }
-        else
-		{
-            Log.logConfig("CORE", "Current used map '" + mapName + "' not found. Downloading...");
-            this.restUtils.getFile("getmappgm/" + mapName, findMapsFolder(), mapName, "pgm");
-            this.restUtils.getFile("getmapyaml/" + mapName, findMapsFolder(), mapName, "yaml");
-            Map map = new Map(mapName);
-            try
-			{
-                DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-                DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
 
-                Document document = documentBuilder.parse(findMapsFolder() + "/maps.xml");
-                Element root = document.getDocumentElement();
-
-                Element newMap = document.createElement("map");
-
-                Element newName = document.createElement("name");
-                newName.appendChild(document.createTextNode(mapName));
-                newMap.appendChild(newName);
-
-                root.appendChild(newMap);
-
-                DOMSource source = new DOMSource(document);
-
-                TransformerFactory transformerFactory = TransformerFactory.newInstance();
-                Transformer transformer = transformerFactory.newTransformer();
-                transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-                transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-                StreamResult result = new StreamResult(findMapsFolder() + "/maps.xml");
-                transformer.transform(source, result);
-
-            }
-            catch (ParserConfigurationException | SAXException | IOException | TransformerException e)
-			{
-                Log.logWarning("CORE", "Could not add map to XML of maps." + e);
-            }
-            this.loadedMaps.put(mapName, map);
-            Log.logConfig("CORE", "Added downloaded map : " + mapName + ".");
-            Log.logInfo("CORE", "Current map '" + mapName + "' downloaded and set as current map.");
-            if (!this.debugWithoutRosKernel)
-                this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", this.loadedMaps.get(mapName)));
-        }
-    }
 
     /**
      * Interfaced method to parse MQTT message and topic after MQTT callback is triggered by incoming message.
@@ -464,7 +328,7 @@ class Core implements TCPListener, MQTTListener
         }
         else if (topic.matches("racecar/[0-9]+/changeMap"))
         {
-                requestMap();
+        	this.mapManager.requestMap();
         }
     }
 
