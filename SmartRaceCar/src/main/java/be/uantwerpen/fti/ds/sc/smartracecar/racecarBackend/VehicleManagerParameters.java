@@ -50,7 +50,7 @@ public class VehicleManagerParameters extends Parameters
         return this.disableMaaS;
     }
 
-    public boolean getBackboneDisabled()
+    public boolean isBackboneDisabled()
     {
         return this.disableBackbone;
     }
@@ -60,7 +60,7 @@ public class VehicleManagerParameters extends Parameters
         return this.MaaSRESTUrl;
     }
 
-    public String getBackboneRESTUrl()
+    public String getBackboneRESTURL()
     {
         return this.backboneRESTUrl;
     }

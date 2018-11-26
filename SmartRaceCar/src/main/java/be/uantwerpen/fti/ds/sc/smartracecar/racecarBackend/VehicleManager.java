@@ -3,6 +3,14 @@ package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.google.gson.reflect.TypeToken;
 
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,6 +32,7 @@ public class VehicleManager implements MQTTListener
     private LogbackWrapper log;
     private MQTTUtils mqttUtils;
     private RESTUtils MaaSRestUtils;
+    private RESTUtils backboneRestUtils;
     private NavigationManager navigationManager;
     private HeartbeatChecker heartbeatChecker;
     private Map<Long, Vehicle> vehicles;
@@ -91,6 +100,7 @@ public class VehicleManager implements MQTTListener
         this.mqttUtils = new MQTTUtils(this.parameters.getMqttBroker(), this.parameters.getMqttUserName(), this.parameters.getMqttPassword(), this);
         this.mqttUtils.subscribeToTopic(this.parameters.getMqttTopic());
         this.MaaSRestUtils = new RESTUtils(parameters.getRESTCarmanagerURL());
+        this.backboneRestUtils = new RESTUtils(parameters.getBackboneRESTURL());
         this.navigationManager = new NavigationManager(this, parameters);
         this.heartbeatChecker = new HeartbeatChecker("dummy");
         this.vehicles = new HashMap<>();
@@ -115,6 +125,34 @@ public class VehicleManager implements MQTTListener
     public void register(long id, Vehicle vehicle)
     {
         this.vehicles.put(id, vehicle);
+    }
+
+    @GET
+    @Path("delete/{id}")
+    @Produces("text/plain")
+    public Response delete(@PathParam("id") long id, @Context HttpServletResponse response) throws IOException
+    {
+        if (this.vehicles.containsKey(id))
+        {
+            if (!this.parameters.isBackboneDisabled())
+            {
+                this.backboneRestUtils.getTextPlain("bot/delete/" + Long.toString(id));
+            }
+
+            this.vehicles.remove(id);
+
+            this.log.info("Removing vehicle " + Long.toString(id));
+
+            return Response.status(Response.Status.OK).build();
+        }
+        else
+        {
+            String errorString = "Got delete request for vehicle " + Long.toString(id) + ", but vehicle doesn't exist.";
+            this.log.warning(errorString);
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
+        }
+
+        return null;
     }
 
     /**
