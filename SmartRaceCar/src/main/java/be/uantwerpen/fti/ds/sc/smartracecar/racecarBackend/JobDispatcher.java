@@ -34,7 +34,7 @@ public class JobDispatcher
         if (!this.vehicleManager.exists(vehicleId))
         {
             String errorString = "Tried to execute job on non-existent vehicle (" + Long.toString(vehicleId) + ")";
-            this.log.error(errorString);
+            this.log.error("JOB-DISPATCHER", errorString);
 
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, errorString);
             return Response.status(Response.Status.BAD_REQUEST).build();
@@ -45,7 +45,7 @@ public class JobDispatcher
             if (this.vehicleManager.get(vehicleId).getOccupied())
             {
                 String errorString = "Vehicle " + Long.toString(vehicleId) + " is currently occupied.";
-                this.log.error(errorString);
+                this.log.error("JOB-DISPATCHER", errorString);
 
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
                 return Response.status(Response.Status.NOT_FOUND).build();
@@ -60,7 +60,7 @@ public class JobDispatcher
             if (!this.vehicleManager.get(vehicleId).isAvailable())
             {
                 String errorString = "Vehicle " + Long.toString(vehicleId) + " is currently not available.";
-                this.log.error(errorString);
+                this.log.error("JOB-DISPATCHER", errorString);
 
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
                 return Response.status(Response.Status.NOT_FOUND).build();
