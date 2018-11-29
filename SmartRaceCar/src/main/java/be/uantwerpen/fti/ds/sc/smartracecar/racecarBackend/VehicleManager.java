@@ -141,14 +141,14 @@ public class VehicleManager implements MQTTListener
 
             this.vehicles.remove(id);
 
-            this.log.info("Removing vehicle " + Long.toString(id));
+            this.log.info("VEH-MANAGER", "Removing vehicle " + Long.toString(id));
 
             return Response.status(Response.Status.OK).build();
         }
         else
         {
             String errorString = "Got delete request for vehicle " + Long.toString(id) + ", but vehicle doesn't exist.";
-            this.log.warning(errorString);
+            this.log.warning("VEH-MANAGER", errorString);
             response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
         }
 
