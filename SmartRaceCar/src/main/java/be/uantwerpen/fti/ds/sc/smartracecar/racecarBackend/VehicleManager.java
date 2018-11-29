@@ -12,7 +12,9 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -211,6 +213,24 @@ public class VehicleManager implements MQTTListener
         this.log.info("VEHICLE-MAN", "Registered new vehicle (" + Long.toString(newVehicleId) + "), Current Waypoint: " + Long.toString(startwaypoint));
 
         return Response.status(Response.Status.OK).entity(newVehicleId).type("text/plain").build();
+    }
+
+    @GET
+    @Path("posAll")
+    @Produces("application/json")
+    public Response getPositions(@Context HttpServletResponse response) throws IOException
+    {
+        List<Location> locations = new ArrayList<>();
+
+        for (Long vehicleId: this.vehicles.keySet())
+        {
+            Vehicle vehicle = this.vehicles.get(vehicleId);
+            locations.add(vehicle.getLocation());
+        }
+
+        this.log.info("VEHICLE-MAN", "Request for all positions processed, returning " + Integer.toString(locations.size()) + " locations.");
+
+        return Response.status(Response.Status.OK).entity(JSONUtils.arrayToJSONString(locations)).type("application/json").build();
     }
 
     /*

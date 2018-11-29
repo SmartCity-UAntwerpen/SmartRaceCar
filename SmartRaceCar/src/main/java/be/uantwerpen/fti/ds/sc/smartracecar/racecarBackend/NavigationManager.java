@@ -49,6 +49,12 @@ public class NavigationManager implements MQTTListener
         this.vehicleManager = vehicleManager;
     }
 
+    /*
+     *
+     *      MQTT Parsing
+     *
+     */
+
     @Override
     public void parseMQTT(String topic, String message)
     {
@@ -76,7 +82,7 @@ public class NavigationManager implements MQTTListener
                 }
                 catch (Exception vehicleNotFoundException)
                 {
-                    this.log.error("NAV-MANAGER", "Tried to update location on non-existent vehicle.");
+                    this.log.error("NAVIGATION-MAN", "Tried to update location on non-existent vehicle.");
                 }
             }
         }
