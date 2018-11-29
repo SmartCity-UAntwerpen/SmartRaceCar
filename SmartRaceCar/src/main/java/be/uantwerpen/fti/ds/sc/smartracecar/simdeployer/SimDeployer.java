@@ -17,7 +17,8 @@ import java.util.logging.Level;
  * Module that handles all simulated vehicles and communicates with the SimWorker service to setup new
  * simulated F1 cars. It deploys and manages the '.jar' versions of the vehicle simulation.
  */
-class SimDeployer implements TCPListener {
+class SimDeployer implements TCPListener
+{
 
     //Standard settings (without config file loaded)
     private int serverPort = 9999; // Port to communicate to SimWorker over.
@@ -37,7 +38,8 @@ class SimDeployer implements TCPListener {
      * Module that handles all simulated vehicles and communicates with the SimWorker service to setup new
      * simulated F1 cars. It deploys and manages the '.jar' versions of the vehicle simulation.
      */
-    SimDeployer() throws IOException, InterruptedException {
+    SimDeployer() throws IOException, InterruptedException
+    {
         String asciiArt1 = FigletFont.convertOneLine("SmartCity");
         System.out.println(asciiArt1);
         System.out.println("-------------------------------------------------------------------");
@@ -57,17 +59,20 @@ class SimDeployer implements TCPListener {
      * If it's not found then it will use the default ones.
      */
     @SuppressWarnings("Duplicates")
-    private void loadConfig() {
+    private void loadConfig()
+    {
         Properties prop = new Properties();
         InputStream input = null;
-        try {
+        try
+        {
             String path = SimDeployer.class.getProtectionDomain().getCodeSource().getLocation().getPath();
             String decodedPath = URLDecoder.decode(path, "UTF-8");
             decodedPath = decodedPath.replace("SimDeployer.jar", "");
             input = new FileInputStream(decodedPath + "/simdeployer.properties");
             prop.load(input);
             String debugLevel = prop.getProperty("debugLevel");
-            switch (debugLevel) {
+            switch (debugLevel)
+            {
                 case "debug":
                     log = new Log(this.getClass(), Level.CONFIG);
                     break;
@@ -86,14 +91,19 @@ class SimDeployer implements TCPListener {
             serverPort = Integer.parseInt(prop.getProperty("serverPort"));
             showSimulatedOutput = Boolean.parseBoolean(prop.getProperty("showSimulatedOutput"));
             Log.logInfo("SIMDEPLOYER", "Config loaded");
-        } catch (IOException ex) {
+        } catch (IOException ex)
+        {
             log = new Log(this.getClass(), Level.CONFIG);
             Log.logWarning("SIMDEPLOYER", "Could not read config file. Loading default settings. " + ex);
-        } finally {
-            if (input != null) {
-                try {
+        } finally
+        {
+            if (input != null)
+            {
+                try
+                {
                     input.close();
-                } catch (IOException e) {
+                } catch (IOException e)
+                {
                     Log.logWarning("SIMDEPLOYER", "Could not read config file. Loading default settings. " + e);
                 }
             }
@@ -103,12 +113,15 @@ class SimDeployer implements TCPListener {
     /**
      * Request all possible waypoints from the RacecarBackend through a REST GET request.
      */
-    private void requestWaypoints() {
-        Type typeOfHashMap = new TypeToken<HashMap<Long, WayPoint>>() {
+    private void requestWaypoints()
+    {
+        Type typeOfHashMap = new TypeToken<HashMap<Long, WayPoint>>()
+        {
         }.getType();
         wayPoints = (HashMap<Long, WayPoint>) JSONUtils.getObjectWithKeyWord(restUtils.getJSON("getwaypoints"), typeOfHashMap);
         assert wayPoints != null;
-        for (WayPoint wayPoint : wayPoints.values()) {
+        for (WayPoint wayPoint : wayPoints.values())
+        {
             Log.logConfig("SIMDEPLOYER", "Waypoint " + wayPoint.getID() + " added: " + wayPoint.getX() + "," + wayPoint.getY() + "," + wayPoint.getZ() + "," + wayPoint.getW());
         }
         Log.logInfo("SIMDEPLOYER", "All possible waypoints(" + wayPoints.size() + ") received.");
@@ -122,28 +135,48 @@ class SimDeployer implements TCPListener {
      * @return a return answer to be send back over the socket to the SimWorker. Here being ACK or NACK.
      */
     @Override
-    public String parseTCP(String message) throws IOException {
+    public String parseTCP(String message) throws IOException
+    {
         boolean result = false;
-        if (message.matches("create\\s[0-9]+")) {
+        if (message.matches("create\\s[0-9]+"))
+        {
             result = createVehicle(Long.parseLong(message.replaceAll("\\D+", "")));
-        } else if (message.matches("run\\s[0-9]+")) {
+        }
+        else if (message.matches("run\\s[0-9]+"))
+        {
             result = runVehicle(Long.parseLong(message.replaceAll("\\D+", "")));
-        } else if (message.matches("stop\\s[0-9]+")) {
+        }
+        else if (message.matches("stop\\s[0-9]+"))
+        {
             result = stopVehicle(Long.parseLong(message.replaceAll("\\D+", "")));
-        } else if (message.matches("kill\\s[0-9]+")) {
+        }
+        else if (message.matches("kill\\s[0-9]+"))
+        {
             result = killVehicle(Long.parseLong(message.replaceAll("\\D+", "")));
-        } else if (message.matches("restart\\s[0-9]+")) {
+        }
+        else if (message.matches("restart\\s[0-9]+"))
+        {
             result = restartVehicle(Long.parseLong(message.replaceAll("\\D+", "")));
-        } else if (message.matches("set\\s[0-9]+\\s\\w+\\s\\w+")) {
+        }
+        else if (message.matches("set\\s[0-9]+\\s\\w+\\s\\w+"))
+        {
             String[] splitString = message.split("\\s+");
             Long simulationID = Long.parseLong(splitString[1]);
             String parameter = splitString[2];
             String argument = splitString[3];
             result = setVehicle(simulationID, parameter, argument);
         }
-        if (result) {
+        else if (message.matches("ping"))
+        {
+            return "PONG";
+        }
+
+        if (result)
+        {
             return "ACK";
-        } else {
+        }
+        else
+        {
             return "NACK";
         }
     }
@@ -156,27 +189,38 @@ class SimDeployer implements TCPListener {
      * @param argument     the argument value of this property.
      * @return A boolean to signify if the request could be handled or not. False means it could not be processed.
      */
-    private boolean setVehicle(long simulationID, String parameter, String argument) {
-        if (simulatedVehicles.containsKey(simulationID)) {
-            switch (parameter) {
+    private boolean setVehicle(long simulationID, String parameter, String argument)
+    {
+        if (simulatedVehicles.containsKey(simulationID))
+        {
+            switch (parameter)
+            {
                 case "startpoint":
-                    if (wayPoints.containsKey(Long.parseLong(argument))) {
+                    if (wayPoints.containsKey(Long.parseLong(argument)))
+                    {
                         simulatedVehicles.get(simulationID).setStartPoint(Long.parseLong(argument));
-                        if (simulatedVehicles.get(simulationID).isDeployed()) {
+                        if (simulatedVehicles.get(simulationID).isDeployed())
+                        {
                             simulatedVehicles.get(simulationID).setStartPoint(Long.parseLong(argument));
                             if (!simulatedVehicles.get(simulationID).isAvailable())
+                            {
                                 simulatedVehicles.get(simulationID).setStartPoint();
+                            }
                         }
                         Log.logInfo("SIMDEPLOYER", "Simulated Vehicle with simulation ID " + simulationID + " given starting point ID " + argument + ".");
                         return true;
-                    } else {
+                    }
+                    else
+                    {
                         Log.logWarning("SIMDEPLOYER", "Cannot set vehicle with simulation ID " + simulationID + " to have startpoint " + Long.parseLong(argument) + ". It does not exist.");
                         return false;
                     }
                 case "speed":
-                    try{
+                    try
+                    {
                         simulatedVehicles.get(simulationID).setSpeed(Float.parseFloat(argument));
-                    }catch(NumberFormatException ex) {
+                    } catch (NumberFormatException ex)
+                    {
                         Log.logWarning("SIMDEPLOYER", "Needs to be a float number as speed argument. Argument: " + argument);
                         return false;
                     }
@@ -191,7 +235,9 @@ class SimDeployer implements TCPListener {
                     Log.logWarning("SIMDEPLOYER", "No matching keyword when parsing simulation request over sockets. Parameter: " + parameter);
                     return false;
             }
-        } else {
+        }
+        else
+        {
             Log.logWarning("SIMDEPLOYER", "Cannot set vehicle with simulation ID " + simulationID + ". It does not exist.");
             return false;
         }
@@ -204,12 +250,16 @@ class SimDeployer implements TCPListener {
      * @param simulationID The ID of the vehicle that needs to be created.
      * @return A boolean to signify if the request could be handled or not. False means it could not be processed.
      */
-    private boolean createVehicle(long simulationID) {
-        if (!simulatedVehicles.containsKey(simulationID)) {
+    private boolean createVehicle(long simulationID)
+    {
+        if (!simulatedVehicles.containsKey(simulationID))
+        {
             simulatedVehicles.put(simulationID, new SimulatedVehicle(simulationID, jarPath, showSimulatedOutput));
             Log.logInfo("SIMDEPLOYER", "New simulated vehicle registered with simulation ID " + simulationID + ".");
             return true;
-        } else {
+        }
+        else
+        {
             Log.logWarning("SIMDEPLOYER", "Cannot create vehicle with simulation ID " + simulationID + ". It already exists.");
             return false;
         }
@@ -223,17 +273,24 @@ class SimDeployer implements TCPListener {
      * @param simulationID The ID of the vehicle that needs to be stopped.
      * @return A boolean to signify if the request could be handled or not. False means it could not be processed.
      */
-    private boolean stopVehicle(long simulationID) {
-        if (simulatedVehicles.containsKey(simulationID)) {
-            if(simulatedVehicles.get(simulationID).isDeployed()){
+    private boolean stopVehicle(long simulationID)
+    {
+        if (simulatedVehicles.containsKey(simulationID))
+        {
+            if (simulatedVehicles.get(simulationID).isDeployed())
+            {
                 simulatedVehicles.get(simulationID).stop();
                 Log.logInfo("SIMDEPLOYER", "Vehicle with ID " + simulationID + " Stopped.");
                 return true;
-            }else{
+            }
+            else
+            {
                 Log.logWarning("SIMDEPLOYER", "Cannot stop vehicle with simulation ID " + simulationID + ". It isn't deployed yet.");
                 return false;
             }
-        } else {
+        }
+        else
+        {
             Log.logWarning("SIMDEPLOYER", "Cannot stop vehicle with simulation ID " + simulationID + ". It does not exist.");
             return false;
         }
@@ -246,13 +303,20 @@ class SimDeployer implements TCPListener {
      * @param simulationID The ID of the vehicle that needs to be killed.
      * @return A boolean to signify if the request could be handled or not. False means it could not be processed.
      */
-    private boolean killVehicle(long simulationID) {
-        if (simulatedVehicles.containsKey(simulationID)) {
-            if (simulatedVehicles.get(simulationID).isDeployed()) simulatedVehicles.get(simulationID).kill();
+    private boolean killVehicle(long simulationID)
+    {
+        if (simulatedVehicles.containsKey(simulationID))
+        {
+            if (simulatedVehicles.get(simulationID).isDeployed())
+            {
+                simulatedVehicles.get(simulationID).kill();
+            }
             simulatedVehicles.remove(simulationID);
             Log.logInfo("SIMDEPLOYER", "Vehicle with ID " + simulationID + " killed.");
             return true;
-        } else {
+        }
+        else
+        {
             Log.logWarning("SIMDEPLOYER", "Cannot kill vehicle with simulation ID " + simulationID + ". It does not exist.");
             return false;
         }
@@ -265,17 +329,24 @@ class SimDeployer implements TCPListener {
      * @param simulationID The ID of the vehicle that needs to be restarted.
      * @return A boolean to signify if the request could be handled or not. False means it could not be processed.
      */
-    private boolean restartVehicle(long simulationID) {
-        if (simulatedVehicles.containsKey(simulationID)) {
-            if (simulatedVehicles.get(simulationID).isDeployed()) {
+    private boolean restartVehicle(long simulationID)
+    {
+        if (simulatedVehicles.containsKey(simulationID))
+        {
+            if (simulatedVehicles.get(simulationID).isDeployed())
+            {
                 Log.logInfo("SIMDEPLOYER", "Restarted vehicle with simulation ID " + simulationID + ".");
                 simulatedVehicles.get(simulationID).restart();
                 return true;
-            } else {
+            }
+            else
+            {
                 Log.logWarning("SIMDEPLOYER", "Cannot restart vehicle with simulation ID " + simulationID + ". It isn't started.");
                 return false;
             }
-        } else {
+        }
+        else
+        {
             Log.logWarning("SIMDEPLOYER", "Cannot restart vehicle with simulation ID " + simulationID + ". It does not exist.");
             return false;
         }
@@ -289,28 +360,41 @@ class SimDeployer implements TCPListener {
      * @param simulationID The ID of the vehicle that needs to be restarted.
      * @return A boolean to signify if the request could be handled or not. False means it could not be processed.
      */
-    private boolean runVehicle(long simulationID) throws IOException {
-        if (simulatedVehicles.containsKey(simulationID)) {
-            if (!simulatedVehicles.get(simulationID).isDeployed()) {
-                if (simulatedVehicles.get(simulationID).getStartPoint() != -1) {
+    private boolean runVehicle(long simulationID) throws IOException
+    {
+        if (simulatedVehicles.containsKey(simulationID))
+        {
+            if (!simulatedVehicles.get(simulationID).isDeployed())
+            {
+                if (simulatedVehicles.get(simulationID).getStartPoint() != -1)
+                {
                     simulatedVehicles.get(simulationID).start(tcpUtils.findRandomOpenPort(), tcpUtils.findRandomOpenPort());
                     Log.logInfo("SIMDEPLOYER", "Simulated Vehicle with simulation ID " + simulationID + " started.");
                     return true;
-                } else {
+                }
+                else
+                {
                     Log.logWarning("SIMDEPLOYER", "Cannot start vehicle with simulation ID " + simulationID + ". It didn't have a starting point set.");
                     return false;
                 }
-            } else {
-                if (!simulatedVehicles.get(simulationID).isAvailable()) {
+            }
+            else
+            {
+                if (!simulatedVehicles.get(simulationID).isAvailable())
+                {
                     simulatedVehicles.get(simulationID).run();
                     Log.logInfo("SIMDEPLOYER", "Stopped simulated Vehicle with simulation ID " + simulationID + " started again.");
                     return true;
-                } else {
+                }
+                else
+                {
                     Log.logWarning("SIMDEPLOYER", "Cannot start vehicle with simulation ID " + simulationID + ". It was already started.");
                     return false;
                 }
             }
-        } else {
+        }
+        else
+        {
             Log.logWarning("SIMDEPLOYER", "Cannot start vehicle with simulation ID " + simulationID + ". It does not exist.");
             return false;
         }
@@ -318,11 +402,13 @@ class SimDeployer implements TCPListener {
 
     /**
      * Main method to run this class as a jar
+     *
      * @param args no arguments required
      * @throws IOException
      * @throws InterruptedException
      */
-    public static void main(String[] args) throws IOException, InterruptedException {
-            SimDeployer simDeployer = new SimDeployer();
+    public static void main(String[] args) throws IOException, InterruptedException
+    {
+        SimDeployer simDeployer = new SimDeployer();
     }
 }
