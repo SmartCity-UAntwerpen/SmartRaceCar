@@ -34,6 +34,7 @@ public class VehicleManager implements MQTTListener
     private RESTUtils MaaSRestUtils;
     private RESTUtils backboneRestUtils;
     private NavigationManager navigationManager;
+    private MapManager mapManager;                  // Non-Owning reference to Map Manager
     private HeartbeatChecker heartbeatChecker;
     private Map<Long, Vehicle> vehicles;
 
@@ -93,7 +94,7 @@ public class VehicleManager implements MQTTListener
         }
     }
 
-    public VehicleManager(VehicleManagerParameters parameters)
+    public VehicleManager(VehicleManagerParameters parameters, MapManager mapManager)
     {
         this.parameters = parameters;
         this.log = new LogbackWrapper();
@@ -102,6 +103,7 @@ public class VehicleManager implements MQTTListener
         this.MaaSRestUtils = new RESTUtils(parameters.getRESTCarmanagerURL());
         this.backboneRestUtils = new RESTUtils(parameters.getBackboneRESTURL());
         this.navigationManager = new NavigationManager(this, parameters);
+        this.mapManager = mapManager;
         this.heartbeatChecker = new HeartbeatChecker("dummy");
         this.vehicles = new HashMap<>();
         this.heartbeatChecker.start();
@@ -127,34 +129,6 @@ public class VehicleManager implements MQTTListener
         this.vehicles.put(id, vehicle);
     }
 
-    @GET
-    @Path("delete/{id}")
-    @Produces("text/plain")
-    public Response delete(@PathParam("id") long id, @Context HttpServletResponse response) throws IOException
-    {
-        if (this.vehicles.containsKey(id))
-        {
-            if (!this.parameters.isBackboneDisabled())
-            {
-                this.backboneRestUtils.getTextPlain("bot/delete/" + Long.toString(id));
-            }
-
-            this.vehicles.remove(id);
-
-            this.log.info("VEH-MANAGER", "Removing vehicle " + Long.toString(id));
-
-            return Response.status(Response.Status.OK).build();
-        }
-        else
-        {
-            String errorString = "Got delete request for vehicle " + Long.toString(id) + ", but vehicle doesn't exist.";
-            this.log.warning("VEH-MANAGER", errorString);
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
-        }
-
-        return null;
-    }
-
     /**
      *
      * @param vehicleId
@@ -172,6 +146,58 @@ public class VehicleManager implements MQTTListener
             throw new IndexOutOfBoundsException("Tried to access vehicle that doesn't exist!");
         }
     }
+
+    /*
+     *
+     *      REST Endpoints
+     *
+     */
+
+    @GET
+    @Path("delete/{id}")
+    @Produces("text/plain")
+    public Response delete(@PathParam("id") long id, @Context HttpServletResponse response) throws IOException
+    {
+        if (this.vehicles.containsKey(id))
+        {
+            if (!this.parameters.isBackboneDisabled())
+            {
+                this.backboneRestUtils.getTextPlain("bot/delete/" + Long.toString(id));
+            }
+
+            this.vehicles.remove(id);
+
+            this.log.info("VEHICLE-MAN", "Removing vehicle " + Long.toString(id));
+
+            return Response.status(Response.Status.OK).build();
+        }
+        else
+        {
+            String errorString = "Got delete request for vehicle " + Long.toString(id) + ", but vehicle doesn't exist.";
+            this.log.warning("VEHICLE-MAN", errorString);
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
+        }
+
+        return null;
+    }
+
+    @GET
+    @Path("register/{startwaypoint}")
+    @Produces("text/plain")
+    public Response register(@PathParam("startwaypoint") long startwaypoint, @Context HttpServletResponse) throws IOException
+    {
+        if (!this.mapManager.exists(startwaypoint))
+        {
+            String errorString = "Tried to register vehicle with non-existent start id.";
+            this.log.error("VEHICLE-MAN", errorString);
+        }
+    }
+
+    /*
+     *
+     *      MQTT Parsing
+     *
+     */
 
     @Override
     public void parseMQTT(String topic, String message)
