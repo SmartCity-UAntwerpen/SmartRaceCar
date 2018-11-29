@@ -159,9 +159,9 @@ public class VehicleManager implements MQTTListener
      *
      * @param vehicleId
      * @return
-     * @throws Exception    When a non-existent vehicle is queried, an exception is thrown
+     * @throws IndexOutOfBoundsException    When a non-existent vehicle is queried, an exception is thrown
      */
-    public Vehicle get(long vehicleId) throws Exception
+    public Vehicle get(long vehicleId)
     {
         if (this.exists(vehicleId))
         {
@@ -169,7 +169,7 @@ public class VehicleManager implements MQTTListener
         }
         else
         {
-            throw new Exception("Tried to access vehicle that doesn't exist!");
+            throw new IndexOutOfBoundsException("Tried to access vehicle that doesn't exist!");
         }
     }
 

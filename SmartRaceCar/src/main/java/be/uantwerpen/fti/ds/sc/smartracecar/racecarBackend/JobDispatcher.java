@@ -40,39 +40,31 @@ public class JobDispatcher
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
 
-        try
+        if (this.vehicleManager.get(vehicleId).getOccupied())
         {
-            if (this.vehicleManager.get(vehicleId).getOccupied())
-            {
-                String errorString = "Vehicle " + Long.toString(vehicleId) + " is currently occupied.";
-                this.log.error("JOB-DISPATCHER", errorString);
+            String errorString = "Vehicle " + Long.toString(vehicleId) + " is currently occupied.";
+            this.log.error("JOB-DISPATCHER", errorString);
 
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
-                return Response.status(Response.Status.NOT_FOUND).build();
-            }
-        }
-        catch (Exception e)
-        {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
+            return Response.status(Response.Status.NOT_FOUND).build();
         }
 
-        try
+        if (!this.vehicleManager.get(vehicleId).isAvailable())
         {
-            if (!this.vehicleManager.get(vehicleId).isAvailable())
-            {
-                String errorString = "Vehicle " + Long.toString(vehicleId) + " is currently not available.";
-                this.log.error("JOB-DISPATCHER", errorString);
+            String errorString = "Vehicle " + Long.toString(vehicleId) + " is currently not available.";
+            this.log.error("JOB-DISPATCHER", errorString);
 
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
-                return Response.status(Response.Status.NOT_FOUND).build();
-            }
-        }
-        catch (Exception e)
-        {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
+            return Response.status(Response.Status.NOT_FOUND).build();
         }
 
         if(!this.mapManager.exists(startId))
         {
             String errorString = "Request job with non-existent start waypoint " + Long.toString(startId) + ".";
+            this.log.error("JOB-DISPATCHER", errorString);
+
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
+            return Response.status(Response.Status.NOT_FOUND).build();
         }
 
         return Response.status(Response.Status.OK).build();
