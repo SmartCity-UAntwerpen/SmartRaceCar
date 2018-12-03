@@ -9,6 +9,15 @@ public class BackendParameters extends Parameters
     private String MaaSRESTUrl;
     private String backboneRESTUrl;
 
+    public BackendParameters()
+    {
+        super();
+        this.disableMaaS = true;
+        this.disableBackbone = true;
+        this.MaaSRESTUrl = "http://smartcity.ddns.net:8090";
+        this.backboneRESTUrl = "http://smartcity.ddns.net:8090";
+    }
+
     public BackendParameters(BackendParameters backendParameters)
     {
         super(backendParameters);
