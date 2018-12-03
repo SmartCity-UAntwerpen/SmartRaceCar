@@ -15,7 +15,7 @@ public class RacecarBackendV2
 {
     private static final String DEFAULT_PROPERTIES_FILE = "RaceCarBackend.properties";
 
-    private LogbackWrapper logbackWrapper;
+    private LogbackWrapper log;
     private JobDispatcher jobDispatcher;
     private MapManager mapManager;
     private VehicleManager vehicleManager;
@@ -36,23 +36,6 @@ public class RacecarBackendV2
             //input = new FileInputStream(decodedPath + "/racecarbackend.properties");
             input = new FileInputStream(decodedPath);
             prop.load(input);
-
-            /*String debugLevel = prop.getProperty("debugLevel");
-            switch (debugLevel)
-            {
-                case "debug":
-                    log = new Log(this.getClass(), Level.CONFIG);
-                    break;
-                case "info":
-                    log = new Log(this.getClass(), Level.INFO);
-                    break;
-                case "warning":
-                    log = new Log(this.getClass(), Level.WARNING);
-                    break;
-                case "severe":
-                    log = new Log(this.getClass(), Level.SEVERE);
-                    break;
-            }*/
 
             boolean debugWithoutBackBone = Boolean.parseBoolean(prop.getProperty("debugWithoutBackBone"));
             boolean debugWithoutMAAS = Boolean.parseBoolean(prop.getProperty("debugWithoutMAAS"));
@@ -89,6 +72,7 @@ public class RacecarBackendV2
 
     public RacecarBackendV2()
     {
+        this.log = new LogbackWrapper();
         this.mapManager = new MapManager();
         this.vehicleManager = new VehicleManager(, this.mapManager);
         this.jobDispatcher = new JobDispatcher(, this.mapManager, this.vehicleManager);
