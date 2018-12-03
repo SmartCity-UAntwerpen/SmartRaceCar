@@ -193,7 +193,7 @@ class Core implements TCPListener, MQTTListener
 			String path = Core.class.getProtectionDomain().getCodeSource().getLocation().getPath();
 			String decodedPath = URLDecoder.decode(path, "UTF-8");
 			decodedPath = decodedPath.replace("Core.jar", "");
-			input = new FileInputStream(decodedPath + "/core.properties");
+			input = new FileInputStream(decodedPath + "/src/main/core.properties");
 			prop.load(input);
 			String debugLevel = prop.getProperty("debugLevel");
 

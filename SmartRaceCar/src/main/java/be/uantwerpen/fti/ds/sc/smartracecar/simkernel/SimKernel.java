@@ -77,7 +77,7 @@ class SimKernel implements TCPListener
 			String path = SimKernel.class.getProtectionDomain().getCodeSource().getLocation().getPath();
 			String decodedPath = URLDecoder.decode(path, "UTF-8");
 			decodedPath = decodedPath.replace("SimKernel.jar", "");
-			input = new FileInputStream(decodedPath + "/simkernel.properties");
+			input = new FileInputStream(decodedPath + "/src/main/simkernel.properties");
 			prop.load(input);
 			String debugLevel = prop.getProperty("debugLevel");
 

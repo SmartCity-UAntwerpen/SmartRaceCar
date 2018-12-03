@@ -68,7 +68,7 @@ class SimDeployer implements TCPListener
 			String path = SimDeployer.class.getProtectionDomain().getCodeSource().getLocation().getPath();
 			String decodedPath = URLDecoder.decode(path, "UTF-8");
 			decodedPath = decodedPath.replace("SimDeployer.jar", "");
-			input = new FileInputStream(decodedPath + "/simdeployer.properties");
+			input = new FileInputStream(decodedPath + "/src/main/simdeployer.properties");
 			prop.load(input);
 			String debugLevel = prop.getProperty("debugLevel");
 			switch (debugLevel)

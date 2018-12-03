@@ -1,7 +1,6 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
-import be.uantwerpen.fti.ds.sc.smartracecar.core.HeartbeatPublisher;
 import com.github.lalyos.jfiglet.FigletFont;
 import com.google.gson.reflect.TypeToken;
 
@@ -126,7 +125,7 @@ public class RacecarBackend implements MQTTListener
 			String path = RacecarBackend.class.getProtectionDomain().getCodeSource().getLocation().getPath();
 			String decodedPath = URLDecoder.decode(path, "UTF-8");
 			decodedPath = decodedPath.replace("RacecarBackendTest.jar", "");
-			input = new FileInputStream(decodedPath + "/racecarbackend.properties");
+			input = new FileInputStream(decodedPath + "/src/main/racecarbackend.properties");
 			prop.load(input);
 			String debugLevel = prop.getProperty("debugLevel");
 			switch (debugLevel)
