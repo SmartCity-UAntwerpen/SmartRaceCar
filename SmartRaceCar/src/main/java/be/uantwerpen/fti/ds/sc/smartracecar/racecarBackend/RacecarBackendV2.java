@@ -136,9 +136,6 @@ public class RacecarBackendV2
             return new MapManagerParameters();
         }
 
-        boolean debugWithoutBackBone = Boolean.parseBoolean(prop.getProperty("debugWithoutBackBone"));
-        boolean debugWithoutMAAS = Boolean.parseBoolean(prop.getProperty("debugWithoutMAAS"));
-
         String currentMap = prop.getProperty("currentMap");
         String mapPath = prop.getProperty("mapsPath");
 
@@ -161,10 +158,27 @@ public class RacecarBackendV2
     {
         Parameters parameters = this.readParameters(configPath);
         BackendParameters backendParameters = this.readBackendParameters(configPath);
+        MapManagerParameters mapManagerParameters = this.readMapManagerParameters(configPath);
 
         this.log = new LogbackWrapper();
         this.mapManager = new MapManager();
         this.vehicleManager = new VehicleManager(backendParameters, this.mapManager);
         this.jobDispatcher = new JobDispatcher(parameters, this.mapManager, this.vehicleManager);
+    }
+
+    public static void main (String[] args)
+    {
+        Optional<String> configPath;
+
+        if (args.length == 1)
+        {
+            configPath = Optional.of(args[0]);
+        }
+        else
+        {
+            configPath = Optional.empty();
+        }
+
+        final RacecarBackendV2 racecarBackendV2 = new RacecarBackendV2(configPath);
     }
 }
