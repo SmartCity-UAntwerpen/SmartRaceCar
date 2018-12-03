@@ -28,7 +28,8 @@ class SimDeployer implements TCPListener
 	private TCPUtils tcpUtils;
 	private RESTUtils restUtils;
 
-	private Log log; // logging instance
+	private Log olLog; // logging instance
+	private LogbackWrapper log;
 	private String jarPath = "./release/";//"C:\\release\\";  //Path where the jar files are located.
 	private HashMap<Long, SimulatedVehicle> simulatedVehicles = new HashMap<>(); // Map of all simulated vehicles. Mapped by their ID.
 	private HashMap<Long, WayPoint> wayPoints = new HashMap<>(); // Map of all loaded waypoints.
@@ -45,6 +46,7 @@ class SimDeployer implements TCPListener
 		System.out.println("-------------------------------------------------------------------");
 		System.out.println("----------------- F1 Racecar SimDeployer - v1.0 -------------------");
 		System.out.println("-------------------------------------------------------------------");
+		this.log = new LogbackWrapper();
 		loadConfig();
 		this.jarPath = jarPath;
 		System.out.println(jarPath);
@@ -74,27 +76,27 @@ class SimDeployer implements TCPListener
 			switch (debugLevel)
 			{
 				case "debug":
-					log = new Log(this.getClass(), Level.CONFIG);
+					olLog = new Log(this.getClass(), Level.CONFIG);
 					break;
 				case "info":
-					log = new Log(this.getClass(), Level.INFO);
+					olLog = new Log(this.getClass(), Level.INFO);
 					break;
 				case "warning":
-					log = new Log(this.getClass(), Level.WARNING);
+					olLog = new Log(this.getClass(), Level.WARNING);
 					break;
 				case "severe":
-					log = new Log(this.getClass(), Level.SEVERE);
+					olLog = new Log(this.getClass(), Level.SEVERE);
 					break;
 			}
 			restURL = prop.getProperty("restURL");
 			jarPath = prop.getProperty("jarPath");
 			serverPort = Integer.parseInt(prop.getProperty("serverPort"));
 			showSimulatedOutput = Boolean.parseBoolean(prop.getProperty("showSimulatedOutput"));
-			Log.logInfo("SIMDEPLOYER", "Config loaded");
+			this.log.info("SIMDEPLOYER", "Config loaded");
 		} catch (IOException ex)
 		{
-			log = new Log(this.getClass(), Level.CONFIG);
-			Log.logWarning("SIMDEPLOYER", "Could not read config file. Loading default settings. " + ex);
+			olLog = new Log(this.getClass(), Level.CONFIG);
+			this.log.warning("SIMDEPLOYER", "Could not read config file. Loading default settings. " + ex);
 		} finally
 		{
 			if (input != null)
@@ -104,7 +106,7 @@ class SimDeployer implements TCPListener
 					input.close();
 				} catch (IOException e)
 				{
-					Log.logWarning("SIMDEPLOYER", "Could not read config file. Loading default settings. " + e);
+					this.log.warning("SIMDEPLOYER", "Could not read config file. Loading default settings. " + e);
 				}
 			}
 		}
@@ -122,9 +124,9 @@ class SimDeployer implements TCPListener
 		assert wayPoints != null;
 		for (WayPoint wayPoint : wayPoints.values())
 		{
-			Log.logConfig("SIMDEPLOYER", "Waypoint " + wayPoint.getID() + " added: " + wayPoint.getX() + "," + wayPoint.getY() + "," + wayPoint.getZ() + "," + wayPoint.getW());
+			this.log.info("SIMDEPLOYER", "Waypoint " + wayPoint.getID() + " added: " + wayPoint.getX() + "," + wayPoint.getY() + "," + wayPoint.getZ() + "," + wayPoint.getW());
 		}
-		Log.logInfo("SIMDEPLOYER", "All possible waypoints(" + wayPoints.size() + ") received.");
+		this.log.info("SIMDEPLOYER", "All possible waypoints(" + wayPoints.size() + ") received.");
 	}
 
 	/**
@@ -200,11 +202,11 @@ class SimDeployer implements TCPListener
 								simulatedVehicles.get(simulationID).setStartPoint();
 							}
 						}
-						Log.logInfo("SIMDEPLOYER", "Simulated Vehicle with simulation ID " + simulationID + " given starting point ID " + argument + ".");
+						this.log.info("SIMDEPLOYER", "Simulated Vehicle with simulation ID " + simulationID + " given starting point ID " + argument + ".");
 						return true;
 					} else
 					{
-						Log.logWarning("SIMDEPLOYER", "Cannot set vehicle with simulation ID " + simulationID + " to have startpoint " + Long.parseLong(argument) + ". It does not exist.");
+						this.log.warning("SIMDEPLOYER", "Cannot set vehicle with simulation ID " + simulationID + " to have startpoint " + Long.parseLong(argument) + ". It does not exist.");
 						return false;
 					}
 				case "speed":
@@ -213,23 +215,23 @@ class SimDeployer implements TCPListener
 						simulatedVehicles.get(simulationID).setSpeed(Float.parseFloat(argument));
 					} catch (NumberFormatException ex)
 					{
-						Log.logWarning("SIMDEPLOYER", "Needs to be a float number as speed argument. Argument: " + argument);
+						this.log.warning("SIMDEPLOYER", "Needs to be a float number as speed argument. Argument: " + argument);
 						return false;
 					}
 
-					Log.logInfo("SIMDEPLOYER", "Simulated Vehicle with simulation ID " + simulationID + " given speed " + argument + ".");
+					this.log.info("SIMDEPLOYER", "Simulated Vehicle with simulation ID " + simulationID + " given speed " + argument + ".");
 					return true;
 				case "name":
 					simulatedVehicles.get(simulationID).setName(argument);
-					Log.logInfo("SIMDEPLOYER", "Simulated Vehicle with simulation ID " + simulationID + " given name " + argument + ".");
+					this.log.info("SIMDEPLOYER", "Simulated Vehicle with simulation ID " + simulationID + " given name " + argument + ".");
 					return true;
 				default:
-					Log.logWarning("SIMDEPLOYER", "No matching keyword when parsing simulation request over sockets. Parameter: " + parameter);
+					this.log.warning("SIMDEPLOYER", "No matching keyword when parsing simulation request over sockets. Parameter: " + parameter);
 					return false;
 			}
 		} else
 		{
-			Log.logWarning("SIMDEPLOYER", "Cannot set vehicle with simulation ID " + simulationID + ". It does not exist.");
+			this.log.warning("SIMDEPLOYER", "Cannot set vehicle with simulation ID " + simulationID + ". It does not exist.");
 			return false;
 		}
 	}
@@ -246,11 +248,11 @@ class SimDeployer implements TCPListener
 		if (!simulatedVehicles.containsKey(simulationID))
 		{
 			simulatedVehicles.put(simulationID, new SimulatedVehicle(simulationID, jarPath, showSimulatedOutput));
-			Log.logInfo("SIMDEPLOYER", "New simulated vehicle registered with simulation ID " + simulationID + ".");
+			this.log.info("SIMDEPLOYER", "New simulated vehicle registered with simulation ID " + simulationID + ".");
 			return true;
 		} else
 		{
-			Log.logWarning("SIMDEPLOYER", "Cannot create vehicle with simulation ID " + simulationID + ". It already exists.");
+			this.log.warning("SIMDEPLOYER", "Cannot create vehicle with simulation ID " + simulationID + ". It already exists.");
 			return false;
 		}
 	}
@@ -270,16 +272,16 @@ class SimDeployer implements TCPListener
 			if (simulatedVehicles.get(simulationID).isDeployed())
 			{
 				simulatedVehicles.get(simulationID).stop();
-				Log.logInfo("SIMDEPLOYER", "Vehicle with ID " + simulationID + " Stopped.");
+				this.log.info("SIMDEPLOYER", "Vehicle with ID " + simulationID + " Stopped.");
 				return true;
 			} else
 			{
-				Log.logWarning("SIMDEPLOYER", "Cannot stop vehicle with simulation ID " + simulationID + ". It isn't deployed yet.");
+				this.log.warning("SIMDEPLOYER", "Cannot stop vehicle with simulation ID " + simulationID + ". It isn't deployed yet.");
 				return false;
 			}
 		} else
 		{
-			Log.logWarning("SIMDEPLOYER", "Cannot stop vehicle with simulation ID " + simulationID + ". It does not exist.");
+			this.log.warning("SIMDEPLOYER", "Cannot stop vehicle with simulation ID " + simulationID + ". It does not exist.");
 			return false;
 		}
 	}
@@ -300,11 +302,11 @@ class SimDeployer implements TCPListener
 				simulatedVehicles.get(simulationID).kill();
 			}
 			simulatedVehicles.remove(simulationID);
-			Log.logInfo("SIMDEPLOYER", "Vehicle with ID " + simulationID + " killed.");
+			this.log.info("SIMDEPLOYER", "Vehicle with ID " + simulationID + " killed.");
 			return true;
 		} else
 		{
-			Log.logWarning("SIMDEPLOYER", "Cannot kill vehicle with simulation ID " + simulationID + ". It does not exist.");
+			this.log.warning("SIMDEPLOYER", "Cannot kill vehicle with simulation ID " + simulationID + ". It does not exist.");
 			return false;
 		}
 	}
@@ -322,17 +324,17 @@ class SimDeployer implements TCPListener
 		{
 			if (simulatedVehicles.get(simulationID).isDeployed())
 			{
-				Log.logInfo("SIMDEPLOYER", "Restarted vehicle with simulation ID " + simulationID + ".");
+				this.log.info("SIMDEPLOYER", "Restarted vehicle with simulation ID " + simulationID + ".");
 				simulatedVehicles.get(simulationID).restart();
 				return true;
 			} else
 			{
-				Log.logWarning("SIMDEPLOYER", "Cannot restart vehicle with simulation ID " + simulationID + ". It isn't started.");
+				this.log.warning("SIMDEPLOYER", "Cannot restart vehicle with simulation ID " + simulationID + ". It isn't started.");
 				return false;
 			}
 		} else
 		{
-			Log.logWarning("SIMDEPLOYER", "Cannot restart vehicle with simulation ID " + simulationID + ". It does not exist.");
+			this.log.warning("SIMDEPLOYER", "Cannot restart vehicle with simulation ID " + simulationID + ". It does not exist.");
 			return false;
 		}
 	}
@@ -354,11 +356,11 @@ class SimDeployer implements TCPListener
 				if (simulatedVehicles.get(simulationID).getStartPoint() != -1)
 				{
 					simulatedVehicles.get(simulationID).start(tcpUtils.findRandomOpenPort(), tcpUtils.findRandomOpenPort());
-					Log.logInfo("SIMDEPLOYER", "Simulated Vehicle with simulation ID " + simulationID + " started.");
+					this.log.info("SIMDEPLOYER", "Simulated Vehicle with simulation ID " + simulationID + " started.");
 					return true;
 				} else
 				{
-					Log.logWarning("SIMDEPLOYER", "Cannot start vehicle with simulation ID " + simulationID + ". It didn't have a starting point set.");
+					this.log.warning("SIMDEPLOYER", "Cannot start vehicle with simulation ID " + simulationID + ". It didn't have a starting point set.");
 					return false;
 				}
 			} else
@@ -366,17 +368,17 @@ class SimDeployer implements TCPListener
 				if (!simulatedVehicles.get(simulationID).isAvailable())
 				{
 					simulatedVehicles.get(simulationID).run();
-					Log.logInfo("SIMDEPLOYER", "Stopped simulated Vehicle with simulation ID " + simulationID + " started again.");
+					this.log.info("SIMDEPLOYER", "Stopped simulated Vehicle with simulation ID " + simulationID + " started again.");
 					return true;
 				} else
 				{
-					Log.logWarning("SIMDEPLOYER", "Cannot start vehicle with simulation ID " + simulationID + ". It was already started.");
+					this.log.warning("SIMDEPLOYER", "Cannot start vehicle with simulation ID " + simulationID + ". It was already started.");
 					return false;
 				}
 			}
 		} else
 		{
-			Log.logWarning("SIMDEPLOYER", "Cannot start vehicle with simulation ID " + simulationID + ". It does not exist.");
+			this.log.warning("SIMDEPLOYER", "Cannot start vehicle with simulation ID " + simulationID + ". It does not exist.");
 			return false;
 		}
 	}

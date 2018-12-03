@@ -2,6 +2,7 @@ package be.uantwerpen.fti.ds.sc.smartracecar.core;
 
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.Log;
+import be.uantwerpen.fti.ds.sc.smartracecar.common.LogbackWrapper;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.MQTTUtils;
 
 import java.util.Date;
@@ -12,6 +13,8 @@ import java.util.HashMap;
  */
 public class HeartbeatPublisher extends Thread
 {
+	private LogbackWrapper log;
+
 	private MQTTUtils mqttUtils;
 	private long ID;
 
@@ -23,6 +26,8 @@ public class HeartbeatPublisher extends Thread
 	 */
 	public HeartbeatPublisher(MQTTUtils mqttUtils, long ID)
 	{
+		this.log = new LogbackWrapper();
+
 		this.mqttUtils = mqttUtils;
 		this.ID = ID;
 	}
@@ -37,7 +42,7 @@ public class HeartbeatPublisher extends Thread
 			try
 			{
 				Thread.sleep(10000); //Sleep for 10s
-				Log.logConfig("CORE", "Publishing Heartbeat...");
+				this.log.info("HEARTBEAT-PUB", "Publishing Heartbeat...");
 				this.mqttUtils.publishMessage("racecar/" + this.ID + "/heartbeat", "heartbeat"); //status can also be send in this message
 			} catch (InterruptedException e)
 			{

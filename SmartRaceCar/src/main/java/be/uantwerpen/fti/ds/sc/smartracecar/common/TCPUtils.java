@@ -189,7 +189,7 @@ public class TCPUtils extends Thread
 					this.log.warning("SOCKETS", "Could not send. Trying to connect to unknown host: " + e);
 				} catch (IOException e)
 				{
-					Log.logSevere("SOCKETS", "Could not send. IOException:  " + e);
+					this.log.error("SOCKETS", "Could not send. IOException:  " + e);
 				}
 			} catch (UnknownHostException e)
 			{
