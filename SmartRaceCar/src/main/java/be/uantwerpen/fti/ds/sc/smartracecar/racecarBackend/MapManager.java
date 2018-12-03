@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+@Path("carmanager")
 public class MapManager implements MQTTListener
 {
 	private LogbackWrapper log;

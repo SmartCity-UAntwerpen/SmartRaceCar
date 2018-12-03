@@ -20,6 +20,7 @@ import java.util.regex.Pattern;
 
 // Route Update
 // Cost Answers
+@Path("carmanager")
 public class NavigationManager implements MQTTListener
 {
 	private static class MQTTConstants

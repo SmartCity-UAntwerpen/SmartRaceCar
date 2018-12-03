@@ -32,8 +32,7 @@ class TomCatLauncher
 		tomcat.getHost().setAppBase(appBase);
 		Context context = tomcat.addWebapp(contextPath, appBase);
 
-		Tomcat.addServlet(context, "jersey-container-servlet",
-				new ServletContainer(resourceConfig()));
+		Tomcat.addServlet(context, "jersey-container-servlet", new ServletContainer(resourceConfig()));
 		context.addServletMapping("/*", "jersey-container-servlet");
 
 		tomcat.start();

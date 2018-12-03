@@ -3,6 +3,7 @@ package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.LogbackWrapper;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.Parameters;
 
+import javax.ws.rs.Path;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
