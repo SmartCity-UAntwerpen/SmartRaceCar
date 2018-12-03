@@ -174,11 +174,11 @@ public class RacecarBackendV2
 	{
 		this.log = new LogbackWrapper();
 
+		this.startTomCatServer();
+
 		Parameters parameters = this.readParameters(configPath);
 		BackendParameters backendParameters = this.readBackendParameters(configPath);
 		MapManagerParameters mapManagerParameters = this.readMapManagerParameters(configPath);
-
-		this.startTomCatServer();
 
 		this.mapManager = new MapManager(mapManagerParameters, null);
 		this.vehicleManager = new VehicleManager(backendParameters, this.mapManager);
