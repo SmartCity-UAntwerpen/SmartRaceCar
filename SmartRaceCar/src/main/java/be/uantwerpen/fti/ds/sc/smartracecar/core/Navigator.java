@@ -10,11 +10,11 @@ public class Navigator
 {
 	private Core core;
 
-	private int costCurrentToStartTiming; 									// Time in seconds from current position to start position of route.
-	private int costStartToEndTiming; 										// Time in seconds from start position to end position of route.
+	private int costCurrentToStartTiming;                                    // Time in seconds from current position to start position of route.
+	private int costStartToEndTiming;                                        // Time in seconds from start position to end position of route.
 
-	private Queue<Long> currentRoute; 										// All waypoint IDs to be handled in the current route.
-	private int routeSize;													// Current route's size.
+	private Queue<Long> currentRoute;                                        // All waypoint IDs to be handled in the current route.
+	private int routeSize;                                                    // Current route's size.
 	private LogbackWrapper log;
 
 	public Navigator(Core core)
@@ -42,6 +42,7 @@ public class Navigator
 
 	/**
 	 * Parses and handles MQTT messages concerning job requests.
+	 *
 	 * @param message
 	 */
 	public void handleJobRequest(String message)
@@ -49,8 +50,7 @@ public class Navigator
 		if (message.equals("stop"))
 		{
 			sendWheelStates(0, 0);
-		}
-		else
+		} else
 		{
 			if (!this.core.isOccupied())
 			{
@@ -67,8 +67,7 @@ public class Navigator
 				{
 					this.log.warning("NAVIGATOR", "Parsing MQTT gives bad result: " + e);
 				}
-			}
-			else
+			} else
 			{
 				this.log.warning("NAVIGATOR", "Current Route not completed. Not adding waypoints.");
 				this.routeNotComplete();
@@ -97,8 +96,7 @@ public class Navigator
 				try
 				{
 					Thread.sleep(1000);
-				}
-				catch (InterruptedException e)
+				} catch (InterruptedException e)
 				{
 					e.printStackTrace();
 				}
@@ -109,26 +107,24 @@ public class Navigator
 				{
 					this.currentRoute.add(wayPointID);
 					this.log.info("NAVIGATOR", "Added waypoint with ID " + wayPointID + " to route.");
-				}
-				else
+				} else
 				{
 					Log.logWarning("NAVIGATOR", "Waypoint with ID '" + wayPointID + "' not found.");
 					this.currentRoute.clear();
 					error = true;
 				}
 			}
-			if (!error) {
+			if (!error)
+			{
 				this.routeSize = this.currentRoute.size();
 				this.log.info("NAVIGATOR", "All waypoints(" + this.routeSize + ") of route added. Starting route.");
 				this.updateRoute();
-			}
-			else
+			} else
 			{
 				this.log.warning("NAVIGATOR", "Certain waypoints not found. Route cancelled.");
 				this.routeError();
 			}
-		}
-		else
+		} else
 		{
 			this.log.warning("NAVIGATOR", "Current Route not completed. Not adding waypoints.");
 			routeNotComplete();
@@ -156,8 +152,7 @@ public class Navigator
 		{
 			float weight = (float) this.costStartToEndTiming / (float) (this.costCurrentToStartTiming + this.costStartToEndTiming);
 			location.setPercentage(Math.round((1 - weight) * 100 + location.getPercentage() * weight));
-		}
-		else if (this.currentRoute.size() == 1)
+		} else if (this.currentRoute.size() == 1)
 		{
 			float weight = (float) this.costCurrentToStartTiming / (float) (this.costCurrentToStartTiming + this.costStartToEndTiming);
 			location.setPercentage(Math.round(location.getPercentage() * weight));
@@ -204,16 +199,14 @@ public class Navigator
 				try
 				{
 					Thread.sleep(3000);
-				}
-				catch (InterruptedException e)
+				} catch (InterruptedException e)
 				{
 					e.printStackTrace();
 				}
 				wayPointReached();
 			}
 
-		}
-		else
+		} else
 		{
 			routeCompleted();
 		}

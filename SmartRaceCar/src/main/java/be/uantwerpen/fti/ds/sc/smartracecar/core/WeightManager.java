@@ -31,8 +31,7 @@ public class WeightManager
 		if (!this.core.getParams().isDebug())
 		{
 			this.core.getTcpUtils().sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("cost", points));
-		}
-		else
+		} else
 		{
 			costComplete(new Cost(false, 5, 5, this.core.getID()));
 		}

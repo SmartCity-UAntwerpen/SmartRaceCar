@@ -24,7 +24,7 @@ public class MapManager
 {
 	private Core core;
 
-	private HashMap<String, Map> loadedMaps; 								// Map of all loaded maps.
+	private HashMap<String, Map> loadedMaps;                                // Map of all loaded maps.
 
 	private LogbackWrapper log;
 
@@ -72,8 +72,7 @@ public class MapManager
 					this.log.info("MAP-MANAGER", "Added map: " + name + ".");
 				}
 			}
-		}
-		catch (IOException | SAXException | ParserConfigurationException e)
+		} catch (IOException | SAXException | ParserConfigurationException e)
 		{
 			this.log.error("MAP-MANAGER", "Could not correctly load XML of maps." + e);
 		}
@@ -127,8 +126,7 @@ public class MapManager
 			this.log.info("MAP-MANAGER", "Current used map '" + mapName + "' found in folder, setting as current map.");
 			if (!this.core.getParams().isDebug())
 				this.core.getTcpUtils().sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", this.loadedMaps.get(mapName)));
-		}
-		else
+		} else
 		{
 			Log.logConfig("MAP-MANAGER", "Current used map '" + mapName + "' not found. Downloading...");
 			this.core.getRestUtils().getFile("getmappgm/" + mapName, findMapsFolder(), mapName, "pgm");
@@ -159,8 +157,7 @@ public class MapManager
 				StreamResult result = new StreamResult(findMapsFolder() + "/maps.xml");
 				transformer.transform(source, result);
 
-			}
-			catch (ParserConfigurationException | SAXException | IOException | TransformerException e)
+			} catch (ParserConfigurationException | SAXException | IOException | TransformerException e)
 			{
 				this.log.warning("MAP-MANAGER", "Could not add map to XML of maps." + e);
 			}

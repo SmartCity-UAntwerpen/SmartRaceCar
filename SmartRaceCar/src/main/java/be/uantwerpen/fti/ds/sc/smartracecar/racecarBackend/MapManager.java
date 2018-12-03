@@ -32,12 +32,12 @@ public class MapManager implements MQTTListener
 	private MQTTUtils mqttUtils;
 	private RESTUtils backboneRESTUtils;
 
-    private Map<Long, WayPoint> wayPoints;
-    private String currentMap;
-    private String mapPath;
+	private Map<Long, WayPoint> wayPoints;
+	private String currentMap;
+	private String mapPath;
 
-    public MapManager(MapManagerParameters params, VehicleManager vehicleManager)
-    {
+	public MapManager(MapManagerParameters params, VehicleManager vehicleManager)
+	{
 		this.log = new LogbackWrapper();
 		this.params = params;
 
@@ -51,30 +51,30 @@ public class MapManager implements MQTTListener
 
 		this.wayPoints = new HashMap<>();
 		this.loadWayPoints();
-    }
+	}
 
-    public boolean exists(long id)
-    {
-        return wayPoints.containsKey(id);
-    }
+	public boolean exists(long id)
+	{
+		return wayPoints.containsKey(id);
+	}
 
-    public void setVehicleManager(VehicleManager vehicleManager)
+	public void setVehicleManager(VehicleManager vehicleManager)
 	{
 		this.vehicleManager = vehicleManager;
 	}
 
-    /**
-     * REST GET server service to get the currently used map.
-     *
-     * @return REST response of the type Text Plain containing the mapname.
-     */
-    @GET
-    @Path("getmapname")
-    @Produces("text/plain")
-    public String getMapName()
-    {
-        return this.currentMap;
-    }
+	/**
+	 * REST GET server service to get the currently used map.
+	 *
+	 * @return REST response of the type Text Plain containing the mapname.
+	 */
+	@GET
+	@Path("getmapname")
+	@Produces("text/plain")
+	public String getMapName()
+	{
+		return this.currentMap;
+	}
 
 	/**
 	 * REST GET server service to download a map's PGM file by name.
@@ -87,7 +87,8 @@ public class MapManager implements MQTTListener
 	@Produces("application/octet-stream")
 	public Response getMapPGM(@PathParam("mapname") final String mapname, @Context HttpServletResponse response) throws UnsupportedEncodingException
 	{
-		StreamingOutput fileStream = output -> {
+		StreamingOutput fileStream = output ->
+		{
 			try
 			{
 				java.nio.file.Path path = Paths.get(this.mapPath + "/" + mapname + ".pgm");
@@ -131,15 +132,15 @@ public class MapManager implements MQTTListener
 	@Produces("application/octet-stream")
 	public Response getMapYAML(@PathParam("mapname") final String mapname, @Context HttpServletResponse response)
 	{
-		StreamingOutput fileStream = output -> {
+		StreamingOutput fileStream = output ->
+		{
 			try
 			{
 				java.nio.file.Path path = Paths.get(mapPath + "/" + mapname + ".yaml");
 				byte[] data = Files.readAllBytes(path);
 				output.write(data);
 				output.flush();
-			}
-			catch (Exception e)
+			} catch (Exception e)
 			{
 				response.sendError(HttpServletResponse.SC_NOT_FOUND, mapname + ".yaml not found");
 			}
@@ -166,7 +167,7 @@ public class MapManager implements MQTTListener
 		{
 			this.currentMap = mapName;
 
-			for (Iterator it = this.vehicleManager.getIdIterator(); it.hasNext();)
+			for (Iterator it = this.vehicleManager.getIdIterator(); it.hasNext(); )
 			{
 				int ID = (int) it.next();
 
@@ -175,8 +176,7 @@ public class MapManager implements MQTTListener
 				loadWayPoints();
 			}
 			return "Command was executed to change map";
-		}
-		else
+		} else
 		{
 			this.log.warning("RACECAR_BACKEND", "Map cannot be changed as the map does not exist");
 			return "Map was not changed as map does not exist";
@@ -222,12 +222,13 @@ public class MapManager implements MQTTListener
 					this.wayPoints.put((long) 48, new WayPoint(48, (float) -27.14, (float) -1.11, (float) -0.3, (float) 0.95));
 					this.wayPoints.put((long) 49, new WayPoint(49, (float) -28.25, (float) -9.19, (float) -0.71, (float) 0.71));
 			}
-		}
-		else
+		} else
 		{
 			String jsonString = this.backboneRESTUtils.getJSON("map/stringmapjson/car"); //when the map is changed, another map needs to be manually loaded in the backbone database
 			JSONUtils.isJSONValid(jsonString);
-			Type typeOfWayPointArray = new TypeToken<ArrayList<WayPoint>>(){}.getType();
+			Type typeOfWayPointArray = new TypeToken<ArrayList<WayPoint>>()
+			{
+			}.getType();
 			ArrayList<WayPoint> wayPointsTemp = (ArrayList<WayPoint>) JSONUtils.getObject(jsonString, typeOfWayPointArray);
 			for (WayPoint wayPoint : wayPointsTemp)
 			{
