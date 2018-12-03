@@ -50,7 +50,7 @@ public class RacecarBackendV2
 
         try
         {
-            input = this.openFileStream(propertiesFile.get());
+            input = this.openFileStream(propertiesFile.orElse(DEFAULT_PROPERTIES_FILE));
             prop.load(input);
         }
         catch (IOException ioe)
@@ -85,22 +85,9 @@ public class RacecarBackendV2
         Properties prop = new Properties();
         InputStream input = null;
 
-        String path = propertiesFile.orElse(DEFAULT_PROPERTIES_FILE);
-        String decodedPath;
-
         try
         {
-            decodedPath = URLDecoder.decode(path, "UTF-8");
-        }
-        catch (UnsupportedEncodingException uee)
-        {
-            this.log.warning("RACECAR-BACKEND", "Could not decode config file path. Loading default settings. IOException: \"" + uee.getMessage() + "\"");
-            return new BackendParameters(true, true);
-        }
-
-        try
-        {
-            input = new FileInputStream(decodedPath);
+            input = this.openFileStream(propertiesFile.orElse(DEFAULT_PROPERTIES_FILE));
             prop.load(input);
         }
         catch (IOException ioe)
@@ -133,19 +120,65 @@ public class RacecarBackendV2
         return backendParameters;
     }
 
-    private MapManagerParameters readMapManagerParameters()
+    private MapManagerParameters readMapManagerParameters(Optional<String> propertiesFile)
     {
+        Properties prop = new Properties();
+        InputStream input = null;
 
+        try
+        {
+            input = this.openFileStream(propertiesFile.orElse(DEFAULT_PROPERTIES_FILE));
+            prop.load(input);
+        }
+        catch (IOException ioe)
+        {
+            this.log.warning("RACECAR-BACKEND", "Could not open config file. Loading default settings. IOException: \"" + ioe.getMessage() + "\"");
+            return new MapManagerParameters();
+        }
+
+        String currentMap = prop.getProperty("currentMap");
+        String mapPath = prop.getProperty("mapsPath");
+
+        this.log.info("RACECAR-BACKEND", "Config loaded");
+
+        MapManagerParameters mapManagerParameters = new MapManagerParameters(this.readBackendParameters(propertiesFile), currentMap, mapPath);
+        try
+        {
+            input.close();
+        }
+        catch (IOException ioe)
+        {
+            this.log.warning("RACECAR-BACKEND", "Could not close config file. Loading default settings. IOException: \"" + ioe.getMessage() + "\"");
+        }
+
+        return mapManagerParameters;
     }
 
     public RacecarBackendV2(Optional<String> configPath)
     {
         Parameters parameters = this.readParameters(configPath);
         BackendParameters backendParameters = this.readBackendParameters(configPath);
+        MapManagerParameters mapManagerParameters = this.readMapManagerParameters(configPath);
 
         this.log = new LogbackWrapper();
         this.mapManager = new MapManager();
         this.vehicleManager = new VehicleManager(backendParameters, this.mapManager);
         this.jobDispatcher = new JobDispatcher(parameters, this.mapManager, this.vehicleManager);
+    }
+
+    public static void main (String[] args)
+    {
+        Optional<String> configPath;
+
+        if (args.length == 1)
+        {
+            configPath = Optional.of(args[0]);
+        }
+        else
+        {
+            configPath = Optional.empty();
+        }
+
+        final RacecarBackendV2 racecarBackendV2 = new RacecarBackendV2(configPath);
     }
 }
