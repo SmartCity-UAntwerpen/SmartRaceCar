@@ -13,6 +13,7 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -100,8 +101,13 @@ public class NavigationManager implements MQTTListener
         int totalVehicles = 0;
         int timer = 0;
 
-        for (Vehicle vehicle : vehicles.values())
+        Iterator<Long> vehicleIdIterator = this.vehicleManager.getIdIterator();
+
+        while (vehicleIdIterator.hasNext())
         {
+            Long vehicleId = vehicleIdIterator.next();
+            Vehicle vehicle = this.vehicleManager.get(vehicleId);
+
             if (vehicle.isAvailable())
             {
                 totalVehicles++;
@@ -109,15 +115,17 @@ public class NavigationManager implements MQTTListener
             }
         }
 
-        while (costs.size() != totalVehicles && timer != 100)
-        { // Wait for each vehicle to complete the request or timeout after 100 attempts.
+        // Runs for 100 iterations, each a little over 200ms
+        while ((this.costList.size() < totalVehicles) && (timer != 100))
+        {
+            // Wait for each vehicle to complete the request or timeout after 100 attempts.
             Log.logInfo("RACECAR_BACKEND", "waiting for vehicles to complete request.");
             Thread.sleep(200);
             timer++;
         }
 
-        ArrayList<Cost> costCopy = (ArrayList<Cost>) costs.clone();
-        costs.clear();
+        ArrayList<Cost> costCopy = (ArrayList<Cost>) this.costList.clone();
+        this.costList.clear();
 
         this.log.info("JOB-DISPATCHER", "Cost calculation request completed.");
 

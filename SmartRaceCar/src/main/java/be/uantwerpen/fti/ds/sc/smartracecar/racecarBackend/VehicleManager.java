@@ -147,9 +147,18 @@ public class VehicleManager implements MQTTListener
         }
     }
 
+    /**
+     * Returns an iterator over a keyset of the vehicle ID's.
+     * @return
+     */
     public Iterator<Long> getIdIterator()
     {
         return this.vehicles.keySet().iterator();
+    }
+
+    public int getNumVehicles()
+    {
+        return this.vehicles.size();
     }
 
     /*
