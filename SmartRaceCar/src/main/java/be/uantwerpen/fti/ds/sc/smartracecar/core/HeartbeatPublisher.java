@@ -12,38 +12,38 @@ import java.util.HashMap;
  */
 public class HeartbeatPublisher extends Thread
 {
-    private MQTTUtils mqttUtils;
-    private long ID;
+	private MQTTUtils mqttUtils;
+	private long ID;
 
-    /**
-     * Constructor for the heartbeat publisher
-     * @param mqttUtils The MQTTUtils class used by the Core class
-     * @param ID Id of the Core class that creates this thread
-     */
-    public HeartbeatPublisher(MQTTUtils mqttUtils, long ID)
+	/**
+	 * Constructor for the heartbeat publisher
+	 *
+	 * @param mqttUtils The MQTTUtils class used by the Core class
+	 * @param ID        Id of the Core class that creates this thread
+	 */
+	public HeartbeatPublisher(MQTTUtils mqttUtils, long ID)
 	{
-        this.mqttUtils=mqttUtils;
-        this.ID=ID;
-    }
+		this.mqttUtils = mqttUtils;
+		this.ID = ID;
+	}
 
-    /**
-     * start the thread
-     */
-    public void run()
-    {
-        while (true)
-        {
-            try
+	/**
+	 * start the thread
+	 */
+	public void run()
+	{
+		while (true)
+		{
+			try
 			{
-                Thread.sleep(10000); //Sleep for 10s
-                Log.logConfig("CORE", "Publishing Heartbeat...");
-                this.mqttUtils.publishMessage("racecar/" + this.ID + "/heartbeat", "heartbeat"); //status can also be send in this message
-            }
-            catch (InterruptedException e)
+				Thread.sleep(10000); //Sleep for 10s
+				Log.logConfig("CORE", "Publishing Heartbeat...");
+				this.mqttUtils.publishMessage("racecar/" + this.ID + "/heartbeat", "heartbeat"); //status can also be send in this message
+			} catch (InterruptedException e)
 			{
-                e.printStackTrace();
-            }
-        }
-    }
+				e.printStackTrace();
+			}
+		}
+	}
 
 }

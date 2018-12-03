@@ -22,159 +22,160 @@ import java.util.regex.Pattern;
 // Cost Answers
 public class NavigationManager implements MQTTListener
 {
-    private static class MQTTConstants
-    {
-        private static final Pattern COST_ANSWER_REGEX = Pattern.compile("racecar/[0-9]+/costanswer");
-        private static final Pattern LOCATION_UPDATE_REGEX = Pattern.compile("racecar/[0-9]+/locationupdate");
-    }
+	private static class MQTTConstants
+	{
+		private static final Pattern COST_ANSWER_REGEX = Pattern.compile("racecar/[0-9]+/costanswer");
+		private static final Pattern LOCATION_UPDATE_REGEX = Pattern.compile("racecar/[0-9]+/locationupdate");
+	}
 
-    private static final Type COST_TYPE = (new TypeToken<Cost>(){}).getType();
+	private static final Type COST_TYPE = (new TypeToken<Cost>()
+	{
+	}).getType();
 
-    private Parameters parameters;
-    private LogbackWrapper log;
-    private MQTTUtils mqttUtils;
-    private List<Cost> costList;
-    private VehicleManager vehicleManager;
-    private MapManager mapManager;
+	private Parameters parameters;
+	private LogbackWrapper log;
+	private MQTTUtils mqttUtils;
+	private List<Cost> costList;
+	private VehicleManager vehicleManager;
+	private MapManager mapManager;
 
-    private boolean isCostAnswer(String topic)
-    {
-        Matcher matcher = MQTTConstants.COST_ANSWER_REGEX.matcher(topic);
-        return matcher.matches();
-    }
+	private boolean isCostAnswer(String topic)
+	{
+		Matcher matcher = MQTTConstants.COST_ANSWER_REGEX.matcher(topic);
+		return matcher.matches();
+	}
 
-    private boolean isLocationUpdate(String topic)
-    {
-        Matcher matcher = MQTTConstants.LOCATION_UPDATE_REGEX.matcher(topic);
-        return matcher.matches();
-    }
+	private boolean isLocationUpdate(String topic)
+	{
+		Matcher matcher = MQTTConstants.LOCATION_UPDATE_REGEX.matcher(topic);
+		return matcher.matches();
+	}
 
-    public NavigationManager(VehicleManager vehicleManager, MapManager mapManager, Parameters parameters)
-    {
-        this.parameters = parameters;
-        this.log = new LogbackWrapper();
-        this.mqttUtils = new MQTTUtils(this.parameters.getMqttBroker(), this.parameters.getMqttUserName(), this.parameters.getMqttPassword(), this);
-        this.mqttUtils.subscribeToTopic(this.parameters.getMqttTopic());
-        this.costList = new ArrayList<>();
-        this.vehicleManager = vehicleManager;
-        this.mapManager = mapManager;
-    }
+	public NavigationManager(VehicleManager vehicleManager, MapManager mapManager, Parameters parameters)
+	{
+		this.parameters = parameters;
+		this.log = new LogbackWrapper();
+		this.mqttUtils = new MQTTUtils(this.parameters.getMqttBroker(), this.parameters.getMqttUserName(), this.parameters.getMqttPassword(), this);
+		this.mqttUtils.subscribeToTopic(this.parameters.getMqttTopic());
+		this.costList = new ArrayList<>();
+		this.vehicleManager = vehicleManager;
+		this.mapManager = mapManager;
+	}
 
-    /**
-     * REST GET server service to get a calculation cost of all available vehicles. It requests from each vehicle a calculation
-     * of a possible route and returns a JSON containing all answers.
-     *
-     * @param startId Starting waypoint ID.
-     * @param endId   Ending waypoint ID.
-     * @return REST response of the type JSON containg all calculated costs of each vehicle.
-     */
-    @GET
-    @Path("calcWeight/{startId}/{endId}")
-    @Produces("application/json")
-    public Response calculateCostsRequest(@PathParam("startId") long startId, @PathParam("endId") long endId, @Context HttpServletResponse response) throws IOException, InterruptedException
-    {
-        if (!this.mapManager.exists(startId))
-        {
-            String errorString = "Request cost with non-existent start waypoint " + Long.toString(startId) + ".";
-            this.log.error("JOB-DISPATCHER", errorString);
+	/**
+	 * REST GET server service to get a calculation cost of all available vehicles. It requests from each vehicle a calculation
+	 * of a possible route and returns a JSON containing all answers.
+	 *
+	 * @param startId Starting waypoint ID.
+	 * @param endId   Ending waypoint ID.
+	 * @return REST response of the type JSON containg all calculated costs of each vehicle.
+	 */
+	@GET
+	@Path("calcWeight/{startId}/{endId}")
+	@Produces("application/json")
+	public Response calculateCostsRequest(@PathParam("startId") long startId, @PathParam("endId") long endId, @Context HttpServletResponse response) throws IOException, InterruptedException
+	{
+		if (!this.mapManager.exists(startId))
+		{
+			String errorString = "Request cost with non-existent start waypoint " + Long.toString(startId) + ".";
+			this.log.error("JOB-DISPATCHER", errorString);
 
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
-            return Response.status(Response.Status.NOT_FOUND).build();
-        }
+			response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
+			return Response.status(Response.Status.NOT_FOUND).build();
+		}
 
-        if (!this.mapManager.exists(endId))
-        {
-            String errorString = "Request cost with non-existent end waypoint " + Long.toString(endId) + ".";
-            this.log.error("JOB-DISPATCHER", errorString);
+		if (!this.mapManager.exists(endId))
+		{
+			String errorString = "Request cost with non-existent end waypoint " + Long.toString(endId) + ".";
+			this.log.error("JOB-DISPATCHER", errorString);
 
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
-            return Response.status(Response.Status.NOT_FOUND).build();
-        }
+			response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
+			return Response.status(Response.Status.NOT_FOUND).build();
+		}
 
-        if (this.vehicleManager.getNumVehicles() == 0)
-        {
-            String errorString = "No vehicles exist" + Long.toString(endId) + ".";
-            this.log.error("JOB-DISPATCHER", errorString);
+		if (this.vehicleManager.getNumVehicles() == 0)
+		{
+			String errorString = "No vehicles exist" + Long.toString(endId) + ".";
+			this.log.error("JOB-DISPATCHER", errorString);
 
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
-            return Response.status(Response.Status.NOT_FOUND).build();
-        }
+			response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
+			return Response.status(Response.Status.NOT_FOUND).build();
+		}
 
-        int totalVehicles = 0;
-        int timer = 0;
+		int totalVehicles = 0;
+		int timer = 0;
 
-        Iterator<Long> vehicleIdIterator = this.vehicleManager.getIdIterator();
+		Iterator<Long> vehicleIdIterator = this.vehicleManager.getIdIterator();
 
-        while (vehicleIdIterator.hasNext())
-        {
-            Long vehicleId = vehicleIdIterator.next();
-            Vehicle vehicle = this.vehicleManager.get(vehicleId);
+		while (vehicleIdIterator.hasNext())
+		{
+			Long vehicleId = vehicleIdIterator.next();
+			Vehicle vehicle = this.vehicleManager.get(vehicleId);
 
-            if (vehicle.isAvailable())
-            {
-                totalVehicles++;
-                this.mqttUtils.publishMessage("racecar/" + Long.toString(vehicle.getID()) + "/costrequest", Long.toString(startId) + " " + Long.toString(endId));
-            }
-        }
+			if (vehicle.isAvailable())
+			{
+				totalVehicles++;
+				this.mqttUtils.publishMessage("racecar/" + Long.toString(vehicle.getID()) + "/costrequest", Long.toString(startId) + " " + Long.toString(endId));
+			}
+		}
 
-        // Runs for 100 iterations, each a little over 200ms
-        while ((this.costList.size() < totalVehicles) && (timer != 100))
-        {
-            // Wait for each vehicle to complete the request or timeout after 100 attempts.
-            Log.logInfo("RACECAR_BACKEND", "waiting for vehicles to complete request.");
-            Thread.sleep(200);
-            timer++;
-        }
+		// Runs for 100 iterations, each a little over 200ms
+		while ((this.costList.size() < totalVehicles) && (timer != 100))
+		{
+			// Wait for each vehicle to complete the request or timeout after 100 attempts.
+			Log.logInfo("RACECAR_BACKEND", "waiting for vehicles to complete request.");
+			Thread.sleep(200);
+			timer++;
+		}
 
-        List<Cost> costCopy = new ArrayList<>();
+		List<Cost> costCopy = new ArrayList<>();
 
-        for (Cost cost: this.costList)
-        {
-            costCopy.add(cost.clone());
-        }
+		for (Cost cost : this.costList)
+		{
+			costCopy.add(cost.clone());
+		}
 
-        this.costList.clear();
+		this.costList.clear();
 
-        this.log.info("JOB-DISPATCHER", "Cost calculation request completed.");
+		this.log.info("JOB-DISPATCHER", "Cost calculation request completed.");
 
-        return Response.status(Response.Status.OK).entity(JSONUtils.arrayToJSONString(costCopy)).type("application/json").build();
-    }
+		return Response.status(Response.Status.OK).entity(JSONUtils.arrayToJSONString(costCopy)).type("application/json").build();
+	}
 
-    /*
-     *
-     *      MQTT Parsing
-     *
-     */
-    @Override
-    public void parseMQTT(String topic, String message)
-    {
-        long id = TopicUtils.getCarId(topic);
+	/*
+	 *
+	 *      MQTT Parsing
+	 *
+	 */
+	@Override
+	public void parseMQTT(String topic, String message)
+	{
+		long id = TopicUtils.getCarId(topic);
 
-        // id == -1 means the topic wasn't valid
-        // It's also possible that the topic was valid, but the vehicle just doesn't exist
-        if ((id != -1) && (this.vehicleManager.exists(id)))
-        {
-            // We received an MQTT cost answer
-            if (this.isCostAnswer(topic))
-            {
-                Cost cost = (Cost)JSONUtils.getObject("value", COST_TYPE);
-                this.costList.add(cost);
-            }
-            // We received an MQTT location update
-            else if (this.isLocationUpdate(topic))
-            {
-                try
-                {
-                    long locationId = Long.parseLong(message);
-                    int percentage = this.vehicleManager.get(id).getLocation().getPercentage();
-                    Location location = new Location(id, locationId, locationId, percentage);
-                    this.vehicleManager.get(id).setLocation(location);
-                }
-                catch (Exception vehicleNotFoundException)
-                {
-                    this.log.error("NAVIGATION-MAN", "Tried to update location on non-existent vehicle.");
-                }
-            }
-        }
-    }
+		// id == -1 means the topic wasn't valid
+		// It's also possible that the topic was valid, but the vehicle just doesn't exist
+		if ((id != -1) && (this.vehicleManager.exists(id)))
+		{
+			// We received an MQTT cost answer
+			if (this.isCostAnswer(topic))
+			{
+				Cost cost = (Cost) JSONUtils.getObject("value", COST_TYPE);
+				this.costList.add(cost);
+			}
+			// We received an MQTT location update
+			else if (this.isLocationUpdate(topic))
+			{
+				try
+				{
+					long locationId = Long.parseLong(message);
+					int percentage = this.vehicleManager.get(id).getLocation().getPercentage();
+					Location location = new Location(id, locationId, locationId, percentage);
+					this.vehicleManager.get(id).setLocation(location);
+				} catch (Exception vehicleNotFoundException)
+				{
+					this.log.error("NAVIGATION-MAN", "Tried to update location on non-existent vehicle.");
+				}
+			}
+		}
+	}
 }

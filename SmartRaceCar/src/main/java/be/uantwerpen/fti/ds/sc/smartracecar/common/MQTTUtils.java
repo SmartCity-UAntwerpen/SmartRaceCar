@@ -45,8 +45,7 @@ public class MQTTUtils implements MqttCallback
 			client.setCallback(this);
 			client.connectWithResult(options);
 			this.log.info("MQTT", "Connected to '" + brokerURL + "'.");
-		}
-		catch (MqttException e)
+		} catch (MqttException e)
 		{
 			this.log.error("MQTT", "Could not connect to '" + brokerURL + "'." + e);
 			System.exit(0);
