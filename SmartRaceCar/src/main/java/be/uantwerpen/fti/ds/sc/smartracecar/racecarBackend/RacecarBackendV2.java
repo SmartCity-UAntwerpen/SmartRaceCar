@@ -6,6 +6,7 @@ import be.uantwerpen.fti.ds.sc.smartracecar.common.Parameters;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.Optional;
 import java.util.Properties;
@@ -19,17 +20,37 @@ public class RacecarBackendV2
     private MapManager mapManager;
     private VehicleManager vehicleManager;
 
+    private FileInputStream openFileStream (String file) throws IOException
+    {
+        try
+        {
+            String decodedPath = URLDecoder.decode(file, "UTF-8");
+            return new FileInputStream(decodedPath);
+        }
+        catch (UnsupportedEncodingException uee)
+        {
+            // Catch, Log and re-throw
+            this.log.warning("RACECAR-BACKEND", "Could not decode file path. UnsupportedEncodingException: \"" + uee.getMessage() + "\"");
+            IOException ioe = new IOException(uee.getMessage());
+            ioe.setStackTrace(uee.getStackTrace());
+            throw ioe;
+        }
+        catch (IOException ioe)
+        {
+            // Catch, Log and re-throw
+            this.log.warning("RACECAR-BACKEND", "Could not open file. IOException: \"" + ioe.getMessage() + "\"");
+            throw ioe;
+        }
+    }
+
     private Parameters readParameters(Optional<String> propertiesFile)
     {
         Properties prop = new Properties();
         InputStream input = null;
 
-        String path = propertiesFile.orElse(DEFAULT_PROPERTIES_FILE);
-        String decodedPath = URLDecoder.decode(path, "UTF-8");
-
         try
         {
-            input = new FileInputStream(decodedPath);
+            input = this.openFileStream(propertiesFile.get());
             prop.load(input);
         }
         catch (IOException ioe)
@@ -59,13 +80,23 @@ public class RacecarBackendV2
         return parameters;
     }
 
-    private BackendParameters readVehicleManagerParameters(Optional<String> propertiesFile)
+    private BackendParameters readBackendParameters(Optional<String> propertiesFile)
     {
         Properties prop = new Properties();
         InputStream input = null;
 
         String path = propertiesFile.orElse(DEFAULT_PROPERTIES_FILE);
-        String decodedPath = URLDecoder.decode(path, "UTF-8");
+        String decodedPath;
+
+        try
+        {
+            decodedPath = URLDecoder.decode(path, "UTF-8");
+        }
+        catch (UnsupportedEncodingException uee)
+        {
+            this.log.warning("RACECAR-BACKEND", "Could not decode config file path. Loading default settings. IOException: \"" + uee.getMessage() + "\"");
+            return new BackendParameters(true, true);
+        }
 
         try
         {
@@ -102,10 +133,15 @@ public class RacecarBackendV2
         return backendParameters;
     }
 
+    private MapManagerParameters readMapManagerParameters()
+    {
+
+    }
+
     public RacecarBackendV2(Optional<String> configPath)
     {
         Parameters parameters = this.readParameters(configPath);
-        BackendParameters backendParameters = this.readVehicleManagerParameters(configPath);
+        BackendParameters backendParameters = this.readBackendParameters(configPath);
 
         this.log = new LogbackWrapper();
         this.mapManager = new MapManager();
