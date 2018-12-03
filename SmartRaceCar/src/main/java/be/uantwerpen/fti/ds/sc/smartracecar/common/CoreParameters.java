@@ -12,7 +12,7 @@ public class CoreParameters extends Parameters
 
 	public CoreParameters(String mqttBroker, String mqttUserName, String mqttPassword, String mqttTopic, String restURL, boolean debug)
 	{
-		super(mqttBroker, mqttUserName, mqttPassword, mqttTopic, restURL);
+		super(mqttBroker, mqttUserName, mqttPassword, restURL, mqttTopic);
 		this.debug = debug;
 	}
 

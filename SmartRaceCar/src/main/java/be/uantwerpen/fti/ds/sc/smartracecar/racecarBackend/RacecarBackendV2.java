@@ -1,7 +1,7 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
-import be.uantwerpen.fti.ds.sc.smartracecar.common.Log;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.LogbackWrapper;
+import be.uantwerpen.fti.ds.sc.smartracecar.common.Parameters;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.net.URLDecoder;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.logging.Level;
 
 public class RacecarBackendV2
 {
@@ -20,61 +19,97 @@ public class RacecarBackendV2
     private MapManager mapManager;
     private VehicleManager vehicleManager;
 
-    private VehicleManagerParameters readVehicleManagerParameters(Optional<String> propertiesFile)
+    private Parameters readParameters(Optional<String> propertiesFile)
     {
         Properties prop = new Properties();
         InputStream input = null;
 
+        String path = propertiesFile.orElse(DEFAULT_PROPERTIES_FILE);
+        String decodedPath = URLDecoder.decode(path, "UTF-8");
+
         try
         {
-            String path;
-
-            path = propertiesFile.orElse(DEFAULT_PROPERTIES_FILE);
-
-            String decodedPath = URLDecoder.decode(path, "UTF-8");
-            //decodedPath = decodedPath.replace("RacecarBackend.jar", "");
-            //input = new FileInputStream(decodedPath + "/racecarbackend.properties");
             input = new FileInputStream(decodedPath);
             prop.load(input);
+        }
+        catch (IOException ioe)
+        {
+            this.log.warning("RACECAR-BACKEND", "Could not open config file. Loading default settings. IOException: \"" + ioe.getMessage() + "\"");
+            return new BackendParameters(true, true);
+        }
 
-            boolean debugWithoutBackBone = Boolean.parseBoolean(prop.getProperty("debugWithoutBackBone"));
-            boolean debugWithoutMAAS = Boolean.parseBoolean(prop.getProperty("debugWithoutMAAS"));
-            String mqttBroker = "tcp://" + prop.getProperty("mqttBroker");
-            String mqqtUsername = prop.getProperty("mqqtUsername");
-            String mqttPassword = prop.getProperty("mqttPassword");
-            String restURLMAAS = prop.getProperty("restURLMAAS");
-            String restURLBackBone = prop.getProperty("restURLBackBone");
-            String restURLBackend = prop.getProperty("restURLBackend");
-            String currentMap = prop.getProperty("currentMap");
-            String mapsPath = prop.getProperty("mapsPath");
-            this.log.info("RACECAR_BACKEND", "Config loaded");
-        }
-        catch (IOException ex)
+        String mqttBroker = "tcp://" + prop.getProperty("mqttBroker");
+        String mqttUsername = prop.getProperty("mqqtUsername");
+        String mqttPassword = prop.getProperty("mqttPassword");
+        String restCarmanagerURL = prop.getProperty("restURLBackend");
+
+        this.log.info("RACECAR-BACKEND", "Config loaded");
+
+        Parameters parameters = new Parameters(mqttBroker, mqttUsername, mqttPassword, restCarmanagerURL);
+
+        try
         {
-            log = new Log(this.getClass(), Level.CONFIG);
-            Log.logWarning("RACECAR_BACKEND", "Could not read config file. Loading default settings. " + ex);
+            input.close();
         }
-        finally
+        catch (IOException ioe)
         {
-            if (input != null)
-            {
-                try
-                {
-                    input.close();
-                } catch (IOException e)
-                {
-                    Log.logWarning("RACECAR_BACKEND", "Could not read config file. Loading default settings. " + e);
-                }
-            }
+            this.log.warning("RACECAR-BACKEND", "Could not close config file. Loading default settings. IOException: \"" + ioe.getMessage() + "\"");
         }
-    }
+
+        return parameters;
     }
 
-    public RacecarBackendV2()
+    private BackendParameters readVehicleManagerParameters(Optional<String> propertiesFile)
     {
+        Properties prop = new Properties();
+        InputStream input = null;
+
+        String path = propertiesFile.orElse(DEFAULT_PROPERTIES_FILE);
+        String decodedPath = URLDecoder.decode(path, "UTF-8");
+
+        try
+        {
+            input = new FileInputStream(decodedPath);
+            prop.load(input);
+        }
+        catch (IOException ioe)
+        {
+            this.log.warning("RACECAR-BACKEND", "Could not open config file. Loading default settings. IOException: \"" + ioe.getMessage() + "\"");
+            return new BackendParameters(true, true);
+        }
+
+        boolean debugWithoutBackBone = Boolean.parseBoolean(prop.getProperty("debugWithoutBackBone"));
+        boolean debugWithoutMAAS = Boolean.parseBoolean(prop.getProperty("debugWithoutMAAS"));
+
+        String restURLMAAS = prop.getProperty("restURLMAAS");
+        String restURLBackBone = prop.getProperty("restURLBackBone");
+        String currentMap = prop.getProperty("currentMap");
+        String mapsPath = prop.getProperty("mapsPath");
+
+        this.log.info("RACECAR-BACKEND", "Config loaded");
+
+        BackendParameters backendParameters = new BackendParameters(this.readParameters(propertiesFile), debugWithoutMAAS, debugWithoutBackBone, restURLMAAS, restURLBackBone);
+
+        try
+        {
+            input.close();
+        }
+        catch (IOException ioe)
+        {
+            this.log.warning("RACECAR-BACKEND", "Could not close config file. Loading default settings. IOException: \"" + ioe.getMessage() + "\"");
+        }
+
+        return backendParameters;
+    }
+
+    public RacecarBackendV2(Optional<String> configPath)
+    {
+        Parameters parameters = this.readParameters(configPath);
+        BackendParameters backendParameters = this.readVehicleManagerParameters(configPath);
+
         this.log = new LogbackWrapper();
         this.mapManager = new MapManager();
-        this.vehicleManager = new VehicleManager(, this.mapManager);
-        this.jobDispatcher = new JobDispatcher(, this.mapManager, this.vehicleManager);
+        this.vehicleManager = new VehicleManager(backendParameters, this.mapManager);
+        this.jobDispatcher = new JobDispatcher(parameters, this.mapManager, this.vehicleManager);
     }
 }

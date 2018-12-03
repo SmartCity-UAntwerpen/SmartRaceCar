@@ -2,14 +2,14 @@ package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.Parameters;
 
-public class VehicleManagerParameters extends Parameters
+public class BackendParameters extends Parameters
 {
     private boolean disableMaaS;
     private boolean disableBackbone;
     private String MaaSRESTUrl;
     private String backboneRESTUrl;
 
-    public VehicleManagerParameters(boolean disableMaaS, boolean disableBackbone)
+    public BackendParameters(boolean disableMaaS, boolean disableBackbone)
     {
         super();
         this.disableMaaS = disableMaaS;
@@ -18,7 +18,7 @@ public class VehicleManagerParameters extends Parameters
         this.backboneRESTUrl = "http://smartcity.ddns.net:8090";
     }
 
-    public VehicleManagerParameters(boolean disableMaaS, boolean disableBackbone, String MaasRESTUrl, String backboneRESTUrl)
+    public BackendParameters(boolean disableMaaS, boolean disableBackbone, String MaasRESTUrl, String backboneRESTUrl)
     {
         super();
         this.disableMaaS = disableMaaS;
@@ -27,18 +27,27 @@ public class VehicleManagerParameters extends Parameters
         this.backboneRESTUrl = backboneRESTUrl;
     }
 
-    public VehicleManagerParameters(String mqttBroker, String mqttUsername, String mqttPassword, String mqttTopic, String restUrl, boolean disableMaaS, boolean disableBackbone)
+    public BackendParameters(String mqttBroker, String mqttUsername, String mqttPassword, String mqttTopic, String restUrl, boolean disableMaaS, boolean disableBackbone)
     {
-        super(mqttBroker, mqttUsername, mqttPassword, mqttTopic, restUrl);
+        super(mqttBroker, mqttUsername, mqttPassword, restUrl, mqttTopic);
         this.disableMaaS = disableMaaS;
         this.disableBackbone = disableBackbone;
         this.MaaSRESTUrl = "http://smartcity.ddns.net:8090";
         this.backboneRESTUrl = "http://smartcity.ddns.net:10000";
     }
 
-    public VehicleManagerParameters(String mqttBroker, String mqttUsername, String mqttPassword, String mqttTopic, String restUrl, boolean disableMaaS, boolean disableBackbone, String MaasRESTUrl, String backboneRESTUrl)
+    public BackendParameters(Parameters parameters, boolean disableMaaS, boolean disableBackbone, String MaasRESTUrl, String backboneRESTUrl)
     {
-        super(mqttBroker, mqttUsername, mqttPassword, mqttTopic, restUrl);
+        super(parameters);
+        this.disableMaaS = disableMaaS;
+        this.disableBackbone = disableBackbone;
+        this.MaaSRESTUrl = MaasRESTUrl;
+        this.backboneRESTUrl = backboneRESTUrl;
+    }
+
+    public BackendParameters(String mqttBroker, String mqttUsername, String mqttPassword, String mqttTopic, String restUrl, boolean disableMaaS, boolean disableBackbone, String MaasRESTUrl, String backboneRESTUrl)
+    {
+        super(mqttBroker, mqttUsername, mqttPassword, restUrl, mqttTopic);
         this.disableMaaS = disableMaaS;
         this.disableBackbone = disableBackbone;
         this.MaaSRESTUrl = MaasRESTUrl;

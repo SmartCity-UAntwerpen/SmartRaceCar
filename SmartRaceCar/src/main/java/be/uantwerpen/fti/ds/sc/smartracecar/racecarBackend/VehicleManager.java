@@ -28,7 +28,7 @@ public class VehicleManager implements MQTTListener
 
     private static final Type LOCATION_TYPE = (new TypeToken<Location>(){}).getType();
 
-    private VehicleManagerParameters parameters;
+    private BackendParameters parameters;
     private LogbackWrapper log;
     private MQTTUtils mqttUtils;
     private RESTUtils MaaSRestUtils;
@@ -94,7 +94,7 @@ public class VehicleManager implements MQTTListener
         }
     }
 
-    public VehicleManager(VehicleManagerParameters parameters, MapManager mapManager)
+    public VehicleManager(BackendParameters parameters, MapManager mapManager)
     {
         this.parameters = parameters;
         this.log = new LogbackWrapper();
@@ -102,7 +102,7 @@ public class VehicleManager implements MQTTListener
         this.mqttUtils.subscribeToTopic(this.parameters.getMqttTopic());
         this.MaaSRestUtils = new RESTUtils(parameters.getRESTCarmanagerURL());
         this.backboneRestUtils = new RESTUtils(parameters.getBackboneRESTURL());
-        this.navigationManager = new NavigationManager(this, parameters);
+        this.navigationManager = new NavigationManager(this, this.mapManager, parameters);
         this.mapManager = mapManager;
         this.heartbeatChecker = new HeartbeatChecker("dummy");
         this.vehicles = new HashMap<>();

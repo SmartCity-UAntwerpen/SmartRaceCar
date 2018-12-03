@@ -15,12 +15,21 @@ public class Parameters
 				"tcp://smartcity.ddns.net:1883",
 				"root",
 				"smartcity",
-				"racecar/#",
-				"http://smartcity.ddns.net:8081/carmanager"
+				"http://smartcity.ddns.net:8081/carmanager", "racecar/#"
 		);
 	}
 
-	public Parameters(String mqttBroker, String mqttUserName, String mqttPassword, String mqttTopic, String restCarmanagerURL)
+	public Parameters(String mqttBroker, String mqttUserName, String mqttPassword, String restCarmanagerURL)
+	{
+		this.mqttBroker = mqttBroker;
+		this.mqttUserName = mqttUserName;
+		this.mqttPassword = mqttPassword;
+		this.mqttTopic = "racecar/#";
+
+		this.restCarmanagerURL = restCarmanagerURL;
+	}
+
+	public Parameters(String mqttBroker, String mqttUserName, String mqttPassword, String restCarmanagerURL, String mqttTopic)
 	{
 		this.mqttBroker = mqttBroker;
 		this.mqttUserName = mqttUserName;
@@ -28,6 +37,15 @@ public class Parameters
 		this.mqttTopic = mqttTopic;
 
 		this.restCarmanagerURL = restCarmanagerURL;
+	}
+
+	public Parameters(Parameters parameters)
+	{
+		this.mqttBroker = parameters.getMqttBroker();
+		this.mqttUserName = parameters.getMqttUserName();
+		this.mqttPassword = parameters.getMqttPassword();
+		this.mqttTopic = parameters.mqttTopic;
+		this.restCarmanagerURL = parameters.getRESTCarmanagerURL();
 	}
 
 	public String getMqttBroker()
