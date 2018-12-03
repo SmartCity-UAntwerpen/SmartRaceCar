@@ -3,6 +3,14 @@ package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.google.gson.reflect.TypeToken;
 
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,12 +57,78 @@ public class NavigationManager implements MQTTListener
         this.vehicleManager = vehicleManager;
     }
 
+    /**
+     * REST GET server service to get a calculation cost of all available vehicles. It requests from each vehicle a calculation
+     * of a possible route and returns a JSON containing all answers.
+     *
+     * @param startId Starting waypoint ID.
+     * @param endId   Ending waypoint ID.
+     * @return REST response of the type JSON containg all calculated costs of each vehicle.
+     */
+    @GET
+    @Path("calcWeight/{startId}/{endId}")
+    @Produces("application/json")
+    public Response calculateCostsRequest(@PathParam("startId") long startId, @PathParam("endId") long endId, @Context HttpServletResponse response) throws IOException, InterruptedException
+    {
+        if (!wayPoints.containsKey(startId))
+        {
+            String errorString = "Request cost with non-existent start waypoint " + Long.toString(startId) + ".";
+            this.log.error("JOB-DISPATCHER", errorString);
+
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        if (!wayPoints.containsKey(endId))
+        {
+            String errorString = "Request cost with non-existent end waypoint " + Long.toString(endId) + ".";
+            this.log.error("JOB-DISPATCHER", errorString);
+
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        if (vehicles.isEmpty())
+        {
+            String errorString = "No vehicles exist" + Long.toString(endId) + ".";
+            this.log.error("JOB-DISPATCHER", errorString);
+
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        int totalVehicles = 0;
+        int timer = 0;
+
+        for (Vehicle vehicle : vehicles.values())
+        {
+            if (vehicle.isAvailable())
+            {
+                totalVehicles++;
+                this.mqttUtils.publishMessage("racecar/" + Long.toString(vehicle.getID()) + "/costrequest", Long.toString(startId) + " " + Long.toString(endId));
+            }
+        }
+
+        while (costs.size() != totalVehicles && timer != 100)
+        { // Wait for each vehicle to complete the request or timeout after 100 attempts.
+            Log.logInfo("RACECAR_BACKEND", "waiting for vehicles to complete request.");
+            Thread.sleep(200);
+            timer++;
+        }
+
+        ArrayList<Cost> costCopy = (ArrayList<Cost>) costs.clone();
+        costs.clear();
+
+        this.log.info("JOB-DISPATCHER", "Cost calculation request completed.");
+
+        return Response.status(Response.Status.OK).entity(JSONUtils.arrayToJSONString(costCopy)).type("application/json").build();
+    }
+
     /*
      *
      *      MQTT Parsing
      *
      */
-
     @Override
     public void parseMQTT(String topic, String message)
     {
