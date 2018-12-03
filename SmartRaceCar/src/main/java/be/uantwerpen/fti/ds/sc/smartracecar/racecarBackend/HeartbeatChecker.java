@@ -1,9 +1,6 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
-import be.uantwerpen.fti.ds.sc.smartracecar.common.JSONUtils;
-import be.uantwerpen.fti.ds.sc.smartracecar.common.Log;
-import be.uantwerpen.fti.ds.sc.smartracecar.common.RESTUtils;
-import be.uantwerpen.fti.ds.sc.smartracecar.common.WayPoint;
+import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.google.gson.reflect.TypeToken;
 
 import javax.servlet.http.HttpServletResponse;
@@ -17,6 +14,8 @@ import java.util.HashMap;
  */
 class HeartbeatChecker extends Thread
 {
+    private LogbackWrapper log;
+
     private RESTUtils restUtils;
     private String restURL = "http://smartcity.ddns.net:8081/carmanager"; // REST Service URL to RacecarBackend
 
@@ -27,7 +26,8 @@ class HeartbeatChecker extends Thread
      */
     public HeartbeatChecker(String url)
     {
-        restUtils = new RESTUtils(restURL);
+    	this.log = new LogbackWrapper();
+        this.restUtils = new RESTUtils(restURL);
     }
 
     /**
@@ -35,13 +35,13 @@ class HeartbeatChecker extends Thread
      */
     public void run()
     {
-        Log.logConfig("RACECAR_BACKEND", "Heartbeatchecker was started");
+        this.log.info("HEARTBEAT-CHECKER", "Heartbeatchecker was started");
         while (true)
         {
             try
             {
                 Thread.sleep(30000); //Sleep for 30s
-                Log.logConfig("RACECAR_BACKEND", "Heartbeats are being checked...");
+                this.log.info("HEARTBEAT-CHECKER", "Heartbeats are being checked...");
                 Type typeOfHashMap = new TypeToken<HashMap<Long, Vehicle>>()
                 {
                 }.getType();
@@ -52,10 +52,10 @@ class HeartbeatChecker extends Thread
                     if ((currentTime.getTime() - vehicles.get(ID).getHeartbeat().getTime()) > 90000) //longer than 90 seconds
                     {
                         restUtils.getCall("delete/" + ID);
-                        Log.logWarning("RACECAR_BACKEND", "Vehicle with ID: " + ID + " was removed since it hasn't responded for over 90s");
+                        this.log.warning("HEARTBEAT-CHECKER", "Vehicle with ID: " + ID + " was removed since it hasn't responded for over 90s");
                     }
                 }
-                Log.logConfig("RACECAR_BACKEND", "All heartbeats were checked.");
+                this.log.info("HEARTBEAT-CHECKER", "All heartbeats were checked.");
 
             } catch (InterruptedException e)
             {

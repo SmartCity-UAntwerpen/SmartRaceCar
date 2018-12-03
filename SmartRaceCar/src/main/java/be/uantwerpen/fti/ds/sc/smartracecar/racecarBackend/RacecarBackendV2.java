@@ -156,13 +156,15 @@ public class RacecarBackendV2
 
     public RacecarBackendV2(Optional<String> configPath)
     {
+		this.log = new LogbackWrapper();
+
         Parameters parameters = this.readParameters(configPath);
         BackendParameters backendParameters = this.readBackendParameters(configPath);
         MapManagerParameters mapManagerParameters = this.readMapManagerParameters(configPath);
 
-        this.log = new LogbackWrapper();
-        this.mapManager = new MapManager();
+        this.mapManager = new MapManager(mapManagerParameters, null);
         this.vehicleManager = new VehicleManager(backendParameters, this.mapManager);
+        this.mapManager.setVehicleManager(vehicleManager);
         this.jobDispatcher = new JobDispatcher(parameters, this.mapManager, this.vehicleManager);
     }
 

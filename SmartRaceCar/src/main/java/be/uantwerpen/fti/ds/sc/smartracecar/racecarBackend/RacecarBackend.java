@@ -52,6 +52,9 @@ public class RacecarBackend implements MQTTListener
     private static String mapsPath = ".\\release\\maps"; //"C:\\maps"; // Path to the location of the maps.xml file where maps are stored.
     private static ArrayList<Cost> costs = new ArrayList<>(); // Contains all currently received calculated costs when a cost request was made.
 
+
+	private MapManager mapManager;
+
     /**
      * Module representing the management or dispatching module of the F1 service. Empty constructor used by REST.
      */
@@ -124,7 +127,7 @@ public class RacecarBackend implements MQTTListener
         {
             String path = RacecarBackend.class.getProtectionDomain().getCodeSource().getLocation().getPath();
             String decodedPath = URLDecoder.decode(path, "UTF-8");
-            decodedPath = decodedPath.replace("RacecarBackend.jar", "");
+            decodedPath = decodedPath.replace("RacecarBackendTest.jar", "");
             input = new FileInputStream(decodedPath + "/racecarbackend.properties");
             prop.load(input);
             String debugLevel = prop.getProperty("debugLevel");
@@ -178,6 +181,7 @@ public class RacecarBackend implements MQTTListener
     /**
      * Request all possible waypoints from the BackBone through a REST Get request.
      */
+    // TODO to mapmanager
     private void loadWayPoints()
     {
         wayPoints.clear();
@@ -335,6 +339,19 @@ public class RacecarBackend implements MQTTListener
             }
         }
     }
+
+	/**
+	 * REST GET server service to get the currently used map.
+	 *
+	 * @return REST response of the type Text Plain containing the mapname.
+	 */
+	@GET
+	@Path("getmapname")
+	@Produces("text/plain")
+	public String getMapName()
+	{
+		return currentMap;
+	}
 
     /**
      * Parses MQTT message received with specific route status update.
@@ -502,18 +519,7 @@ public class RacecarBackend implements MQTTListener
         return null;
     }
 
-    /**
-     * REST GET server service to get the currently used map.
-     *
-     * @return REST response of the type Text Plain containing the mapname.
-     */
-    @GET
-    @Path("getmapname")
-    @Produces("text/plain")
-    public String getMapName()
-    {
-        return currentMap;
-    }
+
 
     /**
      * REST GET server service to delete a vehicle. It in returns does a REST GET request as well to the BackBone service
@@ -585,7 +591,6 @@ public class RacecarBackend implements MQTTListener
                 .ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
                 .header("content-disposition", "attachment; filename = " + mapname + ".pgm")
                 .build();
-
     }
 
     /**
@@ -594,6 +599,7 @@ public class RacecarBackend implements MQTTListener
      * @param mapname the name of the map
      * @return REST response of the type Octet-stream containing the file.
      */
+    // TODO to mapmanager
     @GET
     @Path("getmapyaml/{mapname}")
     @Produces("application/octet-stream")
