@@ -1,7 +1,7 @@
 <configuration>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{HH:mm:ss} [%thread] %-10level %logger{192} - %msg%n</pattern>
+            <pattern>%d{HH:mm:ss} [%thread] %-10level - %msg%n</pattern>
         </encoder>
     </appender>
 
@@ -11,7 +11,7 @@
         <!-- set immediateFlush to false for much higher logging throughput -->
         <immediateFlush>true</immediateFlush>
         <encoder>
-            <pattern>%d{HH:mm:ss} [%thread] %-10level %logger{192} - %msg%n</pattern>
+            <pattern>%d{HH:mm:ss} [%thread] %-10level- %msg%n</pattern>
         </encoder>
     </appender>
 
