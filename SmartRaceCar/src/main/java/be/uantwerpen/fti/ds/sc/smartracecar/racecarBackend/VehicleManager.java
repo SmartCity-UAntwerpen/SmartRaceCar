@@ -12,9 +12,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -147,6 +145,20 @@ public class VehicleManager implements MQTTListener
         {
             throw new IndexOutOfBoundsException("Tried to access vehicle that doesn't exist!");
         }
+    }
+
+    /**
+     * Returns an iterator over a keyset of the vehicle ID's.
+     * @return
+     */
+    public Iterator<Long> getIdIterator()
+    {
+        return this.vehicles.keySet().iterator();
+    }
+
+    public int getNumVehicles()
+    {
+        return this.vehicles.size();
     }
 
     /*
