@@ -51,7 +51,7 @@
                             </filters>
                         </configuration>
                     </execution>
-                <!-- RacecarBackendv2 -->
+                    <!-- RacecarBackendv2 -->
                     <execution>
                         <id>RacecarBackendV2</id>
                         <phase>package</phase>

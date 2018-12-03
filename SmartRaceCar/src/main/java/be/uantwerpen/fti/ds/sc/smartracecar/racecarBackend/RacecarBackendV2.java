@@ -146,6 +146,30 @@ public class RacecarBackendV2
 		return mapManagerParameters;
 	}
 
+	/**
+	 * Start the build-in TomCat Server.
+	 */
+	private void startTomCatServer()
+	{
+		Thread tomcat = new Thread()
+		{
+			public void run()
+			{
+				try
+				{
+					new TomCatLauncher().start();
+				} catch (InterruptedException v)
+				{
+					System.out.println(v);
+				} catch (Exception e)
+				{
+					e.printStackTrace();
+				}
+			}
+		};
+		tomcat.start();
+	}
+
 	public RacecarBackendV2(Optional<String> configPath)
 	{
 		this.log = new LogbackWrapper();
@@ -153,6 +177,8 @@ public class RacecarBackendV2
 		Parameters parameters = this.readParameters(configPath);
 		BackendParameters backendParameters = this.readBackendParameters(configPath);
 		MapManagerParameters mapManagerParameters = this.readMapManagerParameters(configPath);
+
+		this.startTomCatServer();
 
 		this.mapManager = new MapManager(mapManagerParameters, null);
 		this.vehicleManager = new VehicleManager(backendParameters, this.mapManager);
