@@ -79,4 +79,10 @@ public class Cost {
         return idVehicle.equals(cost.idVehicle);
     }
 
+    @Override
+    public Cost clone()
+    {
+        return new Cost(this.status, this.weightToStart, this.weight, this.idVehicle);
+    }
+
 }

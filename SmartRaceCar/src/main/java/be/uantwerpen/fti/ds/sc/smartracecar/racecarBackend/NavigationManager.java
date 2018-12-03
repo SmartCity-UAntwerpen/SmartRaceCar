@@ -35,6 +35,7 @@ public class NavigationManager implements MQTTListener
     private MQTTUtils mqttUtils;
     private List<Cost> costList;
     private VehicleManager vehicleManager;
+    private MapManager mapManager;
 
     private boolean isCostAnswer(String topic)
     {
@@ -48,7 +49,7 @@ public class NavigationManager implements MQTTListener
         return matcher.matches();
     }
 
-    public NavigationManager(VehicleManager vehicleManager, Parameters parameters)
+    public NavigationManager(VehicleManager vehicleManager, MapManager mapManager, Parameters parameters)
     {
         this.parameters = parameters;
         this.log = new LogbackWrapper();
@@ -56,6 +57,7 @@ public class NavigationManager implements MQTTListener
         this.mqttUtils.subscribeToTopic(this.parameters.getMqttTopic());
         this.costList = new ArrayList<>();
         this.vehicleManager = vehicleManager;
+        this.mapManager = mapManager;
     }
 
     /**
@@ -71,7 +73,7 @@ public class NavigationManager implements MQTTListener
     @Produces("application/json")
     public Response calculateCostsRequest(@PathParam("startId") long startId, @PathParam("endId") long endId, @Context HttpServletResponse response) throws IOException, InterruptedException
     {
-        if (!wayPoints.containsKey(startId))
+        if (!this.mapManager.exists(startId))
         {
             String errorString = "Request cost with non-existent start waypoint " + Long.toString(startId) + ".";
             this.log.error("JOB-DISPATCHER", errorString);
@@ -80,7 +82,7 @@ public class NavigationManager implements MQTTListener
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
-        if (!wayPoints.containsKey(endId))
+        if (!this.mapManager.exists(endId))
         {
             String errorString = "Request cost with non-existent end waypoint " + Long.toString(endId) + ".";
             this.log.error("JOB-DISPATCHER", errorString);
@@ -89,7 +91,7 @@ public class NavigationManager implements MQTTListener
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
-        if (vehicles.isEmpty())
+        if (this.vehicleManager.getNumVehicles() == 0)
         {
             String errorString = "No vehicles exist" + Long.toString(endId) + ".";
             this.log.error("JOB-DISPATCHER", errorString);
@@ -124,7 +126,13 @@ public class NavigationManager implements MQTTListener
             timer++;
         }
 
-        ArrayList<Cost> costCopy = (ArrayList<Cost>) this.costList.clone();
+        List<Cost> costCopy = new ArrayList<>();
+
+        for (Cost cost: this.costList)
+        {
+            costCopy.add(cost.clone());
+        }
+
         this.costList.clear();
 
         this.log.info("JOB-DISPATCHER", "Cost calculation request completed.");
