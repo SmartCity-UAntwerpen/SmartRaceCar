@@ -5,6 +5,13 @@ public class MapManagerParameters extends BackendParameters
     private String currentMap;
     private String mapPath;
 
+    public MapManagerParameters()
+    {
+        super();
+        this.currentMap = "gangV";
+        this.mapPath = "release/maps";
+    }
+
     public MapManagerParameters(BackendParameters backendParameters, String currentMap, String mapPath)
     {
         super(backendParameters);
