@@ -9,9 +9,15 @@ import java.util.List;
  */
 public class FileUtils
 {
+	private LogbackWrapper log;
 
 	private String fileNameToSearch; // Name of the file that is being searched.
 	private List<String> result = new ArrayList<>(); // List of all found files matching the searched files. Full path is stored.
+
+	public FileUtils()
+	{
+		this.log = new LogbackWrapper();
+	}
 
 	/**
 	 * /* Get the name of the file being searched.
@@ -60,7 +66,7 @@ public class FileUtils
 			search(directory);
 		} else
 		{
-			Log.logSevere("FILESEARCH", "Not a directory. Cannot search.");
+			this.log.error("FILESEARCH", "Not a directory. Cannot search.");
 		}
 	}
 
@@ -95,7 +101,7 @@ public class FileUtils
 
 			} else
 			{
-				Log.logSevere("FILESEARCH", "No permission to search for files.");
+				this.log.error("FILESEARCH", "No permission to search for files.");
 			}
 		}
 

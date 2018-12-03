@@ -176,7 +176,6 @@ public class RacecarBackend implements MQTTListener
 	/**
 	 * Request all possible waypoints from the BackBone through a REST Get request.
 	 */
-	// TODO to mapmanager
 	private void loadWayPoints()
 	{
 		wayPoints.clear();

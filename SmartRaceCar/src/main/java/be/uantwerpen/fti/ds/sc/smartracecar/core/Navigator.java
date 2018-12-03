@@ -109,7 +109,7 @@ public class Navigator
 					this.log.info("NAVIGATOR", "Added waypoint with ID " + wayPointID + " to route.");
 				} else
 				{
-					Log.logWarning("NAVIGATOR", "Waypoint with ID '" + wayPointID + "' not found.");
+					this.log.warning("NAVIGATOR", "Waypoint with ID '" + wayPointID + "' not found.");
 					this.currentRoute.clear();
 					error = true;
 				}

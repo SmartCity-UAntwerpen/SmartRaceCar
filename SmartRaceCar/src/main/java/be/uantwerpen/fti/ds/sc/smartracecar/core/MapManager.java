@@ -99,7 +99,7 @@ public class MapManager
 					fileUtils.searchDirectory(new File("./../../.."), "maps.xml");
 					if (fileUtils.getResult().size() == 0)
 					{
-						this.log.error("CORE", "maps.xml not found. Make sure it exists in some folder (maximum 3 levels deep).");
+						this.log.error("MAP-MAN", "maps.xml not found. Make sure it exists in some folder (maximum 3 levels deep).");
 						System.exit(0);
 					}
 				}
@@ -128,7 +128,7 @@ public class MapManager
 				this.core.getTcpUtils().sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", this.loadedMaps.get(mapName)));
 		} else
 		{
-			Log.logConfig("MAP-MANAGER", "Current used map '" + mapName + "' not found. Downloading...");
+			this.log.info("MAP-MANAGER", "Current used map '" + mapName + "' not found. Downloading...");
 			this.core.getRestUtils().getFile("getmappgm/" + mapName, findMapsFolder(), mapName, "pgm");
 			this.core.getRestUtils().getFile("getmapyaml/" + mapName, findMapsFolder(), mapName, "yaml");
 			Map map = new Map(mapName);

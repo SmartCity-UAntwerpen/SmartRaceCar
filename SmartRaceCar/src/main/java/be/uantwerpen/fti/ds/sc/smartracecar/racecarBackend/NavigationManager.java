@@ -78,7 +78,7 @@ public class NavigationManager implements MQTTListener
 		if (!this.mapManager.exists(startId))
 		{
 			String errorString = "Request cost with non-existent start waypoint " + Long.toString(startId) + ".";
-			this.log.error("JOB-DISPATCHER", errorString);
+			this.log.error("NAVIGATION-MAN", errorString);
 
 			response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
 			return Response.status(Response.Status.NOT_FOUND).build();
@@ -87,7 +87,7 @@ public class NavigationManager implements MQTTListener
 		if (!this.mapManager.exists(endId))
 		{
 			String errorString = "Request cost with non-existent end waypoint " + Long.toString(endId) + ".";
-			this.log.error("JOB-DISPATCHER", errorString);
+			this.log.error("NAVIGATION-MAN", errorString);
 
 			response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
 			return Response.status(Response.Status.NOT_FOUND).build();
@@ -96,7 +96,7 @@ public class NavigationManager implements MQTTListener
 		if (this.vehicleManager.getNumVehicles() == 0)
 		{
 			String errorString = "No vehicles exist" + Long.toString(endId) + ".";
-			this.log.error("JOB-DISPATCHER", errorString);
+			this.log.error("NAVIGATION-MAN", errorString);
 
 			response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
 			return Response.status(Response.Status.NOT_FOUND).build();
@@ -123,7 +123,7 @@ public class NavigationManager implements MQTTListener
 		while ((this.costList.size() < totalVehicles) && (timer != 100))
 		{
 			// Wait for each vehicle to complete the request or timeout after 100 attempts.
-			Log.logInfo("RACECAR_BACKEND", "waiting for vehicles to complete request.");
+			this.log.info("NAVIGATION-MAN", "waiting for vehicles to complete request.");
 			Thread.sleep(200);
 			timer++;
 		}
@@ -137,7 +137,7 @@ public class NavigationManager implements MQTTListener
 
 		this.costList.clear();
 
-		this.log.info("JOB-DISPATCHER", "Cost calculation request completed.");
+		this.log.info("NAVIGATION-MAN", "Cost calculation request completed.");
 
 		return Response.status(Response.Status.OK).entity(JSONUtils.arrayToJSONString(costCopy)).type("application/json").build();
 	}

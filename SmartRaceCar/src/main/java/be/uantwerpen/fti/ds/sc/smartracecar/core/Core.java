@@ -82,7 +82,7 @@ class Core implements TCPListener, MQTTListener
                     long endTimeMillis = System.currentTimeMillis() + 10000; //10 second timeout
                     while (thread.isAlive()) {
                         if (System.currentTimeMillis() > endTimeMillis) {
-                            Log.logWarning("CORE", "Timeout was exceeded on exiting the system");
+                            this.log.warning("CORE", "Timeout was exceeded on exiting the system");
                             System.exit(1);
                         }
                         try {
@@ -251,7 +251,7 @@ class Core implements TCPListener, MQTTListener
 	 */
 	private void connectReceive()
 	{
-		Log.logInfo("CORE", "Connected to car.");
+		this.log.info("CORE", "Connected to car.");
 	}
 
 	/**
@@ -286,7 +286,7 @@ class Core implements TCPListener, MQTTListener
 	 */
 	private void sendStartPoint()
 	{
-		Log.logInfo("CORE", "Starting point set as waypoint with ID " + startPoint + ".");
+		this.log.info("CORE", "Starting point set as waypoint with ID " + startPoint + ".");
 		if (!this.debugWithoutRosKernel)
 			this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("startPoint", this.wayPoints.get(this.startPoint)));
 	}
@@ -318,7 +318,7 @@ class Core implements TCPListener, MQTTListener
 				this.weightManager.costRequest(wayPointValues);
 			} catch (NumberFormatException e)
 			{
-				Log.logWarning("CORE", "Parsing MQTT gives bad result: " + e);
+				this.log.warning("CORE", "Parsing MQTT gives bad result: " + e);
 			}
 		} else if (topic.matches("racecar/[0-9]+/changeMap"))
 		{
@@ -362,12 +362,12 @@ class Core implements TCPListener, MQTTListener
 				case "startpoint":
 					this.startPoint = (long) JSONUtils.getObjectWithKeyWord(message, Long.class);
 					this.mqttUtils.publishMessage("racecar/" + ID + "/locationupdate", Long.toString((Long) JSONUtils.getObjectWithKeyWord(message, Long.class)));
-					Log.logInfo("CORE", "Setting new starting point with ID " + JSONUtils.getObjectWithKeyWord(message, Long.class));
+					this.log.info("CORE", "Setting new starting point with ID " + JSONUtils.getObjectWithKeyWord(message, Long.class));
 					break;
 				case "restart":
 					this.sendAvailability(true);
 					this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentPosition", this.wayPoints.get(Core.startPoint)));
-					Log.logInfo("CORE", "Vehicle restarted.");
+					this.log.info("CORE", "Vehicle restarted.");
 					break;
 				case "cost":
 					this.weightManager.costComplete((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
@@ -376,11 +376,11 @@ class Core implements TCPListener, MQTTListener
 					this.timeComplete((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
 					break;
 				case "location":
-					//Log.logInfo("CORE", "Car is at coordinates: " + (String) JSONUtils.getObjectWithKeyWord(message, String.class));
+					//this.log.info("CORE", "Car is at coordinates: " + (String) JSONUtils.getObjectWithKeyWord(message, String.class));
 					// the current location is published but is not useful for the smartcityproject, the percentage updates are used
 					break;
 				default:
-					Log.logWarning("CORE", "No matching keyword when parsing JSON from Sockets. Data: " + message);
+					this.log.warning("CORE", "No matching keyword when parsing JSON from Sockets. Data: " + message);
 					break;
 			}
 		}
@@ -395,7 +395,7 @@ class Core implements TCPListener, MQTTListener
 	private void sendAvailability(boolean state)
 	{
 		this.mqttUtils.publishMessage("racecar/" + ID + "/available", Boolean.toString(state));
-		Log.logInfo("CORE", "Vehicle's availability status set to " + state + '.');
+		this.log.info("CORE", "Vehicle's availability status set to " + state + '.');
 	}
 
 	/**
@@ -403,7 +403,7 @@ class Core implements TCPListener, MQTTListener
 	 */
 	private void killCar()
 	{
-		Log.logInfo("CORE", "Vehicle kill request. Closing connections and shutting down...");
+		this.log.info("CORE", "Vehicle kill request. Closing connections and shutting down...");
 		this.restUtils.getCall("delete/" + this.ID);
 		if (!this.debugWithoutRosKernel) this.tcpUtils.closeTCP();
 		{
