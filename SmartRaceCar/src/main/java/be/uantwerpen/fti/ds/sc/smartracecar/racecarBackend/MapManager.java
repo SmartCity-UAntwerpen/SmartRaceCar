@@ -3,7 +3,7 @@ package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.google.gson.reflect.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
+//import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import javax.servlet.http.HttpServletResponse;
+//import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
@@ -98,7 +98,7 @@ public class MapManager implements MQTTListener
 	 * @return REST response of the type Octet-stream containing the file.
 	 */
 	@RequestMapping(value = "/carmanager/getMapPGM/{mapName}", method = RequestMethod.GET, produces = MediaType.APPLICATION_OCTET_STREAM)
-	public Response getMapPGM(@PathVariable("mapname") final String mapname, HttpServletResponse response)
+	public Response getMapPGM(@PathVariable("mapname") final String mapname)
 	{
 		StreamingOutput fileStream = output ->
 		{
@@ -139,7 +139,7 @@ public class MapManager implements MQTTListener
 	 * @return REST response of the type Octet-stream containing the file.
 	 */
 	@RequestMapping(value = "/carmanager/getMapYAML/{mapName}", method = RequestMethod.GET, produces = MediaType.APPLICATION_OCTET_STREAM)
-	public @ResponseBody ResponseEntity<StreamingOutput> getMapYAML(@PathVariable("mapName") final String mapname, HttpServletResponse response)
+	public @ResponseBody ResponseEntity<StreamingOutput> getMapYAML(@PathVariable("mapName") final String mapname/*, HttpServletResponse response*/)
 	{
 		StreamingOutput fileStream = output ->
 		{

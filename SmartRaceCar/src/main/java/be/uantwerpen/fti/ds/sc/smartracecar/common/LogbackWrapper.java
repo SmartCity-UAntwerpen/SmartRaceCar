@@ -5,6 +5,11 @@ import org.slf4j.LoggerFactory;
 
 public class LogbackWrapper
 {
+	private String format(String category, String message)
+	{
+		return "[" + category + "]\t" + message;
+	}
+
 	private Logger logger;
 
 	@Deprecated
@@ -16,6 +21,11 @@ public class LogbackWrapper
 	public LogbackWrapper(Object obj)
 	{
 		this.logger = LoggerFactory.getLogger(obj.getClass());
+	}
+
+	public void debug(String category, String message)
+	{
+		this.logger.debug(this.format(category, message));
 	}
 
 	public void info(String category, String message)
@@ -31,10 +41,5 @@ public class LogbackWrapper
 	public void error(String category, String message)
 	{
 		this.logger.error(this.format(category, message));
-	}
-
-	private String format(String category, String message)
-	{
-		return "[" + category + "]\t" + message;
 	}
 }

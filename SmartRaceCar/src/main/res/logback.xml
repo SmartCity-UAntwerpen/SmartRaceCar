@@ -1,5 +1,4 @@
 <configuration>
-    <!--<include resource="org/springframework/boot/logging/logback/base.xml"/>-->
     <logger name="be.uantwerpen.fti.ds.sc.smartracecar.common.LogbackWrapper" level="DEBUG"/>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
