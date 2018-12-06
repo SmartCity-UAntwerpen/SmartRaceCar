@@ -7,6 +7,7 @@ import java.util.logging.Level;
 /**
  * Model of a Log using Java Logger.
  */
+@Deprecated
 public class Log
 {
 	private static java.util.logging.Logger logging = null; // THe Java Logger being used.
