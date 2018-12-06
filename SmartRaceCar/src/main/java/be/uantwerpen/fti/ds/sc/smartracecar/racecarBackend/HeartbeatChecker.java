@@ -15,9 +15,7 @@ import java.util.HashMap;
 class HeartbeatChecker extends Thread
 {
 	private LogbackWrapper log;
-
 	private RESTUtils restUtils;
-	private String restURL = "http://smartcity.ddns.net:8081/carmanager"; // REST Service URL to RacecarBackend
 
 	/**
 	 * constructor for the HeartbeatChecker class
@@ -27,7 +25,10 @@ class HeartbeatChecker extends Thread
 	public HeartbeatChecker(String url)
 	{
 		this.log = new LogbackWrapper();
-		this.restUtils = new RESTUtils(restURL);
+
+		this.log.info("HEARTBEAT-CHECKER", "Creating REST Utils for \"" + url + "\"...");
+
+		this.restUtils = new RESTUtils(url);
 	}
 
 	/**

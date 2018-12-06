@@ -172,16 +172,33 @@ public class RacecarBackend
 	{
 		this.log = new LogbackWrapper();
 
+		this.log.info("RACECAR-BACKEND", "Starting Tomcat Server...");
+
 		this.startTomCatServer();
+
+		this.log.info("RACECAR-BACKEND", "Reading configuration files...");
 
 		Parameters parameters = this.readParameters(configPath);
 		BackendParameters backendParameters = this.readBackendParameters(configPath);
 		MapManagerParameters mapManagerParameters = this.readMapManagerParameters(configPath);
 
+		this.log.info("RACECAR-BACKEND", "Starting MapManager...");
+
 		this.mapManager = new MapManager(mapManagerParameters, null);
+
+		this.log.info("RACECAR-BACKEND", "Starting VehicleManager...");
+
 		this.vehicleManager = new VehicleManager(backendParameters, this.mapManager);
-		this.mapManager.setVehicleManager(vehicleManager);
+
+		this.log.info("RACECAR-BACKEND", "Setting map managers' VehicleManager...");
+
+		this.mapManager.setVehicleManager(this.vehicleManager);
+
+		this.log.info("RACECAR-BACKEND", "Starting JobDispatcher...");
+
 		this.jobDispatcher = new JobDispatcher(parameters, this.mapManager, this.vehicleManager);
+
+		this.log.info("RACECAR-BACKEND", "Done constructing RacecarBackend...");
 	}
 
 	public static void main(String[] args)

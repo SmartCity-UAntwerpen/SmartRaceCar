@@ -42,15 +42,27 @@ public class MapManager implements MQTTListener
 		this.log = new LogbackWrapper();
 		this.params = params;
 
+		this.log.info("MAP-MAN", "Getting settings from parameter object.");
+
 		this.currentMap = params.getCurrentMap();
 		this.mapPath = params.getMapPath();
 
+		this.log.info("MAP-MAN", "Starting MQTT Utils.");
+
 		this.mqttUtils = new MQTTUtils(params.getMqttBroker(), params.getMqttUserName(), params.getMqttPassword(), this);
+
+		this.log.info("MAP-MAN", "Setting up Backbone REST Utils.");
+
 		this.backboneRESTUtils = new RESTUtils(params.getBackboneRESTURL());
+
+		this.log.info("MAP-MAN", "Setting VehicleManager.");
 
 		this.vehicleManager = vehicleManager;
 
 		this.wayPoints = new HashMap<>();
+
+		this.log.info("MAP-MAN", "Loading Waypoints.");
+
 		this.loadWayPoints();
 	}
 
