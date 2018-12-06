@@ -203,7 +203,7 @@ public class RacecarBackend
 
 		this.mapManager = new MapManager(mapManagerParameters, null);
 
-		this.log.info("RACECAR-BACKEND", "Starting VehicleManager...");
+		this.log.info("RACECAR-BACKEND", "Creating VehicleManager...");
 
 		this.vehicleManager = new VehicleManager(backendParameters, this.mapManager);
 
@@ -214,6 +214,9 @@ public class RacecarBackend
 		this.log.info("RACECAR-BACKEND", "Starting JobDispatcher...");
 
 		this.jobDispatcher = new JobDispatcher(parameters, this.mapManager, this.vehicleManager);
+
+		this.log.info("RACECAR-BACKEND", "Starting VehicleManager");
+		this.vehicleManager.start();
 
 		this.log.info("RACECAR-BACKEND", "Done constructing RacecarBackend...");
 	}
