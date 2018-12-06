@@ -2,10 +2,13 @@ package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.google.gson.reflect.TypeToken;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MediaType;
@@ -78,7 +81,7 @@ public class NavigationManager implements MQTTListener
 	 * @return REST response of the type JSON containg all calculated costs of each vehicle.
 	 */
 	@RequestMapping(value = "calcWeight/{startId}/{endId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON)
-	public Response calculateCostsRequest(@PathVariable("startId") long startId, @PathVariable("endId") long endId, HttpServletResponse response) throws IOException, InterruptedException
+	public @ResponseBody ResponseEntity<String> calculateCostsRequest(@PathVariable("startId") long startId, @PathVariable("endId") long endId, HttpServletResponse response) throws IOException, InterruptedException
 	{
 		if (!this.mapManager.exists(startId))
 		{
@@ -86,7 +89,7 @@ public class NavigationManager implements MQTTListener
 			this.log.error("NAVIGATION-MAN", errorString);
 
 			response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
-			return Response.status(Response.Status.NOT_FOUND).build();
+			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
 
 		if (!this.mapManager.exists(endId))
@@ -95,7 +98,7 @@ public class NavigationManager implements MQTTListener
 			this.log.error("NAVIGATION-MAN", errorString);
 
 			response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
-			return Response.status(Response.Status.NOT_FOUND).build();
+			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
 
 		if (this.vehicleManager.getNumVehicles() == 0)
@@ -104,7 +107,8 @@ public class NavigationManager implements MQTTListener
 			this.log.error("NAVIGATION-MAN", errorString);
 
 			response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
-			return Response.status(Response.Status.NOT_FOUND).build();
+
+			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
 
 		int totalVehicles = 0;
@@ -144,7 +148,8 @@ public class NavigationManager implements MQTTListener
 
 		this.log.info("NAVIGATION-MAN", "Cost calculation request completed.");
 
-		return Response.status(Response.Status.OK).entity(JSONUtils.arrayToJSONString(costCopy)).type("application/json").build();
+		return new ResponseEntity<>(JSONUtils.arrayToJSONString(costCopy), HttpStatus.OK);
+		//return Response.status(Response.Status.OK).entity(JSONUtils.arrayToJSONString(costCopy)).type("application/json").build();
 	}
 
 	/*
