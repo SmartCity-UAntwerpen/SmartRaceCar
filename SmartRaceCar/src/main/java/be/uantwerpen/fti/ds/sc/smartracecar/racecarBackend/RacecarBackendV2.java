@@ -3,7 +3,9 @@ package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.LogbackWrapper;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.Parameters;
 
+import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,6 +14,7 @@ import java.net.URLDecoder;
 import java.util.Optional;
 import java.util.Properties;
 
+@Path("/carmanager")
 public class RacecarBackendV2
 {
 	private static final String DEFAULT_PROPERTIES_FILE = "RaceCarBackend.properties";
@@ -167,6 +170,19 @@ public class RacecarBackendV2
 			}
 		};
 		tomcat.start();
+	}
+
+	@GET
+	@Path("running")
+	@Produces("text/plain")
+	public String running()
+	{
+		return "true";
+	}
+
+	public RacecarBackendV2()
+	{
+		this(Optional.empty());
 	}
 
 	public RacecarBackendV2(Optional<String> configPath)
