@@ -97,8 +97,6 @@ public class RacecarBackendV2
 
 		String restURLMAAS = prop.getProperty("restURLMAAS");
 		String restURLBackBone = prop.getProperty("restURLBackBone");
-		String currentMap = prop.getProperty("currentMap");
-		String mapsPath = prop.getProperty("mapsPath");
 
 		this.log.info("RACECAR-BACKEND", "Config loaded");
 
