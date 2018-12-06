@@ -1,17 +1,17 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 
-@Path("carmanager")
+@Controller
 public class JobDispatcher implements MQTTListener//todo: Get rid of this, still needed because MQTTUtils will crash if you don't provide it with a listener
 {
 	private LogbackWrapper log;
@@ -27,10 +27,9 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		this.mqttUtils = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
 	}
 
-	@GET
-	@Path("executeJob/{jobId}/{vehicleId}/{startId}/{endId}")
-	@Produces("text/plain")
-	public Response jobRequest(@PathParam("jobId") long jobId, @PathParam("vehicleId") long vehicleId, @PathParam("startId") long startId, @PathParam("endId") long endId,  @Context HttpServletResponse response) throws IOException
+
+	@RequestMapping(value = "/carmanager/executeJob.{jobId}/{vehicleId}/{startId}/{endId}", method = RequestMethod.GET, produces = MediaType.TEXT_PLAIN)
+	public Response jobRequest(@PathVariable("jobId") long jobId, @PathVariable("vehicleId") long vehicleId, @PathVariable("startId") long startId, @PathVariable("endId") long endId, HttpServletResponse response) throws IOException
 	{
 		Job job = new Job(jobId, startId, endId, vehicleId);
 
