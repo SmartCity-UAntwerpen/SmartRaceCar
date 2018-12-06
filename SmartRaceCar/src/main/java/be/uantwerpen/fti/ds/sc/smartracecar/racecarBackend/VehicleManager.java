@@ -2,24 +2,21 @@ package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.google.gson.reflect.TypeToken;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import java.io.IOException;
+import javax.ws.rs.core.MediaType;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-//@Path("carmanager")
 @Controller
 public class VehicleManager implements MQTTListener
 {
@@ -196,10 +193,8 @@ public class VehicleManager implements MQTTListener
 	 *      REST Endpoints
 	 *
 	 */
-	@GET
-	@Path("delete/{id}")
-	@Produces("text/plain")
-	public Response delete(@PathParam("id") long id, @Context HttpServletResponse response) throws IOException
+	@RequestMapping(value="/delete/{id}", method= RequestMethod.GET)
+	public @ResponseBody ResponseEntity<String> delete(@RequestParam("id") long id)
 	{
 		if (this.vehicles.containsKey(id))
 		{
@@ -212,29 +207,28 @@ public class VehicleManager implements MQTTListener
 
 			this.log.info("VEHICLE-MAN", "Removing vehicle " + Long.toString(id));
 
-			return Response.status(Response.Status.OK).build();
+			return new ResponseEntity<>(HttpStatus.OK);
+			//return Response.status(Response.Status.OK).build();
 		} else
 		{
 			String errorString = "Got delete request for vehicle " + Long.toString(id) + ", but vehicle doesn't exist.";
 			this.log.warning("VEHICLE-MAN", errorString);
-			response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
+			//response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
+			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
-
-		return null;
 	}
 
-	@GET
-	@Path("register/{startwaypoint}")
-	@Produces("text/plain")
-	public Response register(@PathParam("startwaypoint") long startwaypoint, @Context HttpServletResponse response) throws IOException
+	@RequestMapping(value="/register/{startwaypoint}", method= RequestMethod.GET, produces = MediaType.TEXT_PLAIN)
+	public @ResponseBody ResponseEntity<String> register(@RequestParam("startwaypoint") long startwaypoint)
 	{
 		if (!this.mapManager.exists(startwaypoint))
 		{
 			String errorString = "Tried to register vehicle with non-existent start id.";
 			this.log.error("VEHICLE-MAN", errorString);
 
-			response.sendError(HttpServletResponse.SC_BAD_REQUEST, errorString);
-			return Response.status(Response.Status.BAD_REQUEST).build();
+			//response.sendError(HttpServletResponse.SC_BAD_REQUEST, errorString);
+			//return Response.status(Response.Status.BAD_REQUEST).build();
+			return new ResponseEntity<>(errorString, HttpStatus.BAD_REQUEST);
 		}
 
 		long newVehicleId = -1;
@@ -251,13 +245,12 @@ public class VehicleManager implements MQTTListener
 
 		this.log.info("VEHICLE-MAN", "Registered new vehicle (" + Long.toString(newVehicleId) + "), Current Waypoint: " + Long.toString(startwaypoint));
 
-		return Response.status(Response.Status.OK).entity(newVehicleId).type("text/plain").build();
+		return new ResponseEntity<>(Long.toString(newVehicleId), HttpStatus.OK);
+		//return Response.status(Response.Status.OK).entity(newVehicleId).type("text/plain").build();
 	}
 
-	@GET
-	@Path("posAll")
-	@Produces("application/json")
-	public Response getPositions(@Context HttpServletResponse response) throws IOException
+	@RequestMapping(value="/posAll", method= RequestMethod.GET, produces = MediaType.APPLICATION_JSON)
+	public @ResponseBody ResponseEntity<String> getPositions()
 	{
 		List<Location> locations = new ArrayList<>();
 
@@ -269,7 +262,8 @@ public class VehicleManager implements MQTTListener
 
 		this.log.info("VEHICLE-MAN", "Request for all positions processed, returning " + Integer.toString(locations.size()) + " locations.");
 
-		return Response.status(Response.Status.OK).entity(JSONUtils.arrayToJSONString(locations)).type("application/json").build();
+		return new ResponseEntity<>(JSONUtils.arrayToJSONString(locations), HttpStatus.OK);
+		//return Response.status(Response.Status.OK).entity(JSONUtils.arrayToJSONString(locations)).type("application/json").build();
 	}
 
 	/*
@@ -277,7 +271,6 @@ public class VehicleManager implements MQTTListener
 	 *      MQTT Parsing
 	 *
 	 */
-
 	@Override
 	public void parseMQTT(String topic, String message)
 	{
