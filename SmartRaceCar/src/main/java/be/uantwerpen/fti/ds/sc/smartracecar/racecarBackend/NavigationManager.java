@@ -10,9 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -81,14 +79,13 @@ public class NavigationManager implements MQTTListener
 	 * @return REST response of the type JSON containg all calculated costs of each vehicle.
 	 */
 	@RequestMapping(value = "calcWeight/{startId}/{endId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON)
-	public @ResponseBody ResponseEntity<String> calculateCostsRequest(@PathVariable("startId") long startId, @PathVariable("endId") long endId, HttpServletResponse response) throws IOException, InterruptedException
+	public @ResponseBody ResponseEntity<String> calculateCostsRequest(@PathVariable("startId") long startId, @PathVariable("endId") long endId) throws InterruptedException
 	{
 		if (!this.mapManager.exists(startId))
 		{
 			String errorString = "Request cost with non-existent start waypoint " + Long.toString(startId) + ".";
 			this.log.error("NAVIGATION-MAN", errorString);
 
-			response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
 
@@ -96,8 +93,6 @@ public class NavigationManager implements MQTTListener
 		{
 			String errorString = "Request cost with non-existent end waypoint " + Long.toString(endId) + ".";
 			this.log.error("NAVIGATION-MAN", errorString);
-
-			response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
 
@@ -105,8 +100,6 @@ public class NavigationManager implements MQTTListener
 		{
 			String errorString = "No vehicles exist" + Long.toString(endId) + ".";
 			this.log.error("NAVIGATION-MAN", errorString);
-
-			response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
 
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
