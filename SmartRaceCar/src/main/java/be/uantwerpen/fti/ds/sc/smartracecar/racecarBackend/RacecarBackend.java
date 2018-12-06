@@ -180,12 +180,12 @@ public class RacecarBackend
 		return "true";
 	}
 
-	public RacecarBackendV2()
+	public RacecarBackend()
 	{
 		this(Optional.empty());
 	}
 
-	public RacecarBackendV2(Optional<String> configPath)
+	public RacecarBackend(Optional<String> configPath)
 	{
 		this.log = new LogbackWrapper();
 
