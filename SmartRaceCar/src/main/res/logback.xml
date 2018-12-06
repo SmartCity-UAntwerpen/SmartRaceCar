@@ -1,17 +1,17 @@
 <configuration>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{HH:mm:ss} [%thread] %-10level - %msg%n</pattern>
+            <pattern>%d{HH:mm:ss} [%10thread] %-7level - %msg%n</pattern>
         </encoder>
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>RaceCarBackend.log</file>
+        <file>RacecarBackend.log</file>
         <append>true</append>
         <!-- set immediateFlush to false for much higher logging throughput -->
         <immediateFlush>true</immediateFlush>
         <encoder>
-            <pattern>%d{HH:mm:ss} [%thread] %-10level- %msg%n</pattern>
+            <pattern>%d{HH:mm:ss} [%10thread] %-7level - %msg%n</pattern>   
         </encoder>
     </appender>
 

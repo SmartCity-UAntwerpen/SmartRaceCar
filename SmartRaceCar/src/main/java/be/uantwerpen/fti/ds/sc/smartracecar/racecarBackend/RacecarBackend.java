@@ -65,7 +65,7 @@ public class RacecarBackend
 		String mqttPassword = prop.getProperty("mqttPassword");
 		String restCarmanagerURL = prop.getProperty("restURLBackend");
 
-		this.log.info("RACECAR-BACKEND", "Config loaded");
+		this.log.info("RACECAR-BACKEND", "Standard config loaded.");
 
 		Parameters parameters = new Parameters(mqttBroker, mqttUsername, mqttPassword, restCarmanagerURL);
 
@@ -101,7 +101,7 @@ public class RacecarBackend
 		String restURLMAAS = prop.getProperty("restURLMAAS");
 		String restURLBackBone = prop.getProperty("restURLBackBone");
 
-		this.log.info("RACECAR-BACKEND", "Config loaded");
+		this.log.info("RACECAR-BACKEND", "Backend config loaded.");
 
 		BackendParameters backendParameters = new BackendParameters(this.readParameters(propertiesFile), debugWithoutMAAS, debugWithoutBackBone, restURLMAAS, restURLBackBone);
 
@@ -134,7 +134,7 @@ public class RacecarBackend
 		String currentMap = prop.getProperty("currentMap");
 		String mapPath = prop.getProperty("mapsPath");
 
-		this.log.info("RACECAR-BACKEND", "Config loaded");
+		this.log.info("RACECAR-BACKEND", "Map Manager config loaded.");
 
 		MapManagerParameters mapManagerParameters = new MapManagerParameters(this.readBackendParameters(propertiesFile), currentMap, mapPath);
 		try
@@ -189,16 +189,33 @@ public class RacecarBackend
 	{
 		this.log = new LogbackWrapper();
 
+		this.log.info("RACECAR-BACKEND", "Starting Tomcat Server...");
+
 		this.startTomCatServer();
+
+		this.log.info("RACECAR-BACKEND", "Reading configuration files...");
 
 		Parameters parameters = this.readParameters(configPath);
 		BackendParameters backendParameters = this.readBackendParameters(configPath);
 		MapManagerParameters mapManagerParameters = this.readMapManagerParameters(configPath);
 
+		this.log.info("RACECAR-BACKEND", "Starting MapManager...");
+
 		this.mapManager = new MapManager(mapManagerParameters, null);
+
+		this.log.info("RACECAR-BACKEND", "Starting VehicleManager...");
+
 		this.vehicleManager = new VehicleManager(backendParameters, this.mapManager);
-		this.mapManager.setVehicleManager(vehicleManager);
+
+		this.log.info("RACECAR-BACKEND", "Setting map managers' VehicleManager...");
+
+		this.mapManager.setVehicleManager(this.vehicleManager);
+
+		this.log.info("RACECAR-BACKEND", "Starting JobDispatcher...");
+
 		this.jobDispatcher = new JobDispatcher(parameters, this.mapManager, this.vehicleManager);
+
+		this.log.info("RACECAR-BACKEND", "Done constructing RacecarBackend...");
 	}
 
 	public static void main(String[] args)

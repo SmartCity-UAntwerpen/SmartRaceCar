@@ -101,14 +101,35 @@ public class VehicleManager implements MQTTListener
 	{
 		this.parameters = parameters;
 		this.log = new LogbackWrapper();
+
+		this.log.info("VEHICLE-MAN", "Setting up MQTT...");
+
 		this.mqttUtils = new MQTTUtils(this.parameters.getMqttBroker(), this.parameters.getMqttUserName(), this.parameters.getMqttPassword(), this);
 		this.mqttUtils.subscribeToTopic(this.parameters.getMqttTopic());
+
+		this.log.info("VEHICLE-MAN", "Setting up MaaS REST Utils...");
+
 		this.MaaSRestUtils = new RESTUtils(parameters.getRESTCarmanagerURL());
+
+		this.log.info("VEHICLE-MAN", "Setting up Backbone REST Utils...");
+
 		this.backboneRestUtils = new RESTUtils(parameters.getBackboneRESTURL());
+
+		this.log.info("VEHICLE-MAN", "Starting Navigation Manager...");
+
 		this.navigationManager = new NavigationManager(this, this.mapManager, parameters);
+
+		this.log.info("VEHICLE-MAN", "Setting Map Manager...");
+
 		this.mapManager = mapManager;
-		this.heartbeatChecker = new HeartbeatChecker("dummy");
+
+		this.log.info("VEHICLE-MAN", "Creating Heartbeat Manager...");
+
+		this.heartbeatChecker = new HeartbeatChecker(parameters.getRESTCarmanagerURL());
 		this.vehicles = new HashMap<>();
+
+		this.log.info("VEHICLE-MAN", "Starting Heartbeat Manager...");
+
 		this.heartbeatChecker.start();
 	}
 
