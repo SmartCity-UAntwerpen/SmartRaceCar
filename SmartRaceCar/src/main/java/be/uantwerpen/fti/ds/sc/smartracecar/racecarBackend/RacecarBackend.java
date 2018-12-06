@@ -3,7 +3,6 @@ package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.LogbackWrapper;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.Parameters;
 
-import javax.ws.rs.Path;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,7 +11,7 @@ import java.net.URLDecoder;
 import java.util.Optional;
 import java.util.Properties;
 
-public class RacecarBackendV2
+public class RacecarBackend
 {
 	private static final String DEFAULT_PROPERTIES_FILE = "RaceCarBackend.properties";
 
@@ -169,7 +168,7 @@ public class RacecarBackendV2
 		tomcat.start();
 	}
 
-	public RacecarBackendV2(Optional<String> configPath)
+	public RacecarBackend(Optional<String> configPath)
 	{
 		this.log = new LogbackWrapper();
 
@@ -197,6 +196,6 @@ public class RacecarBackendV2
 			configPath = Optional.empty();
 		}
 
-		final RacecarBackendV2 racecarBackendV2 = new RacecarBackendV2(configPath);
+		final RacecarBackend racecarBackend = new RacecarBackend(configPath);
 	}
 }
