@@ -172,14 +172,14 @@ public class MapManager implements MQTTListener
 			{
 				int ID = (int) it.next();
 
-				this.log.info("RACECAR_BACKEND", "change map command send to vehicle with ID: " + ID);
+				this.log.info("MAP-MAN", "change map command send to vehicle with ID: " + ID);
 				this.mqttUtils.publishMessage("racecar/" + ID + "/changeMap", mapName);
 				loadWayPoints();
 			}
 			return "Command was executed to change map";
 		} else
 		{
-			this.log.warning("RACECAR_BACKEND", "Map cannot be changed as the map does not exist");
+			this.log.warning("MAP-MAN", "Map cannot be changed as the map does not exist");
 			return "Map was not changed as map does not exist";
 		}
 
@@ -210,14 +210,14 @@ public class MapManager implements MQTTListener
 					this.wayPoints.put((long) 49, new WayPoint(49, (float) 4.54, (float) -4.49, (float) -0.60, (float) 0.80));
 					break;
 				case "gangV":
-					this.log.info("MAN-PAN", "Loading wayPoints for " + this.currentMap);
+					this.log.info("MAP-MAN", "Loading wayPoints for " + this.currentMap);
 					this.wayPoints.put((long) 46, new WayPoint(46, (float) -6.1, (float) -28.78, (float) 0.73, (float) 0.69));
 					this.wayPoints.put((long) 47, new WayPoint(47, (float) -6.47, (float) -21.69, (float) 0.66, (float) 0.75));
 					this.wayPoints.put((long) 48, new WayPoint(48, (float) -5.91, (float) -1.03, (float) 0.52, (float) 0.85));
 					this.wayPoints.put((long) 49, new WayPoint(49, (float) 6.09, (float) 0.21, (float) -0.04, (float) 1.00));
 					break;
 				default:
-					log.warning("MAP-PAN", "The backbone could not be reached and there were no default wayPoints for this map");
+					log.warning("MAP-MAN", "The backbone could not be reached and there were no default wayPoints for this map");
 					this.wayPoints.put((long) 46, new WayPoint(46, (float) 0.5, (float) 0, (float) -1, (float) 0.02));
 					this.wayPoints.put((long) 47, new WayPoint(47, (float) -13.4, (float) -0.53, (float) 0.71, (float) 0.71));
 					this.wayPoints.put((long) 48, new WayPoint(48, (float) -27.14, (float) -1.11, (float) -0.3, (float) 0.95));
@@ -234,10 +234,10 @@ public class MapManager implements MQTTListener
 			for (WayPoint wayPoint : wayPointsTemp)
 			{
 				wayPoints.put(wayPoint.getID(), wayPoint);
-				this.log.info("RACECAR_BACKEND", "Added wayPoint with ID " + wayPoint.getID() + " and coordinates " + wayPoint.getX() + "," + wayPoint.getY() + "," + wayPoint.getZ() + "," + wayPoint.getW() + ".");
+				this.log.info("MAP-MAN", "Added wayPoint with ID " + wayPoint.getID() + " and coordinates " + wayPoint.getX() + "," + wayPoint.getY() + "," + wayPoint.getZ() + "," + wayPoint.getW() + ".");
 			}
 		}
-		this.log.info("RACECAR_BACKEND", "All possible wayPoints(" + wayPoints.size() + ") received.");
+		this.log.info("MAP-MAN", "All possible wayPoints(" + wayPoints.size() + ") received.");
 	}
 
 	@Override
