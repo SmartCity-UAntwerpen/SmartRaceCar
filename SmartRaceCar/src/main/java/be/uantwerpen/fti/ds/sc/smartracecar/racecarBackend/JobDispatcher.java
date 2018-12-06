@@ -1,10 +1,14 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
+import com.sun.deploy.net.HttpResponse;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MediaType;
@@ -29,7 +33,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 
 
 	@RequestMapping(value = "/carmanager/executeJob.{jobId}/{vehicleId}/{startId}/{endId}", method = RequestMethod.GET, produces = MediaType.TEXT_PLAIN)
-	public Response jobRequest(@PathVariable("jobId") long jobId, @PathVariable("vehicleId") long vehicleId, @PathVariable("startId") long startId, @PathVariable("endId") long endId, HttpServletResponse response) throws IOException
+	public @ResponseBody ResponseEntity<String> jobRequest(@PathVariable("jobId") long jobId, @PathVariable("vehicleId") long vehicleId, @PathVariable("startId") long startId, @PathVariable("endId") long endId, HttpServletResponse response) throws IOException
 	{
 		Job job = new Job(jobId, startId, endId, vehicleId);
 
@@ -40,7 +44,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 			this.log.error("JOB-DISPATCHER", errorString);
 
 			response.sendError(HttpServletResponse.SC_BAD_REQUEST, errorString);
-			return Response.status(Response.Status.BAD_REQUEST).build();
+			return new ResponseEntity<>(errorString, HttpStatus.BAD_REQUEST);
 		}
 
 		// Check if vehicle is occupied
@@ -50,7 +54,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 			this.log.error("JOB-DISPATCHER", errorString);
 
 			response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
-			return Response.status(Response.Status.NOT_FOUND).build();
+			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
 
 		// Check if vehicle is available
@@ -60,7 +64,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 			this.log.error("JOB-DISPATCHER", errorString);
 
 			response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
-			return Response.status(Response.Status.NOT_FOUND).build();
+			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
 
 		// Check if starting waypoint exists
@@ -70,7 +74,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 			this.log.error("JOB-DISPATCHER", errorString);
 
 			response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
-			return Response.status(Response.Status.NOT_FOUND).build();
+			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
 
 		// Check if end waypoint exists
@@ -80,7 +84,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 			this.log.error("JOB-DISPATCHER", errorString);
 
 			response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
-			return Response.status(Response.Status.NOT_FOUND).build();
+			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
 
 		Vehicle vehicle = this.vehicleManager.get(vehicleId);
@@ -92,7 +96,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 
 		this.mqttUtils.publishMessage("racecar/" + Long.toString(vehicleId) + "/job", Long.toString(startId) + " " + Long.toString(endId));
 
-		return Response.status(Response.Status.OK).build();
+		return new ResponseEntity<>(HttpStatus.OK);
 	}
 
 	/**

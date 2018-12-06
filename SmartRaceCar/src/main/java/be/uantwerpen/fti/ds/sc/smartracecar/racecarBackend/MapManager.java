@@ -3,10 +3,14 @@ package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.google.gson.reflect.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MediaType;
@@ -135,7 +139,7 @@ public class MapManager implements MQTTListener
 	 * @return REST response of the type Octet-stream containing the file.
 	 */
 	@RequestMapping(value = "/carmanager/getMapYAML/{mapName}", method = RequestMethod.GET, produces = MediaType.APPLICATION_OCTET_STREAM)
-	public Response getMapYAML(@PathVariable("mapName") final String mapname, HttpServletResponse response)
+	public @ResponseBody ResponseEntity<StreamingOutput> getMapYAML(@PathVariable("mapName") final String mapname, HttpServletResponse response)
 	{
 		StreamingOutput fileStream = output ->
 		{
@@ -150,10 +154,16 @@ public class MapManager implements MQTTListener
 				response.sendError(HttpServletResponse.SC_NOT_FOUND, mapname + ".yaml not found");
 			}
 		};
-		return Response
+		/*return Response
 				.ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
 				.header("content-disposition", "attachment; filename = " + mapname + ".yaml")
-				.build();
+				.build();*/
+
+		ResponseEntity<StreamingOutput> responseEntity = new ResponseEntity<>(fileStream, HttpStatus.OK);
+
+		response.addHeader("content-disposition", "attachment; filename = " + mapname + ".yaml");
+
+		return responseEntity;
 	}
 
 	/**
