@@ -1,15 +1,21 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.common;
 
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LogbackWrapper
 {
 	private Logger logger;
 
+	@Deprecated
 	public LogbackWrapper()
 	{
-		this.logger = LoggerFactory.getLogger(LogbackWrapper.class);
+		this.logger = LoggerFactory.getLogger(this.getClass());
+	}
+
+	public LogbackWrapper(Object obj)
+	{
+		this.logger = LoggerFactory.getLogger(obj.getClass());
 	}
 
 	public void info(String category, String message)

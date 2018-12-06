@@ -2,10 +2,9 @@ package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.LogbackWrapper;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.Parameters;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,7 +13,7 @@ import java.net.URLDecoder;
 import java.util.Optional;
 import java.util.Properties;
 
-@Path("carmanager")
+@SpringBootApplication
 public class RacecarBackend
 {
 	private static final String DEFAULT_PROPERTIES_FILE = "RaceCarBackend.properties";
@@ -151,6 +150,7 @@ public class RacecarBackend
 	/**
 	 * Start the build-in TomCat Server.
 	 */
+	/*
 	private void startTomCatServer()
 	{
 		Thread tomcat = new Thread()
@@ -171,7 +171,9 @@ public class RacecarBackend
 		};
 		tomcat.start();
 	}
+	*/
 
+	/*
 	@GET
 	@Path("running")
 	@Produces("text/plain")
@@ -179,19 +181,31 @@ public class RacecarBackend
 	{
 		return "true";
 	}
+	*/
 
 	public RacecarBackend()
 	{
-		this(Optional.empty());
+		this(new String[0]);
 	}
 
-	public RacecarBackend(Optional<String> configPath)
+	public RacecarBackend(String[] args)
 	{
+		Optional<String> configPath;
+
+		if (args.length == 1)
+		{
+			configPath = Optional.of(args[0]);
+		}
+		else
+		{
+			configPath = Optional.empty();
+		}
+
 		this.log = new LogbackWrapper();
 
 		this.log.info("RACECAR-BACKEND", "Starting Tomcat Server...");
 
-		this.startTomCatServer();
+		//this.startTomCatServer();
 
 		this.log.info("RACECAR-BACKEND", "Reading configuration files...");
 
@@ -215,24 +229,14 @@ public class RacecarBackend
 
 		this.jobDispatcher = new JobDispatcher(parameters, this.mapManager, this.vehicleManager);
 
-		//this.log.info("RACECAR-BACKEND", "Starting VehicleManager");
-		//this.vehicleManager.start();
+		this.log.info("RACECAR-BACKEND", "Starting VehicleManager");
+		this.vehicleManager.start();
 
 		this.log.info("RACECAR-BACKEND", "Done constructing RacecarBackend...");
 	}
 
 	public static void main(String[] args)
 	{
-		Optional<String> configPath;
-
-		if (args.length == 1)
-		{
-			configPath = Optional.of(args[0]);
-		} else
-		{
-			configPath = Optional.empty();
-		}
-
-		final RacecarBackend racecarBackend = new RacecarBackend(configPath);
+		SpringApplication.run(RacecarBackend.class, args);
 	}
 }
