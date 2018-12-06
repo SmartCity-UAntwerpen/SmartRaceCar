@@ -30,7 +30,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 	@GET
 	@Path("executeJob/{jobId}/{vehicleId}/{startId}/{endId}")
 	@Produces("text/plain")
-	public Response jobRequest(@PathParam("jobId") long jobId, @PathParam("vehicleId") long vehicleId, @PathParam("startId") long startId, @PathParam("endId") long endId, String data, @Context HttpServletResponse response) throws IOException
+	public Response jobRequest(@PathParam("jobId") long jobId, @PathParam("vehicleId") long vehicleId, @PathParam("startId") long startId, @PathParam("endId") long endId,  @Context HttpServletResponse response) throws IOException
 	{
 		Job job = new Job(jobId, startId, endId, vehicleId);
 
