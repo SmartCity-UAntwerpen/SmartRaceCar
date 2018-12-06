@@ -25,7 +25,7 @@ import java.util.logging.Level;
  * Module representing the management or dispatching module of the F1 service.
  */
 @Path("carmanager")
-public class RacecarBackend implements MQTTListener
+public class RacecarBackendV1 implements MQTTListener
 {
 	//Standard settings (without config file loaded)
 	private static boolean debugWithoutBackBone = true; // debug parameter to stop attempts to send or recieve messages from backbone.
@@ -68,7 +68,7 @@ public class RacecarBackend implements MQTTListener
 	 *
 	 * @param start help parameter to make a distinction between the two constructors
 	 */
-	public RacecarBackend(Boolean start) throws Exception
+	public RacecarBackendV1(Boolean start) throws Exception
 	{
 		String asciiArt1 = FigletFont.convertOneLine("SmartCity");
 		System.out.println(asciiArt1);
@@ -122,7 +122,7 @@ public class RacecarBackend implements MQTTListener
 		InputStream input = null;
 		try
 		{
-			String path = RacecarBackend.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+			String path = RacecarBackendV1.class.getProtectionDomain().getCodeSource().getLocation().getPath();
 			String decodedPath = URLDecoder.decode(path, "UTF-8");
 			decodedPath = decodedPath.replace("RacecarBackendTest.jar", "");
 			input = new FileInputStream(decodedPath + "/src/main/racecarbackend.properties");
@@ -708,6 +708,6 @@ public class RacecarBackend implements MQTTListener
 	 */
 	public static void main(String[] args) throws Exception
 	{
-		final RacecarBackend racecarBackend = new RacecarBackend(true);
+		final RacecarBackendV1 racecarBackend = new RacecarBackendV1(true);
 	}
 }

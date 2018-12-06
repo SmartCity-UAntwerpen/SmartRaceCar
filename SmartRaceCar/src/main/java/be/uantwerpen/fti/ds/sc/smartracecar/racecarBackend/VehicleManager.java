@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Path("carmanager")
 public class VehicleManager implements MQTTListener
 {
 	private static class MQTTConstants
@@ -169,7 +170,6 @@ public class VehicleManager implements MQTTListener
 	 *      REST Endpoints
 	 *
 	 */
-
 	@GET
 	@Path("delete/{id}")
 	@Produces("text/plain")

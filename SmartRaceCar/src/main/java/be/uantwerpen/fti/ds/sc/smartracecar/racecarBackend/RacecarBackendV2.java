@@ -3,6 +3,7 @@ package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.LogbackWrapper;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.Parameters;
 
+import javax.ws.rs.Path;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -96,8 +97,6 @@ public class RacecarBackendV2
 
 		String restURLMAAS = prop.getProperty("restURLMAAS");
 		String restURLBackBone = prop.getProperty("restURLBackBone");
-		String currentMap = prop.getProperty("currentMap");
-		String mapsPath = prop.getProperty("mapsPath");
 
 		this.log.info("RACECAR-BACKEND", "Config loaded");
 
