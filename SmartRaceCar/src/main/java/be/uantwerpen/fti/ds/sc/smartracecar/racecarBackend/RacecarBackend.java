@@ -14,7 +14,7 @@ import java.net.URLDecoder;
 import java.util.Optional;
 import java.util.Properties;
 
-@Path("/carmanager")
+@Path("carmanager")
 public class RacecarBackend
 {
 	private static final String DEFAULT_PROPERTIES_FILE = "RaceCarBackend.properties";
@@ -215,8 +215,8 @@ public class RacecarBackend
 
 		this.jobDispatcher = new JobDispatcher(parameters, this.mapManager, this.vehicleManager);
 
-		this.log.info("RACECAR-BACKEND", "Starting VehicleManager");
-		this.vehicleManager.start();
+		//this.log.info("RACECAR-BACKEND", "Starting VehicleManager");
+		//this.vehicleManager.start();
 
 		this.log.info("RACECAR-BACKEND", "Done constructing RacecarBackend...");
 	}
