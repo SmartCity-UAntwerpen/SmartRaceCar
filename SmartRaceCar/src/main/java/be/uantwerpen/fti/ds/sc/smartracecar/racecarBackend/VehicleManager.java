@@ -170,7 +170,6 @@ public class VehicleManager implements MQTTListener
 	 *      REST Endpoints
 	 *
 	 */
-
 	@GET
 	@Path("delete/{id}")
 	@Produces("text/plain")
