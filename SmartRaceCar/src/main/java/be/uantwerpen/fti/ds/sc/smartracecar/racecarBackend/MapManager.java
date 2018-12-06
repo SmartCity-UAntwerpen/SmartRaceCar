@@ -2,19 +2,17 @@ package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.google.gson.reflect.TypeToken;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.swing.text.html.HTMLDocument;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.File;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -23,13 +21,15 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-@Path("carmanager")
+@Controller
 public class MapManager implements MQTTListener
 {
 	private LogbackWrapper log;
 	private MapManagerParameters params;
 
+	@Autowired
 	private VehicleManager vehicleManager;
+
 	private MQTTUtils mqttUtils;
 	private RESTUtils backboneRESTUtils;
 
@@ -81,9 +81,7 @@ public class MapManager implements MQTTListener
 	 *
 	 * @return REST response of the type Text Plain containing the mapname.
 	 */
-	@GET
-	@Path("getmapname")
-	@Produces("text/plain")
+	@RequestMapping(value = "/carmanager/getmapname", method = RequestMethod.GET, produces = MediaType.TEXT_PLAIN)
 	public String getMapName()
 	{
 		return this.currentMap;
@@ -95,10 +93,8 @@ public class MapManager implements MQTTListener
 	 * @param mapname the name of the map
 	 * @return REST response of the type Octet-stream containing the file.
 	 */
-	@GET
-	@Path("getmappgm/{mapname}")
-	@Produces("application/octet-stream")
-	public Response getMapPGM(@PathParam("mapname") final String mapname, @Context HttpServletResponse response) throws UnsupportedEncodingException
+	@RequestMapping(value = "/carmanager/getMapPGM/{mapName}", method = RequestMethod.GET, produces = MediaType.APPLICATION_OCTET_STREAM)
+	public Response getMapPGM(@PathVariable("mapname") final String mapname, HttpServletResponse response)
 	{
 		StreamingOutput fileStream = output ->
 		{
@@ -126,9 +122,7 @@ public class MapManager implements MQTTListener
 	 *
 	 * @return REST response of the type JSON containing all wayPoints.
 	 */
-	@GET
-	@Path("getwaypoints")
-	@Produces("application/json")
+	@RequestMapping(value = "/carmanager/getWaypoints", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON)
 	public String getWayPoints()
 	{
 		return JSONUtils.objectToJSONStringWithKeyWord("wayPoints", this.wayPoints);
@@ -140,10 +134,8 @@ public class MapManager implements MQTTListener
 	 * @param mapname the name of the map
 	 * @return REST response of the type Octet-stream containing the file.
 	 */
-	@GET
-	@Path("getmapyaml/{mapname}")
-	@Produces("application/octet-stream")
-	public Response getMapYAML(@PathParam("mapname") final String mapname, @Context HttpServletResponse response)
+	@RequestMapping(value = "/carmanager/getMapYAML/{mapName}", method = RequestMethod.GET, produces = MediaType.APPLICATION_OCTET_STREAM)
+	public Response getMapYAML(@PathVariable("mapName") final String mapname, HttpServletResponse response)
 	{
 		StreamingOutput fileStream = output ->
 		{
@@ -170,10 +162,8 @@ public class MapManager implements MQTTListener
 	 * @param mapName name of the new map
 	 * @return
 	 */
-	@GET
-	@Path("changeMap/{mapName}")
-	@Produces("text/plain")
-	public String changeMap(@PathParam("mapName") String mapName)
+	@RequestMapping(value = "/carmanager/changeMap/{mapName}", method = RequestMethod.GET, produces = MediaType.TEXT_PLAIN)
+	public String changeMap(@PathVariable("mapName") String mapName)
 	{
 		File f = new File(mapPath + "/" + mapName + ".yaml");
 		if (f.exists() && !f.isDirectory())
