@@ -127,9 +127,11 @@ public class VehicleManager implements MQTTListener
 
 		this.heartbeatChecker = new HeartbeatChecker(parameters.getRESTCarmanagerURL());
 		this.vehicles = new HashMap<>();
+	}
 
+	public void start()
+	{
 		this.log.info("VEHICLE-MAN", "Starting Heartbeat Manager...");
-
 		this.heartbeatChecker.start();
 	}
 
