@@ -706,8 +706,10 @@ public class RacecarBackendV1 implements MQTTListener
 	 * @param args no arguments required
 	 * @throws Exception
 	 */
+	/*
 	public static void main(String[] args) throws Exception
 	{
 		final RacecarBackendV1 racecarBackend = new RacecarBackendV1(true);
 	}
+	*/
 }
