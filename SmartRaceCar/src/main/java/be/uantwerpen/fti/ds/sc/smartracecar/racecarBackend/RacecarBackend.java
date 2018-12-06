@@ -61,7 +61,7 @@ public class RacecarBackend
 		String mqttPassword = prop.getProperty("mqttPassword");
 		String restCarmanagerURL = prop.getProperty("restURLBackend");
 
-		this.log.info("RACECAR-BACKEND", "Config loaded");
+		this.log.info("RACECAR-BACKEND", "Standard config loaded.");
 
 		Parameters parameters = new Parameters(mqttBroker, mqttUsername, mqttPassword, restCarmanagerURL);
 
@@ -97,7 +97,7 @@ public class RacecarBackend
 		String restURLMAAS = prop.getProperty("restURLMAAS");
 		String restURLBackBone = prop.getProperty("restURLBackBone");
 
-		this.log.info("RACECAR-BACKEND", "Config loaded");
+		this.log.info("RACECAR-BACKEND", "Backend config loaded.");
 
 		BackendParameters backendParameters = new BackendParameters(this.readParameters(propertiesFile), debugWithoutMAAS, debugWithoutBackBone, restURLMAAS, restURLBackBone);
 
@@ -130,7 +130,7 @@ public class RacecarBackend
 		String currentMap = prop.getProperty("currentMap");
 		String mapPath = prop.getProperty("mapsPath");
 
-		this.log.info("RACECAR-BACKEND", "Config loaded");
+		this.log.info("RACECAR-BACKEND", "Map Manager config loaded.");
 
 		MapManagerParameters mapManagerParameters = new MapManagerParameters(this.readBackendParameters(propertiesFile), currentMap, mapPath);
 		try
