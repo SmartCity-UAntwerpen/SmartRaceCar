@@ -3,7 +3,7 @@ package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.google.gson.reflect.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -12,9 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-//import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.File;
 import java.lang.reflect.Type;
@@ -98,26 +96,37 @@ public class MapManager implements MQTTListener
 	 * @return REST response of the type Octet-stream containing the file.
 	 */
 	@RequestMapping(value = "/carmanager/getMapPGM/{mapName}", method = RequestMethod.GET, produces = MediaType.APPLICATION_OCTET_STREAM)
-	public Response getMapPGM(@PathVariable("mapname") final String mapname)
+	public @ResponseBody ResponseEntity<StreamingOutput> getMapPGM(@PathVariable("mapname") final String mapname)
 	{
-		StreamingOutput fileStream = output ->
+		try
 		{
-			try
+			StreamingOutput fileStream = output ->
 			{
 				java.nio.file.Path path = Paths.get(this.mapPath + "/" + mapname + ".pgm");
 				byte[] data = Files.readAllBytes(path);
 				output.write(data);
 				output.flush();
-			} catch (Exception e)
-			{
-				System.out.println("error " + e);
-				response.sendError(HttpServletResponse.SC_NOT_FOUND, mapname + ".pgm not found");
-			}
-		};
-		return Response
+			};
+
+			ResponseEntity<String> responseEntity = new ResponseEntity<>(HttpStatus.OK);
+
+
+			HttpHeaders headers = new HttpHeaders();
+			headers.add("content-disposition", "attachment; filename = " + mapname + ".pgm");
+
+			return new ResponseEntity<>(fileStream, headers, HttpStatus.OK);
+		}
+		catch(Exception e)
+		{
+			String errorString = mapname + ".pgm not found";
+			System.out.println("error " + e);
+			//response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		/*return Response
 				.ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
 				.header("content-disposition", "attachment; filename = " + mapname + ".pgm")
-				.build();
+				.build();*/
 
 	}
 
@@ -139,31 +148,36 @@ public class MapManager implements MQTTListener
 	 * @return REST response of the type Octet-stream containing the file.
 	 */
 	@RequestMapping(value = "/carmanager/getMapYAML/{mapName}", method = RequestMethod.GET, produces = MediaType.APPLICATION_OCTET_STREAM)
-	public @ResponseBody ResponseEntity<StreamingOutput> getMapYAML(@PathVariable("mapName") final String mapname/*, HttpServletResponse response*/)
+	public @ResponseBody ResponseEntity<StreamingOutput> getMapYAML(@PathVariable("mapName") final String mapname)
 	{
-		StreamingOutput fileStream = output ->
+		try
 		{
-			try
+			StreamingOutput fileStream = output ->
 			{
 				java.nio.file.Path path = Paths.get(mapPath + "/" + mapname + ".yaml");
 				byte[] data = Files.readAllBytes(path);
 				output.write(data);
 				output.flush();
-			} catch (Exception e)
-			{
-				response.sendError(HttpServletResponse.SC_NOT_FOUND, mapname + ".yaml not found");
-			}
-		};
+			};
 		/*return Response
 				.ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
 				.header("content-disposition", "attachment; filename = " + mapname + ".yaml")
 				.build();*/
 
-		ResponseEntity<StreamingOutput> responseEntity = new ResponseEntity<>(fileStream, HttpStatus.OK);
 
-		response.addHeader("content-disposition", "attachment; filename = " + mapname + ".yaml");
+			HttpHeaders headers = new HttpHeaders();
+			headers.add("content-disposition", "attachment; filename = " + mapname + ".yaml");
+			ResponseEntity<StreamingOutput> responseEntity = new ResponseEntity<>(fileStream, headers, HttpStatus.OK);
 
-		return responseEntity;
+			return responseEntity;
+		}
+		catch (Exception e)
+		{
+			String errorString = mapname + ".yaml not found";
+			//response.sendError(HttpServletResponse.SC_NOT_FOUND, mapname + ".yaml not found");
+			ResponseEntity<StreamingOutput> responseEntity = new ResponseEntity<>(HttpStatus.NOT_FOUND);
+			return responseEntity;
+		}
 	}
 
 	/**

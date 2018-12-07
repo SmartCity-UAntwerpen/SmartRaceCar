@@ -79,7 +79,7 @@ public class NavigationManager implements MQTTListener
 	 * @return REST response of the type JSON containg all calculated costs of each vehicle.
 	 */
 	@RequestMapping(value = "calcWeight/{startId}/{endId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON)
-	public @ResponseBody ResponseEntity<String> calculateCostsRequest(@PathVariable("startId") long startId, @PathVariable("endId") long endId) throws IOException, InterruptedException
+	public @ResponseBody ResponseEntity<String> calculateCostsRequest(@PathVariable("startId") long startId, @PathVariable("endId") long endId) throws InterruptedException
 	{
 		if (!this.mapManager.exists(startId))
 		{
