@@ -1,10 +1,11 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
+/*
 import org.apache.catalina.Context;
 import org.apache.catalina.startup.Tomcat;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
-
+*/
 /**
  * Configuration class defining the build in TomCat Service.
  */
@@ -15,7 +16,7 @@ class TomCatLauncher
 	 * run the launcher
 	 *
 	 * @throws Exception
-	 */
+	 *
 	void start() throws Exception
 	{
 
@@ -43,4 +44,5 @@ class TomCatLauncher
 	{
 		return new JerseyConfiguration();
 	}
+	*/
 }

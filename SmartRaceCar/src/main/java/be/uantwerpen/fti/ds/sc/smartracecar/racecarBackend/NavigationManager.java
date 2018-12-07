@@ -93,6 +93,7 @@ public class NavigationManager implements MQTTListener
 		{
 			String errorString = "Request cost with non-existent end waypoint " + Long.toString(endId) + ".";
 			this.log.error("NAVIGATION-MAN", errorString);
+
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
 
