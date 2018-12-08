@@ -1,9 +1,16 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.common;
 
+import org.springframework.beans.factory.annotation.Value;
+
 public class Parameters
 {
+	@Value("${mqtt.broker}")
 	private String mqttBroker;
+
+	@Value("${mqtt.username}")
 	private String mqttUserName;
+
+	@Value("${mqtt.password}")
 	private String mqttPassword;
 	private String mqttTopic;
 
