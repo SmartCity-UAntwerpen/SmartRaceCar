@@ -257,12 +257,13 @@
             <scope>test</scope>
         </dependency>
 
+        <!--
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>RELEASE</version>
             <scope>compile</scope>
-        </dependency><!--
+        </dependency>
 
         <dependency>
             <groupId>ch.qos.logback</groupId>
