@@ -2,6 +2,8 @@ package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.google.gson.reflect.TypeToken;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -97,7 +99,8 @@ public class VehicleManager implements MQTTListener
 		}
 	}
 
-	public VehicleManager(BackendParameters parameters, MapManager mapManager)
+	@Autowired
+	public VehicleManager(@Qualifier("backend") BackendParameters parameters, MapManager mapManager)
 	{
 		this.parameters = parameters;
 		this.log = new LogbackWrapper(VehicleManager.class);

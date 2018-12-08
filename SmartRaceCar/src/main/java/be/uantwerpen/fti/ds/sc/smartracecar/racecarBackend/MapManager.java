@@ -3,6 +3,7 @@ package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.google.gson.reflect.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +30,6 @@ public class MapManager implements MQTTListener
 	private LogbackWrapper log;
 	private MapManagerParameters params;
 
-	@Autowired
 	private VehicleManager vehicleManager;
 
 	private MQTTUtils mqttUtils;
@@ -39,7 +39,8 @@ public class MapManager implements MQTTListener
 	private String currentMap;
 	private String mapPath;
 
-	public MapManager(MapManagerParameters params, VehicleManager vehicleManager)
+	@Autowired
+	public MapManager(MapManagerParameters params, @Lazy VehicleManager vehicleManager)
 	{
 		this.log = new LogbackWrapper(MapManager.class);
 		this.params = params;

@@ -1,217 +1,31 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
-import be.uantwerpen.fti.ds.sc.smartracecar.common.LogbackWrapper;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.Parameters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.util.Optional;
-import java.util.Properties;
+import org.springframework.context.annotation.Bean;
 
 @SpringBootApplication
 public class RacecarBackend
 {
 	private static final String DEFAULT_PROPERTIES_FILE = "RacecarBackend.properties";
 
-	private LogbackWrapper log;
+	private Logger log;
 	private JobDispatcher jobDispatcher;
 	private MapManager mapManager;
 	private VehicleManager vehicleManager;
 
-	/*
-	@Deprecated
-	private FileInputStream openFileStream(String file) throws IOException
+	@Autowired
+	public RacecarBackend(JobDispatcher jobDispatcher, MapManager mapManager, VehicleManager vehicleManager)
 	{
-		try
-		{
-			String decodedPath = URLDecoder.decode(file, "UTF-8");
-			return new FileInputStream(decodedPath);
-		} catch (UnsupportedEncodingException uee)
-		{
-			// Catch, Log and re-throw
-			this.log.warning("RACECAR-BACKEND", "Could not decode file path. UnsupportedEncodingException: \"" + uee.getMessage() + "\"");
-			IOException ioe = new IOException(uee.getMessage());
-			ioe.setStackTrace(uee.getStackTrace());
-			throw ioe;
-		} catch (IOException ioe)
-		{
-			// Catch, Log and re-throw
-			this.log.warning("RACECAR-BACKEND", "Could not open file. IOException: \"" + ioe.getMessage() + "\"");
-			throw ioe;
-		}
-	}
-
-	@Deprecated
-	private Parameters readParameters(Optional<String> propertiesFile)
-	{
-		Properties prop = new Properties();
-		InputStream input = null;
-
-		try
-		{
-			input = this.openFileStream(propertiesFile.orElse(DEFAULT_PROPERTIES_FILE));
-			prop.load(input);
-		} catch (IOException ioe)
-		{
-			this.log.warning("RACECAR-BACKEND", "Could not open config file. Loading default settings. IOException: \"" + ioe.getMessage() + "\"");
-			return new BackendParameters(true, true);
-		}
-
-		String mqttBroker = "tcp://" + prop.getProperty("mqttBroker");
-		String mqttUsername = prop.getProperty("mqqtUsername");
-		String mqttPassword = prop.getProperty("mqttPassword");
-		String restCarmanagerURL = prop.getProperty("restURLBackend");
-
-		this.log.info("RACECAR-BACKEND", "Standard config loaded.");
-
-		Parameters parameters = new Parameters(mqttBroker, mqttUsername, mqttPassword, restCarmanagerURL);
-
-		try
-		{
-			input.close();
-		} catch (IOException ioe)
-		{
-			this.log.warning("RACECAR-BACKEND", "Could not close config file. Loading default settings. IOException: \"" + ioe.getMessage() + "\"");
-		}
-
-		return parameters;
-	}
-
-	@Deprecated
-	private BackendParameters readBackendParameters(Optional<String> propertiesFile)
-	{
-		Properties prop = new Properties();
-		InputStream input = null;
-
-		try
-		{
-			input = this.openFileStream(propertiesFile.orElse(DEFAULT_PROPERTIES_FILE));
-			prop.load(input);
-		} catch (IOException ioe)
-		{
-			this.log.warning("RACECAR-BACKEND", "Could not open config file. Loading default settings. IOException: \"" + ioe.getMessage() + "\"");
-			return new BackendParameters(true, true);
-		}
-
-		boolean debugWithoutBackBone = Boolean.parseBoolean(prop.getProperty("debugWithoutBackBone"));
-		boolean debugWithoutMAAS = Boolean.parseBoolean(prop.getProperty("debugWithoutMAAS"));
-
-		String restURLMAAS = prop.getProperty("restURLMAAS");
-		String restURLBackBone = prop.getProperty("restURLBackBone");
-
-		this.log.info("RACECAR-BACKEND", "Backend config loaded.");
-
-		BackendParameters backendParameters = new BackendParameters(this.readParameters(propertiesFile), debugWithoutMAAS, debugWithoutBackBone, restURLMAAS, restURLBackBone);
-
-		try
-		{
-			input.close();
-		} catch (IOException ioe)
-		{
-			this.log.warning("RACECAR-BACKEND", "Could not close config file. Loading default settings. IOException: \"" + ioe.getMessage() + "\"");
-		}
-
-		return backendParameters;
-	}
-
-	@Deprecated
-	private MapManagerParameters readMapManagerParameters(Optional<String> propertiesFile)
-	{
-		Properties prop = new Properties();
-		InputStream input = null;
-
-		try
-		{
-			input = this.openFileStream(propertiesFile.orElse(DEFAULT_PROPERTIES_FILE));
-			prop.load(input);
-		} catch (IOException ioe)
-		{
-			this.log.warning("RACECAR-BACKEND", "Could not open config file. Loading default settings. IOException: \"" + ioe.getMessage() + "\"");
-			return new MapManagerParameters();
-		}
-
-		String currentMap = prop.getProperty("currentMap");
-		String mapPath = prop.getProperty("mapsPath");
-
-		this.log.info("RACECAR-BACKEND", "Map Manager config loaded.");
-
-		MapManagerParameters mapManagerParameters = new MapManagerParameters(this.readBackendParameters(propertiesFile), currentMap, mapPath);
-		try
-		{
-			input.close();
-		} catch (IOException ioe)
-		{
-			this.log.warning("RACECAR-BACKEND", "Could not close config file. Loading default settings. IOException: \"" + ioe.getMessage() + "\"");
-		}
-
-		return mapManagerParameters;
-	}
-
-	/*
-	public RacecarBackend()
-	{
-		this(new String[0]);
-	}
-	*/
-
-	public RacecarBackend(@Autowired LogbackWrapper logbackWrapper, @Autowired JobDispatcher jobDispatcher, @Autowired MapManager mapManager, @Autowired VehicleManager vehicleManager)
-	{
-		this.log = logbackWrapper;
+		this.log = LoggerFactory.getLogger(RacecarBackend.class);
 		this.jobDispatcher = jobDispatcher;
 		this.mapManager = mapManager;
 		this.vehicleManager = vehicleManager;
 	}
-
-	/*
-	public RacecarBackend(String[] args)
-	{
-		Optional<String> configPath;
-
-		if (args.length == 1)
-		{
-			configPath = Optional.of(args[0]);
-		}
-		else
-		{
-			configPath = Optional.empty();
-		}
-
-		this.log = new LogbackWrapper(RacecarBackend.class);
-
-		this.log.info("RACECAR-BACKEND", "Reading configuration files...");
-
-		//Parameters parameters = this.readParameters(configPath);
-		//BackendParameters backendParameters = this.readBackendParameters(configPath);
-		//MapManagerParameters mapManagerParameters = this.readMapManagerParameters(configPath);
-
-		this.log.info("RACECAR-BACKEND", "Starting MapManager...");
-
-		this.mapManager = new MapManager(mapManagerParameters, null);
-
-		this.log.info("RACECAR-BACKEND", "Creating VehicleManager...");
-
-		this.vehicleManager = new VehicleManager(backendParameters, this.mapManager);
-
-		this.log.info("RACECAR-BACKEND", "Setting map managers' VehicleManager...");
-
-		this.mapManager.setVehicleManager(this.vehicleManager);
-
-		this.log.info("RACECAR-BACKEND", "Starting JobDispatcher...");
-
-		this.jobDispatcher = new JobDispatcher(parameters, this.mapManager, this.vehicleManager);
-
-		this.log.info("RACECAR-BACKEND", "Starting VehicleManager");
-		this.vehicleManager.start();
-
-		this.log.info("RACECAR-BACKEND", "Done constructing RacecarBackend...");
-	}
-	*/
 
 	public static void main(String[] args)
 	{
