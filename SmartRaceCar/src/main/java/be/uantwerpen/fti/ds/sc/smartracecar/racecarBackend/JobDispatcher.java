@@ -1,6 +1,7 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -18,6 +19,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 	private VehicleManager vehicleManager;
 	private MQTTUtils mqttUtils;
 
+	@Autowired
 	public JobDispatcher(Parameters parameters, MapManager mapManager, VehicleManager vehicleManager)
 	{
 		this.log = new LogbackWrapper(JobDispatcher.class);

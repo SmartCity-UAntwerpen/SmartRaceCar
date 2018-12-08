@@ -2,6 +2,7 @@ package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.LogbackWrapper;
 import be.uantwerpen.fti.ds.sc.smartracecar.common.Parameters;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -23,6 +24,8 @@ public class RacecarBackend
 	private MapManager mapManager;
 	private VehicleManager vehicleManager;
 
+	/*
+	@Deprecated
 	private FileInputStream openFileStream(String file) throws IOException
 	{
 		try
@@ -44,6 +47,7 @@ public class RacecarBackend
 		}
 	}
 
+	@Deprecated
 	private Parameters readParameters(Optional<String> propertiesFile)
 	{
 		Properties prop = new Properties();
@@ -79,6 +83,7 @@ public class RacecarBackend
 		return parameters;
 	}
 
+	@Deprecated
 	private BackendParameters readBackendParameters(Optional<String> propertiesFile)
 	{
 		Properties prop = new Properties();
@@ -115,6 +120,7 @@ public class RacecarBackend
 		return backendParameters;
 	}
 
+	@Deprecated
 	private MapManagerParameters readMapManagerParameters(Optional<String> propertiesFile)
 	{
 		Properties prop = new Properties();
@@ -147,11 +153,22 @@ public class RacecarBackend
 		return mapManagerParameters;
 	}
 
+	/*
 	public RacecarBackend()
 	{
 		this(new String[0]);
 	}
+	*/
 
+	public RacecarBackend(@Autowired LogbackWrapper logbackWrapper, @Autowired JobDispatcher jobDispatcher, @Autowired MapManager mapManager, @Autowired VehicleManager vehicleManager)
+	{
+		this.log = logbackWrapper;
+		this.jobDispatcher = jobDispatcher;
+		this.mapManager = mapManager;
+		this.vehicleManager = vehicleManager;
+	}
+
+	/*
 	public RacecarBackend(String[] args)
 	{
 		Optional<String> configPath;
@@ -169,9 +186,9 @@ public class RacecarBackend
 
 		this.log.info("RACECAR-BACKEND", "Reading configuration files...");
 
-		Parameters parameters = this.readParameters(configPath);
-		BackendParameters backendParameters = this.readBackendParameters(configPath);
-		MapManagerParameters mapManagerParameters = this.readMapManagerParameters(configPath);
+		//Parameters parameters = this.readParameters(configPath);
+		//BackendParameters backendParameters = this.readBackendParameters(configPath);
+		//MapManagerParameters mapManagerParameters = this.readMapManagerParameters(configPath);
 
 		this.log.info("RACECAR-BACKEND", "Starting MapManager...");
 
@@ -194,6 +211,7 @@ public class RacecarBackend
 
 		this.log.info("RACECAR-BACKEND", "Done constructing RacecarBackend...");
 	}
+	*/
 
 	public static void main(String[] args)
 	{
