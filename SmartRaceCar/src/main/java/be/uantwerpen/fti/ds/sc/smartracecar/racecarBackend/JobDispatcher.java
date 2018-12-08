@@ -30,7 +30,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 
 
 	@RequestMapping(value = "/carmanager/executeJob.{jobId}/{vehicleId}/{startId}/{endId}", method = RequestMethod.GET, produces = MediaType.TEXT_PLAIN)
-	public @ResponseBody ResponseEntity<String> jobRequest(@PathVariable("jobId") long jobId, @PathVariable("vehicleId") long vehicleId, @PathVariable("startId") long startId, @PathVariable("endId") long endId) throws IOException
+	public @ResponseBody ResponseEntity<String> jobRequest(@PathVariable("jobId") long jobId, @PathVariable("vehicleId") long vehicleId, @PathVariable("startId") long startId, @PathVariable("endId") long endId)
 	{
 		Job job = new Job(jobId, startId, endId, vehicleId);
 
