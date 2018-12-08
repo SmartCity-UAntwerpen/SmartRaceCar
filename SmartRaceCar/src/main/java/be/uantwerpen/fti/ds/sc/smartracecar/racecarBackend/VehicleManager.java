@@ -100,7 +100,7 @@ public class VehicleManager implements MQTTListener
 	public VehicleManager(BackendParameters parameters, MapManager mapManager)
 	{
 		this.parameters = parameters;
-		this.log = new LogbackWrapper();
+		this.log = new LogbackWrapper(VehicleManager.class);
 
 		this.log.info("VEHICLE-MAN", "Setting up MQTT...");
 

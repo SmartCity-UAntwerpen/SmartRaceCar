@@ -32,7 +32,7 @@ public class MapManager
 	{
 		this.core = core;
 
-		this.log = new LogbackWrapper();
+		this.log = new LogbackWrapper(MapManager.class);
 
 		this.loadedMaps = new HashMap<>();
 		this.loadedMaps = loadMaps(findMapsFolder());

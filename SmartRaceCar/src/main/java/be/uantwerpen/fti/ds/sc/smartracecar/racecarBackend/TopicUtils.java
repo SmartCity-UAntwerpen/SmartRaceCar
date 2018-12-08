@@ -21,7 +21,7 @@ public class TopicUtils
 	 */
 	public static long getCarId(String topic)
 	{
-		LogbackWrapper log = new LogbackWrapper();
+		LogbackWrapper log = new LogbackWrapper(TopicUtils.class);
 		Matcher matcher = MQTTConstants.CAR_ID_REGEX.matcher(topic);
 
 		if (matcher.matches())

@@ -25,7 +25,7 @@ public class MQTTUtils implements MqttCallback
 	 */
 	public MQTTUtils(String brokerURL, String username, String password, MQTTListener listener)
 	{
-		this.log = new LogbackWrapper();
+		this.log = new LogbackWrapper(MQTTUtils.class);
 
 		MqttConnectOptions options = new MqttConnectOptions();
 		this.listener = listener;

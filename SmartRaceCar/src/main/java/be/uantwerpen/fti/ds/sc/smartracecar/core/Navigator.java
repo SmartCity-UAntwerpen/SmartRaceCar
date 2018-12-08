@@ -19,7 +19,7 @@ public class Navigator
 
 	public Navigator(Core core)
 	{
-		this.log = new LogbackWrapper();
+		this.log = new LogbackWrapper(Navigator.class);
 
 		this.core = core;
 

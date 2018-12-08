@@ -14,7 +14,7 @@ public class WeightManager
 
 	public WeightManager(Core core)
 	{
-		this.log = new LogbackWrapper();
+		this.log = new LogbackWrapper(WeightManager.class);
 		this.core = core;
 	}
 

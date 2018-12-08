@@ -16,7 +16,7 @@ public class FileUtils
 
 	public FileUtils()
 	{
-		this.log = new LogbackWrapper();
+		this.log = new LogbackWrapper(FileUtils.class);
 	}
 
 	/**

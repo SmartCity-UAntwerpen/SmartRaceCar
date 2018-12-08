@@ -46,7 +46,7 @@ class SimDeployer implements TCPListener
 		System.out.println("-------------------------------------------------------------------");
 		System.out.println("----------------- F1 Racecar SimDeployer - v1.0 -------------------");
 		System.out.println("-------------------------------------------------------------------");
-		this.log = new LogbackWrapper();
+		this.log = new LogbackWrapper(SimDeployer.class);
 		loadConfig();
 		this.jarPath = jarPath;
 		System.out.println(jarPath);

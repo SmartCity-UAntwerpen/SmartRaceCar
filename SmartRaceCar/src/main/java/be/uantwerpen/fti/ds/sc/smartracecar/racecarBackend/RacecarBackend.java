@@ -16,7 +16,7 @@ import java.util.Properties;
 @SpringBootApplication
 public class RacecarBackend
 {
-	private static final String DEFAULT_PROPERTIES_FILE = "RaceCarBackend.properties";
+	private static final String DEFAULT_PROPERTIES_FILE = "RacecarBackend.properties";
 
 	private LogbackWrapper log;
 	private JobDispatcher jobDispatcher;
@@ -147,42 +147,6 @@ public class RacecarBackend
 		return mapManagerParameters;
 	}
 
-	/**
-	 * Start the build-in TomCat Server.
-	 */
-	/*
-	private void startTomCatServer()
-	{
-		Thread tomcat = new Thread()
-		{
-			public void run()
-			{
-				try
-				{
-					new TomCatLauncher().start();
-				} catch (InterruptedException v)
-				{
-					System.out.println(v);
-				} catch (Exception e)
-				{
-					e.printStackTrace();
-				}
-			}
-		};
-		tomcat.start();
-	}
-	*/
-
-	/*
-	@GET
-	@Path("running")
-	@Produces("text/plain")
-	public String running()
-	{
-		return "true";
-	}
-	*/
-
 	public RacecarBackend()
 	{
 		this(new String[0]);
@@ -201,7 +165,7 @@ public class RacecarBackend
 			configPath = Optional.empty();
 		}
 
-		this.log = new LogbackWrapper();
+		this.log = new LogbackWrapper(RacecarBackend.class);
 
 		this.log.info("RACECAR-BACKEND", "Starting Tomcat Server...");
 

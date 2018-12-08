@@ -51,7 +51,7 @@ class SimKernel implements TCPListener
 		System.out.println("-------------------------------------------------------------------");
 		System.out.println("------------------ F1 Racecar SimKernel - v1.0 --------------------");
 		System.out.println("-------------------------------------------------------------------");
-		this.log = new LogbackWrapper();
+		this.log = new LogbackWrapper(SimKernel.class);
 
 		loadConfig();
 		this.log.info("SIMKERNEL", "Startup parameters: TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);

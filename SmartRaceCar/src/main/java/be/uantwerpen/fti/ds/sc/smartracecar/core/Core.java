@@ -61,7 +61,7 @@ class Core implements TCPListener, MQTTListener
 
 		this.params = params;
 
-		this.log = new LogbackWrapper();
+		this.log = new LogbackWrapper(Core.class);
 
 		Core.startPoint = startPoint;
 

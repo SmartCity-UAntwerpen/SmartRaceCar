@@ -27,7 +27,7 @@ public class RESTUtils
 	 */
 	public RESTUtils(String URL)
 	{
-		this.log = new LogbackWrapper();
+		this.log = new LogbackWrapper(RESTUtils.class);
 
 		Client client = ClientBuilder.newClient();
 		this.webTarget = client.target(URL);

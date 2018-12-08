@@ -30,7 +30,7 @@ public class JSONUtils
 			return true;
 		} catch (com.google.gson.JsonSyntaxException ex)
 		{
-			LogbackWrapper log = new LogbackWrapper();
+			LogbackWrapper log = new LogbackWrapper(JSONUtils.class);
 			log.warning("JSON", "Not a valid JSON string." + jsonInString + "." + ex);
 			return false;
 		}
