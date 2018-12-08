@@ -56,7 +56,7 @@ public class NavigationManager implements MQTTListener
 	public NavigationManager(VehicleManager vehicleManager, MapManager mapManager, Parameters parameters)
 	{
 		this.parameters = parameters;
-		this.log = new LogbackWrapper();
+		this.log = new LogbackWrapper(NavigationManager.class);
 
 		this.log.info("NAVIGATION-MAN", "Setting up MQTT...");
 

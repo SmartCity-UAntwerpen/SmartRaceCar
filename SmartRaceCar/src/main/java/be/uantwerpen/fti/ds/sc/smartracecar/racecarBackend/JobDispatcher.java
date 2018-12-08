@@ -22,7 +22,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 
 	public JobDispatcher(Parameters parameters, MapManager mapManager, VehicleManager vehicleManager)
 	{
-		this.log = new LogbackWrapper();
+		this.log = new LogbackWrapper(JobDispatcher.class);
 		this.mapManager = mapManager;
 		this.vehicleManager = vehicleManager;
 		this.mqttUtils = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);

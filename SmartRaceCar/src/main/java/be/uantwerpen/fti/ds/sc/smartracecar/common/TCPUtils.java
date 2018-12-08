@@ -32,7 +32,7 @@ public class TCPUtils extends Thread
 	 */
 	public TCPUtils(int port, TCPListener listener) throws IOException
 	{
-		this.log = new LogbackWrapper();
+		this.log = new LogbackWrapper(TCPUtils.class);
 		serverSocket = new ServerSocket(port);
 		this.listener = listener;
 		this.ackNack = true;
@@ -211,7 +211,7 @@ public class TCPUtils extends Thread
 	 */
 	public static void sendUpdate(String data, int port)
 	{
-		LogbackWrapper log = new LogbackWrapper();
+		LogbackWrapper log = new LogbackWrapper(TCPUtils.class);
 		Socket clientSocket = null;
 		DataInputStream inputLine = new DataInputStream(new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8)));
 		byte[] bytes = new byte[100];

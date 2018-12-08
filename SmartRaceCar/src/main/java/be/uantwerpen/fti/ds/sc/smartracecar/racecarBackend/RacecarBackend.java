@@ -201,7 +201,7 @@ public class RacecarBackend
 			configPath = Optional.empty();
 		}
 
-		this.log = new LogbackWrapper();
+		this.log = new LogbackWrapper(RacecarBackend.class);
 
 		this.log.info("RACECAR-BACKEND", "Starting Tomcat Server...");
 

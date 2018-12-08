@@ -26,7 +26,7 @@ public class HeartbeatPublisher extends Thread
 	 */
 	public HeartbeatPublisher(MQTTUtils mqttUtils, long ID)
 	{
-		this.log = new LogbackWrapper();
+		this.log = new LogbackWrapper(HeartbeatPublisher.class);
 
 		this.mqttUtils = mqttUtils;
 		this.ID = ID;

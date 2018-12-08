@@ -41,7 +41,7 @@ public class MapManager implements MQTTListener
 
 	public MapManager(MapManagerParameters params, VehicleManager vehicleManager)
 	{
-		this.log = new LogbackWrapper();
+		this.log = new LogbackWrapper(MapManager.class);
 		this.params = params;
 
 		this.log.info("MAP-MAN", "Getting settings from parameter object.");

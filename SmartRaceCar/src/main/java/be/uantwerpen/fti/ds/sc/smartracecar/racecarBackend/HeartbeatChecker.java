@@ -1,6 +1,7 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
+import be.uantwerpen.fti.ds.sc.smartracecar.core.HeartbeatPublisher;
 import com.google.gson.reflect.TypeToken;
 
 //import javax.servlet.http.HttpServletResponse;
@@ -24,7 +25,7 @@ class HeartbeatChecker extends Thread
 	 */
 	public HeartbeatChecker(String url)
 	{
-		this.log = new LogbackWrapper();
+		this.log = new LogbackWrapper(HeartbeatChecker.class);
 
 		this.log.info("HEARTBEAT-CHECKER", "Creating REST Utils for \"" + url + "\"...");
 
