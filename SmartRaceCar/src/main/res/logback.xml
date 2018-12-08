@@ -13,7 +13,7 @@
         <!-- set immediateFlush to false for much higher logging throughput -->
         <immediateFlush>true</immediateFlush>
         <encoder>
-            <pattern>%d{HH:mm:ss} [%-10thread] %-7level - %msg%n</pattern>
+            <pattern>%d{HH:mm:ss} [%-10thread] %-7level %logger{128} - %msg%n</pattern>
         </encoder>
     </appender>
 
