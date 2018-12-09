@@ -2,6 +2,7 @@ package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.google.gson.reflect.TypeToken;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import java.lang.reflect.Type;
@@ -21,13 +22,14 @@ class HeartbeatChecker extends Thread
 	 *
 	 * @param url RestURL of the backend object
 	 */
-	public HeartbeatChecker(String url)
+	@Autowired
+	public HeartbeatChecker(Parameters parameters)
 	{
 		this.log = new LogbackWrapper(HeartbeatChecker.class);
 
-		this.log.info("HEARTBEAT-CHECKER", "Creating REST Utils for \"" + url + "\"...");
+		this.log.info("HEARTBEAT-CHECKER", "Creating REST Utils for \"" + parameters.getRESTCarmanagerURL() + "\"...");
 
-		this.restUtils = new RESTUtils(url);
+		this.restUtils = new RESTUtils(parameters.getRESTCarmanagerURL());
 	}
 
 	@Scheduled(fixedRate = 5000)
