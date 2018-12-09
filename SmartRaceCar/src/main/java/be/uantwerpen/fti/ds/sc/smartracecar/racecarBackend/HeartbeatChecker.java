@@ -2,6 +2,8 @@ package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.google.gson.reflect.TypeToken;
+import org.springframework.scheduling.annotation.Scheduled;
+
 import java.lang.reflect.Type;
 import java.util.Date;
 import java.util.HashMap;
@@ -28,9 +30,30 @@ class HeartbeatChecker extends Thread
 		this.restUtils = new RESTUtils(url);
 	}
 
+	@Scheduled(fixedRate = 5000)
+	private void checkBeats()
+	{
+		this.log.info("HEARTBEAT-CHECKER", "Heartbeats are being checked...");
+		Type typeOfHashMap = new TypeToken<HashMap<Long, Vehicle>>()
+		{
+		}.getType();
+		HashMap<Long, Vehicle> vehicles = (HashMap<Long, Vehicle>) JSONUtils.getObjectWithKeyWord(restUtils.getJSON("getVehicles"), typeOfHashMap);
+		Date currentTime = new Date();
+		for (Long ID : vehicles.keySet())
+		{
+			if ((currentTime.getTime() - vehicles.get(ID).getHeartbeat().getTime()) > 90000) //longer than 90 seconds
+			{
+				restUtils.getCall("delete/" + ID);
+				this.log.warning("HEARTBEAT-CHECKER", "Vehicle with ID: " + ID + " was removed since it hasn't responded for over 90s");
+			}
+		}
+		this.log.info("HEARTBEAT-CHECKER", "All heartbeats were checked.");
+	}
+
 	/**
 	 * start the Checker thread
 	 */
+	@Deprecated
 	public void run()
 	{
 		this.log.info("HEARTBEAT-CHECKER", "Heartbeatchecker was started");
