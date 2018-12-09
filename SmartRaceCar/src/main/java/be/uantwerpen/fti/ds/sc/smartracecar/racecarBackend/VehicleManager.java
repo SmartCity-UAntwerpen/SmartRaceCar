@@ -2,6 +2,8 @@ package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.google.gson.reflect.TypeToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -34,7 +36,7 @@ public class VehicleManager implements MQTTListener
 	}).getType();
 
 	private BackendParameters parameters;
-	private LogbackWrapper log;
+	private Logger log;
 	private MQTTUtils mqttUtils;
 	private RESTUtils MaaSRestUtils;
 	private RESTUtils backboneRestUtils;
@@ -103,7 +105,7 @@ public class VehicleManager implements MQTTListener
 	public VehicleManager(@Qualifier("backend") BackendParameters parameters, MapManager mapManager)
 	{
 		this.parameters = parameters;
-		this.log = new LogbackWrapper(VehicleManager.class);
+		this.log = LoggerFactory.getLogger(this.getClass());
 
 		this.log.info("VEHICLE-MAN", "Setting up MQTT...");
 
@@ -132,13 +134,6 @@ public class VehicleManager implements MQTTListener
 		this.vehicles = new HashMap<>();
 	}
 
-	@Deprecated
-	public void start()
-	{
-		this.log.info("VEHICLE-MAN", "Starting Heartbeat Manager...");
-		this.heartbeatChecker.start();
-	}
-
 	/**
 	 * Checks whether or not a vehicle exists.
 	 *
@@ -148,17 +143,6 @@ public class VehicleManager implements MQTTListener
 	public boolean exists(long vehicleId)
 	{
 		return this.vehicles.containsKey(vehicleId);
-	}
-
-	/**
-	 * Register a vehicle with the vehicle manager
-	 *
-	 * @param id
-	 * @param vehicle
-	 */
-	public void register(long id, Vehicle vehicle)
-	{
-		this.vehicles.put(id, vehicle);
 	}
 
 	/**
@@ -197,7 +181,7 @@ public class VehicleManager implements MQTTListener
 	 *      REST Endpoints
 	 *
 	 */
-	@RequestMapping(value="/carmanager/delete/{id}", method= RequestMethod.GET)
+	@RequestMapping(value="/carmanager/delete", method= RequestMethod.GET)
 	public @ResponseBody ResponseEntity<String> delete(@RequestParam("id") long id)
 	{
 		if (this.vehicles.containsKey(id))
@@ -216,22 +200,20 @@ public class VehicleManager implements MQTTListener
 		} else
 		{
 			String errorString = "Got delete request for vehicle " + Long.toString(id) + ", but vehicle doesn't exist.";
-			this.log.warning("VEHICLE-MAN", errorString);
+			this.log.warn(errorString);
 			//response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
 	}
 
-	@RequestMapping(value="/carmanager/register/{startwaypoint}", method= RequestMethod.GET, produces = MediaType.TEXT_PLAIN)
-	public @ResponseBody ResponseEntity<String> register(@RequestParam("startwaypoint") long startwaypoint)
+	@RequestMapping(value="/carmanager/register", method= RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
+	public @ResponseBody ResponseEntity<String> register(@RequestParam("startWaypoint") long startWaypoint)
 	{
-		if (!this.mapManager.exists(startwaypoint))
+		if (!this.mapManager.exists(startWaypoint))
 		{
 			String errorString = "Tried to register vehicle with non-existent start id.";
-			this.log.error("VEHICLE-MAN", errorString);
+			this.log.error(errorString);
 
-			//response.sendError(HttpServletResponse.SC_BAD_REQUEST, errorString);
-			//return Response.status(Response.Status.BAD_REQUEST).build();
 			return new ResponseEntity<>(errorString, HttpStatus.BAD_REQUEST);
 		}
 
@@ -240,17 +222,17 @@ public class VehicleManager implements MQTTListener
 		if (this.parameters.isBackboneDisabled())
 		{
 			newVehicleId = this.vehicles.size();
-		} else
+		}
+		else
 		{
 			newVehicleId = Long.parseLong(this.backboneRestUtils.getJSON("bot/newBot/car"));
 		}
 
-		this.vehicles.put(newVehicleId, new Vehicle(newVehicleId, startwaypoint));
+		this.vehicles.put(newVehicleId, new Vehicle(newVehicleId, startWaypoint));
 
-		this.log.info("VEHICLE-MAN", "Registered new vehicle (" + Long.toString(newVehicleId) + "), Current Waypoint: " + Long.toString(startwaypoint));
+		this.log.info("Registered new vehicle (" + newVehicleId + "), Current Waypoint: " + startWaypoint);
 
 		return new ResponseEntity<>(Long.toString(newVehicleId), HttpStatus.OK);
-		//return Response.status(Response.Status.OK).entity(newVehicleId).type("text/plain").build();
 	}
 
 	@RequestMapping(value="/carmanager/posAll", method=RequestMethod.GET, produces = MediaType.APPLICATION_JSON)

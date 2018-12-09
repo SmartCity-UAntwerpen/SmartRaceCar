@@ -35,7 +35,9 @@ class HeartbeatChecker
 		{
 			if ((currentTime.getTime() - vehicles.get(ID).getHeartbeat().getTime()) > 90000) //longer than 90 seconds
 			{
-				restUtils.getCall("delete/" + ID);
+				java.util.Map<String, Object> parameters = new HashMap<>();
+				parameters.put("id", ID);
+				restUtils.getCall("delete", parameters);
 				this.log.warn("Vehicle with ID: " + ID + " was removed since it hasn't responded for over 90s");
 			}
 		}
