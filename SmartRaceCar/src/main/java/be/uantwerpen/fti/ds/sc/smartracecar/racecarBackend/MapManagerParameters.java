@@ -1,8 +1,13 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
+import org.springframework.beans.factory.annotation.Value;
+
 public class MapManagerParameters extends BackendParameters
 {
+	@Value("${Maps.current}")
 	private String currentMap;
+
+	@Value("${Maps.path}")
 	private String mapPath;
 
 	public MapManagerParameters()
@@ -12,6 +17,7 @@ public class MapManagerParameters extends BackendParameters
 		this.mapPath = "release/maps";
 	}
 
+	@Deprecated
 	public MapManagerParameters(BackendParameters backendParameters, String currentMap, String mapPath)
 	{
 		super(backendParameters);

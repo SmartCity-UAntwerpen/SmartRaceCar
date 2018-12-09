@@ -2,6 +2,8 @@ package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.google.gson.reflect.TypeToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -34,7 +36,7 @@ public class NavigationManager implements MQTTListener
 	}).getType();
 
 	private Parameters parameters;
-	private LogbackWrapper log;
+	private Logger log;
 	private MQTTUtils mqttUtils;
 	private List<Cost> costList;
 	private VehicleManager vehicleManager;
@@ -55,14 +57,14 @@ public class NavigationManager implements MQTTListener
 	public NavigationManager(VehicleManager vehicleManager, MapManager mapManager, Parameters parameters)
 	{
 		this.parameters = parameters;
-		this.log = new LogbackWrapper(NavigationManager.class);
+		this.log = LoggerFactory.getLogger(NavigationManager.class);
 
-		this.log.info("NAVIGATION-MAN", "Setting up MQTT...");
+		this.log.info("Setting up MQTT...");
 
 		this.mqttUtils = new MQTTUtils(this.parameters.getMqttBroker(), this.parameters.getMqttUserName(), this.parameters.getMqttPassword(), this);
 		this.mqttUtils.subscribeToTopic(this.parameters.getMqttTopic());
 
-		this.log.info("NAVIGATION-MAN", "Setting fields and creating cost list...");
+		this.log.info("Setting fields and creating cost list...");
 
 		this.costList = new ArrayList<>();
 		this.vehicleManager = vehicleManager;
@@ -83,7 +85,7 @@ public class NavigationManager implements MQTTListener
 		if (!this.mapManager.exists(startId))
 		{
 			String errorString = "Request cost with non-existent start waypoint " + Long.toString(startId) + ".";
-			this.log.error("NAVIGATION-MAN", errorString);
+			this.log.error(errorString);
 
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
@@ -91,7 +93,7 @@ public class NavigationManager implements MQTTListener
 		if (!this.mapManager.exists(endId))
 		{
 			String errorString = "Request cost with non-existent end waypoint " + Long.toString(endId) + ".";
-			this.log.error("NAVIGATION-MAN", errorString);
+			this.log.error(errorString);
 
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
@@ -99,7 +101,7 @@ public class NavigationManager implements MQTTListener
 		if (this.vehicleManager.getNumVehicles() == 0)
 		{
 			String errorString = "No vehicles exist" + Long.toString(endId) + ".";
-			this.log.error("NAVIGATION-MAN", errorString);
+			this.log.error(errorString);
 
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
@@ -117,7 +119,7 @@ public class NavigationManager implements MQTTListener
 			if (vehicle.isAvailable())
 			{
 				totalVehicles++;
-				this.mqttUtils.publishMessage("racecar/" + Long.toString(vehicle.getID()) + "/costrequest", Long.toString(startId) + " " + Long.toString(endId));
+				this.mqttUtils.publishMessage("racecar/" + vehicle.getID() + "/costrequest", startId + " " + endId);
 			}
 		}
 
@@ -125,7 +127,7 @@ public class NavigationManager implements MQTTListener
 		while ((this.costList.size() < totalVehicles) && (timer != 100))
 		{
 			// Wait for each vehicle to complete the request or timeout after 100 attempts.
-			this.log.info("NAVIGATION-MAN", "waiting for vehicles to complete request.");
+			this.log.info("waiting for vehicles to complete request.");
 			Thread.sleep(200);
 			timer++;
 		}
@@ -139,10 +141,9 @@ public class NavigationManager implements MQTTListener
 
 		this.costList.clear();
 
-		this.log.info("NAVIGATION-MAN", "Cost calculation request completed.");
+		this.log.info("Cost calculation request completed.");
 
 		return new ResponseEntity<>(JSONUtils.arrayToJSONString(costCopy), HttpStatus.OK);
-		//return Response.status(Response.Status.OK).entity(JSONUtils.arrayToJSONString(costCopy)).type("application/json").build();
 	}
 
 	/*
@@ -174,9 +175,10 @@ public class NavigationManager implements MQTTListener
 					int percentage = this.vehicleManager.get(id).getLocation().getPercentage();
 					Location location = new Location(id, locationId, locationId, percentage);
 					this.vehicleManager.get(id).setLocation(location);
-				} catch (Exception vehicleNotFoundException)
+				}
+				catch (Exception vehicleNotFoundException)
 				{
-					this.log.error("NAVIGATION-MAN", "Tried to update location on non-existent vehicle.");
+					this.log.error("Tried to update location on non-existent vehicle.", vehicleNotFoundException);
 				}
 			}
 		}

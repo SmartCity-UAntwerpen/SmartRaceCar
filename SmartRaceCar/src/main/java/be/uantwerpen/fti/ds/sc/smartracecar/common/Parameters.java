@@ -1,24 +1,37 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.common;
 
+import org.springframework.beans.factory.annotation.Value;
+
 public class Parameters
 {
+	@Value("${mqtt.broker}")
 	private String mqttBroker;
+
+	@Value("${mqtt.username}")
 	private String mqttUserName;
+
+	@Value("${mqtt.password}")
 	private String mqttPassword;
+
+	@Value("${mqtt.topic}")
 	private String mqttTopic;
 
+	@Value("${Racecar.URL}")
 	private String restCarmanagerURL;
 
 	public Parameters()
 	{
+		/*
 		this(
 				"tcp://smartcity.ddns.net:1883",
 				"root",
 				"smartcity",
 				"http://smartcity.ddns.net:8081/carmanager", "racecar/#"
 		);
+		*/
 	}
 
+	@Deprecated
 	public Parameters(String mqttBroker, String mqttUserName, String mqttPassword, String restCarmanagerURL)
 	{
 		this.mqttBroker = mqttBroker;
@@ -29,6 +42,7 @@ public class Parameters
 		this.restCarmanagerURL = restCarmanagerURL;
 	}
 
+	@Deprecated
 	public Parameters(String mqttBroker, String mqttUserName, String mqttPassword, String restCarmanagerURL, String mqttTopic)
 	{
 		this.mqttBroker = mqttBroker;
@@ -39,6 +53,7 @@ public class Parameters
 		this.restCarmanagerURL = restCarmanagerURL;
 	}
 
+	@Deprecated
 	public Parameters(Parameters parameters)
 	{
 		this.mqttBroker = parameters.getMqttBroker();
@@ -53,6 +68,7 @@ public class Parameters
 		return this.mqttBroker;
 	}
 
+	@Deprecated
 	public void setMqttBroker(String mqttBroker)
 	{
 		this.mqttBroker = mqttBroker;
@@ -63,6 +79,7 @@ public class Parameters
 		return this.mqttUserName;
 	}
 
+	@Deprecated
 	public void setMqttUserName(String mqttUserName)
 	{
 		this.mqttUserName = mqttUserName;
@@ -73,6 +90,7 @@ public class Parameters
 		return this.mqttPassword;
 	}
 
+	@Deprecated
 	public void setMqttPassword(String mqttPassword)
 	{
 		this.mqttPassword = mqttPassword;
@@ -83,6 +101,7 @@ public class Parameters
 		return this.restCarmanagerURL;
 	}
 
+	@Deprecated
 	public void setRestCarmanagerURL(String restCarmanagerURL)
 	{
 		this.restCarmanagerURL = restCarmanagerURL;
@@ -91,10 +110,5 @@ public class Parameters
 	public String getMqttTopic()
 	{
 		return this.mqttTopic;
-	}
-
-	public void setMqttTopic(String mqttTopic)
-	{
-		this.mqttTopic = mqttTopic;
 	}
 }

@@ -2,13 +2,14 @@ package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.google.gson.reflect.TypeToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import javax.ws.rs.core.MediaType;
 import java.lang.reflect.Type;
@@ -32,13 +33,12 @@ public class VehicleManager implements MQTTListener
 	}).getType();
 
 	private BackendParameters parameters;
-	private LogbackWrapper log;
+	private Logger log;
 	private MQTTUtils mqttUtils;
 	private RESTUtils MaaSRestUtils;
 	private RESTUtils backboneRestUtils;
 	private NavigationManager navigationManager;
 	private MapManager mapManager;                  // Non-Owning reference to Map Manager
-	private HeartbeatChecker heartbeatChecker;
 	private Map<Long, Vehicle> vehicles;
 
 	private String getAvailabilityString(boolean available)
@@ -81,58 +81,50 @@ public class VehicleManager implements MQTTListener
 
 				vehicle.getLocation().setPercentage(100);
 
-				log.info("VEHICLE-MAN", "Vehicle " + Long.toString(vehicleId) + " completed its route.");
+				this.log.info("Vehicle " + vehicleId + " completed its route.");
 
 				break;
 
 			case "error":
 				this.vehicles.get(vehicleId).setOccupied(false);
-				log.info("VEHICLE-MAN", "Vehicle " + Long.toString(vehicleId) + " completed its route with errors.");
+				this.log.info("Vehicle " + vehicleId + " completed its route with errors.");
 				break;
 
 			case "notcomplete":
 				this.vehicles.get(vehicleId).setOccupied(true);
-				log.info("VEHICLE-MAN", "Vehicle " + Long.toString(vehicleId) + " hasn't completed its route yet.");
+				this.log.info("Vehicle " + vehicleId + " hasn't completed its route yet.");
 				break;
 		}
 	}
 
-	public VehicleManager(BackendParameters parameters, MapManager mapManager)
+	@Autowired
+	public VehicleManager(@Qualifier("backend") BackendParameters parameters, MapManager mapManager)
 	{
 		this.parameters = parameters;
-		this.log = new LogbackWrapper(VehicleManager.class);
+		this.log = LoggerFactory.getLogger(this.getClass());
 
-		this.log.info("VEHICLE-MAN", "Setting up MQTT...");
+		this.log.info("Setting up MQTT...");
 
 		this.mqttUtils = new MQTTUtils(this.parameters.getMqttBroker(), this.parameters.getMqttUserName(), this.parameters.getMqttPassword(), this);
 		this.mqttUtils.subscribeToTopic(this.parameters.getMqttTopic());
 
-		this.log.info("VEHICLE-MAN", "Setting up MaaS REST Utils...");
+		this.log.info("Setting up MaaS REST Utils...");
 
 		this.MaaSRestUtils = new RESTUtils(parameters.getRESTCarmanagerURL());
 
-		this.log.info("VEHICLE-MAN", "Setting up Backbone REST Utils...");
+		this.log.info("Setting up Backbone REST Utils...");
 
 		this.backboneRestUtils = new RESTUtils(parameters.getBackboneRESTURL());
 
-		this.log.info("VEHICLE-MAN", "Starting Navigation Manager...");
+		this.log.info("Starting Navigation Manager...");
 
 		this.navigationManager = new NavigationManager(this, this.mapManager, parameters);
 
-		this.log.info("VEHICLE-MAN", "Setting Map Manager...");
+		this.log.info("Setting Map Manager...");
 
 		this.mapManager = mapManager;
 
-		this.log.info("VEHICLE-MAN", "Creating Heartbeat Manager...");
-
-		this.heartbeatChecker = new HeartbeatChecker(parameters.getRESTCarmanagerURL());
 		this.vehicles = new HashMap<>();
-	}
-
-	public void start()
-	{
-		this.log.info("VEHICLE-MAN", "Starting Heartbeat Manager...");
-		this.heartbeatChecker.start();
 	}
 
 	/**
@@ -147,17 +139,6 @@ public class VehicleManager implements MQTTListener
 	}
 
 	/**
-	 * Register a vehicle with the vehicle manager
-	 *
-	 * @param id
-	 * @param vehicle
-	 */
-	public void register(long id, Vehicle vehicle)
-	{
-		this.vehicles.put(id, vehicle);
-	}
-
-	/**
 	 * @param vehicleId
 	 * @return
 	 * @throws IndexOutOfBoundsException When a non-existent vehicle is queried, an exception is thrown
@@ -167,9 +148,13 @@ public class VehicleManager implements MQTTListener
 		if (this.exists(vehicleId))
 		{
 			return this.vehicles.get(vehicleId);
-		} else
+		}
+		else
 		{
-			throw new IndexOutOfBoundsException("Tried to access vehicle that doesn't exist!");
+			String errorString = "Tried to access vehicle that doesn't exist! (Id: " + vehicleId + ")";
+			IndexOutOfBoundsException exception = new IndexOutOfBoundsException(errorString);
+			this.log.error(errorString, exception);
+			throw exception;
 		}
 	}
 
@@ -193,41 +178,38 @@ public class VehicleManager implements MQTTListener
 	 *      REST Endpoints
 	 *
 	 */
-	@RequestMapping(value="/delete/{id}", method= RequestMethod.GET)
-	public @ResponseBody ResponseEntity<String> delete(@RequestParam("id") long id)
+	@RequestMapping(value="/carmanager/delete/{id}", method= RequestMethod.GET)
+	public @ResponseBody ResponseEntity<String> delete(@PathVariable long id)
 	{
 		if (this.vehicles.containsKey(id))
 		{
 			if (!this.parameters.isBackboneDisabled())
 			{
-				this.backboneRestUtils.getTextPlain("bot/delete/" + Long.toString(id));
+				this.backboneRestUtils.getTextPlain("bot/delete/" + id);
 			}
 
 			this.vehicles.remove(id);
 
-			this.log.info("VEHICLE-MAN", "Removing vehicle " + Long.toString(id));
+			this.log.info("Removing vehicle " + id);
 
 			return new ResponseEntity<>(HttpStatus.OK);
-			//return Response.status(Response.Status.OK).build();
-		} else
+		}
+		else
 		{
-			String errorString = "Got delete request for vehicle " + Long.toString(id) + ", but vehicle doesn't exist.";
-			this.log.warning("VEHICLE-MAN", errorString);
-			//response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
+			String errorString = "Got delete request for vehicle " + id + ", but vehicle doesn't exist.";
+			this.log.warn(errorString);
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
 	}
 
-	@RequestMapping(value="/register/{startwaypoint}", method= RequestMethod.GET, produces = MediaType.TEXT_PLAIN)
-	public @ResponseBody ResponseEntity<String> register(@RequestParam("startwaypoint") long startwaypoint)
+	@RequestMapping(value="/carmanager/register/{startWaypoint}", method=RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
+	public @ResponseBody ResponseEntity<String> register(@PathVariable long startWaypoint)
 	{
-		if (!this.mapManager.exists(startwaypoint))
+		if (!this.mapManager.exists(startWaypoint))
 		{
-			String errorString = "Tried to register vehicle with non-existent start id.";
-			this.log.error("VEHICLE-MAN", errorString);
+			String errorString = "Tried to register vehicle with non-existent start id. (Start Waypoint: " + startWaypoint + ")";
+			this.log.error(errorString);
 
-			//response.sendError(HttpServletResponse.SC_BAD_REQUEST, errorString);
-			//return Response.status(Response.Status.BAD_REQUEST).build();
 			return new ResponseEntity<>(errorString, HttpStatus.BAD_REQUEST);
 		}
 
@@ -236,20 +218,20 @@ public class VehicleManager implements MQTTListener
 		if (this.parameters.isBackboneDisabled())
 		{
 			newVehicleId = this.vehicles.size();
-		} else
+		}
+		else
 		{
 			newVehicleId = Long.parseLong(this.backboneRestUtils.getJSON("bot/newBot/car"));
 		}
 
-		this.vehicles.put(newVehicleId, new Vehicle(newVehicleId, startwaypoint));
+		this.vehicles.put(newVehicleId, new Vehicle(newVehicleId, startWaypoint));
 
-		this.log.info("VEHICLE-MAN", "Registered new vehicle (" + Long.toString(newVehicleId) + "), Current Waypoint: " + Long.toString(startwaypoint));
+		this.log.info("Registered new vehicle (" + newVehicleId + "), Current Waypoint: " + startWaypoint);
 
 		return new ResponseEntity<>(Long.toString(newVehicleId), HttpStatus.OK);
-		//return Response.status(Response.Status.OK).entity(newVehicleId).type("text/plain").build();
 	}
 
-	@RequestMapping(value="/posAll", method= RequestMethod.GET, produces = MediaType.APPLICATION_JSON)
+	@RequestMapping(value="/carmanager/posAll", method=RequestMethod.GET, produces = MediaType.APPLICATION_JSON)
 	public @ResponseBody ResponseEntity<String> getPositions()
 	{
 		List<Location> locations = new ArrayList<>();
@@ -260,10 +242,15 @@ public class VehicleManager implements MQTTListener
 			locations.add(vehicle.getLocation());
 		}
 
-		this.log.info("VEHICLE-MAN", "Request for all positions processed, returning " + Integer.toString(locations.size()) + " locations.");
+		this.log.info("Request for all positions processed, returning " + Integer.toString(locations.size()) + " locations.");
 
 		return new ResponseEntity<>(JSONUtils.arrayToJSONString(locations), HttpStatus.OK);
-		//return Response.status(Response.Status.OK).entity(JSONUtils.arrayToJSONString(locations)).type("application/json").build();
+	}
+
+	@RequestMapping(value="/carmanager/getVehicles", method=RequestMethod.GET, produces=MediaType.APPLICATION_JSON)
+	public @ResponseBody ResponseEntity<String> getVehicles()
+	{
+		return new ResponseEntity<>(JSONUtils.objectToJSONStringWithKeyWord("vehicles", this.vehicles), HttpStatus.OK);
 	}
 
 	/*
@@ -283,15 +270,17 @@ public class VehicleManager implements MQTTListener
 				//todo: Refactor JSON message to only have percentage and no other location information
 				Location location = (Location) JSONUtils.getObject(message, LOCATION_TYPE);
 				this.vehicles.get(id).getLocation().setPercentage(location.getPercentage());
-				log.info("VEHICLE-MAN", "Received Percentage update for vehicle " + Long.toString(id) + ", Status: " + Integer.toString(location.getPercentage()) + "%.");
-			} else if (this.isAvailabilityUpdate(topic))
+				this.log.info("Received Percentage update for vehicle " + Long.toString(id) + ", Status: " + Integer.toString(location.getPercentage()) + "%.");
+			}
+			else if (this.isAvailabilityUpdate(topic))
 			{
 				boolean availability = Boolean.parseBoolean(message);
 				this.vehicles.get(id).setAvailable(availability);
-				log.info("VEHICLE-MAN", "Received Availability update for vehicle " + Long.toString(id) + ", Status: " + this.getAvailabilityString(availability));
-			} else if (this.isRouteUpdate(topic))
+				this.log.info("Received Availability update for vehicle " + Long.toString(id) + ", Status: " + this.getAvailabilityString(availability));
+			}
+			else if (this.isRouteUpdate(topic))
 			{
-				log.info("VEHICLE-MAN", "Received Route Update for vehicle " + Long.toString(id) + "");
+				this.log.info("Received Route Update for vehicle " + Long.toString(id) + "");
 				this.updateRoute(id, message);
 			}
 		}
