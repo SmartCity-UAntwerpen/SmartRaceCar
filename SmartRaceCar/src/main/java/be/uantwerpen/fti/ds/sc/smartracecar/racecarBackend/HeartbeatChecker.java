@@ -21,21 +21,6 @@ class HeartbeatChecker
 	private Logger log;
 	private RESTUtils restUtils;
 
-	/**
-	 * constructor for the HeartbeatChecker class
-	 *
-	 * @param parameters parameters used to start backend
-	 */
-	@Autowired
-	public HeartbeatChecker(Parameters parameters)
-	{
-		this.log = LoggerFactory.getLogger(HeartbeatChecker.class);
-
-		this.log.info("Creating REST Utils for \"" + parameters.getRESTCarmanagerURL() + "\"...");
-
-		this.restUtils = new RESTUtils(parameters.getRESTCarmanagerURL());
-	}
-
 	@Scheduled(fixedRate = 30000)
 	private void checkBeats()
 	{
@@ -51,9 +36,24 @@ class HeartbeatChecker
 			if ((currentTime.getTime() - vehicles.get(ID).getHeartbeat().getTime()) > 90000) //longer than 90 seconds
 			{
 				restUtils.getCall("delete/" + ID);
-				this.log.warning("HEARTBEAT-CHECKER", "Vehicle with ID: " + ID + " was removed since it hasn't responded for over 90s");
+				this.log.warn("Vehicle with ID: " + ID + " was removed since it hasn't responded for over 90s");
 			}
 		}
 		this.log.info("All heartbeats were checked.");
+	}
+
+	/**
+	 * constructor for the HeartbeatChecker class
+	 *
+	 * @param parameters parameters used to start backend
+	 */
+	@Autowired
+	public HeartbeatChecker(Parameters parameters)
+	{
+		this.log = LoggerFactory.getLogger(HeartbeatChecker.class);
+
+		this.log.info("Creating REST Utils for \"" + parameters.getRESTCarmanagerURL() + "\"...");
+
+		this.restUtils = new RESTUtils(parameters.getRESTCarmanagerURL());
 	}
 }
