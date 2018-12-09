@@ -1,6 +1,8 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.common;
 
 import org.eclipse.paho.client.mqttv3.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Help model to deal with MQTT. Uses Paho library.
@@ -9,7 +11,7 @@ import org.eclipse.paho.client.mqttv3.*;
 public class MQTTUtils implements MqttCallback
 {
 
-	private LogbackWrapper log;
+	private Logger log;
 
 	private MqttClient client; // The MQTT client
 	private MQTTListener listener; // Through the interface this is capable of triggering methods in classes that have this interface implemented.
@@ -25,7 +27,7 @@ public class MQTTUtils implements MqttCallback
 	 */
 	public MQTTUtils(String brokerURL, String username, String password, MQTTListener listener)
 	{
-		this.log = new LogbackWrapper(MQTTUtils.class);
+		this.log = LoggerFactory.getLogger(this.getClass());
 
 		MqttConnectOptions options = new MqttConnectOptions();
 		this.listener = listener;
@@ -33,6 +35,7 @@ public class MQTTUtils implements MqttCallback
 		options.setCleanSession(true);
 		options.setMaxInflight(100);
 		options.setKeepAliveInterval(0);
+
 		if (!username.equals("") && !password.equals(""))
 		{
 			options.setUserName(username);
@@ -44,10 +47,11 @@ public class MQTTUtils implements MqttCallback
 			client = new MqttClient(brokerURL, MqttClient.generateClientId());
 			client.setCallback(this);
 			client.connectWithResult(options);
-			this.log.info("MQTT", "Connected to '" + brokerURL + "'.");
-		} catch (MqttException e)
+			this.log.info("Connected to '" + brokerURL + "'.");
+		}
+		catch (MqttException e)
 		{
-			this.log.error("MQTT", "Could not connect to '" + brokerURL + "'." + e);
+			this.log.error("Could not connect to '" + brokerURL + "'." + e);
 			System.exit(0);
 		}
 	}
@@ -60,7 +64,7 @@ public class MQTTUtils implements MqttCallback
 	@Override
 	public void connectionLost(Throwable t)
 	{
-		this.log.error("MQTT", "Connection lost.");
+		this.log.error("Connection lost.");
 		t.printStackTrace();
 		System.exit(0);
 	}
@@ -90,7 +94,7 @@ public class MQTTUtils implements MqttCallback
 	public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception
 	{
 		String message = new String(mqttMessage.getPayload());
-		this.log.info("MQTT", "message arrived. Topic:" + topic + " | Message:" + message);
+		this.log.info("message arrived. Topic:" + topic + " | Message:" + message);
 		listener.parseMQTT(topic, message);
 	}
 
@@ -119,10 +123,11 @@ public class MQTTUtils implements MqttCallback
 		{
 			int subQoS = 2;
 			client.subscribe(topic, subQoS);
-			this.log.info("MQTT", "Subscribed to topic '" + topic + "'.");
-		} catch (Exception e)
+			this.log.info("Subscribed to topic '" + topic + "'.");
+		}
+		catch (Exception e)
 		{
-			this.log.error("MQTT", "Could not subscribe to topic '" + topic + "'." + e);
+			this.log.error("Could not subscribe to topic '" + topic + "'." + e);
 		}
 	}
 
@@ -137,15 +142,16 @@ public class MQTTUtils implements MqttCallback
 		MqttMessage mqttMessage = new MqttMessage(message.getBytes());
 		mqttMessage.setRetained(false);
 		mqttMessage.setQos(2);
-		this.log.info("MQTT", "Publishing. Topic:" + topic + " | Message:" + message);
+		this.log.info("Publishing. Topic:" + topic + " | Message:" + message);
 		MqttTopic mqttTopic = client.getTopic(topic);
 
 		try
 		{
 			mqttTopic.publish(mqttMessage);
-		} catch (Exception e)
+		}
+		catch (Exception e)
 		{
-			this.log.error("MQTT", "Could not Publish." + e);
+			this.log.error("Could not Publish." + e);
 		}
 	}
 
@@ -158,9 +164,10 @@ public class MQTTUtils implements MqttCallback
 		{
 			client.disconnect();
 			client.close();
-		} catch (MqttException e)
+		}
+		catch (MqttException e)
 		{
-			this.log.error("MQTT", "Could not close MQTT Connection :" + e);
+			this.log.error("Could not close MQTT Connection :" + e);
 		}
 
 	}
