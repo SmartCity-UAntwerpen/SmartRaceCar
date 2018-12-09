@@ -1,11 +1,7 @@
 package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
-import be.uantwerpen.fti.ds.sc.smartracecar.core.HeartbeatPublisher;
 import com.google.gson.reflect.TypeToken;
-
-//import javax.servlet.http.HttpServletResponse;
-//import javax.xml.ws.Response;
 import java.lang.reflect.Type;
 import java.util.Date;
 import java.util.HashMap;

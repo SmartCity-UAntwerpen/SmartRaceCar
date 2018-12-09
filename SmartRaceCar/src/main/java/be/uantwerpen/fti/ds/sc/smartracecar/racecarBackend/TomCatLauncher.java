@@ -9,6 +9,7 @@ import org.glassfish.jersey.servlet.ServletContainer;
 /**
  * Configuration class defining the build in TomCat Service.
  */
+@Deprecated
 class TomCatLauncher
 {
 

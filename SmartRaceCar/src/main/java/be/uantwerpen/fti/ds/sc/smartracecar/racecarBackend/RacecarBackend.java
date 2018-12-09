@@ -167,10 +167,6 @@ public class RacecarBackend
 
 		this.log = new LogbackWrapper(RacecarBackend.class);
 
-		this.log.info("RACECAR-BACKEND", "Starting Tomcat Server...");
-
-		//this.startTomCatServer();
-
 		this.log.info("RACECAR-BACKEND", "Reading configuration files...");
 
 		Parameters parameters = this.readParameters(configPath);

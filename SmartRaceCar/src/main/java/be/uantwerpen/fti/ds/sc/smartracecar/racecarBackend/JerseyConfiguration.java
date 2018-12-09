@@ -5,6 +5,7 @@ package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 /**
  * Configuration class of the REST Jerser service. Defining the main class where the REST interface will be found.
  */
+@Deprecated
 class JerseyConfiguration /*extends ResourceConfig*/
 {
     /*
