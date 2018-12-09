@@ -230,6 +230,11 @@ public class MapManager implements MQTTListener
 					this.wayPoints.put((long) 48, new WayPoint(48, (float) -5.91, (float) -1.03, (float) 0.52, (float) 0.85));
 					this.wayPoints.put((long) 49, new WayPoint(49, (float) 6.09, (float) 0.21, (float) -0.04, (float) 1.00));
 					break;
+				case "U014":
+					wayPoints.put((long) 46, new WayPoint(46, (float) 2.26, (float) 0.18, (float) -0.04, (float) -0.99));
+					wayPoints.put((long) 47, new WayPoint(47, (float) 6.64, (float) 2.10, (float) 0.72, (float) 0.70));
+					wayPoints.put((long) 48, new WayPoint(48, (float) 2.26, (float) 4.28, (float) -0.99, (float) 0.30));
+					break;
 				default:
 					log.warn("The backbone could not be reached and there were no default wayPoints for this map");
 					this.wayPoints.put((long) 46, new WayPoint(46, (float) 0.5, (float) 0, (float) -1, (float) 0.02));
@@ -237,7 +242,8 @@ public class MapManager implements MQTTListener
 					this.wayPoints.put((long) 48, new WayPoint(48, (float) -27.14, (float) -1.11, (float) -0.3, (float) 0.95));
 					this.wayPoints.put((long) 49, new WayPoint(49, (float) -28.25, (float) -9.19, (float) -0.71, (float) 0.71));
 			}
-		} else
+		}
+		else
 		{
 			String jsonString = this.backboneRESTUtils.getJSON("map/stringmapjson/car"); //when the map is changed, another map needs to be manually loaded in the backbone database
 			JSONUtils.isJSONValid(jsonString);
@@ -245,13 +251,14 @@ public class MapManager implements MQTTListener
 			{
 			}.getType();
 			ArrayList<WayPoint> wayPointsTemp = (ArrayList<WayPoint>) JSONUtils.getObject(jsonString, typeOfWayPointArray);
-			for (WayPoint wayPoint : wayPointsTemp)
 
+			for (WayPoint wayPoint : wayPointsTemp)
 			{
 				wayPoints.put(wayPoint.getID(), wayPoint);
 				this.log.info("Added wayPoint with ID " + wayPoint.getID() + " and coordinates " + wayPoint.getX() + "," + wayPoint.getY() + "," + wayPoint.getZ() + "," + wayPoint.getW() + ".");
 			}
 		}
+
 		this.log.info("All possible wayPoints(" + wayPoints.size() + ") received.");
 	}
 
