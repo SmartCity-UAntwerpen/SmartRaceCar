@@ -53,12 +53,12 @@ public class RESTUtils
 			response = invocationBuilder.get();
 		} catch (ProcessingException e)
 		{
-			this.log.error("REST", "Cannot connect to REST service: " + e);
+			this.log.error("Cannot connect to REST service: " + e);
 			System.exit(0); //make sure the correct mode is selected (debugwithoutBackbone/debugwithoutMAAS)
 		}
 		checkForError(response, resourceWebTarget.getUri());
 		String responseString = response.readEntity(String.class);
-		this.log.info("REST", "Text Returned from request '" + URL + "' is: " + responseString);
+		this.log.info("Text Returned from request '" + URL + "' is: " + responseString);
 		return responseString;
 	}
 
@@ -78,7 +78,7 @@ public class RESTUtils
 			response = invocationBuilder.get();
 		} catch (ProcessingException e)
 		{
-			this.log.error("REST", "Cannot connect to REST service: " + e);
+			this.log.error("Cannot connect to REST service: " + e);
 			System.exit(0);
 		}
 		checkForError(response, resourceWebTarget.getUri());
@@ -108,7 +108,7 @@ public class RESTUtils
 			response = invocationBuilder.get();
 		} catch (ProcessingException e)
 		{
-			this.log.error("REST", "Cannot connect to REST service: " + e);
+			this.log.error("Cannot connect to REST service: " + e);
 			System.exit(0);
 		}
 		checkForError(response, resourceWebTarget.getUri());
@@ -131,7 +131,7 @@ public class RESTUtils
 		}
 		Invocation.Builder invocationBuilder = resourceWebTarget.request("text/plain");
 
-		this.log.info("REST", "Attempting GET with queryparams (text plain) request with URL:" + resourceWebTarget.getUri());
+		this.log.info("Attempting GET with queryparams (text plain) request with URL:" + resourceWebTarget.getUri());
 		Response response = null;
 		try
 		{
@@ -158,7 +158,7 @@ public class RESTUtils
 		WebTarget resourceWebTarget = this.webTarget.path(URL);
 		Invocation.Builder invocationBuilder = resourceWebTarget.request("application/json");
 		Response response = null;
-		this.log.info("REST", "Attempting GET(JSON) request with URL:" + resourceWebTarget.getUri());
+		this.log.info("Attempting GET(JSON) request with URL:" + resourceWebTarget.getUri());
 		try
 		{
 			response = invocationBuilder.get();
@@ -184,7 +184,7 @@ public class RESTUtils
 	{
 		WebTarget resourceWebTarget = this.webTarget.path(URL);
 		Invocation.Builder invocationBuilder = resourceWebTarget.request("application/json");
-		this.log.info("REST", "Attempting POST(JSON) request with URL:" + resourceWebTarget.getUri() + " and with json:" + jsonString);
+		this.log.info("Attempting POST(JSON) request with URL:" + resourceWebTarget.getUri() + " and with json:" + jsonString);
 		Response response = null;
 		try
 		{
@@ -229,7 +229,7 @@ public class RESTUtils
 			System.exit(0);
 		} catch (IOException e)
 		{
-			this.log.error("REST", "Could not store file '" + fileName + "." + fileExtention + "' after download: " + e);
+			this.log.error("Could not store file '" + fileName + "." + fileExtention + "' after download: " + e);
 		}
 	}
 
