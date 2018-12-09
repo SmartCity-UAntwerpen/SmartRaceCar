@@ -132,6 +132,7 @@ public class VehicleManager implements MQTTListener
 		this.vehicles = new HashMap<>();
 	}
 
+	@Deprecated
 	public void start()
 	{
 		this.log.info("VEHICLE-MAN", "Starting Heartbeat Manager...");
@@ -196,7 +197,7 @@ public class VehicleManager implements MQTTListener
 	 *      REST Endpoints
 	 *
 	 */
-	@RequestMapping(value="/delete/{id}", method= RequestMethod.GET)
+	@RequestMapping(value="/carmanager/delete/{id}", method= RequestMethod.GET)
 	public @ResponseBody ResponseEntity<String> delete(@RequestParam("id") long id)
 	{
 		if (this.vehicles.containsKey(id))
@@ -221,7 +222,7 @@ public class VehicleManager implements MQTTListener
 		}
 	}
 
-	@RequestMapping(value="/register/{startwaypoint}", method= RequestMethod.GET, produces = MediaType.TEXT_PLAIN)
+	@RequestMapping(value="/carmanager/register/{startwaypoint}", method= RequestMethod.GET, produces = MediaType.TEXT_PLAIN)
 	public @ResponseBody ResponseEntity<String> register(@RequestParam("startwaypoint") long startwaypoint)
 	{
 		if (!this.mapManager.exists(startwaypoint))
@@ -252,7 +253,7 @@ public class VehicleManager implements MQTTListener
 		//return Response.status(Response.Status.OK).entity(newVehicleId).type("text/plain").build();
 	}
 
-	@RequestMapping(value="/posAll", method= RequestMethod.GET, produces = MediaType.APPLICATION_JSON)
+	@RequestMapping(value="/carmanager/posAll", method=RequestMethod.GET, produces = MediaType.APPLICATION_JSON)
 	public @ResponseBody ResponseEntity<String> getPositions()
 	{
 		List<Location> locations = new ArrayList<>();
@@ -267,6 +268,12 @@ public class VehicleManager implements MQTTListener
 
 		return new ResponseEntity<>(JSONUtils.arrayToJSONString(locations), HttpStatus.OK);
 		//return Response.status(Response.Status.OK).entity(JSONUtils.arrayToJSONString(locations)).type("application/json").build();
+	}
+
+	@RequestMapping(value="/carmanager/getVehicles", method=RequestMethod.GET, produces=MediaType.APPLICATION_JSON)
+	public @ResponseBody ResponseEntity<String> getVehicles()
+	{
+		return new ResponseEntity<>(JSONUtils.objectToJSONStringWithKeyWord("vehicles", this.vehicles), HttpStatus.OK);
 	}
 
 	/*
