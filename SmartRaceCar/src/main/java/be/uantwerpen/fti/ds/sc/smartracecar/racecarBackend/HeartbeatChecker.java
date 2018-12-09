@@ -4,6 +4,7 @@ import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.google.gson.reflect.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Type;
 import java.util.Date;
@@ -12,6 +13,7 @@ import java.util.HashMap;
 /**
  * Helper class to check the heartbeat of all registered vehicles periodically
  */
+@Component
 class HeartbeatChecker extends Thread
 {
 	private LogbackWrapper log;
