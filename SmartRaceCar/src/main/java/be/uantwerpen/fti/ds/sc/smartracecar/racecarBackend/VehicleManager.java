@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -39,7 +40,6 @@ public class VehicleManager implements MQTTListener
 	private RESTUtils backboneRestUtils;
 	private NavigationManager navigationManager;
 	private MapManager mapManager;                  // Non-Owning reference to Map Manager
-	private HeartbeatChecker heartbeatChecker;
 	private Map<Long, Vehicle> vehicles;
 
 	private String getAvailabilityString(boolean available)
@@ -82,18 +82,18 @@ public class VehicleManager implements MQTTListener
 
 				vehicle.getLocation().setPercentage(100);
 
-				this.log.info("Vehicle " + Long.toString(vehicleId) + " completed its route.");
+				this.log.info("Vehicle " + vehicleId + " completed its route.");
 
 				break;
 
 			case "error":
 				this.vehicles.get(vehicleId).setOccupied(false);
-				this.log.info("Vehicle " + Long.toString(vehicleId) + " completed its route with errors.");
+				this.log.info("Vehicle " + vehicleId + " completed its route with errors.");
 				break;
 
 			case "notcomplete":
 				this.vehicles.get(vehicleId).setOccupied(true);
-				this.log.info("Vehicle " + Long.toString(vehicleId) + " hasn't completed its route yet.");
+				this.log.info("Vehicle " + vehicleId + " hasn't completed its route yet.");
 				break;
 		}
 	}
@@ -125,9 +125,6 @@ public class VehicleManager implements MQTTListener
 
 		this.mapManager = mapManager;
 
-		this.log.info("Creating Heartbeat Manager...");
-
-		this.heartbeatChecker = new HeartbeatChecker(parameters);
 		this.vehicles = new HashMap<>();
 	}
 
