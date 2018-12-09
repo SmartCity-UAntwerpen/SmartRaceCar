@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -152,7 +151,10 @@ public class VehicleManager implements MQTTListener
 		}
 		else
 		{
-			throw new IndexOutOfBoundsException("Tried to access vehicle that doesn't exist!");
+			String errorString = "Tried to access vehicle that doesn't exist! (Id: " + vehicleId + ")";
+			IndexOutOfBoundsException exception = new IndexOutOfBoundsException(errorString);
+			this.log.error(errorString, exception);
+			throw exception;
 		}
 	}
 
@@ -205,7 +207,7 @@ public class VehicleManager implements MQTTListener
 	{
 		if (!this.mapManager.exists(startWaypoint))
 		{
-			String errorString = "Tried to register vehicle with non-existent start id.";
+			String errorString = "Tried to register vehicle with non-existent start id. (Start Waypoint: " + startWaypoint + ")";
 			this.log.error(errorString);
 
 			return new ResponseEntity<>(errorString, HttpStatus.BAD_REQUEST);

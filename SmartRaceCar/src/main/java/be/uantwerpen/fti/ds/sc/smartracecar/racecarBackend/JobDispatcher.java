@@ -48,7 +48,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		// Check if vehicle is occupied
 		if (this.vehicleManager.get(vehicleId).getOccupied())
 		{
-			String errorString = "Vehicle " + vehicleId + " is currently occupied.";
+			String errorString = "Vehicle " + vehicleId + " is currently occupied and can't accept any job requests.";
 			this.log.error(errorString);
 
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
@@ -57,7 +57,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		// Check if vehicle is available
 		if (!this.vehicleManager.get(vehicleId).isAvailable())
 		{
-			String errorString = "Vehicle " + vehicleId + " is currently not available.";
+			String errorString = "Vehicle " + vehicleId + " is currently not available for job requests.";
 			this.log.error(errorString);
 
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
@@ -75,11 +75,13 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		// Check if end waypoint exists
 		if (!this.mapManager.exists(endId))
 		{
-			String errorString = "Request job with non-existent end waypoint " + startId + ".";
+			String errorString = "Request job with non-existent end waypoint " + endId + ".";
 			this.log.error(errorString);
 
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
+
+		this.log.info("Received Job request for " + vehicleId + " from " + startId + " to " + endId + " (JobID: " + jobId + ")");
 
 		Vehicle vehicle = this.vehicleManager.get(vehicleId);
 		Location location = new Location(vehicleId, startId, endId, 0);

@@ -109,7 +109,7 @@ public class MQTTUtils implements MqttCallback
 	@Override
 	public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken)
 	{
-		this.log.info("MQTT", "Publish complete.");
+		this.log.info("Publish complete.");
 	}
 
 	/**
