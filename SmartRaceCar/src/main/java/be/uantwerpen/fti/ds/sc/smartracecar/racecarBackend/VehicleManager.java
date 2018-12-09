@@ -9,11 +9,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
+import javax.ws.rs.PathParam;
 import javax.ws.rs.core.MediaType;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -181,8 +179,8 @@ public class VehicleManager implements MQTTListener
 	 *      REST Endpoints
 	 *
 	 */
-	@RequestMapping(value="/carmanager/delete", method= RequestMethod.GET)
-	public @ResponseBody ResponseEntity<String> delete(@RequestParam("id") long id)
+	@RequestMapping(value="/carmanager/delete/{id}", method= RequestMethod.GET)
+	public @ResponseBody ResponseEntity<String> delete(@PathVariable long id)
 	{
 		if (this.vehicles.containsKey(id))
 		{
@@ -206,8 +204,8 @@ public class VehicleManager implements MQTTListener
 		}
 	}
 
-	@RequestMapping(value="/carmanager/register", method= RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
-	public @ResponseBody ResponseEntity<String> register(@RequestParam("startWaypoint") long startWaypoint)
+	@RequestMapping(value="/carmanager/register/{startWaypoint}", method=RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
+	public @ResponseBody ResponseEntity<String> register(@PathVariable long startWaypoint)
 	{
 		if (!this.mapManager.exists(startWaypoint))
 		{
