@@ -2,6 +2,8 @@ package be.uantwerpen.fti.ds.sc.smartracecar.racecarBackend;
 
 import be.uantwerpen.fti.ds.sc.smartracecar.common.*;
 import com.google.gson.reflect.TypeToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpHeaders;
@@ -27,7 +29,7 @@ import java.util.Map;
 @Controller
 public class MapManager implements MQTTListener
 {
-	private LogbackWrapper log;
+	private Logger log;
 	private MapManagerParameters params;
 
 	private VehicleManager vehicleManager;
@@ -42,29 +44,29 @@ public class MapManager implements MQTTListener
 	@Autowired
 	public MapManager(MapManagerParameters params, @Lazy VehicleManager vehicleManager)
 	{
-		this.log = new LogbackWrapper(MapManager.class);
+		this.log = LoggerFactory.getLogger(this.getClass());
 		this.params = params;
 
-		this.log.info("MAP-MAN", "Getting settings from parameter object.");
+		this.log.info("Getting settings from parameter object.");
 
 		this.currentMap = params.getCurrentMap();
 		this.mapPath = params.getMapPath();
 
-		this.log.info("MAP-MAN", "Starting MQTT Utils.");
+		this.log.info("Starting MQTT Utils.");
 
 		this.mqttUtils = new MQTTUtils(params.getMqttBroker(), params.getMqttUserName(), params.getMqttPassword(), this);
 
-		this.log.info("MAP-MAN", "Setting up Backbone REST Utils.");
+		this.log.info("Setting up Backbone REST Utils.");
 
 		this.backboneRESTUtils = new RESTUtils(params.getBackboneRESTURL());
 
-		this.log.info("MAP-MAN", "Setting VehicleManager.");
+		this.log.info("Setting VehicleManager.");
 
 		this.vehicleManager = vehicleManager;
 
 		this.wayPoints = new HashMap<>();
 
-		this.log.info("MAP-MAN", "Loading Waypoints.");
+		this.log.info("Loading Waypoints.");
 
 		this.loadWayPoints();
 	}
@@ -84,7 +86,7 @@ public class MapManager implements MQTTListener
 	 *
 	 * @return REST response of the type Text Plain containing the mapname.
 	 */
-	@RequestMapping(value = "/carmanager/getmapname", method = RequestMethod.GET, produces = MediaType.TEXT_PLAIN)
+	@RequestMapping(value="/carmanager/getmapname", method=RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
 	public String getMapName()
 	{
 		return this.currentMap;
@@ -120,15 +122,9 @@ public class MapManager implements MQTTListener
 		catch(Exception e)
 		{
 			String errorString = mapname + ".pgm not found";
-			System.out.println("error " + e);
-			//response.sendError(HttpServletResponse.SC_NOT_FOUND, errorString);
+			this.log.error(errorString);
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
-		/*return Response
-				.ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
-				.header("content-disposition", "attachment; filename = " + mapname + ".pgm")
-				.build();*/
-
 	}
 
 	/**
@@ -160,10 +156,6 @@ public class MapManager implements MQTTListener
 				output.write(data);
 				output.flush();
 			};
-		/*return Response
-				.ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
-				.header("content-disposition", "attachment; filename = " + mapname + ".yaml")
-				.build();*/
 
 
 			HttpHeaders headers = new HttpHeaders();
@@ -175,7 +167,7 @@ public class MapManager implements MQTTListener
 		catch (Exception e)
 		{
 			String errorString = mapname + ".yaml not found";
-			//response.sendError(HttpServletResponse.SC_NOT_FOUND, mapname + ".yaml not found");
+			this.log.error(errorString);
 			ResponseEntity<StreamingOutput> responseEntity = new ResponseEntity<>(HttpStatus.NOT_FOUND);
 			return responseEntity;
 		}
@@ -199,14 +191,14 @@ public class MapManager implements MQTTListener
 			{
 				int ID = (int) it.next();
 
-				this.log.info("MAP-MAN", "change map command send to vehicle with ID: " + ID);
+				this.log.info("change map command send to vehicle with ID: " + ID);
 				this.mqttUtils.publishMessage("racecar/" + ID + "/changeMap", mapName);
 				loadWayPoints();
 			}
 			return "Command was executed to change map";
 		} else
 		{
-			this.log.warning("MAP-MAN", "Map cannot be changed as the map does not exist");
+			this.log.warn("Map cannot be changed as the map does not exist");
 			return "Map was not changed as map does not exist";
 		}
 
@@ -219,32 +211,33 @@ public class MapManager implements MQTTListener
 	{
 		this.wayPoints.clear();
 		if (this.params.isBackboneDisabled())
-		{ // Temp wayPoints for when they can't be requested from back-end services.
+		{
+			// Temp wayPoints for when they can't be requested from back-end services.
 			switch (this.currentMap)
 			{
 				case "zbuilding":
-					this.log.info("MAP-MAN", "Loading wayPoints for " + this.currentMap);
+					this.log.info("Loading wayPoints for " + this.currentMap);
 					this.wayPoints.put((long) 46, new WayPoint(46, (float) 0.5, (float) 0, (float) -1, (float) 0.02));
 					this.wayPoints.put((long) 47, new WayPoint(47, (float) -13.4, (float) -0.53, (float) 0.71, (float) 0.71));
 					this.wayPoints.put((long) 48, new WayPoint(48, (float) -27.14, (float) -1.11, (float) -0.3, (float) 0.95));
 					this.wayPoints.put((long) 49, new WayPoint(49, (float) -28.25, (float) -9.19, (float) -0.71, (float) 0.71));
 					break;
 				case "V314":
-					this.log.info("MAP-MAN", "Loading wayPoints for " + this.currentMap);
+					this.log.info("Loading wayPoints for " + this.currentMap);
 					this.wayPoints.put((long) 46, new WayPoint(46, (float) -3.0, (float) -1.5, (float) 0.07, (float) 1.00));
 					this.wayPoints.put((long) 47, new WayPoint(47, (float) 1.10, (float) -1.20, (float) 0.07, (float) 1.00));
 					this.wayPoints.put((long) 48, new WayPoint(48, (float) 4.0, (float) -0.90, (float) -0.68, (float) 0.73));
 					this.wayPoints.put((long) 49, new WayPoint(49, (float) 4.54, (float) -4.49, (float) -0.60, (float) 0.80));
 					break;
 				case "gangV":
-					this.log.info("MAP-MAN", "Loading wayPoints for " + this.currentMap);
+					this.log.info("Loading wayPoints for " + this.currentMap);
 					this.wayPoints.put((long) 46, new WayPoint(46, (float) -6.1, (float) -28.78, (float) 0.73, (float) 0.69));
 					this.wayPoints.put((long) 47, new WayPoint(47, (float) -6.47, (float) -21.69, (float) 0.66, (float) 0.75));
 					this.wayPoints.put((long) 48, new WayPoint(48, (float) -5.91, (float) -1.03, (float) 0.52, (float) 0.85));
 					this.wayPoints.put((long) 49, new WayPoint(49, (float) 6.09, (float) 0.21, (float) -0.04, (float) 1.00));
 					break;
 				default:
-					log.warning("MAP-MAN", "The backbone could not be reached and there were no default wayPoints for this map");
+					log.warn("The backbone could not be reached and there were no default wayPoints for this map");
 					this.wayPoints.put((long) 46, new WayPoint(46, (float) 0.5, (float) 0, (float) -1, (float) 0.02));
 					this.wayPoints.put((long) 47, new WayPoint(47, (float) -13.4, (float) -0.53, (float) 0.71, (float) 0.71));
 					this.wayPoints.put((long) 48, new WayPoint(48, (float) -27.14, (float) -1.11, (float) -0.3, (float) 0.95));
@@ -261,15 +254,14 @@ public class MapManager implements MQTTListener
 			for (WayPoint wayPoint : wayPointsTemp)
 			{
 				wayPoints.put(wayPoint.getID(), wayPoint);
-				this.log.info("MAP-MAN", "Added wayPoint with ID " + wayPoint.getID() + " and coordinates " + wayPoint.getX() + "," + wayPoint.getY() + "," + wayPoint.getZ() + "," + wayPoint.getW() + ".");
+				this.log.info("Added wayPoint with ID " + wayPoint.getID() + " and coordinates " + wayPoint.getX() + "," + wayPoint.getY() + "," + wayPoint.getZ() + "," + wayPoint.getW() + ".");
 			}
 		}
-		this.log.info("MAP-MAN", "All possible wayPoints(" + wayPoints.size() + ") received.");
+		this.log.info("All possible wayPoints(" + wayPoints.size() + ") received.");
 	}
 
 	@Override
 	public void parseMQTT(String topic, String message)
 	{
-
 	}
 }
