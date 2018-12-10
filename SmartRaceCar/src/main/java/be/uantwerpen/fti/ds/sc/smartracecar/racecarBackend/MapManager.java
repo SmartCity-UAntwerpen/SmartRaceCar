@@ -99,7 +99,7 @@ public class MapManager implements MQTTListener
 	 * @param mapname the name of the map
 	 * @return REST response of the type Octet-stream containing the file.
 	 */
-	@RequestMapping(value="/carmanager/getMapPGM/{mapName}", method=RequestMethod.GET, produces=MediaType.APPLICATION_OCTET_STREAM)
+	@RequestMapping(value="/carmanager/getmappgm/{mapName}", method=RequestMethod.GET, produces=MediaType.APPLICATION_OCTET_STREAM)
 	public @ResponseBody ResponseEntity<Resource> getMapPGM(@PathVariable("mapName") String mapName)
 	{
 		try
@@ -139,7 +139,7 @@ public class MapManager implements MQTTListener
 	 * @param mapName the name of the map
 	 * @return REST response of the type Octet-stream containing the file.
 	 */
-	@RequestMapping(value = "/carmanager/getMapYAML/{mapName}", method = RequestMethod.GET, produces = MediaType.APPLICATION_OCTET_STREAM)
+	@RequestMapping(value = "/carmanager/getmapyaml/{mapName}", method = RequestMethod.GET, produces = MediaType.APPLICATION_OCTET_STREAM)
 	public @ResponseBody ResponseEntity<Resource> getMapYAML(@PathVariable("mapName") final String mapName)
 	{
 		try
