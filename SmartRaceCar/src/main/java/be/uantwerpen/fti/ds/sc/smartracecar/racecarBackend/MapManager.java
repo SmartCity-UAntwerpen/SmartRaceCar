@@ -183,8 +183,11 @@ public class MapManager implements MQTTListener
 
 				this.log.info("change map command send to vehicle with ID: " + ID);
 				this.mqttUtils.publishMessage("racecar/" + ID + "/changeMap", mapName);
-				loadWayPoints();
 			}
+
+			loadWayPoints();
+
+			this.log.info("Changed current map to " + mapName);
 
 			return new ResponseEntity<>(mapName, HttpStatus.OK);
 		}
@@ -229,9 +232,10 @@ public class MapManager implements MQTTListener
 					this.wayPoints.put((long) 49, new WayPoint(49, (float) 6.09, (float) 0.21, (float) -0.04, (float) 1.00));
 					break;
 				case "U014":
-					wayPoints.put((long) 46, new WayPoint(46, (float) 2.26, (float) 0.18, (float) -0.04, (float) -0.99));
-					wayPoints.put((long) 47, new WayPoint(47, (float) 6.64, (float) 2.10, (float) 0.72, (float) 0.70));
-					wayPoints.put((long) 48, new WayPoint(48, (float) 2.26, (float) 4.28, (float) -0.99, (float) 0.30));
+					this.log.info("Loading waypoints for " + this.currentMap);
+					this.wayPoints.put((long) 46, new WayPoint(46, (float) 2.26, (float) 0.18, (float) -0.04, (float) -0.99));
+					this.wayPoints.put((long) 47, new WayPoint(47, (float) 6.64, (float) 2.10, (float) 0.72, (float) 0.70));
+					this.wayPoints.put((long) 48, new WayPoint(48, (float) 2.26, (float) 4.28, (float) -0.99, (float) 0.30));
 					break;
 				default:
 					log.warn("The backbone could not be reached and there were no default wayPoints for this map");
