@@ -130,7 +130,7 @@ public class MapManager implements MQTTListener
 	 *
 	 * @return REST response of the type JSON containing all wayPoints.
 	 */
-	@RequestMapping(value = "/carmanager/getWaypoints", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON)
+	@RequestMapping(value = "/carmanager/getwaypoints", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON)
 	public String getWayPoints()
 	{
 		return JSONUtils.objectToJSONStringWithKeyWord("wayPoints", this.wayPoints);
