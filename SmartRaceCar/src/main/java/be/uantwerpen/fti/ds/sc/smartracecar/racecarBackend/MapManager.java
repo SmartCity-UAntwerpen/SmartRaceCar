@@ -90,10 +90,10 @@ public class MapManager implements MQTTListener
 	 *
 	 * @return REST response of the type Text Plain containing the mapname.
 	 */
-	@RequestMapping(value="/carmanager/getMapName", method=RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
-	public @ResponseBody String getMapName()
+	@RequestMapping(value="/carmanager/getmapname", method=RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
+	public @ResponseBody ResponseEntity<String> getMapName()
 	{
-		return this.currentMap;
+		return new ResponseEntity<>(this.currentMap, HttpStatus.OK);
 	}
 
 	/**
