@@ -169,7 +169,7 @@ public class MapManager implements MQTTListener
 	 * @return
 	 */
 	@RequestMapping(value = "/carmanager/changeMap/{mapName}", method = RequestMethod.GET, produces = MediaType.TEXT_PLAIN)
-	public String changeMap(@PathVariable("mapName") String mapName)
+	public @ResponseBody ResponseEntity<String> changeMap(@PathVariable("mapName") String mapName)
 	{
 		File mapFile = new File(mapPath + "/" + mapName + ".yaml");
 
@@ -185,12 +185,14 @@ public class MapManager implements MQTTListener
 				this.mqttUtils.publishMessage("racecar/" + ID + "/changeMap", mapName);
 				loadWayPoints();
 			}
-			return "Command was executed to change map";
+
+			return new ResponseEntity<>(mapName, HttpStatus.OK);
 		}
 		else
 		{
-			this.log.warn("Map cannot be changed as the map does not exist");
-			return "Map was not changed as map does not exist";
+			String errorString = "Map cannot be changed as the map (\"" + mapName + "\") does not exist";
+			this.log.warn(errorString);
+			return new ResponseEntity<>(errorString, HttpStatus.BAD_REQUEST);
 		}
 	}
 
