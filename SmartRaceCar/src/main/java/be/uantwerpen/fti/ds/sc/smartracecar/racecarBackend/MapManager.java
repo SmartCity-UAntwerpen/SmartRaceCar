@@ -179,7 +179,7 @@ public class MapManager implements MQTTListener
 
 			for (Iterator it = this.vehicleManager.getIdIterator(); it.hasNext(); )
 			{
-				int ID = (int) it.next();
+				long ID = (long) it.next();
 
 				this.log.info("change map command send to vehicle with ID: " + ID);
 				this.mqttUtils.publishMessage("racecar/" + ID + "/changeMap", mapName);
@@ -192,7 +192,6 @@ public class MapManager implements MQTTListener
 			this.log.warn("Map cannot be changed as the map does not exist");
 			return "Map was not changed as map does not exist";
 		}
-
 	}
 
 	/**
