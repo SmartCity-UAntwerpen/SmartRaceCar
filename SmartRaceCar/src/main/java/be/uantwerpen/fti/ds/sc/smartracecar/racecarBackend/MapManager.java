@@ -18,13 +18,10 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.StreamingOutput;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -90,10 +87,10 @@ public class MapManager implements MQTTListener
 	 *
 	 * @return REST response of the type Text Plain containing the mapname.
 	 */
-	@RequestMapping(value="/carmanager/getMapName", method=RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
-	public @ResponseBody String getMapName()
+	@RequestMapping(value="/carmanager/getmapname", method=RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
+	public @ResponseBody ResponseEntity<String> getMapName()
 	{
-		return this.currentMap;
+		return new ResponseEntity<>(this.currentMap, HttpStatus.OK);
 	}
 
 	/**
@@ -102,7 +99,7 @@ public class MapManager implements MQTTListener
 	 * @param mapname the name of the map
 	 * @return REST response of the type Octet-stream containing the file.
 	 */
-	@RequestMapping(value="/carmanager/getMapPGM/{mapName}", method=RequestMethod.GET, produces=MediaType.APPLICATION_OCTET_STREAM)
+	@RequestMapping(value="/carmanager/getmappgm/{mapName}", method=RequestMethod.GET, produces=MediaType.APPLICATION_OCTET_STREAM)
 	public @ResponseBody ResponseEntity<Resource> getMapPGM(@PathVariable("mapName") String mapName)
 	{
 		try
@@ -142,7 +139,7 @@ public class MapManager implements MQTTListener
 	 * @param mapName the name of the map
 	 * @return REST response of the type Octet-stream containing the file.
 	 */
-	@RequestMapping(value = "/carmanager/getMapYAML/{mapName}", method = RequestMethod.GET, produces = MediaType.APPLICATION_OCTET_STREAM)
+	@RequestMapping(value = "/carmanager/getmapyaml/{mapName}", method = RequestMethod.GET, produces = MediaType.APPLICATION_OCTET_STREAM)
 	public @ResponseBody ResponseEntity<Resource> getMapYAML(@PathVariable("mapName") final String mapName)
 	{
 		try
@@ -172,7 +169,7 @@ public class MapManager implements MQTTListener
 	 * @return
 	 */
 	@RequestMapping(value = "/carmanager/changeMap/{mapName}", method = RequestMethod.GET, produces = MediaType.TEXT_PLAIN)
-	public String changeMap(@PathVariable("mapName") String mapName)
+	public @ResponseBody ResponseEntity<String> changeMap(@PathVariable("mapName") String mapName)
 	{
 		File mapFile = new File(mapPath + "/" + mapName + ".yaml");
 
@@ -182,20 +179,24 @@ public class MapManager implements MQTTListener
 
 			for (Iterator it = this.vehicleManager.getIdIterator(); it.hasNext(); )
 			{
-				int ID = (int) it.next();
+				long ID = (long) it.next();
 
 				this.log.info("change map command send to vehicle with ID: " + ID);
 				this.mqttUtils.publishMessage("racecar/" + ID + "/changeMap", mapName);
-				loadWayPoints();
 			}
-			return "Command was executed to change map";
+
+			loadWayPoints();
+
+			this.log.info("Changed current map to " + mapName);
+
+			return new ResponseEntity<>(mapName, HttpStatus.OK);
 		}
 		else
 		{
-			this.log.warn("Map cannot be changed as the map does not exist");
-			return "Map was not changed as map does not exist";
+			String errorString = "Map cannot be changed as the map (\"" + mapName + "\") does not exist";
+			this.log.warn(errorString);
+			return new ResponseEntity<>(errorString, HttpStatus.BAD_REQUEST);
 		}
-
 	}
 
 	/**
@@ -231,9 +232,10 @@ public class MapManager implements MQTTListener
 					this.wayPoints.put((long) 49, new WayPoint(49, (float) 6.09, (float) 0.21, (float) -0.04, (float) 1.00));
 					break;
 				case "U014":
-					wayPoints.put((long) 46, new WayPoint(46, (float) 2.26, (float) 0.18, (float) -0.04, (float) -0.99));
-					wayPoints.put((long) 47, new WayPoint(47, (float) 6.64, (float) 2.10, (float) 0.72, (float) 0.70));
-					wayPoints.put((long) 48, new WayPoint(48, (float) 2.26, (float) 4.28, (float) -0.99, (float) 0.30));
+					this.log.info("Loading waypoints for " + this.currentMap);
+					this.wayPoints.put((long) 46, new WayPoint(46, (float) 2.26, (float) 0.18, (float) -0.04, (float) -0.99));
+					this.wayPoints.put((long) 47, new WayPoint(47, (float) 6.64, (float) 2.10, (float) 0.72, (float) 0.70));
+					this.wayPoints.put((long) 48, new WayPoint(48, (float) 2.26, (float) 4.28, (float) -0.99, (float) 0.30));
 					break;
 				default:
 					log.warn("The backbone could not be reached and there were no default wayPoints for this map");
