@@ -83,7 +83,7 @@
                             <transformers>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>be.uantwerpen.fti.ds.sc.smartracecar.simkernel.SimKernel</mainClass>
+                                    <mainClass>be.uantwerpen.fti.ds.sc.smartracecar.SimKernel</mainClass>
                                 </transformer>
                             </transformers>
                             <filters>

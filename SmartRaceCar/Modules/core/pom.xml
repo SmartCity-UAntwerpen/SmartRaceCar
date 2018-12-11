@@ -86,7 +86,7 @@
                             <transformers>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>be.uantwerpen.fti.ds.sc.smartracecar.Core</mainClass>
+                                    <mainClass>be.uantwerpen.fti.ds.sc.core.Core</mainClass>
                                 </transformer>
                             </transformers>
                             <filters>
