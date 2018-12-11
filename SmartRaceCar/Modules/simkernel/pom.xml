@@ -14,6 +14,10 @@
 
     <name>simkernel</name>
 
+    <properties>
+        <jersey.version>2.23.2</jersey.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.github.lalyos</groupId>
@@ -37,9 +41,26 @@
             <version>1.3.0-alpha4</version>
         </dependency>
         <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.8.0</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.ws.rs</groupId>
+            <artifactId>javax.ws.rs-api</artifactId>
+            <version>2.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.core</groupId>
+            <artifactId>jersey-client</artifactId>
+            <version>${jersey.version}</version>
+        </dependency>
+        <dependency>
             <groupId>smartracecar</groupId>
             <artifactId>common</artifactId>
             <version>1.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/release/common-1.0.jar</systemPath>
         </dependency>
     </dependencies>
 
