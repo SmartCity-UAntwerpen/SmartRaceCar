@@ -5,8 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>smartracecar</groupId>
-        <artifactId>SmartRacecar</artifactId>
+        <groupId>be.uantwerpen.fti.ds.sc</groupId>
+        <artifactId>smartRacecar</artifactId>
         <version>1.0</version>
     </parent>
     <artifactId>simkernel</artifactId>

@@ -1,7 +1,6 @@
 package be.uantwerpen.fti.ds.sc.simdeployer;
 
 import be.uantwerpen.fti.ds.sc.common.*;
-import be.uantwerpen.fti.ds.sc.smartracecar.*;
 import com.github.lalyos.jfiglet.FigletFont;
 import com.google.gson.reflect.TypeToken;
 
@@ -382,17 +381,5 @@ class SimDeployer implements TCPListener
 			this.log.warning("SIMDEPLOYER", "Cannot start vehicle with simulation ID " + simulationID + ". It does not exist.");
 			return false;
 		}
-	}
-
-	/**
-	 * Main method to run this class as a jar
-	 *
-	 * @param args no arguments required
-	 * @throws IOException
-	 * @throws InterruptedException
-	 */
-	public static void main(String[] args) throws IOException, InterruptedException
-	{
-		SimDeployer simDeployer = new SimDeployer();
 	}
 }

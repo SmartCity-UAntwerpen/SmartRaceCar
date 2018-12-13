@@ -1,7 +1,6 @@
 package be.uantwerpen.fti.ds.sc.simkernel;
 
 import be.uantwerpen.fti.ds.sc.common.*;
-import be.uantwerpen.fti.ds.sc.smartracecar.*;
 import com.github.lalyos.jfiglet.FigletFont;
 import com.google.gson.reflect.TypeToken;
 

@@ -58,7 +58,6 @@ public class FileUtils
 	 */
 	public void searchDirectory(File directory, String fileNameToSearch)
 	{
-
 		setFileNameToSearch(fileNameToSearch);
 
 		if (directory.isDirectory())
@@ -77,10 +76,9 @@ public class FileUtils
 	 */
 	private void search(File file)
 	{
-
+		this.log.debug("FILE-UTILS", "searching for " + file.getPath());
 		if (file.isDirectory())
 		{
-
 			//do you have permission to read this directory?
 			if (file.canRead())
 			{
@@ -89,7 +87,8 @@ public class FileUtils
 					if (temp.isDirectory())
 					{
 						search(temp);
-					} else
+					}
+					else
 					{
 						if (getFileNameToSearch().equals(temp.getName().toLowerCase()))
 						{

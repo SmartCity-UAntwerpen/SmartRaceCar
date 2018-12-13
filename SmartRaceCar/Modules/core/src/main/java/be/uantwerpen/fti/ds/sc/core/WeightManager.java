@@ -1,6 +1,5 @@
 package be.uantwerpen.fti.ds.sc.core;
 
-
 import be.uantwerpen.fti.ds.sc.common.Cost;
 import be.uantwerpen.fti.ds.sc.common.JSONUtils;
 import be.uantwerpen.fti.ds.sc.common.LogbackWrapper;

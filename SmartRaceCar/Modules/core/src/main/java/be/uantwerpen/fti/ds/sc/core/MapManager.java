@@ -90,7 +90,12 @@ public class MapManager
 	private String findMapsFolder()
 	{
 		FileUtils fileUtils = new FileUtils();
-		fileUtils.searchDirectory(new File(".."), "maps.xml");
+		fileUtils.searchDirectory(new File("."), "maps.xml");
+		if(fileUtils.getResult().size() == 0)
+		{
+			this.log.debug("MAP-MAN", "could not find maps.xml");
+		}
+		/*fileUtils.searchDirectory(new File(".."), "maps.xml");
 		if (fileUtils.getResult().size() == 0)
 		{
 			fileUtils.searchDirectory(new File("./.."), "maps.xml");
@@ -107,7 +112,7 @@ public class MapManager
 					}
 				}
 			}
-		}
+		}*/
 		String output = null;
 		for (String matched : fileUtils.getResult())
 		{

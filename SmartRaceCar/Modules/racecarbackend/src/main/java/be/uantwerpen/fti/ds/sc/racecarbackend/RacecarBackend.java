@@ -27,8 +27,5 @@ public class RacecarBackend
 		this.vehicleManager = vehicleManager;
 	}
 
-	public static void main(String[] args)
-	{
-		SpringApplication.run(RacecarBackend.class, args);
-	}
+
 }

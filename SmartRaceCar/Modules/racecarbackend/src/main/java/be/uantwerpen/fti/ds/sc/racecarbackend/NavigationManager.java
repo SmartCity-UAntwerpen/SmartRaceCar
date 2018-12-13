@@ -1,7 +1,6 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
 import be.uantwerpen.fti.ds.sc.common.*;
-import be.uantwerpen.fti.ds.sc.smartracecar.*;
 import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
