@@ -36,7 +36,7 @@ public class TCPUtils extends Thread
 	public TCPUtils(int port, TCPListener listener) throws IOException
 	{
 		this.log = LoggerFactory.getLogger(TCPUtils.class);
-		serverSocket = new ServerSocket(port);
+		this.serverSocket = new ServerSocket(port);
 		this.listener = listener;
 		this.ackNack = true;
 	}
@@ -83,6 +83,8 @@ public class TCPUtils extends Thread
 	{
 		if (this.ackNack)
 		{
+			this.log.info("Entering ACKNACK mode");
+
 			while (true)
 			{
 				try
@@ -93,57 +95,70 @@ public class TCPUtils extends Thread
 					{
 						this.in = new BufferedReader(new InputStreamReader(server.getInputStream()));
 						this.out = new PrintWriter(server.getOutputStream(), true);
-					} catch (IOException e)
-					{
-						this.log.warn("Cannot receive data." + e);
 					}
-					while (true)
+					catch (IOException e)
 					{
-						try
-						{
-							//Send data back to client
-							String data = in.readLine();
-							this.log.info("Data received: " + data);
-							String response = this.listener.parseTCP(data);
-							this.out.println(response);
-							this.log.info("Data Sent:" + response);
-							break;
-						} catch (IOException e)
-						{
-							this.log.error("Cannot receive data." + e);
-						}
+						this.log.warn("Cannot receive data.", e);
 					}
-					server.close();
 
-				} catch (SocketTimeoutException s)
+					this.log.info("Listening for messages");
+
+					try
+					{
+						//Send data back to client
+						String data = this.in.readLine();
+						this.log.info("Data received: " + data);
+
+						String response = this.listener.parseTCP(data);
+						this.out.println(response);
+						this.log.info("Data Sent:" + response);
+					}
+					catch (IOException ioe)
+					{
+						this.log.error("Cannot receive data.", ioe);
+					}
+
+					this.log.info("Left inner while loop.");
+
+					server.close();
+				}
+				catch (SocketTimeoutException ste)
 				{
-					this.log.error("Timed out." + s);
-				} catch (IOException e)
+					this.log.error("Timed out.", ste);
+				}
+				catch (IOException ioe)
 				{
-					e.printStackTrace();
+					this.log.error("IOException in socket operation", ioe);
 				}
 			}
-		} else
+		}
+		else
 		{
+			this.log.info("Entering NON-ACKNACK mode");
+
 			ServerSocket echoServer = null;
 			String line;
 			DataInputStream is;
 			try
 			{
-				echoServer = new ServerSocket(serverPort);
-			} catch (IOException e)
+				echoServer = new ServerSocket(this.serverPort);
+			}
+			catch (IOException e)
 			{
 				e.printStackTrace();
 			}
+
 			boolean run = true;
+
 			while (run)
 			{
 				try
 				{
 					if (echoServer != null)
 					{
-						socket = echoServer.accept();
+						this.socket = echoServer.accept();
 					}
+
 					is = new DataInputStream(socket.getInputStream());
 
 					line = is.readLine();
@@ -152,12 +167,13 @@ public class TCPUtils extends Thread
 						this.log.info("data received: " + line);
 						this.listener.parseTCP(line);
 					}
-				} catch (IOException e)
+				}
+				catch (IOException ioe)
 				{
-					this.log.error("Cannot receive data." + e);
+					this.log.error("Cannot receive data.", ioe);
 				}
 			}
-			closeTCP();
+			this.closeTCP();
 		}
 	}
 
@@ -187,18 +203,22 @@ public class TCPUtils extends Thread
 					os.println(inputLine.readLine());
 					this.log.info("Data Sent:" + data);
 					os.close();
-				} catch (UnknownHostException e)
+				}
+				catch (UnknownHostException e)
 				{
 					this.log.warn("Could not send. Trying to connect to unknown host: " + e);
-				} catch (IOException e)
+				}
+				catch (IOException e)
 				{
 					this.log.error("Could not send. IOException:  " + e);
 				}
-			} catch (UnknownHostException e)
+			}
+			catch (UnknownHostException e)
 			{
 				this.log.error("Cannot connect to receiver. Trying again." + e);
 				connected = false;
-			} catch (IOException e)
+			}
+			catch (IOException e)
 			{
 				this.log.warn("Cannot connect to receiver to send   " + data + "   Trying again. Error:" + e);
 				connected = false;

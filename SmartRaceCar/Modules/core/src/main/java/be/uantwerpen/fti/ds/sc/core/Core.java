@@ -112,7 +112,7 @@ class Core implements TCPListener, MQTTListener
 
 		if (!this.debugWithoutRosKernel)
 		{
-			connectSend();
+			this.connectSend();
 		}
 
 		this.mapManager = new MapManager(this);
