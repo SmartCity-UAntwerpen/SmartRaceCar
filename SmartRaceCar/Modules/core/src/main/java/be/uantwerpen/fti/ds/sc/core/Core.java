@@ -4,6 +4,7 @@ import be.uantwerpen.fti.ds.sc.common.*;
 import com.github.lalyos.jfiglet.FigletFont;
 import com.google.gson.reflect.TypeToken;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -193,7 +194,9 @@ class Core implements TCPListener, MQTTListener
 		InputStream input = null;
 		try
 		{
-			String path = Core.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+			//String path = Core.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+			String path = new File(".").getPath();
+			this.log.info("CORE", "loading parameters from: " + path);
 			String decodedPath = URLDecoder.decode(path, "UTF-8");
 			decodedPath = decodedPath.replace("Core.jar", "");
 			input = new FileInputStream(decodedPath + "/src/main/core.properties");
