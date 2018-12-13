@@ -14,7 +14,7 @@
     <modules>
         <module>common</module>
         <module>core</module>
-        <module>racecarBackend</module>
+        <module>racecarbackend</module>
         <module>simdeployer</module>
         <module>simkernel</module>
     </modules>
