@@ -21,7 +21,7 @@ public class ParameterParser
     // RACECAR KEYS
     private static final String RACECAR_URL_KEY = "Racecar.URL";
 
-    private Logger log;
+    protected Logger log;
 
     private Parameters readParameters(String propertiesFile)
     {

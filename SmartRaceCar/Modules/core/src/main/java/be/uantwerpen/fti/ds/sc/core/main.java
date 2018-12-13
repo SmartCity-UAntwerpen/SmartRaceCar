@@ -1,7 +1,5 @@
 package be.uantwerpen.fti.ds.sc.core;
 
-import be.uantwerpen.fti.ds.sc.common.CoreParameters;
-
 import java.io.IOException;
 
 public class main
