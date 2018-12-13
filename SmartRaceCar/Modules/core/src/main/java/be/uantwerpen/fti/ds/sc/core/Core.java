@@ -250,7 +250,7 @@ class Core implements TCPListener, MQTTListener
 		}*/
 
 		CoreParameterParser parser = new CoreParameterParser();
-		this.params = parser.parse("./core.properties");
+		this.params = parser.parse("~/Git/SmartRacecar/SmartRacecar/release/core.properties");
 	}
 
 
