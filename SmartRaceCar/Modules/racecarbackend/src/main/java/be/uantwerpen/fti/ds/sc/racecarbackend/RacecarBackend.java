@@ -11,8 +11,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class RacecarBackend
 {
-	private static final String DEFAULT_PROPERTIES_FILE = "RacecarBackend.properties";
-
 	private Logger log;
 	private JobDispatcher jobDispatcher;
 	private MapManager mapManager;
@@ -27,5 +25,8 @@ public class RacecarBackend
 		this.vehicleManager = vehicleManager;
 	}
 
-
+	public static void main(String[] args)
+	{
+		SpringApplication.run(RacecarBackend.class, args);
+	}
 }
