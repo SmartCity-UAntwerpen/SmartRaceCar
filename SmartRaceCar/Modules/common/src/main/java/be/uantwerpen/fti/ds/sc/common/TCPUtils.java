@@ -150,7 +150,7 @@ public class TCPUtils extends Thread
 					if (line != null)
 					{
 						this.log.info("data received: " + line);
-						listener.parseTCP(line);
+						this.listener.parseTCP(line);
 					}
 				} catch (IOException e)
 				{
@@ -185,7 +185,7 @@ public class TCPUtils extends Thread
 				{
 					PrintStream os = new PrintStream(clientSocket.getOutputStream());
 					os.println(inputLine.readLine());
-					this.log.info("SOCKETS", "Data Sent:" + data);
+					this.log.info("Data Sent:" + data);
 					os.close();
 				} catch (UnknownHostException e)
 				{
