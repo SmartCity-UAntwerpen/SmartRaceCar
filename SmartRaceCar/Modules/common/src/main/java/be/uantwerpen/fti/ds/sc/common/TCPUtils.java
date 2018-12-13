@@ -138,14 +138,14 @@ public class TCPUtils extends Thread
 
 			ServerSocket echoServer = null;
 			String line;
-			DataInputStream is;
+			BufferedReader is;
 			try
 			{
 				echoServer = new ServerSocket(this.serverPort);
 			}
-			catch (IOException e)
+			catch (IOException ioe)
 			{
-				e.printStackTrace();
+				this.log.error("failed to create serversocket on port " + this.serverPort, ioe);
 			}
 
 			boolean run = true;
@@ -154,12 +154,11 @@ public class TCPUtils extends Thread
 			{
 				try
 				{
-					if (echoServer != null)
-					{
-						this.socket = echoServer.accept();
-					}
 
-					is = new DataInputStream(socket.getInputStream());
+					this.socket = echoServer.accept();
+
+
+					is = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
 
 					line = is.readLine();
 					if (line != null)
