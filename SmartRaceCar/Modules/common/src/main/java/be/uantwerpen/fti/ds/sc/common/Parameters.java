@@ -45,7 +45,6 @@ public class Parameters
 		this.restCarmanagerURL = restCarmanagerURL;
 	}
 
-	@Deprecated
 	public Parameters(Parameters parameters)
 	{
 		this.mqttBroker = parameters.getMqttBroker();

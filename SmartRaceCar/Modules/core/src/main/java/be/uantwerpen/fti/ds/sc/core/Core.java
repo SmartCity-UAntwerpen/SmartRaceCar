@@ -4,7 +4,6 @@ import be.uantwerpen.fti.ds.sc.common.*;
 import com.github.lalyos.jfiglet.FigletFont;
 import com.google.gson.reflect.TypeToken;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -197,7 +196,7 @@ class Core implements TCPListener, MQTTListener
 	 */
 	private void loadConfig() throws URISyntaxException
 	{
-		Properties prop = new Properties();
+		/*Properties prop = new Properties();
 		InputStream input = null;
 		try
 		{
@@ -248,7 +247,10 @@ class Core implements TCPListener, MQTTListener
 					this.log.warning("CORE", "Could not read config file. Loading default settings. " + e);
 				}
 			}
-		}
+		}*/
+
+		CoreParameterParser parser = new CoreParameterParser();
+		this.params = parser.parse("./core.properties");
 	}
 
 
