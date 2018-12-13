@@ -96,6 +96,7 @@ public class Navigator
 			this.core.timeRequest(wayPointIDs);
 			while (this.costCurrentToStartTiming == -1 && this.costStartToEndTiming == -1)
 			{
+				this.log.info("NAVIGATOR", "Waiting for cost calculation");
 				try
 				{
 					Thread.sleep(1000);

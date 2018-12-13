@@ -1,44 +1,7 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<maps>
-    <map>
-        <name>V314</name>
-    </map>
-    <map>
-        <name>z164</name>
-    </map>
-    <map>
-        <name>zbuilding2</name>
-    </map>
-    <map>
-        <name>zbuilding</name>
-    </map>
-    <map>
-        <name>gangV</name>
-    </map>
-    <map>
-        <name>V314_2</name>
-    </map>
-    <map>
-        <name>z164_2</name>
-    </map>
-    <map>
-        <name>z164_3</name>
-    </map>
-    <map>
-        <name>z164_4</name>
-    </map>
-    <map>
-        <name>z164_5</name>
-    </map>
-    <map>
-        <name>z164_5_2</name>
-    </map>
-    <map>
-        <name>U014</name>
-    </map>
-
-
-
-
-
+image: U014.pgm
+resolution: 0.050000
+origin: [-51.224998, -51.224998, 0.000000]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.196
 

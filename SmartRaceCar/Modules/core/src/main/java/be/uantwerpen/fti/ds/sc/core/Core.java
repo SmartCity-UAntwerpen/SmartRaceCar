@@ -307,10 +307,13 @@ class Core implements TCPListener, MQTTListener
 	 */
 	public void parseMQTT(String topic, String message)
 	{
+		this.log.info("NAVIGATOR", "received MQTT message: " + message);
+
 		if (topic.matches("racecar/[0-9]+/job"))
 		{
 			this.navigator.handleJobRequest(message);
-		} else if (topic.matches("racecar/[0-9]+/costrequest"))
+		}
+		else if (topic.matches("racecar/[0-9]+/costrequest"))
 		{
 			String[] wayPointStringValues = message.split(" ");
 			try
@@ -322,11 +325,13 @@ class Core implements TCPListener, MQTTListener
 					wayPointValues[index] = Integer.parseInt(wayPointStringValues[index]);
 				}
 				this.weightManager.costRequest(wayPointValues);
-			} catch (NumberFormatException e)
+			}
+			catch (NumberFormatException e)
 			{
 				this.log.warning("CORE", "Parsing MQTT gives bad result: " + e);
 			}
-		} else if (topic.matches("racecar/[0-9]+/changeMap"))
+		}
+		else if (topic.matches("racecar/[0-9]+/changeMap"))
 		{
 			this.mapManager.requestMap();
 		}
