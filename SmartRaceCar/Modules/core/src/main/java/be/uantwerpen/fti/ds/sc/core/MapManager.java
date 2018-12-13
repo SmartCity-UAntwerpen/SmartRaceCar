@@ -38,7 +38,8 @@ public class MapManager
 		this.log = new LogbackWrapper(MapManager.class);
 
 		this.loadedMaps = new HashMap<>();
-		this.loadedMaps = loadMaps(findMapsFolder());
+		String mapsFolder = findMapsFolder();
+		this.loadedMaps = loadMaps(mapsFolder);
 	}
 
 	/**
@@ -53,7 +54,7 @@ public class MapManager
 		HashMap<String, Map> loadedMaps = new HashMap<>();
 		try
 		{
-			File fXmlFile = new File(mapFolder);
+			File fXmlFile = new File(mapFolder + "/maps.xml");
 			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
 			Document doc = dBuilder.parse(fXmlFile);
@@ -94,6 +95,7 @@ public class MapManager
 		if(fileUtils.getResult().size() == 0)
 		{
 			this.log.debug("MAP-MAN", "could not find maps.xml");
+			System.exit(0);
 		}
 		/*fileUtils.searchDirectory(new File(".."), "maps.xml");
 		if (fileUtils.getResult().size() == 0)
@@ -128,6 +130,9 @@ public class MapManager
 	 */
 	public void requestMap()
 	{
+		String mapDir = this.findMapsFolder();
+		String mapPath = mapDir + "/maps.xml";
+
 		String mapName = this.core.getRestUtils().getTextPlain("getmapname");
 		if (this.loadedMaps.containsKey(mapName))
 		{
@@ -137,15 +142,15 @@ public class MapManager
 		} else
 		{
 			this.log.info("MAP-MANAGER", "Current used map '" + mapName + "' not found. Downloading...");
-			this.core.getRestUtils().getFile("getmappgm/" + mapName, findMapsFolder(), mapName, "pgm");
-			this.core.getRestUtils().getFile("getmapyaml/" + mapName, findMapsFolder(), mapName, "yaml");
+			this.core.getRestUtils().getFile("getmappgm/" + mapName, mapDir, mapName, "pgm");
+			this.core.getRestUtils().getFile("getmapyaml/" + mapName, mapDir, mapName, "yaml");
 			Map map = new Map(mapName);
 			try
 			{
 				DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
 				DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
 
-				Document document = documentBuilder.parse(findMapsFolder() + "/maps.xml");
+				Document document = documentBuilder.parse(mapPath);
 				Element root = document.getDocumentElement();
 
 				Element newMap = document.createElement("map");
@@ -156,17 +161,30 @@ public class MapManager
 
 				root.appendChild(newMap);
 
-				DOMSource source = new DOMSource(document);
+				/*DOMSource source = new DOMSource(document);
 
 				TransformerFactory transformerFactory = TransformerFactory.newInstance();
 				Transformer transformer = transformerFactory.newTransformer();
 				transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 				transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-				StreamResult result = new StreamResult(findMapsFolder() + "/maps.xml");
+				StreamResult result = new StreamResult(findMapsFolder());
+				transformer.transform(source, result);*/
+
+				TransformerFactory transformerFactory = TransformerFactory.newInstance();
+				Transformer transformer = transformerFactory.newTransformer();
+				transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+				transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+				transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+				DOMSource source = new DOMSource(document);
+
+				StreamResult result = new StreamResult(mapPath);
+
 				transformer.transform(source, result);
 
-			} catch (ParserConfigurationException | SAXException | IOException | TransformerException e)
+			}
+			catch (ParserConfigurationException | SAXException | IOException | TransformerException e)
 			{
+				e.printStackTrace();
 				this.log.warning("MAP-MANAGER", "Could not add map to XML of maps." + e);
 			}
 			this.loadedMaps.put(mapName, map);

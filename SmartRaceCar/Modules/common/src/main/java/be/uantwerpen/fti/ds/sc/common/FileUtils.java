@@ -92,7 +92,7 @@ public class FileUtils
 					{
 						if (getFileNameToSearch().equals(temp.getName().toLowerCase()))
 						{
-							result.add(temp.getPath().toString().replace("\\maps.xml", ""));
+							result.add(temp.getParent());
 						}
 
 					}

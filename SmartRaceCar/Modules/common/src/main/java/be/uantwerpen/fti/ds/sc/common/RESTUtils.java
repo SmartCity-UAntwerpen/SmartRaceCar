@@ -210,7 +210,7 @@ public class RESTUtils
 	 */
 	public void getFile(String URL, String folder, String fileName, String fileExtention)
 	{
-		java.nio.file.Path out = Paths.get(folder);
+		java.nio.file.Path out = Paths.get(folder + "/" + fileName + "." + fileExtention);
 		WebTarget resourceWebTarget = this.webTarget.path(URL);
 		Invocation.Builder invocationBuilder = resourceWebTarget.request("application/octet-stream");
 		Response response;

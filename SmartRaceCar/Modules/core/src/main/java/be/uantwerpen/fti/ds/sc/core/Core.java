@@ -62,8 +62,6 @@ class Core implements TCPListener, MQTTListener
 		System.out.println("--------------------- F1 Racecar Core - v1.0 ---------------------");
 		System.out.println("------------------------------------------------------------------");
 
-		this.mapManager = new MapManager(this);
-
 		this.params = params;
 
 		this.log = new LogbackWrapper(Core.class);
@@ -76,8 +74,8 @@ class Core implements TCPListener, MQTTListener
 		this.loadConfig();
 		this.log.info("CORE", "Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
 		this.restUtils = new RESTUtils(this.params.getRESTCarmanagerURL());
-		requestWaypoints();
-		register();
+		this.requestWaypoints();
+		this.register();
         /*Runtime.getRuntime().addShutdownHook(
                 new Thread(new Runnable() {public void run() {
                     Thread thread = new Thread(new Runnable() {public void run(){
@@ -109,7 +107,7 @@ class Core implements TCPListener, MQTTListener
 			connectSend();
 		}
 
-
+		this.mapManager = new MapManager(this);
 		this.mapManager.requestMap();
 		this.log.info("CORE", "Giving the map 10s to load.");
 		Thread.sleep(10000); //10 seconds delay so the map can load before publishing the startpoint
