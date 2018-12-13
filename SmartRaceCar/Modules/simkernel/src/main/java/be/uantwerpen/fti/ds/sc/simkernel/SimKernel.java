@@ -22,7 +22,7 @@ import java.util.logging.Level;
  */
 class SimKernel implements TCPListener
 {
-	private static final String DEFAULT_CONFIG_PATH = "Simkernel.parameters";
+	private static final String DEFAULT_CONFIG_PATH = "Simkernel.properties";
 
 	private SimkernelParameters parameters;
 
@@ -96,31 +96,37 @@ class SimKernel implements TCPListener
 					}.getType();
 					calculateCost((ArrayList<Point>) JSONUtils.getObjectWithKeyWord(message, typeOfPoints));
 					break;
+
 				case "costtiming":
 					Type typeOfPointss = new TypeToken<ArrayList<Point>>()
 					{
 					}.getType();
 					calculateTiming((ArrayList<Point>) JSONUtils.getObjectWithKeyWord(message, typeOfPointss));
 					break;
+
 				case "connect":
 					connectReceive();
 					break;
+
 				case "startPoint":
 					this.startPoint = (WayPoint) JSONUtils.getObjectWithKeyWord(message, WayPoint.class);
 					this.log.info("Startpoint set to " + startPoint.getX() + "," + startPoint.getY() + "," + startPoint.getZ() + "," + startPoint.getW() + ".");
 					this.currentPosition = new Point(startPoint.getX(), startPoint.getY(), startPoint.getZ(), startPoint.getW());
 					break;
+
 				case "currentMap":
 					this.map = (Map) JSONUtils.getObjectWithKeyWord(message, Map.class);
 					this.calculatedCosts.clear();
 					this.log.info("Map set to '" + this.map.getName() + "'.");
 					break;
+
 				case "nextWayPoint":
 					Type typeOfWayPoint = new TypeToken<WayPoint>()
 					{
 					}.getType();
 					jobRequest((WayPoint) JSONUtils.getObjectWithKeyWord(message, typeOfWayPoint));
 					break;
+
 				case "currentPosition":
 					Type typeOfWayPoint2 = new TypeToken<WayPoint>()
 					{
@@ -128,6 +134,7 @@ class SimKernel implements TCPListener
 					this.currentPosition = (WayPoint) JSONUtils.getObjectWithKeyWord(message, typeOfWayPoint2);
 					this.log.info("Current position set to " + currentPosition.getX() + "," + currentPosition.getY() + "," + currentPosition.getZ() + "," + currentPosition.getW() + ".");
 					break;
+
 				default:
 					this.log.warn("No matching keyword when parsing JSON from Sockets. Data: " + message);
 					break;
@@ -189,7 +196,8 @@ class SimKernel implements TCPListener
 					Location location = new Location(0, 0, 0, i * 5);
 					this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("percentage", location));
 					this.log.info("travelled " + i * 5 + "% of total route.");
-				} catch (InterruptedException e)
+				}
+				catch (InterruptedException e)
 				{
 					e.printStackTrace();
 				}
@@ -258,7 +266,8 @@ class SimKernel implements TCPListener
 			{ //a request to the ROSkernel is intensive and needs to be avoided if possible
 				this.log.info("Loaded cost locally from previously calculated costs");
 				cost = this.calculatedCosts.get(allPoints);
-			} else
+			}
+			else
 			{
 				Type typeOfCost = new TypeToken<Cost>()
 				{

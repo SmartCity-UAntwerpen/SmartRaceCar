@@ -55,6 +55,14 @@
                 </executions>
             </plugin>
         </plugins>
+
+        <!-- Resources Section-->
+        <resources>
+            <resource>
+                <directory>src/main/res</directory>
+                <filtering>false</filtering>
+            </resource>
+        </resources>
     </build>
 
     <dependencies>
