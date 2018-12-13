@@ -9,6 +9,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
+import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -72,7 +73,13 @@ class Core implements TCPListener, MQTTListener
 		this.wayPoints = new HashMap<>();
 		this.occupied = false;
 
-		this.loadConfig();
+		try
+		{
+			this.loadConfig();
+		} catch (URISyntaxException e)
+		{
+			e.printStackTrace();
+		}
 		this.log.info("CORE", "Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
 		this.restUtils = new RESTUtils(this.params.getRESTCarmanagerURL());
 		this.requestWaypoints();
@@ -188,14 +195,14 @@ class Core implements TCPListener, MQTTListener
 	 * Help method to load all configuration parameters from the properties file with the same name as the class.
 	 * If it's not found then it will use the default ones.
 	 */
-	private void loadConfig()
+	private void loadConfig() throws URISyntaxException
 	{
 		Properties prop = new Properties();
 		InputStream input = null;
 		try
 		{
 			//String path = Core.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-			String path = new File(".").getPath();
+			String path =  Core.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
 			this.log.info("CORE", "loading parameters from: " + path);
 			String decodedPath = URLDecoder.decode(path, "UTF-8");
 			decodedPath = decodedPath.replace("Core.jar", "");
