@@ -78,7 +78,7 @@ public class TCPUtils extends Thread
 	 */
 	public void run()
 	{
-		if (ackNack)
+		if (this.ackNack)
 		{
 			while (true)
 			{
@@ -88,8 +88,8 @@ public class TCPUtils extends Thread
 
 					try
 					{
-						in = new BufferedReader(new InputStreamReader(server.getInputStream()));
-						out = new PrintWriter(server.getOutputStream(), true);
+						this.in = new BufferedReader(new InputStreamReader(server.getInputStream()));
+						this.out = new PrintWriter(server.getOutputStream(), true);
 					} catch (IOException e)
 					{
 						this.log.warning("SOCKETS", "Cannot receive data." + e);
@@ -100,9 +100,10 @@ public class TCPUtils extends Thread
 						{
 							//Send data back to client
 							String data = in.readLine();
-							this.log.info("SOCKETS", "data received: " + data);
+							this.log.info("SOCKETS", "Data received: " + data);
+							System.out.println(data);
 							String response = listener.parseTCP(data);
-							out.println(response);
+							this.out.println(response);
 							this.log.info("SOCKETS", "Data Sent:" + response);
 							break;
 						} catch (IOException e)
