@@ -14,6 +14,10 @@
 
     <name>racecarbackend</name>
 
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
     <build>
         <plugins>
             <plugin>
@@ -62,6 +66,14 @@
                 </executions>
             </plugin>
         </plugins>
+
+        <!-- Resources Section-->
+        <resources>
+            <resource>
+                <directory>src/main/res</directory>
+                <filtering>false</filtering>
+            </resource>
+        </resources>
     </build>
 
     <dependencies>
@@ -93,6 +105,12 @@
             <groupId>org.eclipse.paho</groupId>
             <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
             <version>1.1.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.25</version>
         </dependency>
 
         <dependency>
