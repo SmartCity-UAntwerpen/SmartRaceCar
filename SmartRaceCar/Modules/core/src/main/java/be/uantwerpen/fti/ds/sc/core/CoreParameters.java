@@ -39,4 +39,19 @@ public class CoreParameters extends Parameters
 	{
 		this.debug = debug;
 	}
+
+	@Override
+	public String toString()
+	{
+		StringBuilder builder = new StringBuilder();
+
+		String parameters = super.toString();
+		builder.append(parameters);
+
+		builder.append("DEBUG WITHOUT ROS KERNEL: ");
+		builder.append(this.debug);
+		builder.append("\n");
+
+		return builder.toString();
+	}
 }

@@ -75,6 +75,7 @@ class Core implements TCPListener, MQTTListener
 		try
 		{
 			this.loadConfig();
+			this.log.info("CORE", "loaded parameters \n" + this.params.toString());
 		} catch (URISyntaxException e)
 		{
 			e.printStackTrace();
