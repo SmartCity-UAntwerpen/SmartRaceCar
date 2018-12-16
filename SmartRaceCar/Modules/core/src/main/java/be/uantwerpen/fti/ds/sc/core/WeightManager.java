@@ -37,7 +37,7 @@ public class WeightManager
 			this.core.getTcpUtils().sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("cost", points));
 		} else
 		{
-			costComplete(new Cost(false, 5, 5, this.core.getID()));
+			costCalculationComplete(new Cost(false, 5, 5, this.core.getID()));
 		}
 		this.log.info("Cost request received between waypoints " + wayPointIDs[0] + " and " + wayPointIDs[1] + ". Calculating.");
 	}
@@ -47,7 +47,7 @@ public class WeightManager
 	 *
 	 * @param cost Cost object containing the calculated weights.
 	 */
-	public void costComplete(Cost cost)
+	public void costCalculationComplete(Cost cost)
 	{
 		this.log.info("Cost request calculated.");
 		cost.setStatus(this.core.isOccupied());

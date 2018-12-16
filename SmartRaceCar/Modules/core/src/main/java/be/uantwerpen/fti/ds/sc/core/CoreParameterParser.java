@@ -31,7 +31,7 @@ public class CoreParameterParser extends ParameterParser
 
 		boolean debug = Boolean.parseBoolean(prop.getProperty(DEBUG));
 
-		this.log.info("Standard config loaded.");
+		this.log.info("Core config loaded.");
 
 		CoreParameters coreParameters = new CoreParameters(parameters, debug);
 
@@ -49,6 +49,7 @@ public class CoreParameterParser extends ParameterParser
 
 	public CoreParameters parse(String file)
 	{
+		this.log.info("Parsing core properties from: " + file);
 		return this.readParameters(file);
 	}
 }
