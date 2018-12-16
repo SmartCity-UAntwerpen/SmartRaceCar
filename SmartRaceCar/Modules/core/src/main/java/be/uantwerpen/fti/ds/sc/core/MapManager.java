@@ -2,8 +2,9 @@ package be.uantwerpen.fti.ds.sc.core;
 
 import be.uantwerpen.fti.ds.sc.common.FileUtils;
 import be.uantwerpen.fti.ds.sc.common.JSONUtils;
-import be.uantwerpen.fti.ds.sc.common.LogbackWrapper;
 import be.uantwerpen.fti.ds.sc.common.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -29,13 +30,13 @@ public class MapManager
 
 	private HashMap<String, Map> loadedMaps;                                // Map of all loaded maps.
 
-	private LogbackWrapper log;
+	private Logger log;
 
 	public MapManager(Core core)
 	{
 		this.core = core;
 
-		this.log = new LogbackWrapper(MapManager.class);
+		this.log = LoggerFactory.getLogger(MapManager.class);
 
 		this.loadedMaps = new HashMap<>();
 		String mapsFolder = findMapsFolder();
@@ -73,12 +74,12 @@ public class MapManager
 					Element eElement = (Element) nNode;
 					String name = eElement.getElementsByTagName("name").item(0).getTextContent();
 					loadedMaps.put(name, new Map(name));
-					this.log.info("MAP-MANAGER", "Added map: " + name + ".");
+					this.log.info("Added map: " + name + ".");
 				}
 			}
 		} catch (IOException | SAXException | ParserConfigurationException e)
 		{
-			this.log.error("MAP-MANAGER", "Could not correctly load XML of maps." + e);
+			this.log.error("Could not correctly load XML of maps." + e);
 		}
 		return loadedMaps;
 	}
@@ -94,7 +95,7 @@ public class MapManager
 		fileUtils.searchDirectory(new File("."), "maps.xml");
 		if(fileUtils.getResult().size() == 0)
 		{
-			this.log.debug("MAP-MAN", "could not find maps.xml");
+			this.log.debug("could not find maps.xml");
 			System.exit(0);
 		}
 		/*fileUtils.searchDirectory(new File(".."), "maps.xml");
@@ -136,12 +137,12 @@ public class MapManager
 		String mapName = this.core.getRestUtils().getTextPlain("getmapname");
 		if (this.loadedMaps.containsKey(mapName))
 		{
-			this.log.info("MAP-MANAGER", "Current used map '" + mapName + "' found in folder, setting as current map.");
+			this.log.info("Current used map '" + mapName + "' found in folder, setting as current map.");
 			if (!this.core.getParams().isDebug())
 				this.core.getTcpUtils().sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", this.loadedMaps.get(mapName)));
 		} else
 		{
-			this.log.info("MAP-MANAGER", "Current used map '" + mapName + "' not found. Downloading...");
+			this.log.info("Current used map '" + mapName + "' not found. Downloading...");
 			this.core.getRestUtils().getFile("getmappgm/" + mapName, mapDir, mapName, "pgm");
 			this.core.getRestUtils().getFile("getmapyaml/" + mapName, mapDir, mapName, "yaml");
 			Map map = new Map(mapName);
@@ -161,15 +162,6 @@ public class MapManager
 
 				root.appendChild(newMap);
 
-				/*DOMSource source = new DOMSource(document);
-
-				TransformerFactory transformerFactory = TransformerFactory.newInstance();
-				Transformer transformer = transformerFactory.newTransformer();
-				transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-				transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-				StreamResult result = new StreamResult(findMapsFolder());
-				transformer.transform(source, result);*/
-
 				TransformerFactory transformerFactory = TransformerFactory.newInstance();
 				Transformer transformer = transformerFactory.newTransformer();
 				transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
@@ -185,11 +177,11 @@ public class MapManager
 			catch (ParserConfigurationException | SAXException | IOException | TransformerException e)
 			{
 				e.printStackTrace();
-				this.log.warning("MAP-MANAGER", "Could not add map to XML of maps." + e);
+				this.log.warn("Could not add map to XML of maps." + e);
 			}
 			this.loadedMaps.put(mapName, map);
-			this.log.info("MAP-MANAGER", "Added downloaded map : " + mapName + ".");
-			this.log.info("MAP-MANAGER", "Current map '" + mapName + "' downloaded and set as current map.");
+			this.log.info("Added downloaded map : " + mapName + ".");
+			this.log.info("Current map '" + mapName + "' downloaded and set as current map.");
 			if (!this.core.getParams().isDebug())
 				this.core.getTcpUtils().sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", this.loadedMaps.get(mapName)));
 		}

@@ -1,7 +1,6 @@
 package be.uantwerpen.fti.ds.sc.simkernel;
 
 import be.uantwerpen.fti.ds.sc.common.*;
-import com.github.lalyos.jfiglet.FigletFont;
 import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

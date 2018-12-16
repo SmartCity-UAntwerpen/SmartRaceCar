@@ -35,11 +35,6 @@ public class CoreParameters extends Parameters
 		return this.debug;
 	}
 
-	public void setDebug(boolean debug)
-	{
-		this.debug = debug;
-	}
-
 	@Override
 	public String toString()
 	{

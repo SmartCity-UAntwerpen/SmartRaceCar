@@ -16,7 +16,7 @@ public class CoreParameterParser extends ParameterParser
 		Parameters parameters = super.parse(propertiesFile);
 
 		Properties prop = new Properties();
-		InputStream input = null;
+		InputStream input;
 
 		try
 		{
@@ -33,7 +33,7 @@ public class CoreParameterParser extends ParameterParser
 
 		this.log.info("Standard config loaded.");
 
-		CoreParameters coreParameters = new CoreParameters(parameters, debug); //todo: cleanup constructors and parameter order
+		CoreParameters coreParameters = new CoreParameters(parameters, debug);
 
 		try
 		{

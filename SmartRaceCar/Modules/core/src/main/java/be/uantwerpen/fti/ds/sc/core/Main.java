@@ -2,7 +2,7 @@ package be.uantwerpen.fti.ds.sc.core;
 
 import java.io.IOException;
 
-public class main
+public class Main
 {
 	/**
 	 * Main method, used to create a Core object and run it.
