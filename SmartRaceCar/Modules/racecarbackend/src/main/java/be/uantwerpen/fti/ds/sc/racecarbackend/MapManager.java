@@ -72,16 +72,17 @@ public class MapManager implements MQTTListener
 		this.loadWayPoints();
 	}
 
-	public boolean exists(long id)
+	@Deprecated
+	public boolean existsOld(long id)
 	{
 		return wayPoints.containsKey(id);
 	}
 
-	@Deprecated
+	/*@Deprecated
 	public void setVehicleManager(VehicleManager vehicleManager)
 	{
 		this.vehicleManager = vehicleManager;
-	}
+	}*/
 
 	/**
 	 * REST GET server service to get the currently used map.
@@ -263,6 +264,18 @@ public class MapManager implements MQTTListener
 		}
 
 		this.log.info("All possible wayPoints(" + wayPoints.size() + ") received.");
+	}
+
+	@RequestMapping (value="/carmanager/exists/{waypointId}", method=RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
+	public @ResponseBody ResponseEntity<Boolean> exists(@PathVariable long waypointId)
+	{
+		return new ResponseEntity<>(this.wayPoints.containsKey(waypointId), HttpStatus.OK);
+	}
+
+	@RequestMapping (value="/carmanager/getCoordinates/{waypointId}", method=RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
+	public @ResponseBody ResponseEntity<Point> getCoordinates(@PathVariable long waypointId)
+	{
+		return new ResponseEntity<>(this.wayPoints.get(waypointId), HttpStatus.OK);
 	}
 
 	@Override

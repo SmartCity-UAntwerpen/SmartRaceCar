@@ -28,6 +28,10 @@ public class ParameterContributor
     private static final String MAP_PATH_KEY = "Maps.path";
     private static final String MAP_CURRENT_KEY = "Maps.current";
 
+    // ROS SERVER KEYS
+    private static final String ROS_DEBUG_KEY = "ROS.debug";
+    private static final String ROS_SERVER_URL_KEY = "ROS.URL";
+
     @Value("${Racecar.config_file}")
     private String DEFAULT_PROPERTIES_FILE;
 
@@ -107,6 +111,42 @@ public class ParameterContributor
         return mapManagerParameters;
     }
 
+    private JobDispatcherParameters readJobDispatcherParameters(String propertiesFile)
+    {
+        Properties prop = new Properties();
+        InputStream input = null;
+
+        try
+        {
+            ParameterParser parser = new ParameterParser();
+            input = parser.openFileStream(propertiesFile);
+            prop.load(input);
+        }
+        catch (IOException ioe)
+        {
+            this.log.warn("Could not open config file. Loading default settings.", ioe);
+            return new JobDispatcherParameters();
+        }
+
+        Boolean enableROS = Boolean.parseBoolean(prop.getProperty(ROS_DEBUG_KEY));
+        String rosURL = prop.getProperty(ROS_SERVER_URL_KEY);
+
+        this.log.info("Job Dispatcher config loaded.");
+
+        JobDispatcherParameters jobDispatcherParameters = new JobDispatcherParameters(this.readBackendParameters(propertiesFile), enableROS, rosURL);
+
+        try
+        {
+            input.close();
+        }
+        catch (IOException ioe)
+        {
+            this.log.warn("Could not close config file.", ioe);
+        }
+
+        return jobDispatcherParameters;
+    }
+
     public ParameterContributor()
     {
         this.log = LoggerFactory.getLogger(ParameterContributor.class);
@@ -132,5 +172,12 @@ public class ParameterContributor
     MapManagerParameters mapManagerParameters()
     {
         return this.readMapManagerParameters(this.DEFAULT_PROPERTIES_FILE);
+    }
+
+    @Bean
+    @Qualifier("jobdispatcher")
+    JobDispatcherParameters jobDispatcherParameters()
+    {
+        return this.readJobDispatcherParameters(this.DEFAULT_PROPERTIES_FILE);
     }
 }
