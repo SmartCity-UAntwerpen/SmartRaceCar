@@ -1,10 +1,7 @@
 package be.uantwerpen.fti.ds.sc.core;
 
 
-import be.uantwerpen.fti.ds.sc.common.Cost;
-import be.uantwerpen.fti.ds.sc.common.JSONUtils;
-import be.uantwerpen.fti.ds.sc.common.Location;
-import be.uantwerpen.fti.ds.sc.common.WayPoint;
+import be.uantwerpen.fti.ds.sc.common.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,12 +18,15 @@ public class Navigator
 	private Queue<Long> currentRoute;                                        // All waypoint IDs to be handled in the current route.
 	private int routeSize;                                                   // Current route's size.
 	private Logger log;
+	private MQTTUtils mqttUtils;
 
 	public Navigator(Core core)
 	{
 		this.log = LoggerFactory.getLogger(Navigator.class);
 
 		this.core = core;
+
+		this.mqttUtils = new MQTTUtils(this.core.getParams().getMqttBroker(), this.core.getParams().getMqttUserName(), this.core.getParams().getMqttPassword(), this.core);
 
 		this.costCurrentToStartTiming = -1;
 		this.costStartToEndTiming = -1;
@@ -68,11 +68,13 @@ public class Navigator
 						wayPointValues[index] = Integer.parseInt(wayPointStringValues[index]);
 					}
 					this.jobRequest(wayPointValues);
-				} catch (NumberFormatException e)
+				}
+				catch (NumberFormatException e)
 				{
 					this.log.warn("Parsing MQTT gives bad result: " + e);
 				}
-			} else
+			}
+			else
 			{
 				this.log.warn("Current Route not completed. Not adding waypoints.");
 				this.routeNotComplete();
@@ -169,7 +171,8 @@ public class Navigator
 			location.setPercentage(Math.round(location.getPercentage() * weight));
 		}
 		this.log.info("Location Updated. Vehicle has " + location.getPercentage() + "% of route completed");
-		this.core.getMqttUtils().publishMessage("racecar/" + this.core.getID() + "/percentage", JSONUtils.objectToJSONString(location));
+		//this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/percentage", JSONUtils.objectToJSONString(location));
+		this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/percentage", Integer.toString(location.getPercentage()));
 	}
 
 	/**
@@ -179,7 +182,7 @@ public class Navigator
 	private void routeNotComplete()
 	{
 		this.core.setOccupied(false);
-		this.core.getMqttUtils().publishMessage("racecar/" + this.core.getID() + "/route", "notcomplete");
+		this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/route", "notcomplete");
 	}
 
 	/**
@@ -190,7 +193,7 @@ public class Navigator
 	{
 		this.log.warn("Route error. Route Cancelled");
 		this.core.setOccupied(false);
-		this.core.getMqttUtils().publishMessage("racecar/" + this.core.getID() + "/route", "error");
+		this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/route", "error");
 	}
 
 	/**
@@ -238,7 +241,7 @@ public class Navigator
 	{
 		this.log.info("Route Completed.");
 		this.core.setOccupied(false);
-		this.core.getMqttUtils().publishMessage("racecar/" + this.core.getID() + "/route", "done");
+		this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/route", "done");
 	}
 
 	/**
