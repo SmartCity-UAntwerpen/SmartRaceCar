@@ -266,16 +266,29 @@ public class MapManager implements MQTTListener
 		this.log.info("All possible wayPoints(" + wayPoints.size() + ") received.");
 	}
 
+	/**
+	 * REST Endpoint to check if a certain point (based on ID) exists.
+	 * @param waypointId
+	 * @return
+	 */
 	@RequestMapping (value="/carmanager/exists/{waypointId}", method=RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
-	public @ResponseBody ResponseEntity<Boolean> exists(@PathVariable long waypointId)
+	public @ResponseBody ResponseEntity<String> exists(@PathVariable long waypointId)
 	{
-		return new ResponseEntity<>(this.wayPoints.containsKey(waypointId), HttpStatus.OK);
+		this.log.info("Checking if waypoint " + waypointId + " exists.");
+		return new ResponseEntity<>(Boolean.toString(this.wayPoints.containsKey(waypointId)), HttpStatus.OK);
 	}
 
-	@RequestMapping (value="/carmanager/getCoordinates/{waypointId}", method=RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
-	public @ResponseBody ResponseEntity<Point> getCoordinates(@PathVariable long waypointId)
+	/**
+	 * REST Endpoint to get the coordinates (x,y,z,w) of a point with a certain ID.
+	 * @param waypointId
+	 * @return
+	 */
+	@RequestMapping (value="/carmanager/getCoordinates/{waypointId}", method=RequestMethod.GET, produces=MediaType.APPLICATION_JSON)
+	public @ResponseBody ResponseEntity<String> getCoordinates(@PathVariable long waypointId)
 	{
-		return new ResponseEntity<>(this.wayPoints.get(waypointId), HttpStatus.OK);
+		this.log.info("Fetching coordinates for waypoint " + waypointId + ".");
+		Point point = this.wayPoints.get(waypointId);
+		return new ResponseEntity<>(JSONUtils.objectToJSONString(point), HttpStatus.OK);
 	}
 
 	@Override

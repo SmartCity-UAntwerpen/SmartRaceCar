@@ -101,10 +101,20 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
 
-	@RequestMapping(value="/{startPoint}/{endPoint}", method=RequestMethod.GET, produces=MediaType.APPLICATION_JSON)
+	/**
+	 * REST Endpoint used to checkt the cost between the two points.
+	 * The cost is calculated on the ROS navstack server (Usually at smartcity.ddns.net:8084)
+	 * If no cars are available, a cost of infinity (Integer.MAX_VALUE) is returned
+	 * @param startId
+	 * @param endId
+	 * @return
+	 */
+	@RequestMapping(value="/{startId}/{endId}", method=RequestMethod.GET, produces=MediaType.APPLICATION_JSON)
 	public @ResponseBody ResponseEntity<String> costRequest(@PathVariable long startId, @PathVariable long endId)
 	{
 		RESTUtils racecarAPI = new RESTUtils(this.jobDispatcherParameters.getRESTCarmanagerURL());
+
+		this.log.info("Received cost request for " + startId + " -> " + endId);
 
 		Boolean startExists = Boolean.parseBoolean(racecarAPI.getTextPlain("/exists/" + startId));
 		Boolean endExists = Boolean.parseBoolean(racecarAPI.getTextPlain("/exists/" + endId));
@@ -133,9 +143,9 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 			Point startPoint = (Point) JSONUtils.getObject(racecarAPI.getJSON("/getCoordinates/" + startId), pointType);
 			Point endPoint = (Point) JSONUtils.getObject(racecarAPI.getJSON("/getCoordinates/" + endId), pointType);
 
-			List<Point> points = new ArrayList<>(2);
-			points.set(0, startPoint);
-			points.set(1, endPoint);
+			List<Point> points = new ArrayList<>();
+			points.add(startPoint);
+			points.add(endPoint);
 
 			String costString = ROSAPI.postJSONGetJSON("calcWeight", JSONUtils.arrayToJSONString(points));
 			Cost costObj = (Cost) JSONUtils.getObjectWithKeyWord(costString, costType);
