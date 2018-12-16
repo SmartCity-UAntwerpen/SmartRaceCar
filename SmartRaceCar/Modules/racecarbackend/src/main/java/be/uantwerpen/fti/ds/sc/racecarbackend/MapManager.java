@@ -77,6 +77,7 @@ public class MapManager implements MQTTListener
 		return wayPoints.containsKey(id);
 	}
 
+	@Deprecated
 	public void setVehicleManager(VehicleManager vehicleManager)
 	{
 		this.vehicleManager = vehicleManager;
