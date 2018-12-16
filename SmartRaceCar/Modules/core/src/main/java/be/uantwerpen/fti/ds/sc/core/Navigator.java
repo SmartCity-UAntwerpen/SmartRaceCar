@@ -1,6 +1,7 @@
 package be.uantwerpen.fti.ds.sc.core;
 
 
+import be.uantwerpen.fti.ds.sc.common.Cost;
 import be.uantwerpen.fti.ds.sc.common.JSONUtils;
 import be.uantwerpen.fti.ds.sc.common.Location;
 import be.uantwerpen.fti.ds.sc.common.WayPoint;
@@ -201,13 +202,16 @@ public class Navigator
 		if (!this.currentRoute.isEmpty())
 		{
 			WayPoint nextWayPoint = this.core.getWayPoints().get(this.currentRoute.poll());
+
+			this.log.info("Sending next waypoint with ID " + nextWayPoint.getID() + " (" + (this.routeSize - this.currentRoute.size()) + "/" + this.routeSize + ")");
+
 			if (!this.core.getParams().isDebug())
 			{
 				this.core.getTcpUtils().sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("nextWayPoint", nextWayPoint));
-				this.log.info("Sending next waypoint with ID " + nextWayPoint.getID() + " (" + (this.routeSize - this.currentRoute.size()) + "/" + this.routeSize + ")");
 			}
 			else
-			{ //Debug code to go over all waypoints with a 3s sleep in between.
+			{
+				//Debug code to go over all waypoints with a 3s sleep in between.
 				this.log.info("debug mode -> not sending waypoints to corelinker");
 				try
 				{
@@ -218,7 +222,6 @@ public class Navigator
 				}
 				this.wayPointReached();
 			}
-
 		}
 		else
 		{
@@ -246,16 +249,29 @@ public class Navigator
 	 */
 	private void sendWheelStates(float throttle, float steer)
 	{
+		this.log.info("Sending wheel state Throttle:" + throttle + ", Steer:" + steer + ".");
 		if (!this.core.getParams().isDebug())
 		{
 			this.core.getTcpUtils().sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("drive", new Drive(steer, throttle)));
-			this.log.info("Sending wheel state Throttle:" + throttle + ", Steer:" + steer + ".");
 		}
 		else
 		{
 			this.log.info("Debug mode -> not sending wheel states");
 		}
 
+	}
+
+	/**
+	 * When vehicle has completed cost calculation for the locationUpdate() function it sets the variables
+	 * costCurrentToStartTiming and costStartToEndTiming of the Core to be used by locationUpdate().
+	 *
+	 * @param cost Cost object containing the weights of the sub-routes.
+	 */
+	public void timingCalculationComplete(Cost cost)
+	{
+		this.setCostCurrentToStartTiming(cost.getWeightToStart());
+		this.setCostStartToEndTiming(cost.getWeight());
+		this.log.info("Timing calculation complete");
 	}
 
 
