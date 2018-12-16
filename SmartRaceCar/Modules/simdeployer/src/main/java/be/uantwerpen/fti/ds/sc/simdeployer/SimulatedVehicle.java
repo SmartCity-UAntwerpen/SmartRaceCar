@@ -98,7 +98,7 @@ class SimulatedVehicle
 	 */
 	void setStartPoint()
 	{
-		TCPUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("startpoint", startPoint), listeningPort);
+		TCPUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("startpoint", this.startPoint), this.listeningPort);
 	}
 
 	/**

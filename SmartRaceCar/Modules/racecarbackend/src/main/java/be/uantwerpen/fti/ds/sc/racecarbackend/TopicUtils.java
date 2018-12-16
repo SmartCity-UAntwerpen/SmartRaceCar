@@ -1,7 +1,7 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
-
-import be.uantwerpen.fti.ds.sc.common.LogbackWrapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -22,7 +22,7 @@ public class TopicUtils
 	 */
 	public static long getCarId(String topic)
 	{
-		LogbackWrapper log = new LogbackWrapper(TopicUtils.class);
+		Logger log = LoggerFactory.getLogger(TopicUtils.class);
 		Matcher matcher = MQTTConstants.CAR_ID_REGEX.matcher(topic);
 
 		if (matcher.matches())
@@ -34,14 +34,16 @@ public class TopicUtils
 			{
 				long id = Long.parseLong(idString);
 				return id;
-			} catch (NumberFormatException nfe)
+			}
+			catch (NumberFormatException nfe)
 			{
-				log.error("TopicUtils", "Extracted invalid integer ('" + idString + "') from racecar topic ('" + topic + "').");
+				log.error("Extracted invalid integer ('" + idString + "') from racecar topic ('" + topic + "').", nfe);
 				return -1;
 			}
-		} else
+		}
+		else
 		{
-			log.warning("TopicUtils", "Failed to extract car id from topic: '" + topic + "'");
+			log.warn("Failed to extract car id from topic: '" + topic + "'");
 			return -1;
 		}
 	}
