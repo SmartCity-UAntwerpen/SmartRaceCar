@@ -141,7 +141,7 @@ public class VehicleManager implements MQTTListener
 	}
 
 	/**
-	 * Checks whether or not a vehicle exists.
+	 * Checks whether or not a vehicle existsOld.
 	 *
 	 * @param vehicleId The id of the vehicle to be checked
 	 * @return
@@ -218,7 +218,7 @@ public class VehicleManager implements MQTTListener
 	@RequestMapping(value="/carmanager/register/{startWaypoint}", method=RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
 	public @ResponseBody ResponseEntity<String> register(@PathVariable long startWaypoint)
 	{
-		if (!this.mapManager.exists(startWaypoint))
+		if (!this.mapManager.existsOld(startWaypoint))
 		{
 			String errorString = "Tried to register vehicle with non-existent start id. (Start Waypoint: " + startWaypoint + ")";
 			this.log.error(errorString);

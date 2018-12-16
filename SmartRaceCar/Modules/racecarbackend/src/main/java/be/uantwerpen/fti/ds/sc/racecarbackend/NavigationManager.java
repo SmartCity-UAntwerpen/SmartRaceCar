@@ -82,17 +82,17 @@ public class NavigationManager implements MQTTListener
 	@RequestMapping(value = "calcWeight/{startId}/{endId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON)
 	public @ResponseBody ResponseEntity<String> calculateCostsRequest(@PathVariable("startId") long startId, @PathVariable("endId") long endId) throws InterruptedException
 	{
-		if (!this.mapManager.exists(startId))
+		if (!this.mapManager.existsOld(startId))
 		{
-			String errorString = "Request cost with non-existent start waypoint " + Long.toString(startId) + ".";
+			String errorString = "Request cost with non-existent start waypoint " + startId + ".";
 			this.log.error(errorString);
 
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
 
-		if (!this.mapManager.exists(endId))
+		if (!this.mapManager.existsOld(endId))
 		{
-			String errorString = "Request cost with non-existent end waypoint " + Long.toString(endId) + ".";
+			String errorString = "Request cost with non-existent end waypoint " + endId + ".";
 			this.log.error(errorString);
 
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
@@ -100,7 +100,7 @@ public class NavigationManager implements MQTTListener
 
 		if (this.vehicleManager.getNumVehicles() == 0)
 		{
-			String errorString = "No vehicles exist" + Long.toString(endId) + ".";
+			String errorString = "No vehicles exist.";
 			this.log.error(errorString);
 
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
