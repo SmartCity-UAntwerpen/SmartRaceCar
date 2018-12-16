@@ -37,12 +37,13 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		this.mqttUtils = new MQTTUtils(jobDispatcherParameters.getMqttBroker(), jobDispatcherParameters.getMqttUserName(), jobDispatcherParameters.getMqttPassword(), this);
 	}
 
+	@Deprecated
 	@RequestMapping(value = "/carmanager/executeJob/{jobId}/{vehicleId}/{startId}/{endId}", method=RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
 	public @ResponseBody ResponseEntity<String> jobRequest(@PathVariable long jobId, @PathVariable long vehicleId, @PathVariable long startId, @PathVariable long endId)
 	{
 		Job job = new Job(jobId, startId, endId, vehicleId);
 
-		// Check if vehicle existsOld
+		// Check if vehicle exists
 		if (!this.vehicleManager.exists(vehicleId))
 		{
 			String errorString = "Tried to execute job on non-existent vehicle (" + vehicleId + ")";
@@ -69,7 +70,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
 
-		// Check if starting waypoint existsOld
+		// Check if starting waypoint exists
 		if (!this.mapManager.existsOld(startId))
 		{
 			String errorString = "Request job with non-existent start waypoint " + startId + ".";
@@ -78,7 +79,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
 
-		// Check if end waypoint existsOld
+		// Check if end waypoint exists
 		if (!this.mapManager.existsOld(endId))
 		{
 			String errorString = "Request job with non-existent end waypoint " + endId + ".";
@@ -118,6 +119,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 
 		Boolean startExists = Boolean.parseBoolean(racecarAPI.getTextPlain("/exists/" + startId));
 		Boolean endExists = Boolean.parseBoolean(racecarAPI.getTextPlain("/exists/" + endId));
+		int numVehicles = Integer.parseInt(racecarAPI.getTextPlain("/getNumVehicles"));
 
 		if (!startExists)
 		{
@@ -129,6 +131,13 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		{
 			this.log.error("Requested cost for end waypoint " + startId + ", but waypoint doesn't exist.");
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		}
+
+		if (numVehicles == 0)
+		{
+			this.log.error("Requested cost, but no vehicles are available, returning " + Integer.MAX_VALUE);
+			String responseJson = JSONUtils.objectToJSONStringWithKeyWord("cost", Integer.MAX_VALUE);
+			return new ResponseEntity<>(responseJson, HttpStatus.OK);
 		}
 
 		int cost = 0;

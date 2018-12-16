@@ -98,7 +98,7 @@ public class NavigationManager implements MQTTListener
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
 
-		if (this.vehicleManager.getNumVehicles() == 0)
+		if (this.vehicleManager.getNumVehiclesOld() == 0)
 		{
 			String errorString = "No vehicles exist.";
 			this.log.error(errorString);
