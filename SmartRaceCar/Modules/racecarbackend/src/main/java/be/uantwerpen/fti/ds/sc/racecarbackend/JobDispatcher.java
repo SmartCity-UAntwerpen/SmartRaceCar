@@ -148,14 +148,19 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 
 			Type costType = new TypeToken<Cost>(){}.getType();
 
-			Point startPoint = this.mapManager.getCoordinates(startId);
-			Point endPoint = this.mapManager.getCoordinates(endId);
+			Point startPointTmp = this.mapManager.getCoordinates(startId);
+			Point endPointTmp = this.mapManager.getCoordinates(endId);
+
+			Point startPoint = new Point(startPointTmp.getX(), startPointTmp.getY(), startPointTmp.getZ(), startPointTmp.getW());
+			Point endPoint = new Point(endPointTmp.getX(), endPointTmp.getY(), endPointTmp.getZ(), endPointTmp.getW());
 
 			List<Point> points = new ArrayList<>();
-			points.add(startPoint);
+			points.add(startPoint);	// We need to add a Dummy point to the request, otherwise, the cost calculation server will return an error.
+            points.add(startPoint);
 			points.add(endPoint);
 
-			String costString = ROSAPI.postJSONGetJSON("calcWeight", JSONUtils.arrayToJSONString(points));
+			String jsonString = JSONUtils.arrayToJSONString(points);
+			String costString = ROSAPI.postJSONGetJSON("calcWeight", jsonString);
 			Cost costObj = (Cost) JSONUtils.getObjectWithKeyWord(costString, costType);
 
 			cost = costObj.getWeight();
