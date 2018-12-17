@@ -125,7 +125,7 @@ public class MapManager
 	public boolean requestMap()
 	{
 		boolean contains;
-		String mapDir = this.findMapsFolder();
+		File mapDir = new File(this.findMapsFolder());
 		String mapPath = mapDir + "/maps.xml";
 
 		String mapName = this.core.getRestUtils().getTextPlain("getmapname");
@@ -140,9 +140,15 @@ public class MapManager
 		} else
 		{
 			contains = false;
-			this.log.info("Current used map '" + mapName + "' not found. Downloading... to " + mapDir + "/" + mapName);
-			this.core.getRestUtils().getFile("getmappgm/" + mapName, mapDir, mapName, "pgm");
-			this.core.getRestUtils().getFile("getmapyaml/" + mapName, mapDir, mapName, "yaml");
+			try
+			{
+				this.log.info("Current used map '" + mapName + "' not found. Downloading... to " + mapDir.getCanonicalPath() + "/" + mapName);
+			} catch (IOException e)
+			{
+				e.printStackTrace();
+			}
+			this.core.getRestUtils().getFile("getmappgm/" + mapName, mapDir.getPath(), mapName, "pgm");
+			this.core.getRestUtils().getFile("getmapyaml/" + mapName, mapDir.getPath(), mapName, "yaml");
 			Map map = new Map(mapName);
 			try
 			{
