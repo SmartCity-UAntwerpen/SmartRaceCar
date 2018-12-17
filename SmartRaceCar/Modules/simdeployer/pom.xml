@@ -127,8 +127,6 @@
             <groupId>be.uantwerpen.fti.ds.sc</groupId>
             <artifactId>common</artifactId>
             <version>1.0</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/release/common-1.0.jar</systemPath>
         </dependency>
 
         <dependency>

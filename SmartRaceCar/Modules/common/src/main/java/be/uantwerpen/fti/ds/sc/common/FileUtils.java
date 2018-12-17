@@ -1,5 +1,8 @@
 package be.uantwerpen.fti.ds.sc.common;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,14 +12,14 @@ import java.util.List;
  */
 public class FileUtils
 {
-	private LogbackWrapper log;
+	private Logger log;
 
 	private String fileNameToSearch; // Name of the file that is being searched.
 	private List<String> result = new ArrayList<>(); // List of all found files matching the searched files. Full path is stored.
 
 	public FileUtils()
 	{
-		this.log = new LogbackWrapper(FileUtils.class);
+		this.log = LoggerFactory.getLogger(FileUtils.class);
 	}
 
 	/**
@@ -65,7 +68,7 @@ public class FileUtils
 			search(directory);
 		} else
 		{
-			this.log.error("FILESEARCH", "Not a directory. Cannot search.");
+			this.log.error(directory.getName() + " is not a directory. Cannot search.");
 		}
 	}
 
@@ -76,7 +79,7 @@ public class FileUtils
 	 */
 	private void search(File file)
 	{
-		this.log.debug("FILE-UTILS", "searching for " + file.getPath());
+		this.log.debug("Searching for " + file.getPath());
 		if (file.isDirectory())
 		{
 			//do you have permission to read this directory?
@@ -100,7 +103,7 @@ public class FileUtils
 
 			} else
 			{
-				this.log.error("FILESEARCH", "No permission to search for files.");
+				this.log.error("No permission to search for files.");
 			}
 		}
 
