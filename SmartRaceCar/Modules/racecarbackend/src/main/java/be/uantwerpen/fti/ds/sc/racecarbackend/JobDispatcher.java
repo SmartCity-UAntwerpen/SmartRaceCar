@@ -254,7 +254,8 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 
 		long vehicleLocation = this.navigationManager.getLocation(vehicleId);
 
-
+		//todo: find a way to track this job, without conflicting with the backbone's job ID's
+		this.mqttUtils.publishMessage("racecar/" + vehicleId + "/job", vehicleLocation + " " + destId);
 
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
