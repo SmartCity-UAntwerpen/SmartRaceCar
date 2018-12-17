@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.ws.rs.Path;
 import javax.ws.rs.core.MediaType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -211,8 +212,6 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}*/
 
-		RESTUtils racecarAPI = new RESTUtils(this.jobDispatcherParameters.getRESTCarmanagerURL());
-
 		// Check if starting waypoint exists
 		if (!this.mapManager.exists(startId))
 		{
@@ -237,6 +236,27 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 
 		this.mqttUtils.publishMessage("racecar/" + vehicleId + "/job", startId + " " + endId);
 		return new ResponseEntity<>("starting", HttpStatus.OK);
+	}
+
+	@RequestMapping(value="/job/gotopoint/{destId}", method=RequestMethod.POST, produces=MediaType.TEXT_PLAIN)
+	public @ResponseBody ResponseEntity<String> goToPoint (@PathVariable long destId)
+	{
+		//todo: Replace this with actual resource management
+		long dummyVehicleId = 0;
+		long vehicleId = dummyVehicleId;
+
+		if (!this.mapManager.exists(destId))
+		{
+			String errorString = "Tried to send vehicle to non-existent waypoint " + destId + ".";
+			this.log.error(errorString);
+			return new ResponseEntity<>(errorString, HttpStatus.BAD_REQUEST);
+		}
+
+		long vehicleLocation = this.navigationManager.getLocation(vehicleId);
+
+
+
+		return new ResponseEntity<>(HttpStatus.OK);
 	}
 
 	/**
