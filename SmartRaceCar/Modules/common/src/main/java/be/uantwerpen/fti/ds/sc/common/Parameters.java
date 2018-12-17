@@ -45,7 +45,6 @@ public class Parameters
 		this.restCarmanagerURL = restCarmanagerURL;
 	}
 
-	@Deprecated
 	public Parameters(Parameters parameters)
 	{
 		this.mqttBroker = parameters.getMqttBroker();
@@ -102,5 +101,33 @@ public class Parameters
 	public String getMqttTopic()
 	{
 		return this.mqttTopic;
+	}
+
+	@Override
+	public String toString()
+	{
+		StringBuilder builder = new StringBuilder();
+
+		builder.append("MQTT BROKER: ");
+		builder.append(this.mqttBroker);
+		builder.append("\n");
+
+		builder.append("MQTT USER NAME: ");
+		builder.append(this.mqttUserName);
+		builder.append("\n");
+
+		builder.append("MQTT PASSWORD: ");
+		builder.append(this.mqttPassword);
+		builder.append("\n");
+
+		builder.append("MQTT TOPIC: ");
+		builder.append(this.mqttTopic);
+		builder.append("\n");
+
+		builder.append("REST CARMANAGER URL: ");
+		builder.append(this.restCarmanagerURL);
+		builder.append("\n");
+
+		return builder.toString();
 	}
 }

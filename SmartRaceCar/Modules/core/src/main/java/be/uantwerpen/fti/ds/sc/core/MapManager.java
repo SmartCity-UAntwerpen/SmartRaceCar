@@ -2,8 +2,9 @@ package be.uantwerpen.fti.ds.sc.core;
 
 import be.uantwerpen.fti.ds.sc.common.FileUtils;
 import be.uantwerpen.fti.ds.sc.common.JSONUtils;
-import be.uantwerpen.fti.ds.sc.common.LogbackWrapper;
 import be.uantwerpen.fti.ds.sc.common.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -29,16 +30,20 @@ public class MapManager
 
 	private HashMap<String, Map> loadedMaps;                                // Map of all loaded maps.
 
-	private LogbackWrapper log;
+	private Logger log;
 
 	public MapManager(Core core)
 	{
+
 		this.core = core;
 
-		this.log = new LogbackWrapper(MapManager.class);
-
+		this.log = LoggerFactory.getLogger(MapManager.class);
+		this.log.info("starting to load maps");
 		this.loadedMaps = new HashMap<>();
-		this.loadedMaps = loadMaps(findMapsFolder());
+		String mapsFolder = findMapsFolder();
+		this.log.info("Found maps folder = " + mapsFolder);
+		this.loadedMaps = loadMaps(mapsFolder);
+		this.log.info("Maps loaded");
 	}
 
 	/**
@@ -53,7 +58,7 @@ public class MapManager
 		HashMap<String, Map> loadedMaps = new HashMap<>();
 		try
 		{
-			File fXmlFile = new File(mapFolder);
+			File fXmlFile = new File(mapFolder + "/maps.xml");
 			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
 			Document doc = dBuilder.parse(fXmlFile);
@@ -72,12 +77,12 @@ public class MapManager
 					Element eElement = (Element) nNode;
 					String name = eElement.getElementsByTagName("name").item(0).getTextContent();
 					loadedMaps.put(name, new Map(name));
-					this.log.info("MAP-MANAGER", "Added map: " + name + ".");
+					this.log.info("Added map: " + name + ".");
 				}
 			}
 		} catch (IOException | SAXException | ParserConfigurationException e)
 		{
-			this.log.error("MAP-MANAGER", "Could not correctly load XML of maps." + e);
+			this.log.error("Could not correctly load XML of maps." + e);
 		}
 		return loadedMaps;
 	}
@@ -93,26 +98,10 @@ public class MapManager
 		fileUtils.searchDirectory(new File("."), "maps.xml");
 		if(fileUtils.getResult().size() == 0)
 		{
-			this.log.debug("MAP-MAN", "could not find maps.xml");
+			this.log.debug("could not find maps.xml");
+			System.exit(0);
 		}
-		/*fileUtils.searchDirectory(new File(".."), "maps.xml");
-		if (fileUtils.getResult().size() == 0)
-		{
-			fileUtils.searchDirectory(new File("./.."), "maps.xml");
-			if (fileUtils.getResult().size() == 0)
-			{
-				fileUtils.searchDirectory(new File("./../.."), "maps.xml");
-				if (fileUtils.getResult().size() == 0)
-				{
-					fileUtils.searchDirectory(new File("./../../.."), "maps.xml");
-					if (fileUtils.getResult().size() == 0)
-					{
-						this.log.error("MAP-MAN", "maps.xml not found. Make sure it exists in some folder (maximum 3 levels deep).");
-						System.exit(0);
-					}
-				}
-			}
-		}*/
+
 		String output = null;
 		for (String matched : fileUtils.getResult())
 		{
@@ -126,26 +115,34 @@ public class MapManager
 	 * REST GET request to download the map files and store it in the mapfolder and add it to the maps.xml file.
 	 * After that it sends this information to the vehicle SimKernel/SimKernel over the socket connection.
 	 */
-	public void requestMap()
+	public boolean requestMap()
 	{
+		boolean contains;
+		String mapDir = this.findMapsFolder();
+		String mapPath = mapDir + "/maps.xml";
+
 		String mapName = this.core.getRestUtils().getTextPlain("getmapname");
 		if (this.loadedMaps.containsKey(mapName))
 		{
-			this.log.info("MAP-MANAGER", "Current used map '" + mapName + "' found in folder, setting as current map.");
+			contains = true;
+			this.log.info("Current used map '" + mapName + "' found in folder, setting as current map.");
 			if (!this.core.getParams().isDebug())
+			{
 				this.core.getTcpUtils().sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", this.loadedMaps.get(mapName)));
+			}
 		} else
 		{
-			this.log.info("MAP-MANAGER", "Current used map '" + mapName + "' not found. Downloading...");
-			this.core.getRestUtils().getFile("getmappgm/" + mapName, findMapsFolder(), mapName, "pgm");
-			this.core.getRestUtils().getFile("getmapyaml/" + mapName, findMapsFolder(), mapName, "yaml");
+			contains = false;
+			this.log.info("Current used map '" + mapName + "' not found. Downloading...");
+			this.core.getRestUtils().getFile("getmappgm/" + mapName, mapDir, mapName, "pgm");
+			this.core.getRestUtils().getFile("getmapyaml/" + mapName, mapDir, mapName, "yaml");
 			Map map = new Map(mapName);
 			try
 			{
 				DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
 				DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
 
-				Document document = documentBuilder.parse(findMapsFolder() + "/maps.xml");
+				Document document = documentBuilder.parse(mapPath);
 				Element root = document.getDocumentElement();
 
 				Element newMap = document.createElement("map");
@@ -156,24 +153,32 @@ public class MapManager
 
 				root.appendChild(newMap);
 
-				DOMSource source = new DOMSource(document);
-
 				TransformerFactory transformerFactory = TransformerFactory.newInstance();
 				Transformer transformer = transformerFactory.newTransformer();
+				transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
 				transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-				transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-				StreamResult result = new StreamResult(findMapsFolder() + "/maps.xml");
+				transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+				DOMSource source = new DOMSource(document);
+
+				StreamResult result = new StreamResult(mapPath);
+
 				transformer.transform(source, result);
 
 			} catch (ParserConfigurationException | SAXException | IOException | TransformerException e)
 			{
-				this.log.warning("MAP-MANAGER", "Could not add map to XML of maps." + e);
+				e.printStackTrace();
+				this.log.warn("Could not add map to XML of maps." + e);
 			}
 			this.loadedMaps.put(mapName, map);
-			this.log.info("MAP-MANAGER", "Added downloaded map : " + mapName + ".");
-			this.log.info("MAP-MANAGER", "Current map '" + mapName + "' downloaded and set as current map.");
+			this.log.info("Added downloaded map : " + mapName + ".");
+			this.log.info("Current map '" + mapName + "' downloaded and set as current map.");
 			if (!this.core.getParams().isDebug())
+			{
 				this.core.getTcpUtils().sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", this.loadedMaps.get(mapName)));
+
+			}
 		}
+
+		return contains;
 	}
 }

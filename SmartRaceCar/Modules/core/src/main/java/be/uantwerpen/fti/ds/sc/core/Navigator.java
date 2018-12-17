@@ -1,10 +1,9 @@
 package be.uantwerpen.fti.ds.sc.core;
 
 
-import be.uantwerpen.fti.ds.sc.common.JSONUtils;
-import be.uantwerpen.fti.ds.sc.common.Location;
-import be.uantwerpen.fti.ds.sc.common.LogbackWrapper;
-import be.uantwerpen.fti.ds.sc.common.WayPoint;
+import be.uantwerpen.fti.ds.sc.common.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -17,14 +16,17 @@ public class Navigator
 	private int costStartToEndTiming;                                        // Time in seconds from start position to end position of route.
 
 	private Queue<Long> currentRoute;                                        // All waypoint IDs to be handled in the current route.
-	private int routeSize;                                                    // Current route's size.
-	private LogbackWrapper log;
+	private int routeSize;                                                   // Current route's size.
+	private Logger log;
+	private MQTTUtils mqttUtils;
 
 	public Navigator(Core core)
 	{
-		this.log = new LogbackWrapper(Navigator.class);
+		this.log = LoggerFactory.getLogger(Navigator.class);
 
 		this.core = core;
+
+		this.mqttUtils = new MQTTUtils(this.core.getParams().getMqttBroker(), this.core.getParams().getMqttUserName(), this.core.getParams().getMqttPassword(), this.core);
 
 		this.costCurrentToStartTiming = -1;
 		this.costStartToEndTiming = -1;
@@ -66,13 +68,15 @@ public class Navigator
 						wayPointValues[index] = Integer.parseInt(wayPointStringValues[index]);
 					}
 					this.jobRequest(wayPointValues);
-				} catch (NumberFormatException e)
-				{
-					this.log.warning("NAVIGATOR", "Parsing MQTT gives bad result: " + e);
 				}
-			} else
+				catch (NumberFormatException e)
+				{
+					this.log.warn("Parsing MQTT gives bad result: " + e);
+				}
+			}
+			else
 			{
-				this.log.warning("NAVIGATOR", "Current Route not completed. Not adding waypoints.");
+				this.log.warn("Current Route not completed. Not adding waypoints.");
 				this.routeNotComplete();
 			}
 		}
@@ -88,14 +92,17 @@ public class Navigator
 	 */
 	public void jobRequest(long[] wayPointIDs)
 	{
-		this.log.info("NAVIGATOR", "Route request received.");
-		Boolean error = false;
+		this.log.info("Route request received.");
+
+		boolean error = false;
+
 		if (!this.core.isOccupied())
 		{
 			this.core.setOccupied(true);
 			this.core.timeRequest(wayPointIDs);
 			while (this.costCurrentToStartTiming == -1 && this.costStartToEndTiming == -1)
 			{
+				this.log.info("Waiting for cost calculation");
 				try
 				{
 					Thread.sleep(1000);
@@ -104,15 +111,17 @@ public class Navigator
 					e.printStackTrace();
 				}
 			}
+			this.log.info("Cost calculation complete");
 			for (long wayPointID : wayPointIDs)
 			{
 				if (this.core.getWayPoints().containsKey(wayPointID))
 				{
 					this.currentRoute.add(wayPointID);
-					this.log.info("NAVIGATOR", "Added waypoint with ID " + wayPointID + " to route.");
-				} else
+					this.log.info("Added waypoint with ID " + wayPointID + " to route.");
+				}
+				else
 				{
-					this.log.warning("NAVIGATOR", "Waypoint with ID '" + wayPointID + "' not found.");
+					this.log.warn("Waypoint with ID '" + wayPointID + "' not found.");
 					this.currentRoute.clear();
 					error = true;
 				}
@@ -120,17 +129,19 @@ public class Navigator
 			if (!error)
 			{
 				this.routeSize = this.currentRoute.size();
-				this.log.info("NAVIGATOR", "All waypoints(" + this.routeSize + ") of route added. Starting route.");
+				this.log.info("All waypoints(" + this.routeSize + ") of route added. Starting route.");
 				this.updateRoute();
-			} else
+			}
+			else
 			{
-				this.log.warning("NAVIGATOR", "Certain waypoints not found. Route cancelled.");
+				this.log.warn("Certain waypoints not found. Route cancelled.");
 				this.routeError();
 			}
-		} else
+		}
+		else
 		{
-			this.log.warning("NAVIGATOR", "Current Route not completed. Not adding waypoints.");
-			routeNotComplete();
+			this.log.warn("Current Route not completed. Not adding waypoints.");
+			this.routeNotComplete();
 		}
 	}
 
@@ -139,8 +150,8 @@ public class Navigator
 	 */
 	public void wayPointReached()
 	{
-		this.log.info("NAVIGATOR", "Waypoint reached.");
-		updateRoute();
+		this.log.info("Waypoint reached.");
+		this.updateRoute();
 	}
 
 	/**
@@ -160,8 +171,9 @@ public class Navigator
 			float weight = (float) this.costCurrentToStartTiming / (float) (this.costCurrentToStartTiming + this.costStartToEndTiming);
 			location.setPercentage(Math.round(location.getPercentage() * weight));
 		}
-		this.log.info("NAVIGATOR", "Location Updated. Vehicle has " + location.getPercentage() + "% of route completed");
-		this.core.getMqttUtils().publishMessage("racecar/" + this.core.getID() + "/percentage", JSONUtils.objectToJSONString(location));
+		this.log.info("Location Updated. Vehicle has " + location.getPercentage() + "% of route completed");
+		//this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/percentage", JSONUtils.objectToJSONString(location));
+		this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/percentage", Integer.toString(location.getPercentage()));
 	}
 
 	/**
@@ -171,7 +183,7 @@ public class Navigator
 	private void routeNotComplete()
 	{
 		this.core.setOccupied(false);
-		this.core.getMqttUtils().publishMessage("racecar/" + this.core.getID() + "/route", "notcomplete");
+		this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/route", "notcomplete");
 	}
 
 	/**
@@ -180,9 +192,9 @@ public class Navigator
 	 */
 	private void routeError()
 	{
-		this.log.warning("NAVIGATOR", "Route error. Route Cancelled");
+		this.log.warn("Route error. Route Cancelled");
 		this.core.setOccupied(false);
-		this.core.getMqttUtils().publishMessage("racecar/" + this.core.getID() + "/route", "error");
+		this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/route", "error");
 	}
 
 	/**
@@ -194,24 +206,31 @@ public class Navigator
 		if (!this.currentRoute.isEmpty())
 		{
 			WayPoint nextWayPoint = this.core.getWayPoints().get(this.currentRoute.poll());
+
+			this.log.info("Sending next waypoint with ID " + nextWayPoint.getID() + " (" + (this.routeSize - this.currentRoute.size()) + "/" + this.routeSize + ")");
+
 			if (!this.core.getParams().isDebug())
+			{
 				this.core.getTcpUtils().sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("nextWayPoint", nextWayPoint));
-			this.log.info("NAVIGATOR", "Sending next waypoint with ID " + nextWayPoint.getID() + " (" + (this.routeSize - this.currentRoute.size()) + "/" + this.routeSize + ")");
-			if (this.core.getParams().isDebug())
-			{ //Debug code to go over all waypoints with a 3s sleep in between.
+			}
+			else
+			{
+				//Debug code to go over all waypoints with a 3s sleep in between.
+				this.log.info("debug mode -> not sending waypoints to corelinker");
 				try
 				{
 					Thread.sleep(3000);
-				} catch (InterruptedException e)
+				} catch (InterruptedException ie)
 				{
-					e.printStackTrace();
+					ie.printStackTrace();
 				}
-				wayPointReached();
+				this.wayPointReached();
 			}
-
-		} else
+		}
+		else
 		{
-			routeCompleted();
+			this.log.info("No waypoints left in route");
+			this.routeCompleted();
 		}
 	}
 
@@ -221,9 +240,9 @@ public class Navigator
 	 */
 	private void routeCompleted()
 	{
-		this.log.info("NAVIGATOR", "Route Completed.");
+		this.log.info("Route Completed.");
 		this.core.setOccupied(false);
-		this.core.getMqttUtils().publishMessage("racecar/" + this.core.getID() + "/route", "done");
+		this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/route", "done");
 	}
 
 	/**
@@ -234,9 +253,29 @@ public class Navigator
 	 */
 	private void sendWheelStates(float throttle, float steer)
 	{
+		this.log.info("Sending wheel state Throttle:" + throttle + ", Steer:" + steer + ".");
 		if (!this.core.getParams().isDebug())
+		{
 			this.core.getTcpUtils().sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("drive", new Drive(steer, throttle)));
-		this.log.info("NAVIGATOR", "Sending wheel state Throttle:" + throttle + ", Steer:" + steer + ".");
+		}
+		else
+		{
+			this.log.info("Debug mode -> not sending wheel states");
+		}
+
+	}
+
+	/**
+	 * When vehicle has completed cost calculation for the locationUpdate() function it sets the variables
+	 * costCurrentToStartTiming and costStartToEndTiming of the Core to be used by locationUpdate().
+	 *
+	 * @param cost Cost object containing the weights of the sub-routes.
+	 */
+	public void timingCalculationComplete(Cost cost)
+	{
+		this.setCostCurrentToStartTiming(cost.getWeightToStart());
+		this.setCostStartToEndTiming(cost.getWeight());
+		this.log.info("Timing calculation complete");
 	}
 
 

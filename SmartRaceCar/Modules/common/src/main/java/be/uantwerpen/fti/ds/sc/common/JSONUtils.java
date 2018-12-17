@@ -1,6 +1,8 @@
 package be.uantwerpen.fti.ds.sc.common;
 
 import com.google.gson.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.util.List;
@@ -29,8 +31,8 @@ public class JSONUtils
 			return true;
 		} catch (com.google.gson.JsonSyntaxException ex)
 		{
-			LogbackWrapper log = new LogbackWrapper(JSONUtils.class);
-			log.warning("JSON", "Not a valid JSON string." + jsonInString + "." + ex);
+			Logger log = LoggerFactory.getLogger(JSONUtils.class);
+			log.warn("Not a valid JSON string." + jsonInString + "." + ex);
 			return false;
 		}
 	}

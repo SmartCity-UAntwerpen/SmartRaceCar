@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <maps>
-    <map>
-        <name>V314</name>
-    </map>
-    <map>
-        <name>z164</name>
-    </map>
+	<map>
+		<name>V314</name>
+	</map>
+	<map>
+		<name>z164</name>
+	</map>
     <map>
         <name>zbuilding2</name>
     </map>
@@ -27,8 +27,8 @@
     <map>
         <name>z164_4</name>
     </map>
-    <map>
-        <name>z164_5</name>
+        <map>
+            <name>z164_5</name>
     </map>
     <map>
         <name>z164_5_2</name>
@@ -36,9 +36,4 @@
     <map>
         <name>U014</name>
     </map>
-
-
-
-
-
-
+</maps>

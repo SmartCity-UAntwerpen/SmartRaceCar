@@ -3,44 +3,36 @@ package be.uantwerpen.fti.ds.sc.core;
 import be.uantwerpen.fti.ds.sc.common.*;
 import com.github.lalyos.jfiglet.FigletFont;
 import com.google.gson.reflect.TypeToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Type;
-import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Properties;
-import java.util.logging.Level;
 
 /**
  * Module representing the high-level of a vehicle.
  */
 class Core implements TCPListener, MQTTListener
 {
-	private Log oldlog;
 
-	private static long startPoint;                                        // Starting position on map. Given by main argument.
-
-	//Standard settings (without config file loaded)
-	private boolean debugWithoutRosKernel = false;                            // debug parameter for using this module without a connected RosKernel/SimKernel
-
-	private boolean occupied;                                                // To verify if racecar is currently occupied by a route job.
-
-	//Help services
+	// Help services
 	private MQTTUtils mqttUtils;
 	private TCPUtils tcpUtils;
 	private RESTUtils restUtils;
+	private Logger log;
+
+
+	// Variables
+	private long ID;                                                        	// ID given by RacecarBackend to identify vehicle.
+	private HashMap<Long, WayPoint> wayPoints;                                	// Map of all loaded waypoints.
+	private long startPoint;                                        			// Starting position on map. Given by Main argument.
+	private boolean occupied;                                                	// To verify if racecar is currently occupied by a route job.
+
+	// Subsystems
 	private HeartbeatPublisher heartbeatPublisher;
-
-	//variables
-	private long ID;                                                        // ID given by RacecarBackend to identify vehicle.
-	private LogbackWrapper log;                                                        // logging instance
-	private HashMap<Long, WayPoint> wayPoints;                                // Map of all loaded waypoints.
-	private boolean connected = false;                                        // To verify socket connection to vehicle.
-
 	private Navigator navigator;
 	private WeightManager weightManager;
 	private CoreParameters params;
@@ -50,9 +42,9 @@ class Core implements TCPListener, MQTTListener
 	/**
 	 * Module representing the high-level of a vehicle.
 	 *
-	 * @param startPoint Starting point of the vehicle. Defined by input arguments of main method.
-	 * @param serverPort Port to listen for messages of SimKernel/Roskernel. Defined by input arguments of main method.
-	 * @param clientPort Port to send messages to SimKernel/Roskernel. Defined by input arguments of main method.
+	 * @param startPoint Starting point of the vehicle. Defined by input arguments of Main method.
+	 * @param serverPort Port to listen for messages of SimKernel/Roskernel. Defined by input arguments of Main method.
+	 * @param clientPort Port to send messages to SimKernel/Roskernel. Defined by input arguments of Main method.
 	 */
 	public Core(long startPoint, int serverPort, int clientPort, CoreParameters params) throws InterruptedException, IOException
 	{
@@ -62,22 +54,27 @@ class Core implements TCPListener, MQTTListener
 		System.out.println("--------------------- F1 Racecar Core - v1.0 ---------------------");
 		System.out.println("------------------------------------------------------------------");
 
-		this.mapManager = new MapManager(this);
-
 		this.params = params;
 
-		this.log = new LogbackWrapper(Core.class);
+		this.log = LoggerFactory.getLogger(Core.class);
 
-		Core.startPoint = startPoint;
+		this.startPoint = startPoint;
 
 		this.wayPoints = new HashMap<>();
 		this.occupied = false;
 
+
 		this.loadConfig();
-		this.log.info("CORE", "Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
+		this.log.info("Current parameters: \n" + this.params.toString());
+
+		this.log.info("Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
+
+		this.log.info("Starting REST connection to " + this.params.getRESTCarmanagerURL());
 		this.restUtils = new RESTUtils(this.params.getRESTCarmanagerURL());
-		requestWaypoints();
-		register();
+
+		this.requestWaypoints();
+		this.register();
+
         /*Runtime.getRuntime().addShutdownHook(
                 new Thread(new Runnable() {public void run() {
                     Thread thread = new Thread(new Runnable() {public void run(){
@@ -98,32 +95,44 @@ class Core implements TCPListener, MQTTListener
             }
         }));*/
 
+        this.log.info("Starting MQTT connection on " + this.params.getMqttBroker());
 		this.mqttUtils = new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this);
 		this.mqttUtils.subscribeToTopic("racecar/" + ID + "/#");
 
+		this.log.info("Connecting TCP on port " + clientPort + " and " + serverPort);
 		this.tcpUtils = new TCPUtils(clientPort, serverPort, this);
 		this.tcpUtils.start();
 
-		if (!this.debugWithoutRosKernel)
+		if (!this.params.isDebug())
 		{
-			connectSend();
+			this.log.debug("Waiting 3 seconds before sending connect");
+			Thread.sleep(3000);
+			this.connectSend();
+		}
+
+		this.mapManager = new MapManager(this);
+		this.log.info("Map manager started");
+
+		if(!this.mapManager.requestMap())
+		{
+			// TODO find better mechanism to wait for download
+			// map not downloaded yet -> waiting for download to finish
+			this.log.info("Giving the map 10s to load.");
+			Thread.sleep(10000); //10 seconds delay so the map can load before publishing the startpoint
 		}
 
 
-		this.mapManager.requestMap();
-		this.log.info("CORE", "Giving the map 10s to load.");
-		Thread.sleep(10000); //10 seconds delay so the map can load before publishing the startpoint
-		sendStartPoint();
-		this.log.info("CORE", "Startpoint was send");
+		this.sendStartPoint();
+
 		this.heartbeatPublisher = new HeartbeatPublisher(new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this), this.ID);
 		this.heartbeatPublisher.start();
-		this.log.info("CORE", "Heartbeat publisher was started.");
+		this.log.info("Heartbeat publisher was started.");
 
 		this.navigator = new Navigator(this);
-		this.log.info("CORE", "Navigator was started.");
+		this.log.info("Navigator was started.");
 
 		this.weightManager = new WeightManager(this);
-		this.log.info("CORE", "Weightmanager was started");
+		this.log.info("Weightmanager was started");
 	}
 
 	public HashMap<Long, WayPoint> getWayPoints()
@@ -173,6 +182,8 @@ class Core implements TCPListener, MQTTListener
 	 */
 	public void timeRequest(long[] wayPointIDs)
 	{
+		this.log.info("Requesting timing");
+
 		List<Point> points = new ArrayList<>();
 		points.add(this.wayPoints.get(wayPointIDs[0]));
 		points.add(this.wayPoints.get(wayPointIDs[1]));
@@ -181,7 +192,8 @@ class Core implements TCPListener, MQTTListener
 			this.tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("costtiming", points));
 		} else
 		{
-			this.weightManager.costComplete(new Cost(false, 5, 5, this.ID));
+			this.log.info("Debug mode -> timing = 5");
+			this.weightManager.costCalculationComplete(new Cost(false, 5, 5, this.ID));
 		}
 	}
 
@@ -191,56 +203,9 @@ class Core implements TCPListener, MQTTListener
 	 */
 	private void loadConfig()
 	{
-		Properties prop = new Properties();
-		InputStream input = null;
-		try
-		{
-			String path = Core.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-			String decodedPath = URLDecoder.decode(path, "UTF-8");
-			decodedPath = decodedPath.replace("Core.jar", "");
-			input = new FileInputStream(decodedPath + "/src/main/core.properties");
-			prop.load(input);
-			String debugLevel = prop.getProperty("debugLevel");
-
-			switch (debugLevel)
-			{
-				case "debug":
-					oldlog = new Log(this.getClass(), Level.CONFIG);
-					break;
-				case "info":
-					oldlog = new Log(this.getClass(), Level.INFO);
-					break;
-				case "warning":
-					oldlog = new Log(this.getClass(), Level.WARNING);
-					break;
-				case "severe":
-					oldlog = new Log(this.getClass(), Level.SEVERE);
-					break;
-			}
-			this.params.setDebug(Boolean.parseBoolean(prop.getProperty("debugWithoutRosKernel")));
-			this.params.setMqttBroker("tcp://" + prop.getProperty("mqttBroker"));
-			this.params.setMqttUserName(prop.getProperty("mqqtUsername"));
-			this.params.setMqttPassword(prop.getProperty("mqttPassword"));
-			this.params.setRestCarmanagerURL(prop.getProperty("restURL"));
-			this.log.info("CORE", "Config loaded");
-		} catch (IOException ex)
-		{
-			oldlog = new Log(this.getClass(), Level.SEVERE);
-			this.log.warning("CORE", "Could not read config file. Loading default settings. " + ex);
-
-		} finally
-		{
-			if (input != null)
-			{
-				try
-				{
-					input.close();
-				} catch (IOException e)
-				{
-					this.log.warning("CORE", "Could not read config file. Loading default settings. " + e);
-				}
-			}
-		}
+		CoreParameterParser parser = new CoreParameterParser();
+		this.params = parser.parse("/home/ubuntu/Git/SmartRacecar/SmartRaceCar/release/core.properties");
+		//this.params = parser.parse("core.properties");
 	}
 
 
@@ -249,15 +214,8 @@ class Core implements TCPListener, MQTTListener
 	 */
 	private void connectSend()
 	{
+		this.log.info("Trying to connect to car");
 		this.tcpUtils.sendUpdate(JSONUtils.keywordToJSONString("connect"));
-	}
-
-	/**
-	 * Event to be called when connection to car has been made.
-	 */
-	private void connectReceive()
-	{
-		this.log.info("CORE", "Connected to car.");
 	}
 
 	/**
@@ -265,9 +223,10 @@ class Core implements TCPListener, MQTTListener
 	 */
 	private void register()
 	{
+		this.log.info("Registering vehicle");
 		String id = this.restUtils.getTextPlain("register/" + Long.toString(this.startPoint));
 		this.ID = Long.parseLong(id, 10);
-		this.log.info("CORE", "Vehicle received ID " + this.ID + ".");
+		this.log.info("Vehicle received ID " + this.ID + ".");
 	}
 
 	/**
@@ -275,6 +234,7 @@ class Core implements TCPListener, MQTTListener
 	 */
 	private void requestWaypoints()
 	{
+		this.log.info("Requesting waypoints");
 		Type typeOfHashMap = new TypeToken<HashMap<Long, WayPoint>>()
 		{
 		}.getType();
@@ -282,9 +242,9 @@ class Core implements TCPListener, MQTTListener
 		assert this.wayPoints != null;
 		for (WayPoint wayPoint : this.wayPoints.values())
 		{
-			this.log.info("CORE", "Waypoint " + wayPoint.getID() + " added: " + wayPoint.getX() + "," + wayPoint.getY() + "," + wayPoint.getZ() + "," + wayPoint.getW());
+			this.log.info("Waypoint " + wayPoint.getID() + " added: " + wayPoint.getX() + "," + wayPoint.getY() + "," + wayPoint.getZ() + "," + wayPoint.getW());
 		}
-		this.log.info("CORE", "All possible waypoints(" + this.wayPoints.size() + ") received.");
+		this.log.info("All possible waypoints(" + this.wayPoints.size() + ") received.");
 	}
 
 	/**
@@ -292,9 +252,15 @@ class Core implements TCPListener, MQTTListener
 	 */
 	private void sendStartPoint()
 	{
-		this.log.info("CORE", "Starting point set as waypoint with ID " + startPoint + ".");
-		if (!this.debugWithoutRosKernel)
+		this.log.info("Starting point set as waypoint with ID " + startPoint + ".");
+		if (!this.params.isDebug())
+		{
 			this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("startPoint", this.wayPoints.get(this.startPoint)));
+		}
+		else
+		{
+			this.log.info("Debug mode -> not sending start point");
+		}
 	}
 
 
@@ -307,10 +273,13 @@ class Core implements TCPListener, MQTTListener
 	 */
 	public void parseMQTT(String topic, String message)
 	{
+		this.log.info("received MQTT message: " + message);
+
 		if (topic.matches("racecar/[0-9]+/job"))
 		{
 			this.navigator.handleJobRequest(message);
-		} else if (topic.matches("racecar/[0-9]+/costrequest"))
+		}
+		else if (topic.matches("racecar/[0-9]+/costrequest"))
 		{
 			String[] wayPointStringValues = message.split(" ");
 			try
@@ -322,11 +291,13 @@ class Core implements TCPListener, MQTTListener
 					wayPointValues[index] = Integer.parseInt(wayPointStringValues[index]);
 				}
 				this.weightManager.costRequest(wayPointValues);
-			} catch (NumberFormatException e)
-			{
-				this.log.warning("CORE", "Parsing MQTT gives bad result: " + e);
 			}
-		} else if (topic.matches("racecar/[0-9]+/changeMap"))
+			catch (NumberFormatException e)
+			{
+				this.log.warn("Parsing MQTT gives bad result: " + e);
+			}
+		}
+		else if (topic.matches("racecar/[0-9]+/changeMap"))
 		{
 			this.mapManager.requestMap();
 		}
@@ -354,7 +325,7 @@ class Core implements TCPListener, MQTTListener
 					this.navigator.wayPointReached();
 					break;
 				case "connect":
-					this.connectReceive();
+					this.log.info("Connected to car.");
 					break;
 				case "kill":
 					this.killCar();
@@ -368,25 +339,25 @@ class Core implements TCPListener, MQTTListener
 				case "startpoint":
 					this.startPoint = (long) JSONUtils.getObjectWithKeyWord(message, Long.class);
 					this.mqttUtils.publishMessage("racecar/" + ID + "/locationupdate", Long.toString((Long) JSONUtils.getObjectWithKeyWord(message, Long.class)));
-					this.log.info("CORE", "Setting new starting point with ID " + JSONUtils.getObjectWithKeyWord(message, Long.class));
+					this.log.info("Setting new starting point with ID " + JSONUtils.getObjectWithKeyWord(message, Long.class));
 					break;
 				case "restart":
 					this.sendAvailability(true);
-					this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentPosition", this.wayPoints.get(Core.startPoint)));
-					this.log.info("CORE", "Vehicle restarted.");
+					this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentPosition", this.wayPoints.get(this.startPoint)));
+					this.log.info("Vehicle restarted.");
 					break;
 				case "cost":
-					this.weightManager.costComplete((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
+					this.weightManager.costCalculationComplete((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
 					break;
 				case "costtiming":
-					this.timeComplete((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
+					this.navigator.timingCalculationComplete((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
 					break;
 				case "location":
 					//this.log.info("CORE", "Car is at coordinates: " + (String) JSONUtils.getObjectWithKeyWord(message, String.class));
 					// the current location is published but is not useful for the smartcityproject, the percentage updates are used
 					break;
 				default:
-					this.log.warning("CORE", "No matching keyword when parsing JSON from Sockets. Data: " + message);
+					this.log.warn("No matching keyword when parsing JSON from Sockets. Data: " + message);
 					break;
 			}
 		}
@@ -401,7 +372,7 @@ class Core implements TCPListener, MQTTListener
 	private void sendAvailability(boolean state)
 	{
 		this.mqttUtils.publishMessage("racecar/" + ID + "/available", Boolean.toString(state));
-		this.log.info("CORE", "Vehicle's availability status set to " + state + '.');
+		this.log.info("Vehicle's availability status set to " + state + '.');
 	}
 
 	/**
@@ -409,25 +380,12 @@ class Core implements TCPListener, MQTTListener
 	 */
 	private void killCar()
 	{
-		this.log.info("CORE", "Vehicle kill request. Closing connections and shutting down...");
+		this.log.info("Vehicle kill request. Closing connections and shutting down...");
 		this.restUtils.getCall("delete/" + this.ID);
-		if (!this.debugWithoutRosKernel) this.tcpUtils.closeTCP();
+		if (!this.params.isDebug()) this.tcpUtils.closeTCP();
 		{
 			this.mqttUtils.closeMQTT();
 		}
 		System.exit(0);
-	}
-
-
-	/**
-	 * When vehicle has completed cost calculation for the locationUpdate() function it sets the variables
-	 * costCurrentToStartTiming and costStartToEndTiming of the Core to be used by locationUpdate().
-	 *
-	 * @param cost Cost object containing the weights of the sub-routes.
-	 */
-	private void timeComplete(Cost cost)
-	{
-		this.navigator.setCostCurrentToStartTiming(cost.getWeightToStart());
-		this.navigator.setCostStartToEndTiming(cost.getWeight());
 	}
 }

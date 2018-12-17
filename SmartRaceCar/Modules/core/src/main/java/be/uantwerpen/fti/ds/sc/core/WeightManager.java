@@ -2,8 +2,9 @@ package be.uantwerpen.fti.ds.sc.core;
 
 import be.uantwerpen.fti.ds.sc.common.Cost;
 import be.uantwerpen.fti.ds.sc.common.JSONUtils;
-import be.uantwerpen.fti.ds.sc.common.LogbackWrapper;
 import be.uantwerpen.fti.ds.sc.common.Point;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,12 +13,12 @@ public class WeightManager
 {
 	private Core core;
 
-	private LogbackWrapper log;
+	private Logger log;
 
 
 	public WeightManager(Core core)
 	{
-		this.log = new LogbackWrapper(WeightManager.class);
+		this.log = LoggerFactory.getLogger(WeightManager.class);
 		this.core = core;
 	}
 
@@ -36,9 +37,9 @@ public class WeightManager
 			this.core.getTcpUtils().sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("cost", points));
 		} else
 		{
-			costComplete(new Cost(false, 5, 5, this.core.getID()));
+			costCalculationComplete(new Cost(false, 5, 5, this.core.getID()));
 		}
-		this.log.info("WEIGHT-MANAGER", "Cost request received between waypoints " + wayPointIDs[0] + " and " + wayPointIDs[1] + ". Calculating.");
+		this.log.info("Cost request received between waypoints " + wayPointIDs[0] + " and " + wayPointIDs[1] + ". Calculating.");
 	}
 
 	/**
@@ -46,9 +47,9 @@ public class WeightManager
 	 *
 	 * @param cost Cost object containing the calculated weights.
 	 */
-	public void costComplete(Cost cost)
+	public void costCalculationComplete(Cost cost)
 	{
-		this.log.info("WEIGHT-MANAGER", "Cost request calculated.");
+		this.log.info("Cost request calculated.");
 		cost.setStatus(this.core.isOccupied());
 		cost.setIdVehicle(this.core.getID());
 		this.core.getMqttUtils().publishMessage("racecar/" + this.core.getID() + "/costanswer", JSONUtils.objectToJSONString(cost));

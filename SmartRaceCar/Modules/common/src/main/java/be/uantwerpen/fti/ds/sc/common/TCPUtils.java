@@ -1,5 +1,8 @@
 package be.uantwerpen.fti.ds.sc.common;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -11,7 +14,7 @@ import java.util.Arrays;
 @SuppressWarnings("Duplicates")
 public class TCPUtils extends Thread
 {
-	private LogbackWrapper log;
+	private Logger log;
 	private ServerSocket serverSocket; // The server socket to be used for a one way connection for the listener.
 	private Socket socket; // The duplex socket for a back and forth communication.
 	private int clientPort; // Port to send messages to.
@@ -32,8 +35,8 @@ public class TCPUtils extends Thread
 	 */
 	public TCPUtils(int port, TCPListener listener) throws IOException
 	{
-		this.log = new LogbackWrapper(TCPUtils.class);
-		serverSocket = new ServerSocket(port);
+		this.log = LoggerFactory.getLogger(TCPUtils.class);
+		this.serverSocket = new ServerSocket(port);
 		this.listener = listener;
 		this.ackNack = true;
 	}
@@ -47,7 +50,7 @@ public class TCPUtils extends Thread
 	 */
 	public TCPUtils(int clientPort, int serverPort, TCPListener listener)
 	{
-		this.log = new LogbackWrapper();
+		this.log = LoggerFactory.getLogger(TCPUtils.class);
 		this.clientPort = clientPort;
 		this.serverPort = serverPort;
 		this.listener = listener;
@@ -78,8 +81,10 @@ public class TCPUtils extends Thread
 	 */
 	public void run()
 	{
-		if (ackNack)
+		if (this.ackNack)
 		{
+			this.log.info("Entering ACKNACK mode");
+
 			while (true)
 			{
 				try
@@ -88,73 +93,86 @@ public class TCPUtils extends Thread
 
 					try
 					{
-						in = new BufferedReader(new InputStreamReader(server.getInputStream()));
-						out = new PrintWriter(server.getOutputStream(), true);
-					} catch (IOException e)
-					{
-						this.log.warning("SOCKETS", "Cannot receive data." + e);
+						this.in = new BufferedReader(new InputStreamReader(server.getInputStream()));
+						this.out = new PrintWriter(server.getOutputStream(), true);
 					}
-					while (true)
+					catch (IOException e)
 					{
-						try
-						{
-							//Send data back to client
-							String data = in.readLine();
-							this.log.info("SOCKETS", "data received: " + data);
-							String response = listener.parseTCP(data);
-							out.println(response);
-							this.log.info("SOCKETS", "Data Sent:" + response);
-							break;
-						} catch (IOException e)
-						{
-							this.log.error("SOCKETS", "Cannot receive data." + e);
-						}
+						this.log.warn("Cannot receive data.", e);
 					}
-					server.close();
 
-				} catch (SocketTimeoutException s)
+					this.log.info("Listening for messages");
+
+					try
+					{
+						//Send data back to client
+						String data = this.in.readLine();
+						this.log.info("Data received: " + data);
+
+						String response = this.listener.parseTCP(data);
+						this.out.println(response);
+						this.log.info("Data Sent:" + response);
+					}
+					catch (IOException ioe)
+					{
+						this.log.error("Cannot receive data.", ioe);
+					}
+
+					this.log.info("Left inner while loop.");
+
+					server.close();
+				}
+				catch (SocketTimeoutException ste)
 				{
-					this.log.error("SOCKETS", "Timed out." + s);
-				} catch (IOException e)
+					this.log.error("Timed out.", ste);
+				}
+				catch (IOException ioe)
 				{
-					e.printStackTrace();
+					this.log.error("IOException in socket operation", ioe);
 				}
 			}
-		} else
+		}
+		else
 		{
+			this.log.info("Entering NON-ACKNACK mode");
+
 			ServerSocket echoServer = null;
 			String line;
-			DataInputStream is;
+			BufferedReader is;
 			try
 			{
-				echoServer = new ServerSocket(serverPort);
-			} catch (IOException e)
-			{
-				e.printStackTrace();
+				echoServer = new ServerSocket(this.serverPort);
 			}
+			catch (IOException ioe)
+			{
+				this.log.error("failed to create serversocket on port " + this.serverPort, ioe);
+			}
+
 			boolean run = true;
+
 			while (run)
 			{
 				try
 				{
-					if (echoServer != null)
-					{
-						socket = echoServer.accept();
-					}
-					is = new DataInputStream(socket.getInputStream());
+
+					this.socket = echoServer.accept();
+
+
+					is = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
 
 					line = is.readLine();
 					if (line != null)
 					{
-						this.log.info("SOCKETS", "data received: " + line);
-						listener.parseTCP(line);
+						this.log.info("data received: " + line);
+						this.listener.parseTCP(line);
 					}
-				} catch (IOException e)
+				}
+				catch (IOException ioe)
 				{
-					this.log.error("SOCKETS", "Cannot receive data." + e);
+					this.log.error("Cannot receive data.", ioe);
 				}
 			}
-			closeTCP();
+			this.closeTCP();
 		}
 	}
 
@@ -182,22 +200,26 @@ public class TCPUtils extends Thread
 				{
 					PrintStream os = new PrintStream(clientSocket.getOutputStream());
 					os.println(inputLine.readLine());
-					this.log.info("SOCKETS", "Data Sent:" + data);
+					this.log.info("Data Sent:" + data);
 					os.close();
-				} catch (UnknownHostException e)
-				{
-					this.log.warning("SOCKETS", "Could not send. Trying to connect to unknown host: " + e);
-				} catch (IOException e)
-				{
-					this.log.error("SOCKETS", "Could not send. IOException:  " + e);
 				}
-			} catch (UnknownHostException e)
+				catch (UnknownHostException e)
+				{
+					this.log.warn("Could not send. Trying to connect to unknown host: " + e);
+				}
+				catch (IOException e)
+				{
+					this.log.error("Could not send. IOException:  " + e);
+				}
+			}
+			catch (UnknownHostException e)
 			{
-				this.log.error("SOCKETS", "Cannot connect to receiver. Trying again." + e);
+				this.log.error("Cannot connect to receiver. Trying again." + e);
 				connected = false;
-			} catch (IOException e)
+			}
+			catch (IOException e)
 			{
-				this.log.warning("SOCKETS", "Cannot connect to receiver to send   " + data + "   Trying again. Error:" + e);
+				this.log.warn("Cannot connect to receiver to send   " + data + "   Trying again. Error:" + e);
 				connected = false;
 			}
 		}
@@ -211,7 +233,7 @@ public class TCPUtils extends Thread
 	 */
 	public static void sendUpdate(String data, int port)
 	{
-		LogbackWrapper log = new LogbackWrapper(TCPUtils.class);
+		Logger log = LoggerFactory.getLogger(TCPUtils.class);
 		Socket clientSocket = null;
 		DataInputStream inputLine = new DataInputStream(new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8)));
 		byte[] bytes = new byte[100];
@@ -231,22 +253,22 @@ public class TCPUtils extends Thread
 				{
 					PrintStream os = new PrintStream(clientSocket.getOutputStream());
 					os.println(inputLine.readLine());
-					log.info("SOCKETS", "Data Sent:" + data);
+					log.info("Data Sent:" + data);
 					os.close();
 				} catch (UnknownHostException e)
 				{
-					log.warning("SOCKETS", "Could not send. Trying to connect to unknown host: " + e);
+					log.warn("Could not send. Trying to connect to unknown host: " + e);
 				} catch (IOException e)
 				{
-					log.error("SOCKETS", "Could not send. IOException:  " + e);
+					log.error("Could not send. IOException:  " + e);
 				}
 			} catch (UnknownHostException e)
 			{
-				log.error("SOCKETS", "Cannot connect to receiver. Trying again." + e);
+				log.error("Cannot connect to receiver. Trying again." + e);
 				connected = false;
 			} catch (IOException e)
 			{
-				log.info("SOCKETS", "Cannot connect to receiver to send   " + data + "   Trying again(" + tryTimes + "/5). Error:" + e);
+				log.info("Cannot connect to receiver to send   " + data + "   Trying again(" + tryTimes + "/5). Error:" + e);
 				connected = false;
 				tryTimes++;
 			}
@@ -264,10 +286,10 @@ public class TCPUtils extends Thread
 			socket.close();
 		} catch (IOException e)
 		{
-			this.log.error("SOCKETS", "Could not close Socket connection. IOException:  " + e);
+			this.log.error("Could not close Socket connection. IOException:  " + e);
 		} catch (Exception e)
 		{
-			this.log.error("SOCKTS", "Could not close Socket connection: ");
+			this.log.error("Could not close Socket connection: ");
 		}
 	}
 }
