@@ -5,8 +5,8 @@ package be.uantwerpen.fti.ds.sc.racecarbackend;
  */
 class Job
 {
-	private long startId; // ID of the start waypoint of the route.
-	private long endId; // ID of the end waypoint of the route.
+	private long startId; 	// ID of the start waypoint of the route.
+	private long endId; 	// ID of the end waypoint of the route.
 	private long vehicleId; // ID of the vehicle.
 	private int progress;
 
@@ -57,11 +57,19 @@ class Job
 		return vehicleId;
 	}
 
+	/**
+	 * Return the progress of this job (As a percentage)
+	 * @return
+	 */
 	public int getProgress()
 	{
 		return this.progress;
 	}
 
+	/**
+	 * Set the progress of this job (Should be a percentage)
+	 * @param newProgress
+	 */
 	public void setProgress(int newProgress)
 	{
 		this.progress = newProgress;

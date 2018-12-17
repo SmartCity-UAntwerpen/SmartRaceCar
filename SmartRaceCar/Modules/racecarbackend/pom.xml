@@ -30,7 +30,8 @@
                             <goal>repackage</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${project.basedir}/release/RacecarBackend.jar</outputDirectory>
+                            <outputDirectory>${project.basedir}/release</outputDirectory>
+                            <finalName>RacecarBackend</finalName>
                         </configuration>
                     </execution>
                 </executions>

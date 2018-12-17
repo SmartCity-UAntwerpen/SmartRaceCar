@@ -106,10 +106,32 @@ public class NavigationManager implements MQTTListener
 		{
 			String errorString = "Tried to set location of " + vehicleId + " to a non-existent location: " + locationId;
 			this.log.error(errorString);
-			return;
+
+			throw new IndexOutOfBoundsException (errorString);
 		}
 
 		this.vehicleLocations.put(vehicleId, locationId);
+	}
+
+	/**
+	 * Get the location of the vehicle with ID vehicleId.
+	 * If the vehicle doesn't exist an IndexOutOfBoundsExecption is thrown.
+	 * @param vehicleId
+	 * @return
+	 */
+	public long getLocation(long vehicleId)
+	{
+		this.log.info("Fetching location for vehicle " + vehicleId + ".");
+
+		if (!this.vehicleLocations.containsKey(vehicleId))
+		{
+			String errorString = "Vehicle " + vehicleId + " doesn't have a location.";
+			this.log.error(errorString);
+
+			throw new IndexOutOfBoundsException (errorString);
+		}
+
+		return this.vehicleLocations.get(vehicleId);
 	}
 
 	/**
@@ -120,6 +142,7 @@ public class NavigationManager implements MQTTListener
 	 * @param endId   Ending waypoint ID.
 	 * @return REST response of the type JSON containg all calculated costs of each vehicle.
 	 */
+	@Deprecated
 	@RequestMapping(value = "calcWeight/{startId}/{endId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON)
 	public @ResponseBody ResponseEntity<String> calculateCostsRequest(@PathVariable("startId") long startId, @PathVariable("endId") long endId) throws InterruptedException
 	{
@@ -229,7 +252,9 @@ public class NavigationManager implements MQTTListener
 		}
 		else
 		{
-			this.log.warn("Tried to remove non-existent vehicle (" + vehicleId + ").");
+			String errorString = "Tried to remove non-existent vehicle (" + vehicleId + ").";
+			this.log.error(errorString);
+			throw new IndexOutOfBoundsException (errorString);
 		}
 	}
 }

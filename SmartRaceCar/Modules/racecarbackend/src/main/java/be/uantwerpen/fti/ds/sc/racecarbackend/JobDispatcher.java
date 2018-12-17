@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.ws.rs.Path;
 import javax.ws.rs.core.MediaType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -148,14 +149,19 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 
 			Type costType = new TypeToken<Cost>(){}.getType();
 
-			Point startPoint = this.mapManager.getCoordinates(startId);
-			Point endPoint = this.mapManager.getCoordinates(endId);
+			Point startPointTmp = this.mapManager.getCoordinates(startId);
+			Point endPointTmp = this.mapManager.getCoordinates(endId);
+
+			Point startPoint = new Point(startPointTmp.getX(), startPointTmp.getY(), startPointTmp.getZ(), startPointTmp.getW());
+			Point endPoint = new Point(endPointTmp.getX(), endPointTmp.getY(), endPointTmp.getZ(), endPointTmp.getW());
 
 			List<Point> points = new ArrayList<>();
-			points.add(startPoint);
+			points.add(startPoint);	// We need to add a Dummy point to the request, otherwise, the cost calculation server will return an error.
+            points.add(startPoint);
 			points.add(endPoint);
 
-			String costString = ROSAPI.postJSONGetJSON("calcWeight", JSONUtils.arrayToJSONString(points));
+			String jsonString = JSONUtils.arrayToJSONString(points);
+			String costString = ROSAPI.postJSONGetJSON("calcWeight", jsonString);
 			Cost costObj = (Cost) JSONUtils.getObjectWithKeyWord(costString, costType);
 
 			cost = costObj.getWeight();
@@ -206,8 +212,6 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}*/
 
-		RESTUtils racecarAPI = new RESTUtils(this.jobDispatcherParameters.getRESTCarmanagerURL());
-
 		// Check if starting waypoint exists
 		if (!this.mapManager.exists(startId))
 		{
@@ -232,6 +236,28 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 
 		this.mqttUtils.publishMessage("racecar/" + vehicleId + "/job", startId + " " + endId);
 		return new ResponseEntity<>("starting", HttpStatus.OK);
+	}
+
+	@RequestMapping(value="/job/gotopoint/{destId}", method=RequestMethod.POST, produces=MediaType.TEXT_PLAIN)
+	public @ResponseBody ResponseEntity<String> goToPoint (@PathVariable long destId)
+	{
+		//todo: Replace this with actual resource management
+		long dummyVehicleId = 0;
+		long vehicleId = dummyVehicleId;
+
+		if (!this.mapManager.exists(destId))
+		{
+			String errorString = "Tried to send vehicle to non-existent waypoint " + destId + ".";
+			this.log.error(errorString);
+			return new ResponseEntity<>(errorString, HttpStatus.BAD_REQUEST);
+		}
+
+		long vehicleLocation = this.navigationManager.getLocation(vehicleId);
+
+		//todo: find a way to track this job, without conflicting with the backbone's job ID's
+		this.mqttUtils.publishMessage("racecar/" + vehicleId + "/job", vehicleLocation + " " + destId);
+
+		return new ResponseEntity<>(HttpStatus.OK);
 	}
 
 	/**
