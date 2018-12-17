@@ -67,7 +67,6 @@ public class NavigationManager implements MQTTListener
 		this.mqttUtils = new MQTTUtils(this.parameters.getMqttBroker(), this.parameters.getMqttUserName(), this.parameters.getMqttPassword(), this);
 		this.mqttUtils.subscribeToTopic(this.parameters.getMqttTopic());
 
-
 		this.costList = new ArrayList<>();
 		this.vehicleLocations = new HashMap<>();
 		this.vehicleManager = vehicleManager;
@@ -101,7 +100,9 @@ public class NavigationManager implements MQTTListener
 
 	public void setLocation(long vehicleId, long locationId)
 	{
-		if (!this.mapManager.existsOld(locationId))
+		this.log.info("Setting the location of vehicle " + vehicleId + " to " + locationId + ".");
+
+		if (!this.mapManager.exists(locationId))
 		{
 			String errorString = "Tried to set location of " + vehicleId + " to a non-existent location: " + locationId;
 			this.log.error(errorString);
@@ -122,12 +123,9 @@ public class NavigationManager implements MQTTListener
 	@RequestMapping(value = "calcWeight/{startId}/{endId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON)
 	public @ResponseBody ResponseEntity<String> calculateCostsRequest(@PathVariable("startId") long startId, @PathVariable("endId") long endId) throws InterruptedException
 	{
-		RESTUtils racecarAPI = new RESTUtils(this.parameters.getRESTCarmanagerURL());
+		this.log.info("Received cost request for " + startId + " -> " + endId + ".");
 
-		boolean startExists = Boolean.parseBoolean(racecarAPI.getTextPlain("/exists/" + startId));
-		boolean endExists = Boolean.parseBoolean(racecarAPI.getTextPlain("/exists/" + endId));
-
-		if (!startExists)
+		if (!this.mapManager.exists(startId))
 		{
 			String errorString = "Request cost with non-existent start waypoint " + startId + ".";
 			this.log.error(errorString);
@@ -135,7 +133,7 @@ public class NavigationManager implements MQTTListener
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
 
-		if (!endExists)
+		if (!this.mapManager.exists(endId))
 		{
 			String errorString = "Request cost with non-existent end waypoint " + endId + ".";
 			this.log.error(errorString);
@@ -223,9 +221,15 @@ public class NavigationManager implements MQTTListener
 
 	public void removeVehicle(long vehicleId)
 	{
+		this.log.info("Removing vehicle " + vehicleId);
+
 		if (this.vehicleLocations.containsKey(vehicleId))
 		{
 			this.vehicleLocations.remove(vehicleId);
+		}
+		else
+		{
+			this.log.warn("Tried to remove non-existent vehicle (" + vehicleId + ").");
 		}
 	}
 }

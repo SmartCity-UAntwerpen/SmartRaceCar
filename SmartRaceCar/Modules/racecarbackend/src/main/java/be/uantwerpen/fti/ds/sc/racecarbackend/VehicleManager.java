@@ -1,7 +1,6 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
 import be.uantwerpen.fti.ds.sc.common.*;
-import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,9 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import javax.ws.rs.Path;
 import javax.ws.rs.core.MediaType;
-import java.lang.reflect.Type;
 import java.util.*;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -83,7 +80,7 @@ public class VehicleManager implements MQTTListener
 	}
 
 	/**
-	 * Checks whether or not a vehicle existsOld.
+	 * Checks whether or not a vehicle exists.
 	 *
 	 * @param vehicleId The id of the vehicle to be checked
 	 * @return
@@ -162,7 +159,7 @@ public class VehicleManager implements MQTTListener
 	@RequestMapping(value="/carmanager/register/{startWaypoint}", method=RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
 	public @ResponseBody ResponseEntity<String> register(@PathVariable long startWaypoint)
 	{
-		if (!this.mapManager.existsOld(startWaypoint))
+		if (!this.mapManager.exists(startWaypoint))
 		{
 			String errorString = "Tried to register vehicle with non-existent start id. (Start Waypoint: " + startWaypoint + ")";
 			this.log.error(errorString);

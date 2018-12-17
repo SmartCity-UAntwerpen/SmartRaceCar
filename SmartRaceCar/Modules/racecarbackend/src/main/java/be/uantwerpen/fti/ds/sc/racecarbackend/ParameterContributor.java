@@ -39,6 +39,8 @@ public class ParameterContributor
 
     private BackendParameters readBackendParameters(String propertiesFile)
     {
+        this.log.debug("Loading BackendParameters from \"" + propertiesFile + "\'");
+
         Properties prop = new Properties();
         InputStream input = null;
 
@@ -57,10 +59,17 @@ public class ParameterContributor
         boolean debugWithoutMAAS = Boolean.parseBoolean(prop.getProperty(MAAS_DEBUG_KEY));
         boolean debugWithoutBackBone = Boolean.parseBoolean(prop.getProperty(BACKBONE_DEBUG_KEY));
 
+        this.log.debug("Debug Without MaaS: " + debugWithoutMAAS);
+        this.log.debug("Debug Without Backbone: " + debugWithoutBackBone);
+
         String restURLMAAS = prop.getProperty(MAAS_URL_KEY);
         String restURLBackBone = prop.getProperty(BACKBONE_URL_KEY);
 
-        this.log.info("Backend config loaded.");
+
+        this.log.debug("MaaS REST URL: " + restURLMAAS);
+        this.log.debug("Backbone REST URL: " + restURLBackBone);
+
+        this.log.info("Backend Config loaded.");
 
         BackendParameters backendParameters = new BackendParameters(this.parameters(), debugWithoutMAAS, debugWithoutBackBone, restURLMAAS, restURLBackBone);
 
@@ -81,6 +90,8 @@ public class ParameterContributor
         Properties prop = new Properties();
         InputStream input = null;
 
+        this.log.debug("Loading MapManagerParameters from \"" + propertiesFile + "\'");
+
         try
         {
             ParameterParser parser = new ParameterParser();
@@ -95,6 +106,9 @@ public class ParameterContributor
 
         String mapPath = prop.getProperty(MAP_PATH_KEY);
         String currentMap = prop.getProperty(MAP_CURRENT_KEY);
+
+        this.log.debug("Map Path: " + mapPath);
+        this.log.debug("Current Map: " + currentMap);
 
         this.log.info("Map Manager config loaded.");
 
@@ -116,6 +130,9 @@ public class ParameterContributor
         Properties prop = new Properties();
         InputStream input = null;
 
+        this.log.debug("Loading JobDipatcherParameters from \"" + propertiesFile + "\'");
+
+
         try
         {
             ParameterParser parser = new ParameterParser();
@@ -130,6 +147,9 @@ public class ParameterContributor
 
         Boolean enableROS = Boolean.parseBoolean(prop.getProperty(ROS_DEBUG_KEY));
         String rosURL = prop.getProperty(ROS_SERVER_URL_KEY);
+
+        this.log.debug("Debug Without ROS: " + enableROS);
+        this.log.debug("ROS Server URL: " + rosURL);
 
         this.log.info("Job Dispatcher config loaded.");
 

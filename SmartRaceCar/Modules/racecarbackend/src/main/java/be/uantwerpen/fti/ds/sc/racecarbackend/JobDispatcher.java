@@ -49,7 +49,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		Job job = new Job(jobId, startId, endId, vehicleId);
 
 		// Check if vehicle exists
-		if (!this.vehicleManager.existsOld(vehicleId))
+		if (!this.vehicleManager.exists(vehicleId))
 		{
 			String errorString = "Tried to execute job on non-existent vehicle (" + vehicleId + ")";
 			this.log.error(errorString);
@@ -76,7 +76,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		}
 
 		// Check if starting waypoint exists
-		if (!this.mapManager.existsOld(startId))
+		if (!this.mapManager.exists(startId))
 		{
 			String errorString = "Request job with non-existent start waypoint " + startId + ".";
 			this.log.error(errorString);
@@ -85,7 +85,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		}
 
 		// Check if end waypoint exists
-		if (!this.mapManager.existsOld(endId))
+		if (!this.mapManager.exists(endId))
 		{
 			String errorString = "Request job with non-existent end waypoint " + endId + ".";
 			this.log.error(errorString);
@@ -121,13 +121,13 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 	{
 		this.log.info("Received cost request for " + startId + " -> " + endId);
 
-		if (!this.mapManager.existsOld(startId))
+		if (!this.mapManager.exists(startId))
 		{
 			this.log.error("Requested cost for start waypoint " + startId + ", but waypoint doesn't exist.");
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 
-		if (!this.mapManager.existsOld(endId))
+		if (!this.mapManager.exists(endId))
 		{
 			this.log.error("Requested cost for end waypoint " + startId + ", but waypoint doesn't exist.");
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -181,7 +181,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		//todo: move to resource manager
 		/*
 		// Check if vehicle exists
-		if (!this.vehicleManager.existsOld(vehicleId))
+		if (!this.vehicleManager.exists(vehicleId))
 		{
 			String errorString = "Tried to execute job on non-existent vehicle (" + vehicleId + ")";
 			this.log.error(errorString);
@@ -209,7 +209,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		RESTUtils racecarAPI = new RESTUtils(this.jobDispatcherParameters.getRESTCarmanagerURL());
 
 		// Check if starting waypoint exists
-		if (!this.mapManager.existsOld(startId))
+		if (!this.mapManager.exists(startId))
 		{
 			String errorString = "Request job with non-existent start waypoint " + startId + ".";
 			this.log.error(errorString);
@@ -218,7 +218,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		}
 
 		// Check if end waypoint exists
-		if (!this.mapManager.existsOld(endId))
+		if (!this.mapManager.exists(endId))
 		{
 			String errorString = "Request job with non-existent end waypoint " + endId + ".";
 			this.log.error(errorString);

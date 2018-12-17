@@ -67,9 +67,9 @@ public class MapManager implements MQTTListener
 		this.log.info("Initialized Map Manager.");
 	}
 
-	@Deprecated
-	public boolean existsOld(long id)
+	public boolean exists(long id)
 	{
+		this.log.info("Checking if " + id + " exists in the current map.");
 		return wayPoints.containsKey(id);
 	}
 
@@ -87,7 +87,7 @@ public class MapManager implements MQTTListener
 	/**
 	 * REST GET server service to download a map's PGM file by name.
 	 *
-	 * @param mapname the name of the map
+	 * @param mapName the name of the map
 	 * @return REST response of the type Octet-stream containing the file.
 	 */
 	@RequestMapping(value="/carmanager/getmappgm/{mapName}", method=RequestMethod.GET, produces=MediaType.APPLICATION_OCTET_STREAM)
@@ -121,6 +121,7 @@ public class MapManager implements MQTTListener
 	@RequestMapping(value="/carmanager/getwaypoints", method=RequestMethod.GET, produces=MediaType.APPLICATION_JSON)
 	public @ResponseBody ResponseEntity<String> getWayPoints()
 	{
+		this.log.info("Received request for all waypoint on map. Returning " + this.wayPoints.size() + " waypoints.");
 		return new ResponseEntity<>(JSONUtils.objectToJSONStringWithKeyWord("wayPoints", this.wayPoints), HttpStatus.OK);
 	}
 
@@ -254,19 +255,6 @@ public class MapManager implements MQTTListener
 
 		this.log.info("All possible wayPoints(" + wayPoints.size() + ") received.");
 	}
-
-	/**
-	 * REST Endpoint to check if a certain point (based on ID) exists.
-	 * @param waypointId
-	 * @return
-	 */
-	@RequestMapping (value="/carmanager/exists/{waypointId}", method=RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
-	public @ResponseBody ResponseEntity<String> exists(@PathVariable long waypointId)
-	{
-		this.log.info("Checking if waypoint " + waypointId + " exists.");
-		return new ResponseEntity<>(Boolean.toString(this.wayPoints.containsKey(waypointId)), HttpStatus.OK);
-	}
-
 	/**
 	 * Get the coordinates (x,y,z,w) of a point with a certain ID.
 	 * @param waypointId
