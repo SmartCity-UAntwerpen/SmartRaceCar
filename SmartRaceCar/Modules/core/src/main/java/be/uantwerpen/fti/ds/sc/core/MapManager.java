@@ -202,8 +202,9 @@ public class MapManager
 
 		if (!this.core.getParams().isDebug())
 		{
-			this.log.info("Setting current map on NAVSTACK to " + this.loadedMaps.get(mapName).getPath());
-			this.core.getTcpUtils().sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", this.loadedMaps.get(mapName)));
+			String json = JSONUtils.objectToJSONStringWithKeyWord("currentMap", this.loadedMaps.get(mapName));
+			this.log.info("Setting current map on NAVSTACK to " + json);
+			this.core.getTcpUtils().sendUpdate(json);
 		}
 
 		return contains;
