@@ -90,6 +90,19 @@ public class JobTracker implements MQTTListener
         }
     }
 
+    private void updateProgress(long jobId, int progress)
+    {
+        Job job = this.jobs.get(jobId);
+        job.setProgress(progress);
+
+        if ((!this.backendParameters.isBackboneDisabled()) && (!job.isBackboneNotified()) && (progress >= ALMOST_DONE_PERCENTAGE))
+        {
+            RESTUtils backboneRESTUtil = new RESTUtils(this.backendParameters.getBackboneRESTURL());
+
+            job.setBackboneNotified(true);
+        }
+    }
+
     /**
      * Return the job being executed by the vehicle with id vehicleID.
      * Returns -1 if no job was found for the given vehicle.
@@ -170,7 +183,7 @@ public class JobTracker implements MQTTListener
 
             int percentage = Integer.parseInt(message);
             this.log.info("Received Percentage update for vehicle " + vehicleId + ", Job: " + jobId + ", Status: " + percentage + "%.");
-            this.jobs.get(jobId).setProgress(percentage);
+            this.updateProgress(jobId, percentage);
         }
         else if (this.isRouteUpdate(topic))
         {

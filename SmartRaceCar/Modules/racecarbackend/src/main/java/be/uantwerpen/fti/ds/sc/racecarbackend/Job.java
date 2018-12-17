@@ -9,6 +9,8 @@ class Job
 	private long endId; 	// ID of the end waypoint of the route.
 	private long vehicleId; // ID of the vehicle.
 	private int progress;
+	private boolean backboneNotified;	// Whether or not the backbone has been notified about us "almost" completing our job.
+
 
 	/**
 	 * Create a job object.
@@ -25,6 +27,7 @@ class Job
 		this.endId = endId;
 		this.vehicleId = vehicleId;
 		this.progress = 0;
+		this.backboneNotified = false;
 	}
 
 	/**
@@ -73,5 +76,15 @@ class Job
 	public void setProgress(int newProgress)
 	{
 		this.progress = newProgress;
+	}
+
+	public void setBackboneNotified(boolean backboneNotified)
+	{
+		this.backboneNotified = backboneNotified;
+	}
+
+	public boolean isBackboneNotified()
+	{
+		return this.backboneNotified;
 	}
 }
