@@ -105,6 +105,8 @@ class Core implements TCPListener, MQTTListener
 
 		if (!this.params.isDebug())
 		{
+			this.log.debug("Waiting 3 seconds before sending connect");
+			Thread.sleep(3000);
 			this.connectSend();
 		}
 
