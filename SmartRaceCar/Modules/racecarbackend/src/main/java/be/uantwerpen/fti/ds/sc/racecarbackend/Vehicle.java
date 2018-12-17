@@ -13,7 +13,6 @@ public class Vehicle
 	private Long ID; // ID of the vehicle.
 	private boolean occupied = false; // If the vehicle is occupied by a current route job.
 	private boolean available = true; // If the vehicle is available for jobs or other requests.
-	private Date heartbeat; //last known heartbeat of the vehicle
 
 	/**
 	 * Model that describes a F1 vehicle.
@@ -23,7 +22,6 @@ public class Vehicle
 	public Vehicle(Long ID)
 	{
 		this.ID = ID;
-		heartbeat = new Date();
 	}
 
 	/**
@@ -64,16 +62,6 @@ public class Vehicle
 	void setAvailable(boolean available)
 	{
 		this.available = available;
-	}
-
-	public Date getHeartbeat()
-	{
-		return heartbeat;
-	}
-
-	public void setHeartbeat(Date heartbeat)
-	{
-		this.heartbeat = heartbeat;
 	}
 
 	/**
