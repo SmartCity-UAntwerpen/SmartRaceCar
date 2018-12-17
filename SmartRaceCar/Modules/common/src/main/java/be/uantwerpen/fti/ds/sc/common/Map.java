@@ -5,17 +5,18 @@ package be.uantwerpen.fti.ds.sc.common;
  */
 public class Map
 {
-
-	private String name = ""; //Name of the mapfile.
+	private String name; // Name of the mapfile
+	private String path; // Path to the mapfile
 
 	/**
 	 * Model of a offline kept map.
 	 *
 	 * @param name The name of the map.
 	 */
-	public Map(String name)
+	public Map(String name, String path)
 	{
 		this.name = name;
+		this.path = path;
 	}
 
 	/**
@@ -26,5 +27,10 @@ public class Map
 	public String getName()
 	{
 		return name;
+	}
+
+	public String getPath()
+	{
+		return path;
 	}
 }

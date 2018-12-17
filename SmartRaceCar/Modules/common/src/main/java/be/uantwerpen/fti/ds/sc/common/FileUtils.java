@@ -88,7 +88,7 @@ public class FileUtils
 	 */
 	private void search(File file)
 	{
-		this.log.info("Searching for " + file.getPath());
+		this.log.debug("Searching for " + file.getPath());
 		if (file.isDirectory())
 		{
 			//do you have permission to read this directory?
