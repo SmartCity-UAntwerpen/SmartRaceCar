@@ -34,13 +34,16 @@ public class MapManager
 
 	public MapManager(Core core)
 	{
+
 		this.core = core;
 
 		this.log = LoggerFactory.getLogger(MapManager.class);
-
+		this.log.info("starting to load maps");
 		this.loadedMaps = new HashMap<>();
 		String mapsFolder = findMapsFolder();
+		this.log.info("Found maps folder = " + mapsFolder);
 		this.loadedMaps = loadMaps(mapsFolder);
+		this.log.info("Maps loaded");
 	}
 
 	/**
