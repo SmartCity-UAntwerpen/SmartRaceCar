@@ -163,7 +163,7 @@ public class MapManager
 				newName.appendChild(document.createTextNode(mapName));
 
 				Element newPath = document.createElement("path");
-				newPath.appendChild(document.createTextNode(mapDir.getCanonicalPath() + mapName));
+				newPath.appendChild(document.createTextNode(mapDir.getCanonicalPath() + "/" + mapName));
 
 				newMap.appendChild(newName);
 				newMap.appendChild(newPath);
