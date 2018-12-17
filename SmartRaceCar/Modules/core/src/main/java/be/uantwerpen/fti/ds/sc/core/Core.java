@@ -202,8 +202,8 @@ class Core implements TCPListener, MQTTListener
 	private void loadConfig()
 	{
 		CoreParameterParser parser = new CoreParameterParser();
-		//this.params = parser.parse("/home/ubuntu/Git/SmartRacecar/SmartRaceCar/release/core.properties");
-		this.params = parser.parse("core.properties");
+		this.params = parser.parse("/home/ubuntu/Git/SmartRacecar/SmartRaceCar/release/core.properties");
+		//this.params = parser.parse("core.properties");
 	}
 
 
