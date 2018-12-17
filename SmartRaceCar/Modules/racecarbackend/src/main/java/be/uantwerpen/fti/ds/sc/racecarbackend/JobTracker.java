@@ -83,7 +83,7 @@ public class JobTracker implements MQTTListener
         switch (mqttMessage)
         {
             case ROUTE_UPDATE_DONE:
-                this.log.info("Vehicle " + vehicleId + " complete job " + jobId + ".");
+                this.log.info("Vehicle " + vehicleId + " completed job " + jobId + ".");
                 this.completeJob(jobId, vehicleId);
                 break;
 
@@ -161,8 +161,8 @@ public class JobTracker implements MQTTListener
     {
         long vehicleId = TopicUtils.getCarId(topic);
         long jobId = this.findJobByVehicleId(vehicleId);
-
         boolean jobExists = jobId != -1L;
+
 
         if (!this.vehicleManager.existsOld(vehicleId))
         {
@@ -170,20 +170,26 @@ public class JobTracker implements MQTTListener
             return;
         }
 
-        if (!jobExists)
-        {
-            this.log.warn("Couldn't find job associated with vehicle " + vehicleId);
-            return;
-        }
-
         if (this.isPercentageUpdate(topic))
         {
+            if (!jobExists)
+            {
+                this.log.warn("Couldn't find job associated with vehicle " + vehicleId);
+                return;
+            }
+
             int percentage = Integer.parseInt(message);
             this.log.info("Received Percentage update for vehicle " + vehicleId + ", Job: " + jobId + ", Status: " + percentage + "%.");
             this.jobs.get(jobId).setProgress(percentage);
         }
         else if (this.isRouteUpdate(topic))
         {
+            if (!jobExists)
+            {
+                this.log.warn("Couldn't find job associated with vehicle " + vehicleId);
+                return;
+            }
+
             this.log.info("Received Route Update for vehicle " + vehicleId + "");
             this.updateRoute(jobId, message);
         }

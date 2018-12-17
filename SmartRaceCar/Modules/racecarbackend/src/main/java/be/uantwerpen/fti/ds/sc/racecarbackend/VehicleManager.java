@@ -1,7 +1,6 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
 import be.uantwerpen.fti.ds.sc.common.*;
-import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,9 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import javax.ws.rs.Path;
 import javax.ws.rs.core.MediaType;
-import java.lang.reflect.Type;
 import java.util.*;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -25,16 +22,15 @@ public class VehicleManager implements MQTTListener
 	private static class MQTTConstants
 	{
 		private static final Pattern AVAILABILITY_UPDATE_REGEX = Pattern.compile("racecar/[0-9]+/available");
-		private static final Pattern HEARTBEAT_REGEX = Pattern.compile("racecar/[0-9]+/heartbeat");	//todo: move to Heartbeat checker
 	}
 
 	private BackendParameters parameters;
 	private Logger log;
 	private MQTTUtils mqttUtils;
-	private RESTUtils MaaSRestUtils;
 	private RESTUtils backboneRestUtils;
 	private NavigationManager navigationManager;
-	private MapManager mapManager;                  // Non-Owning reference to Map Manager
+	private MapManager mapManager;
+	private HeartbeatChecker heartbeatChecker;
 	private Map<Long, Vehicle> vehicles;
 
 	private String getAvailabilityString(boolean available)
@@ -48,20 +44,8 @@ public class VehicleManager implements MQTTListener
 		return matcher.matches();
 	}
 
-	private boolean isHeartbeat(String topic)
-	{
-		Matcher matcher = MQTTConstants.HEARTBEAT_REGEX.matcher(topic);
-		return matcher.matches();
-	}
-
-	private void heartbeatUpdate(long vehicleId)
-	{
-		Date timestamp = new Date();
-		this.vehicles.get(vehicleId).setHeartbeat(timestamp);
-	}
-
 	@Autowired
-	public VehicleManager(@Qualifier("backend") BackendParameters parameters, MapManager mapManager)
+	public VehicleManager(@Qualifier("backend") BackendParameters parameters, MapManager mapManager, HeartbeatChecker heartbeatChecker)
 	{
 		this.parameters = parameters;
 		this.log = LoggerFactory.getLogger(this.getClass());
@@ -71,11 +55,11 @@ public class VehicleManager implements MQTTListener
 		this.mqttUtils = new MQTTUtils(this.parameters.getMqttBroker(), this.parameters.getMqttUserName(), this.parameters.getMqttPassword(), this);
 		this.mqttUtils.subscribeToTopic(this.parameters.getMqttTopic());
 
-		this.MaaSRestUtils = new RESTUtils(parameters.getRESTCarmanagerURL());
 		this.backboneRestUtils = new RESTUtils(parameters.getBackboneRESTURL());
 
 		this.navigationManager = new NavigationManager(this, mapManager, parameters);
 		this.mapManager = mapManager;
+		this.heartbeatChecker = heartbeatChecker;
 
 		this.vehicles = new HashMap<>();
 
@@ -83,7 +67,7 @@ public class VehicleManager implements MQTTListener
 	}
 
 	/**
-	 * Checks whether or not a vehicle existsOld.
+	 * Checks whether or not a vehicle exists.
 	 *
 	 * @param vehicleId The id of the vehicle to be checked
 	 * @return
@@ -146,6 +130,7 @@ public class VehicleManager implements MQTTListener
 
 			this.vehicles.remove(vehicleId);
 			this.navigationManager.removeVehicle(vehicleId);
+			this.heartbeatChecker.removeVehicle(vehicleId);
 
 			this.log.info("Removing vehicle " + vehicleId);
 
@@ -162,7 +147,7 @@ public class VehicleManager implements MQTTListener
 	@RequestMapping(value="/carmanager/register/{startWaypoint}", method=RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
 	public @ResponseBody ResponseEntity<String> register(@PathVariable long startWaypoint)
 	{
-		if (!this.mapManager.existsOld(startWaypoint))
+		if (!this.mapManager.exists(startWaypoint))
 		{
 			String errorString = "Tried to register vehicle with non-existent start id. (Start Waypoint: " + startWaypoint + ")";
 			this.log.error(errorString);
@@ -182,8 +167,9 @@ public class VehicleManager implements MQTTListener
 		}
 
 		this.vehicles.put(newVehicleId, new Vehicle(newVehicleId));
-
 		this.navigationManager.setLocation(newVehicleId, startWaypoint);
+		this.heartbeatChecker.addVehicle(newVehicleId);
+
 		this.log.info("Registered new vehicle (" + newVehicleId + "), Current Waypoint: " + startWaypoint);
 
 		return new ResponseEntity<>(Long.toString(newVehicleId), HttpStatus.OK);
@@ -230,11 +216,6 @@ public class VehicleManager implements MQTTListener
 				boolean availability = Boolean.parseBoolean(message);
 				this.vehicles.get(id).setAvailable(availability);
 				this.log.info("Received Availability update for vehicle " + id + ", Status: " + this.getAvailabilityString(availability));
-			}
-			else if (this.isHeartbeat(topic))
-			{
-				this.log.info("Received Heartbeat from " + id);
-				this.heartbeatUpdate(id);
 			}
 		}
 	}
