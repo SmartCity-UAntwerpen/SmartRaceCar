@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.annotation.PostConstruct;
 import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.io.FileInputStream;
@@ -48,39 +49,28 @@ public class MapManager implements MQTTListener
 		this.log = LoggerFactory.getLogger(this.getClass());
 		this.params = params;
 
-		this.log.info("Getting settings from parameter object.");
+		this.log.info("Initializing Map Manager...");
 
 		this.currentMap = params.getCurrentMap();
 		this.mapPath = params.getMapPath();
 
-		this.log.info("Starting MQTT Utils.");
-
 		this.mqttUtils = new MQTTUtils(params.getMqttBroker(), params.getMqttUserName(), params.getMqttPassword(), this);
-
-		this.log.info("Setting up Backbone REST Utils.");
 
 		this.backboneRESTUtils = new RESTUtils(params.getBackboneRESTURL());
 
-		this.log.info("Setting VehicleManager.");
+		this.wayPoints = new HashMap<>();
 
 		this.vehicleManager = vehicleManager;
 
-		this.wayPoints = new HashMap<>();
-
-		this.log.info("Loading Waypoints.");
-
 		this.loadWayPoints();
-	}
 
-	public boolean exists(long id)
-	{
-		return wayPoints.containsKey(id);
+		this.log.info("Initialized Map Manager.");
 	}
 
 	@Deprecated
-	public void setVehicleManager(VehicleManager vehicleManager)
+	public boolean existsOld(long id)
 	{
-		this.vehicleManager = vehicleManager;
+		return wayPoints.containsKey(id);
 	}
 
 	/**
@@ -263,6 +253,36 @@ public class MapManager implements MQTTListener
 		}
 
 		this.log.info("All possible wayPoints(" + wayPoints.size() + ") received.");
+	}
+
+	/**
+	 * REST Endpoint to check if a certain point (based on ID) exists.
+	 * @param waypointId
+	 * @return
+	 */
+	@RequestMapping (value="/carmanager/exists/{waypointId}", method=RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
+	public @ResponseBody ResponseEntity<String> exists(@PathVariable long waypointId)
+	{
+		this.log.info("Checking if waypoint " + waypointId + " exists.");
+		return new ResponseEntity<>(Boolean.toString(this.wayPoints.containsKey(waypointId)), HttpStatus.OK);
+	}
+
+	/**
+	 * Get the coordinates (x,y,z,w) of a point with a certain ID.
+	 * @param waypointId
+	 * @return
+	 */
+	public Point getCoordinates(long waypointId)
+	{
+		this.log.info("Fetching coordinates for waypoint " + waypointId + ".");
+
+		if (!this.wayPoints.containsKey(waypointId))
+		{
+			this.log.error("Tried to fetch coordinates for non-existent waypoint " + waypointId + ".");
+			return new Point(0.0f, 0.0f, 0.0f, 0.0f);
+		}
+
+		return this.wayPoints.get(waypointId);
 	}
 
 	@Override

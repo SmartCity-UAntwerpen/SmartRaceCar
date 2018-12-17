@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import javax.ws.rs.core.MediaType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -41,6 +42,8 @@ public class NavigationManager implements MQTTListener
 	private List<Cost> costList;
 	private VehicleManager vehicleManager;
 	private MapManager mapManager;
+	private java.util.Map<Long, Long> vehicleLocations;	// This map keeps track of the location of every vehicle
+	// The key is the vehicleId, the value is the locationId
 
 	private boolean isCostAnswer(String topic)
 	{
@@ -59,16 +62,53 @@ public class NavigationManager implements MQTTListener
 		this.parameters = parameters;
 		this.log = LoggerFactory.getLogger(NavigationManager.class);
 
-		this.log.info("Setting up MQTT...");
+		this.log.info("Initializing Navigation Manager...");
 
 		this.mqttUtils = new MQTTUtils(this.parameters.getMqttBroker(), this.parameters.getMqttUserName(), this.parameters.getMqttPassword(), this);
 		this.mqttUtils.subscribeToTopic(this.parameters.getMqttTopic());
 
-		this.log.info("Setting fields and creating cost list...");
 
 		this.costList = new ArrayList<>();
+		this.vehicleLocations = new HashMap<>();
 		this.vehicleManager = vehicleManager;
 		this.mapManager = mapManager;
+
+		this.log.info("Initialized Navigation Manager.");
+
+	}
+
+	/*
+	 *
+	 * 	REST ENDPOINTS
+	 *
+	 */
+
+	@RequestMapping(value="/carmanager/posAll", method=RequestMethod.GET, produces=MediaType.APPLICATION_JSON)
+	public @ResponseBody ResponseEntity<String> getPositions()
+	{
+		List<Location> locations = new ArrayList<>();
+
+		for (Long vehicleId : this.vehicleLocations.keySet())
+		{
+			Location location = new Location(vehicleId, this.vehicleLocations.get(vehicleId), this.vehicleLocations.get(vehicleId), 0);
+			locations.add(location);
+		}
+
+		this.log.info("Request for all positions processed, returning " + locations.size() + " locations.");
+
+		return new ResponseEntity<>(JSONUtils.arrayToJSONString(locations), HttpStatus.OK);
+	}
+
+	public void setLocation(long vehicleId, long locationId)
+	{
+		if (!this.mapManager.existsOld(locationId))
+		{
+			String errorString = "Tried to set location of " + vehicleId + " to a non-existent location: " + locationId;
+			this.log.error(errorString);
+			return;
+		}
+
+		this.vehicleLocations.put(vehicleId, locationId);
 	}
 
 	/**
@@ -82,17 +122,22 @@ public class NavigationManager implements MQTTListener
 	@RequestMapping(value = "calcWeight/{startId}/{endId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON)
 	public @ResponseBody ResponseEntity<String> calculateCostsRequest(@PathVariable("startId") long startId, @PathVariable("endId") long endId) throws InterruptedException
 	{
-		if (!this.mapManager.exists(startId))
+		RESTUtils racecarAPI = new RESTUtils(this.parameters.getRESTCarmanagerURL());
+
+		boolean startExists = Boolean.parseBoolean(racecarAPI.getTextPlain("/exists/" + startId));
+		boolean endExists = Boolean.parseBoolean(racecarAPI.getTextPlain("/exists/" + endId));
+
+		if (!startExists)
 		{
-			String errorString = "Request cost with non-existent start waypoint " + Long.toString(startId) + ".";
+			String errorString = "Request cost with non-existent start waypoint " + startId + ".";
 			this.log.error(errorString);
 
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
 
-		if (!this.mapManager.exists(endId))
+		if (!endExists)
 		{
-			String errorString = "Request cost with non-existent end waypoint " + Long.toString(endId) + ".";
+			String errorString = "Request cost with non-existent end waypoint " + endId + ".";
 			this.log.error(errorString);
 
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
@@ -100,7 +145,7 @@ public class NavigationManager implements MQTTListener
 
 		if (this.vehicleManager.getNumVehicles() == 0)
 		{
-			String errorString = "No vehicles exist" + Long.toString(endId) + ".";
+			String errorString = "No vehicles exist.";
 			this.log.error(errorString);
 
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
@@ -154,33 +199,33 @@ public class NavigationManager implements MQTTListener
 	@Override
 	public void parseMQTT(String topic, String message)
 	{
-		long id = TopicUtils.getCarId(topic);
+		long vehicleId = TopicUtils.getCarId(topic);
 
-		// id == -1 means the topic wasn't valid
-		// It's also possible that the topic was valid, but the vehicle just doesn't exist
-		if ((id != -1) && (this.vehicleManager.exists(id)))
+		if (!this.vehicleManager.existsOld(vehicleId))
 		{
-			// We received an MQTT cost answer
-			if (this.isCostAnswer(topic))
-			{
-				Cost cost = (Cost) JSONUtils.getObject("value", COST_TYPE);
-				this.costList.add(cost);
-			}
-			// We received an MQTT location update
-			else if (this.isLocationUpdate(topic))
-			{
-				try
-				{
-					long locationId = Long.parseLong(message);
-					int percentage = this.vehicleManager.get(id).getLocation().getPercentage();
-					Location location = new Location(id, locationId, locationId, percentage);
-					this.vehicleManager.get(id).setLocation(location);
-				}
-				catch (Exception vehicleNotFoundException)
-				{
-					this.log.error("Tried to update location on non-existent vehicle.", vehicleNotFoundException);
-				}
-			}
+			this.log.warn("Received MQTT message from non-existent vehicle " + vehicleId);
+			return;
+		}
+
+		// We received an MQTT cost answer
+		if (this.isCostAnswer(topic))
+		{
+			Cost cost = (Cost) JSONUtils.getObject("value", COST_TYPE);
+			this.costList.add(cost);
+		}
+		// We received an MQTT location update
+		else if (this.isLocationUpdate(topic))
+		{
+			long locationId = Long.parseLong(message);
+			this.vehicleLocations.put(vehicleId, locationId);
+		}
+	}
+
+	public void removeVehicle(long vehicleId)
+	{
+		if (this.vehicleLocations.containsKey(vehicleId))
+		{
+			this.vehicleLocations.remove(vehicleId);
 		}
 	}
 }

@@ -1,6 +1,7 @@
 package be.uantwerpen.fti.ds.sc.common;
 
 import org.eclipse.paho.client.mqttv3.*;
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,9 +45,9 @@ public class MQTTUtils implements MqttCallback
 
 		try
 		{
-			client = new MqttClient(brokerURL, MqttClient.generateClientId());
-			client.setCallback(this);
-			client.connectWithResult(options);
+			this.client = new MqttClient(brokerURL, MqttClient.generateClientId(), new MemoryPersistence());
+			this.client.setCallback(this);
+			this.client.connectWithResult(options);
 			this.log.info("Connected to '" + brokerURL + "'.");
 		}
 		catch (MqttException e)
