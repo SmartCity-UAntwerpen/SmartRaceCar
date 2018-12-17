@@ -20,6 +20,8 @@ import java.util.HashMap;
 @Component
 class HeartbeatChecker
 {
+	private static final long MAX_DELTA = 90000;	// Maximum amount of time between consecutive heartbeats (in ms)
+
 	private Logger log;
 	private RESTUtils restUtils;
 
@@ -28,19 +30,23 @@ class HeartbeatChecker
 	{
 		this.log.info("Heartbeats are being checked...");
 
-		Type typeOfHashMap = new TypeToken<HashMap<Long, Vehicle>>()
-		{
-		}.getType();
+		Type typeOfHashMap = new TypeToken<HashMap<Long, Vehicle>>(){}.getType();
 		HashMap<Long, Vehicle> vehicles = (HashMap<Long, Vehicle>) JSONUtils.getObjectWithKeyWord(restUtils.getJSON("getVehicles"), typeOfHashMap);
 		Date currentTime = new Date();
+
 		for (Long ID : vehicles.keySet())
 		{
-			if ((currentTime.getTime() - vehicles.get(ID).getHeartbeat().getTime()) > 90000) //longer than 90 seconds
+			final long delta = currentTime.getTime() - vehicles.get(ID).getHeartbeat().getTime();
+
+			this.log.debug("Vehicle " + ID + "'s last heartbeat came " + (delta / 1000) + "s ago.");
+
+			if (delta > MAX_DELTA) //longer than 90 seconds
 			{
 				restUtils.getCall("delete/" + ID);
 				this.log.warn("Vehicle with ID: " + ID + " was removed since it hasn't responded for over 90s");
 			}
 		}
+
 		this.log.info("All heartbeats were checked.");
 	}
 
@@ -54,7 +60,7 @@ class HeartbeatChecker
 	{
 		this.log = LoggerFactory.getLogger(HeartbeatChecker.class);
 
-		this.log.info("Creating REST Utils for \"" + parameters.getRESTCarmanagerURL() + "\"...");
+		this.log.debug("Creating REST Utils for \"" + parameters.getRESTCarmanagerURL() + "\"...");
 
 		this.restUtils = new RESTUtils(parameters.getRESTCarmanagerURL());
 	}

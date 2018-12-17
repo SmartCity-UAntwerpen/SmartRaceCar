@@ -37,7 +37,8 @@ public class JobTracker implements MQTTListener
     private static final String ROUTE_UPDATE_ERROR = "error";
     private static final String ROUTE_UPDATE_NOT_COMPLETE = "notcomplete";
 
-    private static final int ALMOST_DONE_PERCENTAGE = 90;   // We need to contact the backbone if we're "almost there"
+    private static final int ALMOST_DONE_PERCENTAGE = 90;
+    // We need to contact the backbone if we're "almost there"
     // No concrete definition of "almost" has been given, so
     // I'm choosing one here. It's 90%.
 
