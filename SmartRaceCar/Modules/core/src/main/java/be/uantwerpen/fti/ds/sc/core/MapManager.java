@@ -40,9 +40,9 @@ public class MapManager
 		this.log = LoggerFactory.getLogger(MapManager.class);
 		this.log.info("starting to load maps");
 		this.loadedMaps = new HashMap<>();
-		String mapsFolder = findMapsFolder();
+		String mapsFolder = this.findMapsFolder();
 		this.log.info("Found maps folder = " + mapsFolder);
-		this.loadedMaps = loadMaps(mapsFolder);
+		this.loadedMaps = this.loadMaps(mapsFolder);
 		this.log.info("Maps loaded");
 	}
 
@@ -94,6 +94,7 @@ public class MapManager
 	 */
 	private String findMapsFolder()
 	{
+		this.log.info("starting to load map manager");
 		FileUtils fileUtils = new FileUtils();
 		fileUtils.searchDirectory(new File("."), "maps.xml");
 		if(fileUtils.getResult().size() == 0)
@@ -102,11 +103,16 @@ public class MapManager
 			System.exit(0);
 		}
 
+		this.log.info("Found " + fileUtils.getResult().size() + " matches for maps.xml");
+
 		String output = null;
 		for (String matched : fileUtils.getResult())
 		{
 			output = matched;
 		}
+
+		this.log.info("Maps folder found at " + output);
+
 		return output;
 	}
 
