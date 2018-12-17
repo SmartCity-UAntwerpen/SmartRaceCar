@@ -111,6 +111,7 @@ public class Navigator
 					e.printStackTrace();
 				}
 			}
+			this.log.info("Cost calculation complete");
 			for (long wayPointID : wayPointIDs)
 			{
 				if (this.core.getWayPoints().containsKey(wayPointID))
