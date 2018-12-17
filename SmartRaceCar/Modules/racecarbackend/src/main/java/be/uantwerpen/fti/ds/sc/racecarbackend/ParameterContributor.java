@@ -39,7 +39,7 @@ public class ParameterContributor
 
     private BackendParameters readBackendParameters(String propertiesFile)
     {
-        this.log.debug("Loading BackendParameters from \"" + propertiesFile + "\'");
+        this.log.debug("Loading BackendParameters from \"" + propertiesFile + "\"");
 
         Properties prop = new Properties();
         InputStream input = null;
@@ -90,7 +90,7 @@ public class ParameterContributor
         Properties prop = new Properties();
         InputStream input = null;
 
-        this.log.debug("Loading MapManagerParameters from \"" + propertiesFile + "\'");
+        this.log.debug("Loading MapManagerParameters from \"" + propertiesFile + "\"");
 
         try
         {
@@ -130,7 +130,7 @@ public class ParameterContributor
         Properties prop = new Properties();
         InputStream input = null;
 
-        this.log.debug("Loading JobDipatcherParameters from \"" + propertiesFile + "\'");
+        this.log.debug("Loading JobDipatcherParameters from \"" + propertiesFile + "\"");
 
 
         try

@@ -5,6 +5,7 @@ import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -13,6 +14,7 @@ import java.lang.reflect.Type;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -22,8 +24,11 @@ import java.util.regex.Pattern;
 @Component
 class HeartbeatChecker implements MQTTListener
 {
-	private static final long CHECK_INTERVAL = 30000;		// Interval between heartbeat checks (in ms)
-	private static final long MAX_DELTA = 90000;			// Maximum amount of time between consecutive heartbeats (in ms)
+	@Value("${Racecar.Heartbeat.interval}")
+	private long CHECK_INTERVAL;				// Interval between heartbeat checks (in s)
+
+	@Value("${Racecar.Heartbeat.max_age}")
+	private long MAX_DELTA;			// Maximum amount of time between consecutive heartbeats (in ms)
 
 	private static class MQTTConstants
 	{
@@ -54,16 +59,16 @@ class HeartbeatChecker implements MQTTListener
 		}
 	}
 
-	@Scheduled(fixedRate = CHECK_INTERVAL)
+	@Scheduled(fixedRateString="${Racecar.Heartbeat.interval}")
 	private void checkBeats()
 	{
-		this.log.info("Heartbeats are being checked...");
+		this.log.info("Checking the heartbeats of " + this.heartbeats.size() + " vehicles...");
 
 		Date currentTime = new Date();
 
 		for (long vehicleId : this.heartbeats.keySet())
 		{
-			final long delta = currentTime.getTime() - this.heartbeats.get(vehicleId).getTime();
+			final long delta = (currentTime.getTime() - this.heartbeats.get(vehicleId).getTime());
 
 			this.log.debug("Vehicle " + vehicleId + "'s last heartbeat came " + (delta / 1000) + "s ago.");
 
@@ -123,7 +128,7 @@ class HeartbeatChecker implements MQTTListener
 
 		this.vehicleManager = vehicleManager;
 
-		this.heartbeats = new HashMap<>();
+		this.heartbeats = new ConcurrentHashMap<>();
 	}
 
 	@Override
