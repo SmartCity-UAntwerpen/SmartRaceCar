@@ -61,11 +61,12 @@ public class FileUtils
 	 */
 	public void searchDirectory(File directory, String fileNameToSearch)
 	{
+		this.log.info("Searching for directory with file " + fileNameToSearch + " in " + directory.getPath());
 		setFileNameToSearch(fileNameToSearch);
 
 		if (directory.isDirectory())
 		{
-			search(directory);
+			this.search(directory);
 		} else
 		{
 			this.log.error(directory.getName() + " is not a directory. Cannot search.");
@@ -79,7 +80,7 @@ public class FileUtils
 	 */
 	private void search(File file)
 	{
-		this.log.debug("Searching for " + file.getPath());
+		this.log.info("Searching for " + file.getPath());
 		if (file.isDirectory())
 		{
 			//do you have permission to read this directory?
