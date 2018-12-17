@@ -108,6 +108,7 @@ class HeartbeatChecker implements MQTTListener
 	 * constructor for the HeartbeatChecker class
 	 *
 	 * @param parameters parameters used to start backend
+	 * @param vehicleManager
 	 */
 	@Autowired
 	public HeartbeatChecker(Parameters parameters, @Lazy VehicleManager vehicleManager)
@@ -118,6 +119,7 @@ class HeartbeatChecker implements MQTTListener
 
 		this.restUtils = new RESTUtils(parameters.getRESTCarmanagerURL());
 		this.mqttUtils = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
+		this.mqttUtils.subscribeToTopic(parameters.getMqttTopic());
 
 		this.vehicleManager = vehicleManager;
 
