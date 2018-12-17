@@ -15,11 +15,12 @@ public class FileUtils
 	private Logger log;
 
 	private String fileNameToSearch; // Name of the file that is being searched.
-	private List<String> result = new ArrayList<>(); // List of all found files matching the searched files. Full path is stored.
+	private List<String> result; // List of all found files matching the searched files. Full path is stored.
 
 	public FileUtils()
 	{
 		this.log = LoggerFactory.getLogger(FileUtils.class);
+		this.result = new ArrayList<>();
 	}
 
 	/**
@@ -29,7 +30,7 @@ public class FileUtils
 	 */
 	public String getFileNameToSearch()
 	{
-		return fileNameToSearch;
+		return this.fileNameToSearch;
 	}
 
 	/**
@@ -49,7 +50,7 @@ public class FileUtils
 	 */
 	public List<String> getResult()
 	{
-		return result;
+		return this.result;
 	}
 
 	/**
@@ -96,7 +97,8 @@ public class FileUtils
 					{
 						if (getFileNameToSearch().equals(temp.getName().toLowerCase()))
 						{
-							result.add(temp.getParent());
+							this.result.add(temp.getParent());
+							this.log.info("added " + temp.getParent() + " to results");
 						}
 
 					}
