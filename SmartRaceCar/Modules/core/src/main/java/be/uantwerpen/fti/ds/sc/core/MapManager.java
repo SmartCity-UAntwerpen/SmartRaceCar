@@ -94,9 +94,10 @@ public class MapManager
 	 */
 	private String findMapsFolder()
 	{
-		this.log.info("starting to load map manager");
+		this.log.info("starting to search map folder");
 		FileUtils fileUtils = new FileUtils();
 		fileUtils.searchDirectory(new File("."), "maps.xml");
+		this.log.info("search complete");
 		if(fileUtils.getResult().size() == 0)
 		{
 			this.log.debug("could not find maps.xml");
