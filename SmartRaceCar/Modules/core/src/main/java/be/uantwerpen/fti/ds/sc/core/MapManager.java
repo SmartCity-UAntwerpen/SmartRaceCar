@@ -140,7 +140,7 @@ public class MapManager
 		} else
 		{
 			contains = false;
-			this.log.info("Current used map '" + mapName + "' not found. Downloading...");
+			this.log.info("Current used map '" + mapName + "' not found. Downloading... to " + mapDir + "/" + mapName);
 			this.core.getRestUtils().getFile("getmappgm/" + mapName, mapDir, mapName, "pgm");
 			this.core.getRestUtils().getFile("getmapyaml/" + mapName, mapDir, mapName, "yaml");
 			Map map = new Map(mapName);
@@ -171,7 +171,8 @@ public class MapManager
 
 				transformer.transform(source, result);
 
-			} catch (ParserConfigurationException | SAXException | IOException | TransformerException e)
+			}
+			catch (ParserConfigurationException | SAXException | IOException | TransformerException e)
 			{
 				e.printStackTrace();
 				this.log.warn("Could not add map to XML of maps." + e);
