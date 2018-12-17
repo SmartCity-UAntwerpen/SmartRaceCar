@@ -98,13 +98,13 @@ public class MapManager
 		FileUtils fileUtils = new FileUtils();
 		fileUtils.searchDirectory(new File("."), "maps.xml");
 		this.log.info("search complete");
+		this.log.info("Found " + fileUtils.getResult().size() + " matches for maps.xml");
+
 		if(fileUtils.getResult().size() == 0)
 		{
 			this.log.debug("could not find maps.xml");
 			System.exit(0);
 		}
-
-		this.log.info("Found " + fileUtils.getResult().size() + " matches for maps.xml");
 
 		String output = null;
 		for (String matched : fileUtils.getResult())
