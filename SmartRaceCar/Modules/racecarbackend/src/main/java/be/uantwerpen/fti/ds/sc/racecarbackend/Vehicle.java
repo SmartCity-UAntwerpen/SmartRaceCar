@@ -1,10 +1,5 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
-
-import be.uantwerpen.fti.ds.sc.common.Location;
-
-import java.util.Date;
-
 /**
  * Model that describes a F1 vehicle.
  */
