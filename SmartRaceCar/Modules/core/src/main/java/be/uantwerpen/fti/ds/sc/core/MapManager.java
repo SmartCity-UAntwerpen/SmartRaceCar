@@ -134,11 +134,9 @@ public class MapManager
 		{
 			contains = true;
 			this.log.info("Current used map '" + mapName + "' found in folder, setting as current map.");
-			if (!this.core.getParams().isDebug())
-			{
-				this.core.getTcpUtils().sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", this.loadedMaps.get(mapName)));
-			}
-		} else
+
+		}
+		else
 		{
 			contains = false;
 			try
@@ -194,16 +192,18 @@ public class MapManager
 				Map map = new Map(mapName, mapDir.getCanonicalPath() + mapName);
 				this.loadedMaps.put(mapName, map);
 				this.log.info("Added downloaded map : " + mapName + ".");
-			} catch (IOException e)
+			}
+			catch (IOException e)
 			{
 				e.printStackTrace();
 			}
 			this.log.info("Current map '" + mapName + "' downloaded and set as current map.");
-			if (!this.core.getParams().isDebug())
-			{
-				this.core.getTcpUtils().sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", this.loadedMaps.get(mapName).getPath()));
+		}
 
-			}
+		if (!this.core.getParams().isDebug())
+		{
+			this.log.info("Setting current map on NAVSTACK to " + this.loadedMaps.get(mapName).getPath());
+			this.core.getTcpUtils().sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", this.loadedMaps.get(mapName).getPath()));
 		}
 
 		return contains;
