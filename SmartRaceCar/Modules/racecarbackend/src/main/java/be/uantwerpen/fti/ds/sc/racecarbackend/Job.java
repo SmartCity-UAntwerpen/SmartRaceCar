@@ -5,26 +5,26 @@ package be.uantwerpen.fti.ds.sc.racecarbackend;
  */
 class Job
 {
-
-	private Long idJob; //ID of the job.
-	private Long idStart; // ID of the start waypoint of the route.
-	private Long idEnd; // ID of the end waypoint of the route.
-	private Long idVehicle; // ID of the vehicle.
+	private long startId; // ID of the start waypoint of the route.
+	private long endId; // ID of the end waypoint of the route.
+	private long vehicleId; // ID of the vehicle.
+	private int progress;
 
 	/**
-	 * Model that describes a job request.
+	 * Create a job object.
+	 * Progress is initialized to 0 and stored as a percentage.
 	 *
-	 * @param idJob     ID of the job
-	 * @param idStart   ID of the start waypoint of the route
-	 * @param idEnd     ID of the end waypoint of the route
-	 * @param idVehicle ID of the vehicle
+	 * @param jobId     ID of the job
+	 * @param startId   ID of the start waypoint of the route
+	 * @param endId     ID of the end waypoint of the route
+	 * @param vehicleId ID of the vehicle
 	 */
-	Job(Long idJob, Long idStart, Long idEnd, Long idVehicle)
+	public Job(long startId, long endId, long vehicleId)
 	{
-		this.idJob = idJob;
-		this.idStart = idStart;
-		this.idEnd = idEnd;
-		this.idVehicle = idVehicle;
+		this.startId = startId;
+		this.endId = endId;
+		this.vehicleId = vehicleId;
+		this.progress = 0;
 	}
 
 	/**
@@ -32,9 +32,9 @@ class Job
 	 *
 	 * @return Long of the starting waypoint's ID
 	 */
-	Long getIdStart()
+	public long getStartId()
 	{
-		return idStart;
+		return startId;
 	}
 
 	/**
@@ -42,9 +42,9 @@ class Job
 	 *
 	 * @return Long of the ending waypoint's ID
 	 */
-	Long getIdEnd()
+	public long getEndId()
 	{
-		return idEnd;
+		return endId;
 	}
 
 	/**
@@ -52,13 +52,18 @@ class Job
 	 *
 	 * @return Long of the vehicle's ID
 	 */
-	Long getIdVehicle()
+	public long getVehicleId()
 	{
-		return idVehicle;
+		return vehicleId;
 	}
 
-	public Long getIdJob()
+	public int getProgress()
 	{
-		return idJob;
+		return this.progress;
+	}
+
+	public void setProgress(int newProgress)
+	{
+		this.progress = newProgress;
 	}
 }

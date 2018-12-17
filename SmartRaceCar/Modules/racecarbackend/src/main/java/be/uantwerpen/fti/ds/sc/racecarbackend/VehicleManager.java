@@ -141,7 +141,7 @@ public class VehicleManager implements MQTTListener
 	}
 
 	/**
-	 * Checks whether or not a vehicle exists.
+	 * Checks whether or not a vehicle existsOld.
 	 *
 	 * @param vehicleId The id of the vehicle to be checked
 	 * @return
@@ -176,12 +176,14 @@ public class VehicleManager implements MQTTListener
 	 *
 	 * @return
 	 */
+	@Deprecated
 	public Iterator<Long> getIdIterator()
 	{
 		return this.vehicles.keySet().iterator();
 	}
 
-	public int getNumVehicles()
+	@Deprecated
+	public int getNumVehiclesOld()
 	{
 		return this.vehicles.size();
 	}
@@ -191,7 +193,14 @@ public class VehicleManager implements MQTTListener
 	 *      REST Endpoints
 	 *
 	 */
-	@RequestMapping(value="/carmanager/delete/{id}", method= RequestMethod.GET)
+	@RequestMapping(value="/carmanager/getNumVehicles", method=RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
+	public @ResponseBody ResponseEntity<String> getNumVehicles()
+	{
+		return new ResponseEntity<>(Integer.toString(this.vehicles.size()), HttpStatus.OK);
+	}
+
+
+	@RequestMapping(value="/carmanager/delete/{id}", method=RequestMethod.GET)
 	public @ResponseBody ResponseEntity<String> delete(@PathVariable long id)
 	{
 		if (this.vehicles.containsKey(id))
@@ -218,7 +227,7 @@ public class VehicleManager implements MQTTListener
 	@RequestMapping(value="/carmanager/register/{startWaypoint}", method=RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
 	public @ResponseBody ResponseEntity<String> register(@PathVariable long startWaypoint)
 	{
-		if (!this.mapManager.exists(startWaypoint))
+		if (!this.mapManager.existsOld(startWaypoint))
 		{
 			String errorString = "Tried to register vehicle with non-existent start id. (Start Waypoint: " + startWaypoint + ")";
 			this.log.error(errorString);

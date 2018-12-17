@@ -13,14 +13,16 @@ public class RacecarBackend
 {
 	private Logger log;
 	private JobDispatcher jobDispatcher;
+	private JobTracker jobTracker;
 	private MapManager mapManager;
 	private VehicleManager vehicleManager;
 
 	@Autowired
-	public RacecarBackend(JobDispatcher jobDispatcher, MapManager mapManager, VehicleManager vehicleManager)
+	public RacecarBackend(JobDispatcher jobDispatcher, JobTracker jobTracker, MapManager mapManager, VehicleManager vehicleManager)
 	{
 		this.log = LoggerFactory.getLogger(RacecarBackend.class);
 		this.jobDispatcher = jobDispatcher;
+		this.jobTracker = jobTracker;
 		this.mapManager = mapManager;
 		this.vehicleManager = vehicleManager;
 	}

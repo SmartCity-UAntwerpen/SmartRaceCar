@@ -1,9 +1,7 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
-import be.uantwerpen.fti.ds.sc.common.Location;
-import be.uantwerpen.fti.ds.sc.common.MQTTListener;
-import be.uantwerpen.fti.ds.sc.common.MQTTUtils;
-import be.uantwerpen.fti.ds.sc.common.Parameters;
+import be.uantwerpen.fti.ds.sc.common.*;
+import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,24 +14,30 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.ws.rs.core.MediaType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
+
 @Controller
 public class JobDispatcher implements MQTTListener//todo: Get rid of this, still needed because MQTTUtils will crash if you don't provide it with a listener
 {
 	private Logger log;
+	private JobDispatcherParameters jobDispatcherParameters;
 	private MapManager mapManager;
 	private VehicleManager vehicleManager;
 	private MQTTUtils mqttUtils;
 
 	@Autowired
-	public JobDispatcher(Parameters parameters, MapManager mapManager, VehicleManager vehicleManager)
+	public JobDispatcher(JobDispatcherParameters jobDispatcherParameters, MapManager mapManager, VehicleManager vehicleManager)
 	{
 		this.log = LoggerFactory.getLogger(this.getClass());
+		this.jobDispatcherParameters = jobDispatcherParameters;
 		this.mapManager = mapManager;
 		this.vehicleManager = vehicleManager;
-		this.mqttUtils = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
+		this.mqttUtils = new MQTTUtils(jobDispatcherParameters.getMqttBroker(), jobDispatcherParameters.getMqttUserName(), jobDispatcherParameters.getMqttPassword(), this);
 	}
 
-
+	@Deprecated
 	@RequestMapping(value = "/carmanager/executeJob/{jobId}/{vehicleId}/{startId}/{endId}", method=RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
 	public @ResponseBody ResponseEntity<String> jobRequest(@PathVariable long jobId, @PathVariable long vehicleId, @PathVariable long startId, @PathVariable long endId)
 	{
@@ -67,7 +71,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		}
 
 		// Check if starting waypoint exists
-		if (!this.mapManager.exists(startId))
+		if (!this.mapManager.existsOld(startId))
 		{
 			String errorString = "Request job with non-existent start waypoint " + startId + ".";
 			this.log.error(errorString);
@@ -76,7 +80,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		}
 
 		// Check if end waypoint exists
-		if (!this.mapManager.exists(endId))
+		if (!this.mapManager.existsOld(endId))
 		{
 			String errorString = "Request job with non-existent end waypoint " + endId + ".";
 			this.log.error(errorString);
@@ -96,6 +100,74 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		this.mqttUtils.publishMessage("racecar/" + vehicleId + "/job", startId + " " + endId);
 
 		return new ResponseEntity<>(HttpStatus.OK);
+	}
+
+	/**
+	 * REST Endpoint used to checkt the cost between the two points.
+	 * The cost is calculated on the ROS navstack server (Usually at smartcity.ddns.net:8084)
+	 * If no cars are available, a cost of infinity (Integer.MAX_VALUE) is returned
+	 * @param startId
+	 * @param endId
+	 * @return
+	 */
+	@RequestMapping(value="/{startId}/{endId}", method=RequestMethod.GET, produces=MediaType.APPLICATION_JSON)
+	public @ResponseBody ResponseEntity<String> costRequest(@PathVariable long startId, @PathVariable long endId)
+	{
+		RESTUtils racecarAPI = new RESTUtils(this.jobDispatcherParameters.getRESTCarmanagerURL());
+
+		this.log.info("Received cost request for " + startId + " -> " + endId);
+
+		Boolean startExists = Boolean.parseBoolean(racecarAPI.getTextPlain("/exists/" + startId));
+		Boolean endExists = Boolean.parseBoolean(racecarAPI.getTextPlain("/exists/" + endId));
+		int numVehicles = Integer.parseInt(racecarAPI.getTextPlain("/getNumVehicles"));
+
+		if (!startExists)
+		{
+			this.log.error("Requested cost for start waypoint " + startId + ", but waypoint doesn't exist.");
+			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		}
+
+		if (!endExists)
+		{
+			this.log.error("Requested cost for end waypoint " + startId + ", but waypoint doesn't exist.");
+			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		}
+
+		if (numVehicles == 0)
+		{
+			this.log.error("Requested cost, but no vehicles are available, returning " + Integer.MAX_VALUE);
+			String responseJson = JSONUtils.objectToJSONStringWithKeyWord("cost", Integer.MAX_VALUE);
+			return new ResponseEntity<>(responseJson, HttpStatus.OK);
+		}
+
+		int cost = 0;
+
+		if (!this.jobDispatcherParameters.isROSServerDisabled())
+		{
+			RESTUtils ROSAPI = new RESTUtils(this.jobDispatcherParameters.getROSServerURL());
+
+			Type pointType = new TypeToken<Point>(){}.getType();
+			Type costType = new TypeToken<Cost>(){}.getType();
+
+			Point startPoint = (Point) JSONUtils.getObject(racecarAPI.getJSON("/getCoordinates/" + startId), pointType);
+			Point endPoint = (Point) JSONUtils.getObject(racecarAPI.getJSON("/getCoordinates/" + endId), pointType);
+
+			List<Point> points = new ArrayList<>();
+			points.add(startPoint);
+			points.add(endPoint);
+
+			String costString = ROSAPI.postJSONGetJSON("calcWeight", JSONUtils.arrayToJSONString(points));
+			Cost costObj = (Cost) JSONUtils.getObjectWithKeyWord(costString, costType);
+
+			cost = costObj.getWeight();
+		}
+		else
+		{
+			cost = 5;
+		}
+
+		String responseJson = JSONUtils.objectToJSONStringWithKeyWord("cost", cost);
+		return new ResponseEntity<>(responseJson, HttpStatus.OK);
 	}
 
 	/**
