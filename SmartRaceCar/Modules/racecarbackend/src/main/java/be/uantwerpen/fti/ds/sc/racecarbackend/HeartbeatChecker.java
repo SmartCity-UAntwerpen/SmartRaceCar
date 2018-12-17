@@ -14,6 +14,7 @@ import java.lang.reflect.Type;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -127,7 +128,7 @@ class HeartbeatChecker implements MQTTListener
 
 		this.vehicleManager = vehicleManager;
 
-		this.heartbeats = new HashMap<>();
+		this.heartbeats = new ConcurrentHashMap<>();
 	}
 
 	@Override
