@@ -98,24 +98,7 @@ public class MapManager
 			this.log.debug("could not find maps.xml");
 			System.exit(0);
 		}
-		/*fileUtils.searchDirectory(new File(".."), "maps.xml");
-		if (fileUtils.getResult().size() == 0)
-		{
-			fileUtils.searchDirectory(new File("./.."), "maps.xml");
-			if (fileUtils.getResult().size() == 0)
-			{
-				fileUtils.searchDirectory(new File("./../.."), "maps.xml");
-				if (fileUtils.getResult().size() == 0)
-				{
-					fileUtils.searchDirectory(new File("./../../.."), "maps.xml");
-					if (fileUtils.getResult().size() == 0)
-					{
-						this.log.error("MAP-MAN", "maps.xml not found. Make sure it exists in some folder (maximum 3 levels deep).");
-						System.exit(0);
-					}
-				}
-			}
-		}*/
+
 		String output = null;
 		for (String matched : fileUtils.getResult())
 		{
@@ -129,19 +112,24 @@ public class MapManager
 	 * REST GET request to download the map files and store it in the mapfolder and add it to the maps.xml file.
 	 * After that it sends this information to the vehicle SimKernel/SimKernel over the socket connection.
 	 */
-	public void requestMap()
+	public boolean requestMap()
 	{
+		boolean contains;
 		String mapDir = this.findMapsFolder();
 		String mapPath = mapDir + "/maps.xml";
 
 		String mapName = this.core.getRestUtils().getTextPlain("getmapname");
 		if (this.loadedMaps.containsKey(mapName))
 		{
+			contains = true;
 			this.log.info("Current used map '" + mapName + "' found in folder, setting as current map.");
 			if (!this.core.getParams().isDebug())
+			{
 				this.core.getTcpUtils().sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", this.loadedMaps.get(mapName)));
+			}
 		} else
 		{
+			contains = false;
 			this.log.info("Current used map '" + mapName + "' not found. Downloading...");
 			this.core.getRestUtils().getFile("getmappgm/" + mapName, mapDir, mapName, "pgm");
 			this.core.getRestUtils().getFile("getmapyaml/" + mapName, mapDir, mapName, "yaml");
@@ -173,8 +161,7 @@ public class MapManager
 
 				transformer.transform(source, result);
 
-			}
-			catch (ParserConfigurationException | SAXException | IOException | TransformerException e)
+			} catch (ParserConfigurationException | SAXException | IOException | TransformerException e)
 			{
 				e.printStackTrace();
 				this.log.warn("Could not add map to XML of maps." + e);
@@ -183,7 +170,12 @@ public class MapManager
 			this.log.info("Added downloaded map : " + mapName + ".");
 			this.log.info("Current map '" + mapName + "' downloaded and set as current map.");
 			if (!this.core.getParams().isDebug())
+			{
 				this.core.getTcpUtils().sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", this.loadedMaps.get(mapName)));
+
+			}
 		}
+
+		return contains;
 	}
 }

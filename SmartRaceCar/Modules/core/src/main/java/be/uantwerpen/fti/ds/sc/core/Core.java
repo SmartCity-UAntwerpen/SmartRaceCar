@@ -111,9 +111,14 @@ class Core implements TCPListener, MQTTListener
 		this.mapManager = new MapManager(this);
 		this.log.info("Map manager started");
 
-		this.mapManager.requestMap();
-		this.log.info("Giving the map 10s to load.");
-		Thread.sleep(10000); //10 seconds delay so the map can load before publishing the startpoint
+		if(!this.mapManager.requestMap())
+		{
+			// TODO find better mechanism to wait for download
+			// map not downloaded yet -> waiting for download to finish
+			this.log.info("Giving the map 10s to load.");
+			Thread.sleep(10000); //10 seconds delay so the map can load before publishing the startpoint
+		}
+
 
 		this.sendStartPoint();
 
@@ -197,8 +202,8 @@ class Core implements TCPListener, MQTTListener
 	private void loadConfig()
 	{
 		CoreParameterParser parser = new CoreParameterParser();
-		this.params = parser.parse("/home/ubuntu/Git/SmartRacecar/SmartRaceCar/release/core.properties");
-		//this.params = parser.parse("core.properties");
+		//this.params = parser.parse("/home/ubuntu/Git/SmartRacecar/SmartRaceCar/release/core.properties");
+		this.params = parser.parse("core.properties");
 	}
 
 

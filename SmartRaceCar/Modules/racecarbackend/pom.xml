@@ -29,6 +29,9 @@
                         <goals>
                             <goal>repackage</goal>
                         </goals>
+                        <configuration>
+                            <outputDirectory>${project.basedir}/release/RacecarBackend.jar</outputDirectory>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -44,7 +47,7 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <outputFile>release/RacecarBackendV2.jar</outputFile>
+                            <outputFile>release/intermediate.jar</outputFile>
                             <transformers>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
