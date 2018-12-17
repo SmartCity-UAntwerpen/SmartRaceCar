@@ -57,7 +57,7 @@ class HeartbeatChecker implements MQTTListener
 	@Scheduled(fixedRate = CHECK_INTERVAL)
 	private void checkBeats()
 	{
-		this.log.info("Heartbeats are being checked...");
+		this.log.info("Checking the heartbeats of " + this.heartbeats.size() + " vehicles...");
 
 		Date currentTime = new Date();
 
