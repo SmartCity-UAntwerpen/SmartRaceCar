@@ -5,6 +5,7 @@ import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -109,7 +110,7 @@ class HeartbeatChecker implements MQTTListener
 	 * @param parameters parameters used to start backend
 	 */
 	@Autowired
-	public HeartbeatChecker(Parameters parameters, VehicleManager vehicleManager)
+	public HeartbeatChecker(Parameters parameters, @Lazy VehicleManager vehicleManager)
 	{
 		this.log = LoggerFactory.getLogger(HeartbeatChecker.class);
 
