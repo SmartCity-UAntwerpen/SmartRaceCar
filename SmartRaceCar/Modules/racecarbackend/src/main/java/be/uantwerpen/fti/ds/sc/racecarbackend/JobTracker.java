@@ -63,6 +63,12 @@ public class JobTracker implements MQTTListener
             maasRESTUtils.getTextPlain("completeJob/" + jobId);
         }
 
+        if (!this.backendParameters.isBackboneDisabled())
+        {
+            RESTUtils backboneRESTUtil = new RESTUtils(this.backendParameters.getBackboneRESTURL());
+            backboneRESTUtil.postEmpty("/jobs/complete/" + jobId);
+        }
+
         this.jobs.remove(jobId);
     }
 
@@ -98,7 +104,7 @@ public class JobTracker implements MQTTListener
         if ((!this.backendParameters.isBackboneDisabled()) && (!job.isBackboneNotified()) && (progress >= ALMOST_DONE_PERCENTAGE))
         {
             RESTUtils backboneRESTUtil = new RESTUtils(this.backendParameters.getBackboneRESTURL());
-
+            backboneRESTUtil.postEmpty("/jobs/vehiclecloseby/" + jobId);
             job.setBackboneNotified(true);
         }
     }
