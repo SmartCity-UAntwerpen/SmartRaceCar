@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,7 +63,13 @@ public class FileUtils
 	 */
 	public void searchDirectory(File directory, String fileNameToSearch)
 	{
-		this.log.info("Searching for directory with file " + fileNameToSearch + " in " + directory.getPath());
+		try
+		{
+			this.log.info("Searching for directory with file " + fileNameToSearch + " in " + directory.getCanonicalPath());
+		} catch (IOException e)
+		{
+			e.printStackTrace();
+		}
 		setFileNameToSearch(fileNameToSearch);
 
 		if (directory.isDirectory())
