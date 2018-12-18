@@ -55,16 +55,21 @@ public class JobTracker implements MQTTListener
 
     private void completeJob(long jobId, long vehicleId)
     {
+        this.log.debug("Completing job, setting vehicle " + vehicleId + " to unoccupied.");
         this.vehicleManager.setOccupied(vehicleId, false);
 
         if (!this.backendParameters.isMaaSDisabled())
         {
+            this.log.debug("Informing MaaS about job completion.");
+
             RESTUtils maasRESTUtils = new RESTUtils(this.backendParameters.getMaaSRESTUrl());
             maasRESTUtils.getTextPlain("completeJob/" + jobId);
         }
 
         if (!this.backendParameters.isBackboneDisabled())
         {
+            this.log.debug("Informing Backbone about job completion.");
+
             RESTUtils backboneRESTUtil = new RESTUtils(this.backendParameters.getBackboneRESTURL());
             backboneRESTUtil.postEmpty("/jobs/complete/" + jobId);
         }

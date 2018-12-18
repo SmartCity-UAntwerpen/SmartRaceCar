@@ -145,10 +145,9 @@ public class RESTUtils
 	 */
 	public String postEmpty(String URL)
 	{
+		this.log.debug("Attempting POST request with URL: \"" + URL + "\"");
 
 		WebTarget resourceWebTarget = this.webTarget.path(URL);
-
-		this.log.debug("Attempting POST request with URL: \"" + resourceWebTarget.getUri() + "\"");
 
 		Invocation.Builder invocationBuilder = resourceWebTarget.request();
 
@@ -212,31 +211,33 @@ public class RESTUtils
 			switch (status)
 			{
 				case BAD_REQUEST:
-					webAppException = new BadRequestException();
+					webAppException = new BadRequestException(response.readEntity(String.class));
 					break;
 				case FORBIDDEN:
-					webAppException = new ForbiddenException();
+					webAppException = new ForbiddenException(response.readEntity(String.class));
 					break;
 				case NOT_FOUND:
-					webAppException = new NotFoundException();
+					webAppException = new NotFoundException(response.readEntity(String.class));
 					break;
 				case NOT_ACCEPTABLE:
-					webAppException = new NotAcceptableException();
+					webAppException = new NotAcceptableException(response.readEntity(String.class));
 					break;
 				case UNSUPPORTED_MEDIA_TYPE:
-					webAppException = new NotSupportedException();
+					webAppException = new NotSupportedException(response.readEntity(String.class));
 					break;
 				case INTERNAL_SERVER_ERROR:
-					webAppException = new InternalServerErrorException();
+					webAppException = new InternalServerErrorException(response.readEntity(String.class));
 					break;
 				case SERVICE_UNAVAILABLE:
-					webAppException = new ServiceUnavailableException();
+					webAppException = new ServiceUnavailableException(response.readEntity(String.class));
 					break;
 				default:
-					webAppException = new WebApplicationException();
+					webAppException = new WebApplicationException(response.readEntity(String.class));
+					break;
 			}
-			this.log.error("Error with request: " + webAppException.getMessage() + ". URL:" + url);
-			System.exit(0);
+
+			this.log.error("Error with request for URL:" + url, webAppException);
+			throw webAppException;
 		}
 	}
 }

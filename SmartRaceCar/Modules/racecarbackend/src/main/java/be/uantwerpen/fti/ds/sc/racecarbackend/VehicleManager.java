@@ -157,14 +157,16 @@ public class VehicleManager implements MQTTListener
 
 		long newVehicleId = -1;
 
+		newVehicleId = this.vehicles.size();/*
 		if (this.parameters.isBackboneDisabled())
 		{
-			newVehicleId = this.vehicles.size();
+
 		}
+		/*
 		else
 		{
 			newVehicleId = Long.parseLong(this.backboneRestUtils.getJSON("bot/newBot/car"));
-		}
+		}*/
 
 		this.vehicles.put(newVehicleId, new Vehicle(newVehicleId));
 		this.navigationManager.setLocation(newVehicleId, startWaypoint);

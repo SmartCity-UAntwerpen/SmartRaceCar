@@ -20,6 +20,6 @@
 
     <root level="debug">
         <appender-ref ref="STDOUT" />
-        <appender-ref ref="FILE" />
+        <appender-ref ref="FILE" level="info"/>
     </root>
 </configuration>

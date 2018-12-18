@@ -183,9 +183,9 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 	@RequestMapping(value="/job/gotopoint/{destId}", method=RequestMethod.POST, produces=MediaType.TEXT_PLAIN)
 	public @ResponseBody ResponseEntity<String> goToPoint (@PathVariable long destId)
 	{
-		//todo: Replace this with actual resource management
-		long dummyVehicleId = 0;
-		long vehicleId = dummyVehicleId;
+		this.log.info("Received GOTO command for waypoint " + destId);
+
+		long vehicleId = this.resourceManager.getOptimalCar(destId);
 
 		if (!this.mapManager.exists(destId))
 		{
