@@ -41,73 +41,6 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		this.mqttUtils = new MQTTUtils(backendParameters.getMqttBroker(), backendParameters.getMqttUserName(), backendParameters.getMqttPassword(), this);
 	}
 
-	/*
-	@Deprecated
-	@RequestMapping(value = "/carmanager/executeJob/{jobId}/{vehicleId}/{startId}/{endId}", method=RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
-	public @ResponseBody ResponseEntity<String> jobRequest(@PathVariable long jobId, @PathVariable long vehicleId, @PathVariable long startId, @PathVariable long endId)
-	{
-		Job job = new Job(jobId, startId, endId, vehicleId);
-
-		// Check if vehicle exists
-		if (!this.vehicleManager.exists(vehicleId))
-		{
-			String errorString = "Tried to execute job on non-existent vehicle (" + vehicleId + ")";
-			this.log.error(errorString);
-
-			return new ResponseEntity<>(errorString, HttpStatus.BAD_REQUEST);
-		}
-
-		// Check if vehicle is occupied
-		if (this.vehicleManager.get(vehicleId).getOccupied())
-		{
-			String errorString = "Vehicle " + vehicleId + " is currently occupied and can't accept any job requests.";
-			this.log.error(errorString);
-
-			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
-		}
-
-		// Check if vehicle is available
-		if (!this.vehicleManager.get(vehicleId).isAvailable())
-		{
-			String errorString = "Vehicle " + vehicleId + " is currently not available for job requests.";
-			this.log.error(errorString);
-
-			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
-		}
-
-		// Check if starting waypoint exists
-		if (!this.mapManager.exists(startId))
-		{
-			String errorString = "Request job with non-existent start waypoint " + startId + ".";
-			this.log.error(errorString);
-
-			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
-		}
-
-		// Check if end waypoint exists
-		if (!this.mapManager.exists(endId))
-		{
-			String errorString = "Request job with non-existent end waypoint " + endId + ".";
-			this.log.error(errorString);
-
-			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
-		}
-
-		this.log.info("Received Job request for " + vehicleId + " from " + startId + " to " + endId + " (JobID: " + jobId + ")");
-
-		Vehicle vehicle = this.vehicleManager.get(vehicleId);
-		Location location = new Location(vehicleId, startId, endId);
-
-		vehicle.setJob(job);
-		vehicle.setLocation(location);
-		vehicle.setOccupied(true);
-
-		this.mqttUtils.publishMessage("racecar/" + vehicleId + "/job", startId + " " + endId);
-
-		return new ResponseEntity<>(HttpStatus.OK);
-	}
-	*/
-
 	@RequestMapping(value="/job/execute/{startId}/{endId}/{jobId}", method=RequestMethod.POST, produces=MediaType.TEXT_PLAIN)
 	public @ResponseBody ResponseEntity<String> executeJob(@PathVariable long startId, @PathVariable long endId, @PathVariable long jobId)
 	{
@@ -125,34 +58,6 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 			this.log.error(errorString, nsee);
 			return new ResponseEntity<>(errorString, HttpStatus.PRECONDITION_FAILED);
 		}
-
-		//todo: move to resource manager
-		/*
-		// Check if vehicle exists
-		if (!this.vehicleManager.exists(vehicleId))
-		{
-			String errorString = "Tried to execute job on non-existent vehicle (" + vehicleId + ")";
-			this.log.error(errorString);
-
-			return new ResponseEntity<>(errorString, HttpStatus.BAD_REQUEST);
-		}
-
-		// Check if vehicle is occupied
-		if (this.vehicleManager.get(vehicleId).getOccupied())
-		{
-			String errorString = "Vehicle " + vehicleId + " is currently occupied and can't accept any job requests.";
-			this.log.error(errorString);
-
-			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
-		}
-		// Check if vehicle is available
-		if (!this.vehicleManager.get(vehicleId).isAvailable())
-		{
-			String errorString = "Vehicle " + vehicleId + " is currently not available for job requests.";
-			this.log.error(errorString);
-
-			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
-		}*/
 
 		// Check if starting waypoint exists
 		if (!this.mapManager.exists(startId))
