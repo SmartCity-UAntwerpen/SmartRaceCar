@@ -27,19 +27,19 @@ import java.util.Map;
 public class CostCache
 {
 	private Logger log;
-	private VehicleManager vehicleManager;
+	private VehicleRepository vehicleRepository;
 	private MapManager mapManager;
 	private CostCacheParameters costCacheParameters;
 	private Map<Link, Integer> costCache;
 
 	@Autowired
-	public CostCache (CostCacheParameters costCacheParameters, VehicleManager vehicleManager, MapManager mapManager)
+	public CostCache (CostCacheParameters costCacheParameters, VehicleRepository vehicleRepository, MapManager mapManager)
 	{
 		this.log = LoggerFactory.getLogger(CostCache.class);
 
 		this.log.info("Initializing CostCache...");
 		this.costCacheParameters = costCacheParameters;
-		this.vehicleManager = vehicleManager;
+		this.vehicleRepository = vehicleRepository;
 		this.mapManager = mapManager;
 		this.costCache = new HashMap<>();
 		this.log.info("Initialized CostCache.");
@@ -71,7 +71,7 @@ public class CostCache
 			throw new IndexOutOfBoundsException(errorString);
 		}
 
-		if (this.vehicleManager.getNumVehicles() == 0)
+		if (this.vehicleRepository.getNumVehicles() == 0)
 		{
 			String errorString = "Requested cost, but no vehicles are available, returning " + Integer.MAX_VALUE;
 			this.log.error(errorString);

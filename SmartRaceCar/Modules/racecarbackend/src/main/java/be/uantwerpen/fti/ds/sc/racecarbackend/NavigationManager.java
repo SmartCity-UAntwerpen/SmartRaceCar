@@ -39,7 +39,8 @@ public class NavigationManager implements MQTTListener
 	private Logger log;
 	private MQTTUtils mqttUtils;
 	private List<Cost> costList;
-	private VehicleManager vehicleManager;
+	private VehicleRepository vehicleRepository;
+	private VehicleValidator vehicleValidator;
 	private WaypointValidator waypointValidator;
 	private java.util.Map<Long, Long> vehicleLocations;	// This map keeps track of the location of every vehicle
 	// The key is the vehicleId, the value is the locationId
@@ -56,7 +57,7 @@ public class NavigationManager implements MQTTListener
 		return matcher.matches();
 	}
 
-	public NavigationManager(@Lazy VehicleManager vehicleManager, WaypointValidator waypointValidator, Parameters parameters)
+	public NavigationManager(@Lazy VehicleRepository vehicleRepository, VehicleValidator vehicleValidator, WaypointValidator waypointValidator, Parameters parameters)
 	{
 		this.log = LoggerFactory.getLogger(NavigationManager.class);
 
@@ -67,11 +68,11 @@ public class NavigationManager implements MQTTListener
 
 		this.costList = new ArrayList<>();
 		this.vehicleLocations = new HashMap<>();
-		this.vehicleManager = vehicleManager;
+		this.vehicleRepository = vehicleRepository;
+		this.vehicleValidator = vehicleValidator;
 		this.waypointValidator = waypointValidator;
 
 		this.log.info("Initialized Navigation Manager.");
-
 	}
 
 	/*
@@ -162,7 +163,7 @@ public class NavigationManager implements MQTTListener
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
 
-		if (this.vehicleManager.getNumVehicles() == 0)
+		if (this.vehicleRepository.getNumVehicles() == 0)
 		{
 			String errorString = "No vehicles exist.";
 			this.log.error(errorString);
@@ -173,9 +174,9 @@ public class NavigationManager implements MQTTListener
 		int totalVehicles = 0;
 		int timer = 0;
 
-		for (long vehicleId: this.vehicleManager.getVehicleIds())
+		for (long vehicleId: this.vehicleRepository.getVehicleIds())
 		{
-			Vehicle vehicle = this.vehicleManager.get(vehicleId);
+			Vehicle vehicle = this.vehicleRepository.get(vehicleId);
 
 			if (vehicle.isAvailable())
 			{
@@ -217,7 +218,7 @@ public class NavigationManager implements MQTTListener
 	{
 		long vehicleId = TopicUtils.getCarId(topic);
 
-		if (!this.vehicleManager.exists(vehicleId))
+		if (!this.vehicleValidator.exists(vehicleId))
 		{
 			this.log.warn("Received MQTT message from non-existent vehicle " + vehicleId);
 			return;

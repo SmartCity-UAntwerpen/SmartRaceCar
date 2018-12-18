@@ -34,14 +34,14 @@ public class MapManager implements MQTTListener, WaypointValidator
 	private Logger log;
 	private MapManagerParameters params;
 
-	private VehicleManager vehicleManager;
+	private VehicleRepository vehicleRepository;
 
 	private MQTTUtils mqttUtils;
 
 	private Map<Long, WayPoint> wayPoints;
 
 	@Autowired
-	public MapManager(MapManagerParameters params, @Lazy VehicleManager vehicleManager)
+	public MapManager(MapManagerParameters params, @Lazy VehicleRepository vehicleRepository)
 	{
 		this.log = LoggerFactory.getLogger(this.getClass());
 		this.params = params;
@@ -52,7 +52,7 @@ public class MapManager implements MQTTListener, WaypointValidator
 
 		this.wayPoints = new HashMap<>();
 
-		this.vehicleManager = vehicleManager;
+		this.vehicleRepository = vehicleRepository;
 
 		this.loadWayPoints(params.getCurrentMap());
 
@@ -161,7 +161,7 @@ public class MapManager implements MQTTListener, WaypointValidator
 		{
 			this.params.setCurrentMap(mapName);
 
-			for (long vehicleId: this.vehicleManager.getVehicleIds())
+			for (long vehicleId: this.vehicleRepository.getVehicleIds())
 			{
 				this.log.info("change map command sent to vehicle with ID: " + vehicleId);
 				this.mqttUtils.publishMessage("racecar/" + vehicleId + "/changeMap", mapName);
