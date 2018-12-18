@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.ws.rs.core.MediaType;
+import java.util.NoSuchElementException;
 
 @Controller
 public class JobDispatcher implements MQTTListener//todo: Get rid of this, still needed because MQTTUtils will crash if you don't provide it with a listener
@@ -24,10 +25,11 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 	private MapManager mapManager;
 	private VehicleManager vehicleManager;
 	private NavigationManager navigationManager;
+	private ResourceManager resourceManager;
 	private MQTTUtils mqttUtils;
 
 	@Autowired
-	public JobDispatcher(@Qualifier("backend") BackendParameters backendParameters, JobTracker jobTracker, MapManager mapManager, VehicleManager vehicleManager, NavigationManager navigationManager)
+	public JobDispatcher(@Qualifier("backend") BackendParameters backendParameters, JobTracker jobTracker, MapManager mapManager, VehicleManager vehicleManager, NavigationManager navigationManager, ResourceManager resourceManager)
 	{
 		this.log = LoggerFactory.getLogger(this.getClass());
 		this.backendParameters = backendParameters;
@@ -35,6 +37,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		this.mapManager = mapManager;
 		this.vehicleManager = vehicleManager;
 		this.navigationManager = navigationManager;
+		this.resourceManager = resourceManager;
 		this.mqttUtils = new MQTTUtils(backendParameters.getMqttBroker(), backendParameters.getMqttUserName(), backendParameters.getMqttPassword(), this);
 	}
 
@@ -110,9 +113,18 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 	{
 		this.log.info("Received Job request for " + startId + " -> " + endId + " (JobID: " + jobId + ")");
 
-		//todo: Replace this with actual resource management
-		long dummyVehicleId = 0;
-		long vehicleId = dummyVehicleId;
+		long vehicleId = 0;
+
+		try
+		{
+			vehicleId = this.resourceManager.getOptimalCar(startId);
+		}
+		catch (NoSuchElementException nsee)
+		{
+			String errorString = "An error occurred while determining the optimal car for a job.";
+			this.log.error(errorString, nsee);
+			return new ResponseEntity<>(errorString, HttpStatus.PRECONDITION_FAILED);
+		}
 
 		//todo: move to resource manager
 		/*

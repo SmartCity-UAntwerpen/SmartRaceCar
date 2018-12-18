@@ -45,48 +45,37 @@ public class CostCache
 		this.log.info("Initialized CostCache.");
 	}
 
-	/**
-	 * REST Endpoint used to check the cost between the two points.
-	 * The cost is calculated on the ROS navstack server (Usually at smartcity.ddns.net:8084)
-	 * If no cars are available, a cost of infinity (Integer.MAX_VALUE) is returned
-	 * @param startId
-	 * @param endId
-	 * @return
-	 */
-	@RequestMapping(value="/{startId}/{endId}", method= RequestMethod.GET, produces= MediaType.APPLICATION_JSON)
-	public @ResponseBody
-	ResponseEntity<String> costRequest(@PathVariable long startId, @PathVariable long endId)
+	public int calculateCost (long startId, long endId) throws IndexOutOfBoundsException
 	{
 		Link link = new Link(startId, endId);
-
-		this.log.info("Received cost request for " + link);
 
 		if (this.costCache.containsKey(link))
 		{
 			this.log.info("Got cache hit for link " + link);
-			String responseJson = JSONUtils.objectToJSONStringWithKeyWord("cost", this.costCache.get(link));
-			return new ResponseEntity<>(responseJson, HttpStatus.OK);
+			return this.costCache.get(link);
 		}
 
-		this.log.info("Got cache muss for link " + link);
+		this.log.info("Got cache miss for link " + link);
 
 		if (!this.mapManager.exists(startId))
 		{
-			this.log.error("Requested cost for start waypoint " + startId + ", but waypoint doesn't exist.");
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			String errorString = "Requested cost for start waypoint " + startId + ", but waypoint doesn't exist.";
+			this.log.error(errorString);
+			throw new IndexOutOfBoundsException(errorString);
 		}
 
 		if (!this.mapManager.exists(endId))
 		{
-			this.log.error("Requested cost for end waypoint " + startId + ", but waypoint doesn't exist.");
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			String errorString = "Requested cost for end waypoint " + startId + ", but waypoint doesn't exist.";
+			this.log.error(errorString);
+			throw new IndexOutOfBoundsException(errorString);
 		}
 
 		if (this.vehicleManager.getNumVehicles() == 0)
 		{
-			this.log.error("Requested cost, but no vehicles are available, returning " + Integer.MAX_VALUE);
-			String responseJson = JSONUtils.objectToJSONStringWithKeyWord("cost", Integer.MAX_VALUE);
-			return new ResponseEntity<>(responseJson, HttpStatus.OK);
+			String errorString = "Requested cost, but no vehicles are available, returning " + Integer.MAX_VALUE;
+			this.log.error(errorString);
+			throw new IndexOutOfBoundsException(errorString);
 		}
 
 		int cost = 0;
@@ -124,7 +113,35 @@ public class CostCache
 			cost = 5;
 		}
 
-		String responseJson = JSONUtils.objectToJSONStringWithKeyWord("cost", cost);
-		return new ResponseEntity<>(responseJson, HttpStatus.OK);
+		return cost;
+	}
+
+	/**
+	 * REST Endpoint used to check the cost between the two points.
+	 * The cost is calculated on the ROS navstack server (Usually at smartcity.ddns.net:8084)
+	 * If no cars are available, a cost of infinity (Integer.MAX_VALUE) is returned
+	 * @param startId
+	 * @param endId
+	 * @return
+	 */
+	@RequestMapping(value="/{startId}/{endId}", method= RequestMethod.GET, produces= MediaType.APPLICATION_JSON)
+	public @ResponseBody
+	ResponseEntity<String> costRequest(@PathVariable long startId, @PathVariable long endId)
+	{
+		Link link = new Link(startId, endId);
+
+		this.log.info("Received cost request for " + link);
+
+		try
+		{
+			int cost = this.calculateCost(startId, endId);
+			String responseJson = JSONUtils.objectToJSONStringWithKeyWord("cost", cost);
+			return new ResponseEntity<>(responseJson, HttpStatus.OK);
+		}
+		catch (IndexOutOfBoundsException ioobe)
+		{
+			this.log.error("Cost calculation caused an exception: ", ioobe);
+			return new ResponseEntity<>(ioobe.getMessage(), HttpStatus.BAD_REQUEST);
+		}
 	}
 }
