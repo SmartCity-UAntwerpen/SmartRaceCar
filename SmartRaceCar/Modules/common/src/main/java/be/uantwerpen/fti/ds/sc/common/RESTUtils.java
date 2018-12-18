@@ -11,7 +11,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
 
 /**
  * Help model to deal with REST client requests. Uses Jersey library.
@@ -117,7 +116,7 @@ public class RESTUtils
 	 * @param jsonString The JSON string to be posted.
 	 * @return REST response of the type JSON.
 	 */
-	public String postJSONGetJSON(String URL, String jsonString)
+	public String postJSONGetJSON(String URL, String jsonString) throws IOException
 	{
 		WebTarget resourceWebTarget = this.webTarget.path(URL);
 		Invocation.Builder invocationBuilder = resourceWebTarget.request("application/json");
@@ -128,8 +127,9 @@ public class RESTUtils
 			response = invocationBuilder.put(Entity.json(jsonString));
 		} catch (ProcessingException e)
 		{
-			this.log.error("Cannot connect to REST service: " + e);
-			System.exit(0);
+			String errorString = "Cannot connect to REST service (URL: \"" + resourceWebTarget.getUri() + "\": ";
+			this.log.error(errorString, e);
+			throw new IOException(errorString);
 		}
 		checkForError(response, resourceWebTarget.getUri());
 		String responseString = response.readEntity(String.class);

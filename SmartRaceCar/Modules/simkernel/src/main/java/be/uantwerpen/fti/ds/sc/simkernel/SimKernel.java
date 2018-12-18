@@ -177,7 +177,16 @@ class SimKernel implements TCPListener
 			Type typeOfCost = new TypeToken<Cost>()
 			{
 			}.getType();
-			cost = (Cost) JSONUtils.getObjectWithKeyWord(this.restUtils.postJSONGetJSON("calcWeight", JSONUtils.arrayToJSONString(points)), typeOfCost);
+
+			try
+			{
+				cost = (Cost) JSONUtils.getObjectWithKeyWord(this.restUtils.postJSONGetJSON("calcWeight", JSONUtils.arrayToJSONString(points)), typeOfCost);
+			}
+			catch (IOException ioe)
+			{
+				this.log.error("An IOException was thrown while trying to calculate the cost to " + nextPoint.getID(), ioe);
+				return;
+			}
 		}
 		this.log.info("Travel time to destination is " + cost.getWeight() + "s.");
 		if (cost.getWeight() != 0)
@@ -266,7 +275,17 @@ class SimKernel implements TCPListener
 				Type typeOfCost = new TypeToken<Cost>()
 				{
 				}.getType();
-				cost = (Cost) JSONUtils.getObjectWithKeyWord(this.restUtils.postJSONGetJSON("calcWeight", JSONUtils.arrayToJSONString(allPoints)), typeOfCost);
+
+				try
+				{
+					cost = (Cost) JSONUtils.getObjectWithKeyWord(this.restUtils.postJSONGetJSON("calcWeight", JSONUtils.arrayToJSONString(allPoints)), typeOfCost);
+				}
+				catch (IOException ioe)
+				{
+					this.log.error("An IOException was thrown while trying to calculate the cost to " + allPoints.toString(), ioe);
+					return cost;
+				}
+
 				this.calculatedCosts.put(allPoints, cost);
 				this.log.info("Cost was requested from ROSserver and added to local costs.");
 			}

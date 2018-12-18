@@ -174,13 +174,6 @@ public class JobTracker implements MQTTListener
         long jobId = this.findJobByVehicleId(vehicleId);
         boolean jobExists = jobId != -1L;
 
-
-        if (!this.vehicleManager.exists(vehicleId))
-        {
-            this.log.warn("Received MQTT message from non-existent vehicle " + vehicleId);
-            return;
-        }
-
         if (this.isPercentageUpdate(topic))
         {
             if (!jobExists)

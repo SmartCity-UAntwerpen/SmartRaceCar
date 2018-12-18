@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.ws.rs.core.MediaType;
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -91,15 +92,23 @@ public class CostCache
 			points.add(endPoint);
 
 			String jsonString = JSONUtils.arrayToJSONString(points);
-			String costString = ROSAPI.postJSONGetJSON("calcWeight", jsonString);
-			Cost costObj = (Cost) JSONUtils.getObjectWithKeyWord(costString, costType);
 
-			cost = costObj.getWeight();
+			try
+			{
+				String costString = ROSAPI.postJSONGetJSON("calcWeight", jsonString);
+				Cost costObj = (Cost) JSONUtils.getObjectWithKeyWord(costString, costType);
+				cost = costObj.getWeight();
 
-			// We only cache if we're using the ROS Server
-			// The whole point of caching was to take some load off the ROS Server,
-			// so caching in case we don't use the ROS server is useless
-			this.costCache.put(link, cost);
+				// We only cache if we're using the ROS Server
+				// The whole point of caching was to take some load off the ROS Server,
+				// so caching in case we don't use the ROS server is useless
+				this.costCache.put(link, cost);
+			}
+			catch (IOException ioe)
+			{
+				this.log.error("An exception was thrown while trying to calculate the cost for " + startId + " -> " + endId, ioe);
+				return Integer.MAX_VALUE;
+			}
 		}
 		else
 		{
