@@ -175,7 +175,7 @@ public class NavigationManager implements MQTTListener
 		int totalVehicles = 0;
 		int timer = 0;
 
-		while (long vehicleId: this.vehicleManager.getVehicleIds())
+		for (long vehicleId: this.vehicleManager.getVehicleIds())
 		{
 			Vehicle vehicle = this.vehicleManager.get(vehicleId);
 
