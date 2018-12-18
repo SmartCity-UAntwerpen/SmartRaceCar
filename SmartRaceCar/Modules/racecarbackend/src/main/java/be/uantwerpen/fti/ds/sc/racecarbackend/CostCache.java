@@ -27,22 +27,20 @@ import java.util.Map;
 public class CostCache
 {
 	private Logger log;
-	private VehicleRepository vehicleRepository;
 	private WaypointValidator waypointValidator;
-	private MapManager mapManager;
+	private WaypointRepository waypointRepository;
 	private CostCacheParameters costCacheParameters;
 	private Map<Link, Integer> costCache;
 
 	@Autowired
-	public CostCache (CostCacheParameters costCacheParameters, VehicleRepository vehicleRepository, MapManager mapManager)
+	public CostCache (CostCacheParameters costCacheParameters, WaypointRepository waypointRepository, WaypointValidator waypointValidator)
 	{
 		this.log = LoggerFactory.getLogger(CostCache.class);
 
 		this.log.info("Initializing CostCache...");
 		this.costCacheParameters = costCacheParameters;
-		this.vehicleRepository = vehicleRepository;
-		this.mapManager = mapManager;
-		this.waypointValidator = mapManager;
+		this.waypointRepository = waypointRepository;
+		this.waypointValidator = waypointValidator;
 		this.costCache = new HashMap<>();
 		this.log.info("Initialized CostCache.");
 	}
@@ -73,13 +71,6 @@ public class CostCache
 			throw new IndexOutOfBoundsException(errorString);
 		}
 
-		if (this.vehicleRepository.getNumVehicles() == 0)
-		{
-			String errorString = "Requested cost, but no vehicles are available, returning " + Integer.MAX_VALUE;
-			this.log.error(errorString);
-			throw new IndexOutOfBoundsException(errorString);
-		}
-
 		int cost = 0;
 
 		if (!this.costCacheParameters.isROSServerDisabled())
@@ -88,8 +79,8 @@ public class CostCache
 
 			Type costType = new TypeToken<Cost>(){}.getType();
 
-			Point startPointTmp = this.mapManager.getCoordinates(startId);
-			Point endPointTmp = this.mapManager.getCoordinates(endId);
+			Point startPointTmp = this.waypointRepository.getCoordinates(startId);
+			Point endPointTmp = this.waypointRepository.getCoordinates(endId);
 
 			Point startPoint = new Point(startPointTmp.getX(), startPointTmp.getY(), startPointTmp.getZ(), startPointTmp.getW());
 			Point endPoint = new Point(endPointTmp.getX(), endPointTmp.getY(), endPointTmp.getZ(), endPointTmp.getW());
