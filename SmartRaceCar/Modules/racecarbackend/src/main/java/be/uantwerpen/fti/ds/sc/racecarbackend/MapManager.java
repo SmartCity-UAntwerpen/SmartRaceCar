@@ -223,9 +223,10 @@ public class MapManager implements MQTTListener
 					break;
 				case "U014":
 					this.log.info("Loading waypoints for " + this.currentMap);
-					this.wayPoints.put((long) 46, new WayPoint(46, (float) 2.26, (float) 0.18, (float) -0.04, (float) -0.99));
-					this.wayPoints.put((long) 47, new WayPoint(47, (float) 6.64, (float) 2.10, (float) 0.72, (float) 0.70));
-					this.wayPoints.put((long) 48, new WayPoint(48, (float) 2.26, (float) 4.28, (float) -0.99, (float) 0.30));
+					this.wayPoints.put((long) 46, new WayPoint(46, (float) 0.07, (float) 0.15, (float) 0.99, (float) 0.05));
+					this.wayPoints.put((long) 47, new WayPoint(47, (float) 4.61, (float) 1.82, (float) 0.72, (float) 0.69));
+					this.wayPoints.put((long) 48, new WayPoint(48, (float) 0.3, (float) 3.85, (float) -0.99, (float) 0.18));
+					this.wayPoints.put((long) 49, new WayPoint(49, (float) 4.35, (float) 1.86, (float) -0.70, (float) 0.711));
 					break;
 				default:
 					log.warn("The backbone could not be reached and there were no default wayPoints for this map");
