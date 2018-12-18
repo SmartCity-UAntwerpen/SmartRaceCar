@@ -195,61 +195,43 @@ public class MapManager implements MQTTListener
 	private void loadWayPoints()
 	{
 		this.wayPoints.clear();
-		if (this.params.isBackboneDisabled())
+		// Temp wayPoints for when they can't be requested from back-end services.
+		switch (this.currentMap)
 		{
-			// Temp wayPoints for when they can't be requested from back-end services.
-			switch (this.currentMap)
-			{
-				case "zbuilding":
-					this.log.info("Loading wayPoints for " + this.currentMap);
-					this.wayPoints.put((long) 46, new WayPoint(46, (float) 0.5, (float) 0, (float) -1, (float) 0.02));
-					this.wayPoints.put((long) 47, new WayPoint(47, (float) -13.4, (float) -0.53, (float) 0.71, (float) 0.71));
-					this.wayPoints.put((long) 48, new WayPoint(48, (float) -27.14, (float) -1.11, (float) -0.3, (float) 0.95));
-					this.wayPoints.put((long) 49, new WayPoint(49, (float) -28.25, (float) -9.19, (float) -0.71, (float) 0.71));
-					break;
-				case "V314":
-					this.log.info("Loading wayPoints for " + this.currentMap);
-					this.wayPoints.put((long) 46, new WayPoint(46, (float) -3.0, (float) -1.5, (float) 0.07, (float) 1.00));
-					this.wayPoints.put((long) 47, new WayPoint(47, (float) 1.10, (float) -1.20, (float) 0.07, (float) 1.00));
-					this.wayPoints.put((long) 48, new WayPoint(48, (float) 4.0, (float) -0.90, (float) -0.68, (float) 0.73));
-					this.wayPoints.put((long) 49, new WayPoint(49, (float) 4.54, (float) -4.49, (float) -0.60, (float) 0.80));
-					break;
-				case "gangV":
-					this.log.info("Loading wayPoints for " + this.currentMap);
-					this.wayPoints.put(46L, new WayPoint(46, -6.1f, -28.78f, 0.73f, 0.69f));
-					this.wayPoints.put(47L, new WayPoint(47, -6.47f, -21.69f, 0.66f, 0.75f));
-					this.wayPoints.put(48L, new WayPoint(48, -5.91f, -1.03f, 0.52f, 0.85f));
-					this.wayPoints.put(49L, new WayPoint(49, 6.09f, 0.21f, -0.04f, 1.00f));
-					break;
-				case "U014":
-					this.log.info("Loading waypoints for " + this.currentMap);
-					this.wayPoints.put((long) 46, new WayPoint(46, (float) 0.07, (float) 0.15, (float) 0.99, (float) 0.05));
-					this.wayPoints.put((long) 47, new WayPoint(47, (float) 4.61, (float) 1.82, (float) 0.72, (float) 0.69));
-					this.wayPoints.put((long) 48, new WayPoint(48, (float) 0.3, (float) 3.85, (float) -0.99, (float) 0.18));
-					this.wayPoints.put((long) 49, new WayPoint(49, (float) 4.35, (float) 1.86, (float) -0.70, (float) 0.711));
-					break;
-				default:
-					log.warn("The backbone could not be reached and there were no default wayPoints for this map");
-					this.wayPoints.put((long) 46, new WayPoint(46, (float) 0.5, (float) 0, (float) -1, (float) 0.02));
-					this.wayPoints.put((long) 47, new WayPoint(47, (float) -13.4, (float) -0.53, (float) 0.71, (float) 0.71));
-					this.wayPoints.put((long) 48, new WayPoint(48, (float) -27.14, (float) -1.11, (float) -0.3, (float) 0.95));
-					this.wayPoints.put((long) 49, new WayPoint(49, (float) -28.25, (float) -9.19, (float) -0.71, (float) 0.71));
-			}
-		}
-		else
-		{
-			String jsonString = this.backboneRESTUtils.getJSON("map/stringmapjson/car"); //when the map is changed, another map needs to be manually loaded in the backbone database
-			JSONUtils.isJSONValid(jsonString);
-			Type typeOfWayPointArray = new TypeToken<ArrayList<WayPoint>>()
-			{
-			}.getType();
-			ArrayList<WayPoint> wayPointsTemp = (ArrayList<WayPoint>) JSONUtils.getObject(jsonString, typeOfWayPointArray);
-
-			for (WayPoint wayPoint : wayPointsTemp)
-			{
-				wayPoints.put(wayPoint.getID(), wayPoint);
-				this.log.info("Added wayPoint with ID " + wayPoint.getID() + " and coordinates " + wayPoint.getX() + "," + wayPoint.getY() + "," + wayPoint.getZ() + "," + wayPoint.getW() + ".");
-			}
+			case "zbuilding":
+				this.log.info("Loading wayPoints for " + this.currentMap);
+				this.wayPoints.put(46L, new WayPoint(46, 0.5f, (float) 0, (float) -1, (float) 0.02));
+				this.wayPoints.put(47L, new WayPoint(47, -13.4f, (float) -0.53, (float) 0.71, (float) 0.71));
+				this.wayPoints.put(48L, new WayPoint(48, -27.14f, (float) -1.11, (float) -0.3, (float) 0.95));
+				this.wayPoints.put(49L, new WayPoint(49, -28.25f, (float) -9.19, (float) -0.71, (float) 0.71));
+				break;
+			case "V314":
+				this.log.info("Loading wayPoints for " + this.currentMap);
+				this.wayPoints.put(46L, new WayPoint(46, (float) -3.0, (float) -1.5, (float) 0.07, (float) 1.00));
+				this.wayPoints.put(47L, new WayPoint(47, (float) 1.10, (float) -1.20, (float) 0.07, (float) 1.00));
+				this.wayPoints.put(48L, new WayPoint(48, (float) 4.0, (float) -0.90, (float) -0.68, (float) 0.73));
+				this.wayPoints.put(49L, new WayPoint(49, (float) 4.54, (float) -4.49, (float) -0.60, (float) 0.80));
+				break;
+			case "gangV":
+				this.log.info("Loading wayPoints for " + this.currentMap);
+				this.wayPoints.put(46L, new WayPoint(46, -6.1f, -28.78f, 0.73f, 0.69f));
+				this.wayPoints.put(47L, new WayPoint(47, -6.47f, -21.69f, 0.66f, 0.75f));
+				this.wayPoints.put(48L, new WayPoint(48, -5.91f, -1.03f, 0.52f, 0.85f));
+				this.wayPoints.put(49L, new WayPoint(49, 6.09f, 0.21f, -0.04f, 1.00f));
+				break;
+			case "U014":
+				this.log.info("Loading waypoints for " + this.currentMap);
+				this.wayPoints.put(46L, new WayPoint(46, (float) 0.07, (float) 0.15, (float) 0.99, (float) 0.05));
+				this.wayPoints.put(47L, new WayPoint(47, (float) 4.61, (float) 1.82, (float) 0.72, (float) 0.69));
+				this.wayPoints.put(48L, new WayPoint(48, (float) 0.3, (float) 3.85, (float) -0.99, (float) 0.18));
+				this.wayPoints.put(49L, new WayPoint(49, (float) 4.35, (float) 1.86, (float) -0.70, (float) 0.711));
+				break;
+			default:
+				log.warn("The backbone could not be reached and there were no default wayPoints for this map");
+				this.wayPoints.put((long) 46, new WayPoint(46, (float) 0.5, (float) 0, (float) -1, (float) 0.02));
+				this.wayPoints.put((long) 47, new WayPoint(47, (float) -13.4, (float) -0.53, (float) 0.71, (float) 0.71));
+				this.wayPoints.put((long) 48, new WayPoint(48, (float) -27.14, (float) -1.11, (float) -0.3, (float) 0.95));
+				this.wayPoints.put((long) 49, new WayPoint(49, (float) -28.25, (float) -9.19, (float) -0.71, (float) 0.71));
 		}
 
 		this.log.info("All possible wayPoints(" + wayPoints.size() + ") received.");
