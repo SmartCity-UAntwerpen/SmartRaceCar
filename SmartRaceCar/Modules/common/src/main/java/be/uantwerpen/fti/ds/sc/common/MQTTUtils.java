@@ -95,7 +95,7 @@ public class MQTTUtils implements MqttCallback
 	public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception
 	{
 		String message = new String(mqttMessage.getPayload());
-		this.log.info("message arrived. Topic:" + topic + " | Message:" + message);
+		this.log.debug("message arrived. Topic:" + topic + " | Message:" + message);
 		listener.parseMQTT(topic, message);
 	}
 
@@ -143,7 +143,7 @@ public class MQTTUtils implements MqttCallback
 		MqttMessage mqttMessage = new MqttMessage(message.getBytes());
 		mqttMessage.setRetained(false);
 		mqttMessage.setQos(2);
-		this.log.info("Publishing. Topic:" + topic + " | Message:" + message);
+		this.log.debug("Publishing. Topic:" + topic + " | Message:" + message);
 		MqttTopic mqttTopic = client.getTopic(topic);
 
 		try
