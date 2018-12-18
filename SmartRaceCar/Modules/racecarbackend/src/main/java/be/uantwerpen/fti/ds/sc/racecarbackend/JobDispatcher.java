@@ -23,18 +23,18 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 	private JobTracker jobTracker;
 	private WaypointValidator waypointValidator;
 	private VehicleManager vehicleManager;
-	private NavigationManager navigationManager;
+	private LocationRepository locationRepository;
 	private ResourceManager resourceManager;
 	private MQTTUtils mqttUtils;
 
 	@Autowired
-	public JobDispatcher(@Qualifier("backend") BackendParameters backendParameters, JobTracker jobTracker, WaypointValidator waypointValidator, VehicleManager vehicleManager, NavigationManager navigationManager, ResourceManager resourceManager)
+	public JobDispatcher(@Qualifier("backend") BackendParameters backendParameters, JobTracker jobTracker, WaypointValidator waypointValidator, VehicleManager vehicleManager, LocationRepository locationRepository, ResourceManager resourceManager)
 	{
 		this.log = LoggerFactory.getLogger(this.getClass());
 		this.jobTracker = jobTracker;
 		this.waypointValidator = waypointValidator;
 		this.vehicleManager = vehicleManager;
-		this.navigationManager = navigationManager;
+		this.locationRepository = locationRepository;
 		this.resourceManager = resourceManager;
 		this.mqttUtils = new MQTTUtils(backendParameters.getMqttBroker(), backendParameters.getMqttUserName(), backendParameters.getMqttPassword(), this);
 	}
@@ -75,7 +75,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
 
-		this.navigationManager.setLocation(vehicleId, startId);
+		this.locationRepository.setLocation(vehicleId, startId);
 		this.vehicleManager.setOccupied(vehicleId, true);
 		this.jobTracker.addJob(jobId, vehicleId, startId, endId);
 
@@ -97,7 +97,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 			return new ResponseEntity<>(errorString, HttpStatus.BAD_REQUEST);
 		}
 
-		long vehicleLocation = this.navigationManager.getLocation(vehicleId);
+		long vehicleLocation = this.locationRepository.getLocation(vehicleId);
 
 		//todo: find a way to track this job, without conflicting with the backbone's job ID's
 		this.mqttUtils.publishMessage("racecar/" + vehicleId + "/job", vehicleLocation + " " + destId);

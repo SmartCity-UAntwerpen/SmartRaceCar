@@ -12,7 +12,7 @@ import java.util.TreeSet;
 public class ResourceManager
 {
 	private Logger log;
-	private NavigationManager navigationManager;
+	private LocationRepository locationRepository;
 	private VehicleManager vehicleManager;
 	private CostCache costCache;
 
@@ -41,12 +41,12 @@ public class ResourceManager
 	}
 
 	@Autowired
-	public ResourceManager (CostCache costCache, NavigationManager navigationManager, VehicleManager vehicleManager)
+	public ResourceManager (CostCache costCache, LocationRepository locationRepository, VehicleManager vehicleManager)
 	{
 		this.log = LoggerFactory.getLogger(ResourceManager.class);
 
 		this.log.info("Initializing ResourceManager...");
-		this.navigationManager = navigationManager;
+		this.locationRepository = locationRepository;
 		this.vehicleManager = vehicleManager;
 		this.costCache = costCache;
 		this.log.info("Initialized ResourceManager.");
@@ -79,7 +79,7 @@ public class ResourceManager
 			// it ourselves.
 			if (!this.vehicleManager.isOccupied(vehicleId))
 			{
-				long vehiclePosition = this.navigationManager.getLocation(vehicleId);
+				long vehiclePosition = this.locationRepository.getLocation(vehicleId);
 				int cost = this.costCache.calculateCost(vehiclePosition, waypointId);
 				costSet.add(new Cost(vehicleId, cost));
 			}

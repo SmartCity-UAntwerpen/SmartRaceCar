@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 // Route Update
 // Cost Answers
 @Controller
-public class NavigationManager implements MQTTListener
+public class NavigationManager implements MQTTListener, LocationRepository
 {
 	private static class MQTTConstants
 	{
@@ -97,6 +97,7 @@ public class NavigationManager implements MQTTListener
 		return new ResponseEntity<>(JSONUtils.arrayToJSONString(locations), HttpStatus.OK);
 	}
 
+	@Override
 	public void setLocation(long vehicleId, long locationId)
 	{
 		this.log.info("Setting the location of vehicle " + vehicleId + " to " + locationId + ".");
@@ -112,12 +113,7 @@ public class NavigationManager implements MQTTListener
 		this.vehicleLocations.put(vehicleId, locationId);
 	}
 
-	/**
-	 * Get the location of the vehicle with ID vehicleId.
-	 * If the vehicle doesn't exist an IndexOutOfBoundsExecption is thrown.
-	 * @param vehicleId
-	 * @return
-	 */
+	@Override
 	public long getLocation(long vehicleId)
 	{
 		this.log.info("Fetching location for vehicle " + vehicleId + ".");

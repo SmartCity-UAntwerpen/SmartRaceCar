@@ -28,7 +28,7 @@ public class VehicleManager implements MQTTListener, VehicleValidator, VehicleRe
 	private Logger log;
 	private RESTUtils backboneRestUtils;
 	private NavigationManager navigationManager;
-	private MapManager mapManager;
+	private WaypointValidator waypointValidator;
 	private HeartbeatChecker heartbeatChecker;
 	private Map<Long, Vehicle> vehicles;
 
@@ -44,7 +44,7 @@ public class VehicleManager implements MQTTListener, VehicleValidator, VehicleRe
 	}
 
 	@Autowired
-	public VehicleManager(@Qualifier("backend") BackendParameters parameters, MapManager mapManager, NavigationManager navigationManager, HeartbeatChecker heartbeatChecker)
+	public VehicleManager(@Qualifier("backend") BackendParameters parameters, WaypointValidator waypointValidator, NavigationManager navigationManager, HeartbeatChecker heartbeatChecker)
 	{
 		this.parameters = parameters;
 		this.log = LoggerFactory.getLogger(this.getClass());
@@ -57,7 +57,7 @@ public class VehicleManager implements MQTTListener, VehicleValidator, VehicleRe
 		this.backboneRestUtils = new RESTUtils(parameters.getBackboneRESTURL());
 
 		this.navigationManager = navigationManager;
-		this.mapManager = mapManager;
+		this.waypointValidator = waypointValidator;
 		this.heartbeatChecker = heartbeatChecker;
 
 		this.vehicles = new HashMap<>();
@@ -135,7 +135,7 @@ public class VehicleManager implements MQTTListener, VehicleValidator, VehicleRe
 	@RequestMapping(value="/carmanager/register/{startWaypoint}", method=RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
 	public @ResponseBody ResponseEntity<String> register(@PathVariable long startWaypoint)
 	{
-		if (!this.mapManager.exists(startWaypoint))
+		if (!this.waypointValidator.exists(startWaypoint))
 		{
 			String errorString = "Tried to register vehicle with non-existent start id. (Start Waypoint: " + startWaypoint + ")";
 			this.log.error(errorString);
@@ -145,16 +145,8 @@ public class VehicleManager implements MQTTListener, VehicleValidator, VehicleRe
 
 		long newVehicleId = -1;
 
-		newVehicleId = this.vehicles.size();/*
-		if (this.parameters.isBackboneDisabled())
-		{
-
-		}
-		/*
-		else
-		{
-			newVehicleId = Long.parseLong(this.backboneRestUtils.getJSON("bot/newBot/car"));
-		}*/
+		//todo: Implement a proper way to give out vehicle IDs
+		newVehicleId = this.vehicles.size();
 
 		this.vehicles.put(newVehicleId, new Vehicle(newVehicleId));
 		this.navigationManager.setLocation(newVehicleId, startWaypoint);
