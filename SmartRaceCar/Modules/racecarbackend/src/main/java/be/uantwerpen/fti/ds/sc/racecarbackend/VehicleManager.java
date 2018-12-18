@@ -98,14 +98,14 @@ public class VehicleManager implements MQTTListener
 	}
 
 	/**
-	 * Returns an iterator over a keyset of the vehicle ID's.
-	 *
+	 * Returns a list of with the ID of every vehicle.
 	 * @return
 	 */
-	@Deprecated
-	public Iterator<Long> getIdIterator()
+	public List<Long> getVehicleIds()
 	{
-		return this.vehicles.keySet().iterator();
+		List<Long> idList = new ArrayList<>();
+		idList.addAll(this.vehicles.keySet());
+		return idList;
 	}
 
 	public int getNumVehicles()
@@ -197,6 +197,18 @@ public class VehicleManager implements MQTTListener
 		}
 
 		this.vehicles.get(vehicleId).setOccupied(occupied);
+	}
+
+	public boolean isOccupied(long vehicleId) throws NoSuchElementException
+	{
+		if (!this.vehicles.containsKey(vehicleId))
+		{
+			String errorString = "Tried to check occupancy of vehicle " + vehicleId + ", but vehicle doesn't exist!";
+			this.log.error(errorString);
+			throw new NoSuchElementException(errorString);
+		}
+
+		return this.vehicles.get(vehicleId).getOccupied();
 	}
 
 	/*

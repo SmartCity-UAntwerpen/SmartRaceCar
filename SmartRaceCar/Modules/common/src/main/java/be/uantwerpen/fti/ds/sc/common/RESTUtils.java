@@ -85,69 +85,6 @@ public class RESTUtils
 	}
 
 	/**
-	 * REST GET request to receive a response of the type Text Plain.
-	 *
-	 * @param URL Path of the GET request.
-	 * @param parameters The parameters of the GET request.
-	 * @return REST response of the type Text Plain.
-	 */
-	public void getCall(String URL, java.util.Map<String, Object> parameters)
-	{
-		WebTarget resourceWebTarget = this.webTarget.path(URL);
-
-		for (String paramKey: parameters.keySet())
-		{
-			resourceWebTarget = resourceWebTarget.queryParam(paramKey, parameters.get(paramKey));
-		}
-
-		Invocation.Builder invocationBuilder = resourceWebTarget.request("text/plain");
-		Response response = null;
-		this.log.info("Attempting GET request with URL:" + resourceWebTarget.getUri());
-		try
-		{
-			response = invocationBuilder.get();
-		} catch (ProcessingException e)
-		{
-			this.log.error("Cannot connect to REST service: " + e);
-			System.exit(0);
-		}
-		checkForError(response, resourceWebTarget.getUri());
-	}
-
-	/**
-	 * REST GET request to receive a response of the type Text Plain.
-	 * Uses queryParams.
-	 *
-	 * @param URL         Path of the GET request.
-	 * @param queryParams A HashMap of all query parameters.
-	 * @return REST response of the type Text Plain.
-	 */
-	public String getTextPlain(String URL, HashMap<String, String> queryParams)
-	{
-		WebTarget resourceWebTarget = this.webTarget.path(URL);
-		for (HashMap.Entry<String, String> entry : queryParams.entrySet())
-		{
-			resourceWebTarget = resourceWebTarget.queryParam(entry.getKey(), entry.getValue());
-		}
-		Invocation.Builder invocationBuilder = resourceWebTarget.request("text/plain");
-
-		this.log.info("Attempting GET with queryparams (text plain) request with URL:" + resourceWebTarget.getUri());
-		Response response = null;
-		try
-		{
-			response = invocationBuilder.get();
-		} catch (ProcessingException e)
-		{
-			this.log.error("Cannot connect to REST service: " + e);
-			System.exit(0);
-		}
-		checkForError(response, resourceWebTarget.getUri());
-		String responseString = response.readEntity(String.class);
-		this.log.info("Text Returned from request '" + URL + "' is: " + responseString);
-		return responseString;
-	}
-
-	/**
 	 * REST GET request to receive a response of the type JSON.
 	 *
 	 * @param URL Path of the GET request.
@@ -197,6 +134,32 @@ public class RESTUtils
 		checkForError(response, resourceWebTarget.getUri());
 		String responseString = response.readEntity(String.class);
 		this.log.info("JSON Returned from request '" + URL + "' is: " + responseString);
+		return responseString;
+	}
+
+	/**
+	 * Send a HTTP POST request to the specified URL.
+	 * The request's body is empty.
+	 * @param URL
+	 * @return
+	 */
+	public String postEmpty(String URL)
+	{
+
+		WebTarget resourceWebTarget = this.webTarget.path(URL);
+
+		this.log.debug("Attempting POST request with URL: \"" + resourceWebTarget.getUri() + "\"");
+
+		Invocation.Builder invocationBuilder = resourceWebTarget.request();
+
+		Response response = invocationBuilder.post(Entity.text(""));
+
+		checkForError(response, resourceWebTarget.getUri());
+
+		String responseString = response.readEntity(String.class);
+
+		this.log.debug("POST Request got response: \"" + responseString + "\"");
+
 		return responseString;
 	}
 

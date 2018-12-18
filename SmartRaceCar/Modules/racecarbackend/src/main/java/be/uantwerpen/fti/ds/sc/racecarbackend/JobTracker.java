@@ -63,6 +63,12 @@ public class JobTracker implements MQTTListener
             maasRESTUtils.getTextPlain("completeJob/" + jobId);
         }
 
+        if (!this.backendParameters.isBackboneDisabled())
+        {
+            RESTUtils backboneRESTUtil = new RESTUtils(this.backendParameters.getBackboneRESTURL());
+            backboneRESTUtil.postEmpty("/jobs/complete/" + jobId);
+        }
+
         this.jobs.remove(jobId);
     }
 
@@ -87,6 +93,19 @@ public class JobTracker implements MQTTListener
                 this.log.info("Vehicle " + vehicleId + " hasn't completed its route yet.");
                 this.vehicleManager.setOccupied(vehicleId, true);
                 break;
+        }
+    }
+
+    private void updateProgress(long jobId, int progress)
+    {
+        Job job = this.jobs.get(jobId);
+        job.setProgress(progress);
+
+        if ((!this.backendParameters.isBackboneDisabled()) && (!job.isBackboneNotified()) && (progress >= ALMOST_DONE_PERCENTAGE))
+        {
+            RESTUtils backboneRESTUtil = new RESTUtils(this.backendParameters.getBackboneRESTURL());
+            backboneRESTUtil.postEmpty("/jobs/vehiclecloseby/" + jobId);
+            job.setBackboneNotified(true);
         }
     }
 
@@ -170,7 +189,7 @@ public class JobTracker implements MQTTListener
 
             int percentage = Integer.parseInt(message);
             this.log.info("Received Percentage update for vehicle " + vehicleId + ", Job: " + jobId + ", Status: " + percentage + "%.");
-            this.jobs.get(jobId).setProgress(percentage);
+            this.updateProgress(jobId, percentage);
         }
         else if (this.isRouteUpdate(topic))
         {

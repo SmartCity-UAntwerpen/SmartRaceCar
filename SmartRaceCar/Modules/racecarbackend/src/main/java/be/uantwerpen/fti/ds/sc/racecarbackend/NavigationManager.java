@@ -175,11 +175,8 @@ public class NavigationManager implements MQTTListener
 		int totalVehicles = 0;
 		int timer = 0;
 
-		Iterator<Long> vehicleIdIterator = this.vehicleManager.getIdIterator();
-
-		while (vehicleIdIterator.hasNext())
+		for (long vehicleId: this.vehicleManager.getVehicleIds())
 		{
-			Long vehicleId = vehicleIdIterator.next();
 			Vehicle vehicle = this.vehicleManager.get(vehicleId);
 
 			if (vehicle.isAvailable())
