@@ -34,7 +34,7 @@ public class Vehicle
 	 *
 	 * @return Status of occupation of teh vehicle by another route job.
 	 */
-	boolean getOccupied()
+	boolean isOccupied()
 	{
 		return occupied;
 	}

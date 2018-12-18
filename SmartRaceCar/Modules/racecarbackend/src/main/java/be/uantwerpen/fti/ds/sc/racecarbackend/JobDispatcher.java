@@ -20,23 +20,21 @@ import java.util.NoSuchElementException;
 public class JobDispatcher implements MQTTListener//todo: Get rid of this, still needed because MQTTUtils will crash if you don't provide it with a listener
 {
 	private Logger log;
-	private BackendParameters backendParameters;
 	private JobTracker jobTracker;
-	private MapManager mapManager;
+	private WaypointValidator waypointValidator;
 	private VehicleManager vehicleManager;
-	private NavigationManager navigationManager;
+	private LocationRepository locationRepository;
 	private ResourceManager resourceManager;
 	private MQTTUtils mqttUtils;
 
 	@Autowired
-	public JobDispatcher(@Qualifier("backend") BackendParameters backendParameters, JobTracker jobTracker, MapManager mapManager, VehicleManager vehicleManager, NavigationManager navigationManager, ResourceManager resourceManager)
+	public JobDispatcher(@Qualifier("backend") BackendParameters backendParameters, JobTracker jobTracker, WaypointValidator waypointValidator, VehicleManager vehicleManager, LocationRepository locationRepository, ResourceManager resourceManager)
 	{
 		this.log = LoggerFactory.getLogger(this.getClass());
-		this.backendParameters = backendParameters;
 		this.jobTracker = jobTracker;
-		this.mapManager = mapManager;
+		this.waypointValidator = waypointValidator;
 		this.vehicleManager = vehicleManager;
-		this.navigationManager = navigationManager;
+		this.locationRepository = locationRepository;
 		this.resourceManager = resourceManager;
 		this.mqttUtils = new MQTTUtils(backendParameters.getMqttBroker(), backendParameters.getMqttUserName(), backendParameters.getMqttPassword(), this);
 	}
@@ -60,7 +58,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		}
 
 		// Check if starting waypoint exists
-		if (!this.mapManager.exists(startId))
+		if (!this.waypointValidator.exists(startId))
 		{
 			String errorString = "Request job with non-existent start waypoint " + startId + ".";
 			this.log.error(errorString);
@@ -69,7 +67,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		}
 
 		// Check if end waypoint exists
-		if (!this.mapManager.exists(endId))
+		if (!this.waypointValidator.exists(endId))
 		{
 			String errorString = "Request job with non-existent end waypoint " + endId + ".";
 			this.log.error(errorString);
@@ -77,7 +75,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
 
-		this.navigationManager.setLocation(vehicleId, startId);
+		this.locationRepository.setLocation(vehicleId, startId);
 		this.vehicleManager.setOccupied(vehicleId, true);
 		this.jobTracker.addJob(jobId, vehicleId, startId, endId);
 
@@ -92,14 +90,14 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 
 		long vehicleId = this.resourceManager.getOptimalCar(destId);
 
-		if (!this.mapManager.exists(destId))
+		if (!this.waypointValidator.exists(destId))
 		{
 			String errorString = "Tried to send vehicle to non-existent waypoint " + destId + ".";
 			this.log.error(errorString);
 			return new ResponseEntity<>(errorString, HttpStatus.BAD_REQUEST);
 		}
 
-		long vehicleLocation = this.navigationManager.getLocation(vehicleId);
+		long vehicleLocation = this.locationRepository.getLocation(vehicleId);
 
 		//todo: find a way to track this job, without conflicting with the backbone's job ID's
 		this.mqttUtils.publishMessage("racecar/" + vehicleId + "/job", vehicleLocation + " " + destId);

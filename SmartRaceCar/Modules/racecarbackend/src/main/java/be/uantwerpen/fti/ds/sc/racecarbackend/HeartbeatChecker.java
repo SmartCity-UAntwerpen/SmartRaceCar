@@ -1,7 +1,6 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
 import be.uantwerpen.fti.ds.sc.common.*;
-import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,9 +9,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.Type;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
@@ -38,7 +35,6 @@ class HeartbeatChecker implements MQTTListener
 	private Logger log;
 	private RESTUtils restUtils;
 	private MQTTUtils mqttUtils;
-	private VehicleManager vehicleManager;
 	private Map<Long, Date> heartbeats;
 
 	private boolean isHeartbeat(String topic)
@@ -113,10 +109,9 @@ class HeartbeatChecker implements MQTTListener
 	 * constructor for the HeartbeatChecker class
 	 *
 	 * @param parameters parameters used to start backend
-	 * @param vehicleManager
 	 */
 	@Autowired
-	public HeartbeatChecker(Parameters parameters, @Lazy VehicleManager vehicleManager)
+	public HeartbeatChecker(Parameters parameters)
 	{
 		this.log = LoggerFactory.getLogger(HeartbeatChecker.class);
 
@@ -126,8 +121,6 @@ class HeartbeatChecker implements MQTTListener
 		this.mqttUtils = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
 		this.mqttUtils.subscribeToTopic(parameters.getMqttTopic());
 
-		this.vehicleManager = vehicleManager;
-
 		this.heartbeats = new ConcurrentHashMap<>();
 	}
 
@@ -136,13 +129,10 @@ class HeartbeatChecker implements MQTTListener
 	{
 		long id = TopicUtils.getCarId(topic);
 
-		if (this.vehicleManager.existsOld(id))
+		if (this.isHeartbeat(topic))
 		{
-			if (this.isHeartbeat(topic))
-			{
-				this.log.info("Received Heartbeat from " + id);
-				this.updateHeartbeat(id);
-			}
+			this.log.info("Received Heartbeat from " + id);
+			this.updateHeartbeat(id);
 		}
 	}
 }
