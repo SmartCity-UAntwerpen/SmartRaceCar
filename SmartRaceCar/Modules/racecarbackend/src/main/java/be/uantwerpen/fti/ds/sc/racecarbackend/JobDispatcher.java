@@ -22,19 +22,19 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 	private Logger log;
 	private BackendParameters backendParameters;
 	private JobTracker jobTracker;
-	private MapManager mapManager;
+	private WaypointValidator waypointValidator;
 	private VehicleManager vehicleManager;
 	private NavigationManager navigationManager;
 	private ResourceManager resourceManager;
 	private MQTTUtils mqttUtils;
 
 	@Autowired
-	public JobDispatcher(@Qualifier("backend") BackendParameters backendParameters, JobTracker jobTracker, MapManager mapManager, VehicleManager vehicleManager, NavigationManager navigationManager, ResourceManager resourceManager)
+	public JobDispatcher(@Qualifier("backend") BackendParameters backendParameters, JobTracker jobTracker, WaypointValidator waypointValidator, VehicleManager vehicleManager, NavigationManager navigationManager, ResourceManager resourceManager)
 	{
 		this.log = LoggerFactory.getLogger(this.getClass());
 		this.backendParameters = backendParameters;
 		this.jobTracker = jobTracker;
-		this.mapManager = mapManager;
+		this.waypointValidator = waypointValidator;
 		this.vehicleManager = vehicleManager;
 		this.navigationManager = navigationManager;
 		this.resourceManager = resourceManager;
@@ -60,7 +60,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		}
 
 		// Check if starting waypoint exists
-		if (!this.mapManager.exists(startId))
+		if (!this.waypointValidator.exists(startId))
 		{
 			String errorString = "Request job with non-existent start waypoint " + startId + ".";
 			this.log.error(errorString);
@@ -69,7 +69,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		}
 
 		// Check if end waypoint exists
-		if (!this.mapManager.exists(endId))
+		if (!this.waypointValidator.exists(endId))
 		{
 			String errorString = "Request job with non-existent end waypoint " + endId + ".";
 			this.log.error(errorString);
@@ -92,7 +92,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 
 		long vehicleId = this.resourceManager.getOptimalCar(destId);
 
-		if (!this.mapManager.exists(destId))
+		if (!this.waypointValidator.exists(destId))
 		{
 			String errorString = "Tried to send vehicle to non-existent waypoint " + destId + ".";
 			this.log.error(errorString);
