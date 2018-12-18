@@ -45,7 +45,7 @@ public class VehicleManager implements MQTTListener
 	}
 
 	@Autowired
-	public VehicleManager(@Qualifier("backend") BackendParameters parameters, MapManager mapManager, HeartbeatChecker heartbeatChecker)
+	public VehicleManager(@Qualifier("backend") BackendParameters parameters, MapManager mapManager, NavigationManager navigationManager, HeartbeatChecker heartbeatChecker)
 	{
 		this.parameters = parameters;
 		this.log = LoggerFactory.getLogger(this.getClass());
@@ -57,7 +57,7 @@ public class VehicleManager implements MQTTListener
 
 		this.backboneRestUtils = new RESTUtils(parameters.getBackboneRESTURL());
 
-		this.navigationManager = new NavigationManager(this, mapManager, parameters);
+		this.navigationManager = navigationManager;
 		this.mapManager = mapManager;
 		this.heartbeatChecker = heartbeatChecker;
 
