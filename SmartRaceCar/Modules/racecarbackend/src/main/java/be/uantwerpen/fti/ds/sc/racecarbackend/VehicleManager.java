@@ -17,7 +17,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Controller
-public class VehicleManager implements MQTTListener, VehicleValidator
+public class VehicleManager implements MQTTListener, VehicleValidator, VehicleRepository
 {
 	private static class MQTTConstants
 	{
@@ -71,11 +71,7 @@ public class VehicleManager implements MQTTListener, VehicleValidator
 		return this.vehicles.containsKey(vehicleId);
 	}
 
-	/**
-	 * @param vehicleId
-	 * @return
-	 * @throws IndexOutOfBoundsException When a non-existent vehicle is queried, an exception is thrown
-	 */
+	@Override
 	public Vehicle get(long vehicleId)
 	{
 		if (this.exists(vehicleId))
@@ -91,10 +87,7 @@ public class VehicleManager implements MQTTListener, VehicleValidator
 		}
 	}
 
-	/**
-	 * Returns a list of with the ID of every vehicle.
-	 * @return
-	 */
+	@Override
 	public List<Long> getVehicleIds()
 	{
 		List<Long> idList = new ArrayList<>();
@@ -102,6 +95,7 @@ public class VehicleManager implements MQTTListener, VehicleValidator
 		return idList;
 	}
 
+	@Override
 	public int getNumVehicles()
 	{
 		return this.vehicles.size();

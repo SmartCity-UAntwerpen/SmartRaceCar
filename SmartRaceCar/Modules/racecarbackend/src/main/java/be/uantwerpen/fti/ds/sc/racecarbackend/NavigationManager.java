@@ -36,12 +36,11 @@ public class NavigationManager implements MQTTListener
 	{
 	}).getType();
 
-	private Parameters parameters;
 	private Logger log;
 	private MQTTUtils mqttUtils;
 	private List<Cost> costList;
 	private VehicleManager vehicleManager;
-	private MapManager mapManager;
+	private WaypointValidator waypointValidator;
 	private java.util.Map<Long, Long> vehicleLocations;	// This map keeps track of the location of every vehicle
 	// The key is the vehicleId, the value is the locationId
 
@@ -57,20 +56,19 @@ public class NavigationManager implements MQTTListener
 		return matcher.matches();
 	}
 
-	public NavigationManager(@Lazy VehicleManager vehicleManager, MapManager mapManager, Parameters parameters)
+	public NavigationManager(@Lazy VehicleManager vehicleManager, WaypointValidator waypointValidator, Parameters parameters)
 	{
-		this.parameters = parameters;
 		this.log = LoggerFactory.getLogger(NavigationManager.class);
 
 		this.log.info("Initializing Navigation Manager...");
 
-		this.mqttUtils = new MQTTUtils(this.parameters.getMqttBroker(), this.parameters.getMqttUserName(), this.parameters.getMqttPassword(), this);
-		this.mqttUtils.subscribeToTopic(this.parameters.getMqttTopic());
+		this.mqttUtils = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
+		this.mqttUtils.subscribeToTopic(parameters.getMqttTopic());
 
 		this.costList = new ArrayList<>();
 		this.vehicleLocations = new HashMap<>();
 		this.vehicleManager = vehicleManager;
-		this.mapManager = mapManager;
+		this.waypointValidator = waypointValidator;
 
 		this.log.info("Initialized Navigation Manager.");
 
@@ -102,7 +100,7 @@ public class NavigationManager implements MQTTListener
 	{
 		this.log.info("Setting the location of vehicle " + vehicleId + " to " + locationId + ".");
 
-		if (!this.mapManager.exists(locationId))
+		if (!this.waypointValidator.exists(locationId))
 		{
 			String errorString = "Tried to set location of " + vehicleId + " to a non-existent location: " + locationId;
 			this.log.error(errorString);
@@ -148,7 +146,7 @@ public class NavigationManager implements MQTTListener
 	{
 		this.log.info("Received cost request for " + startId + " -> " + endId + ".");
 
-		if (!this.mapManager.exists(startId))
+		if (!this.waypointValidator.exists(startId))
 		{
 			String errorString = "Request cost with non-existent start waypoint " + startId + ".";
 			this.log.error(errorString);
@@ -156,7 +154,7 @@ public class NavigationManager implements MQTTListener
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
 
-		if (!this.mapManager.exists(endId))
+		if (!this.waypointValidator.exists(endId))
 		{
 			String errorString = "Request cost with non-existent end waypoint " + endId + ".";
 			this.log.error(errorString);

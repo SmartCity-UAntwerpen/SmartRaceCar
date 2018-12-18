@@ -20,7 +20,6 @@ import java.util.NoSuchElementException;
 public class JobDispatcher implements MQTTListener//todo: Get rid of this, still needed because MQTTUtils will crash if you don't provide it with a listener
 {
 	private Logger log;
-	private BackendParameters backendParameters;
 	private JobTracker jobTracker;
 	private WaypointValidator waypointValidator;
 	private VehicleManager vehicleManager;
@@ -32,7 +31,6 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 	public JobDispatcher(@Qualifier("backend") BackendParameters backendParameters, JobTracker jobTracker, WaypointValidator waypointValidator, VehicleManager vehicleManager, NavigationManager navigationManager, ResourceManager resourceManager)
 	{
 		this.log = LoggerFactory.getLogger(this.getClass());
-		this.backendParameters = backendParameters;
 		this.jobTracker = jobTracker;
 		this.waypointValidator = waypointValidator;
 		this.vehicleManager = vehicleManager;
