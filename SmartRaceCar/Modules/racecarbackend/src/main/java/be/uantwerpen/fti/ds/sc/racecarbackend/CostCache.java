@@ -6,6 +6,7 @@ import be.uantwerpen.fti.ds.sc.common.Point;
 import be.uantwerpen.fti.ds.sc.common.RESTUtils;
 import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,10 +35,14 @@ public class CostCache
 	@Autowired
 	public CostCache (CostCacheParameters costCacheParameters, VehicleManager vehicleManager, MapManager mapManager)
 	{
+		this.log = LoggerFactory.getLogger(CostCache.class);
+
+		this.log.info("Initializing CostCache...");
 		this.costCacheParameters = costCacheParameters;
 		this.vehicleManager = vehicleManager;
 		this.mapManager = mapManager;
 		this.costCache = new HashMap<>();
+		this.log.info("Initialized CostCache.");
 	}
 
 	/**
@@ -52,15 +57,18 @@ public class CostCache
 	public @ResponseBody
 	ResponseEntity<String> costRequest(@PathVariable long startId, @PathVariable long endId)
 	{
-		this.log.info("Received cost request for " + startId + " -> " + endId);
-
 		Link link = new Link(startId, endId);
+
+		this.log.info("Received cost request for " + link);
 
 		if (this.costCache.containsKey(link))
 		{
+			this.log.info("Got cache hit for link " + link);
 			String responseJson = JSONUtils.objectToJSONStringWithKeyWord("cost", this.costCache.get(link));
 			return new ResponseEntity<>(responseJson, HttpStatus.OK);
 		}
+
+		this.log.info("Got cache muss for link " + link);
 
 		if (!this.mapManager.exists(startId))
 		{
