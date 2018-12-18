@@ -125,7 +125,7 @@ public class ParameterContributor
         return mapManagerParameters;
     }
 
-    private JobDispatcherParameters readJobDispatcherParameters(String propertiesFile)
+    private CostCacheParameters readJobDispatcherParameters(String propertiesFile)
     {
         Properties prop = new Properties();
         InputStream input = null;
@@ -142,7 +142,7 @@ public class ParameterContributor
         catch (IOException ioe)
         {
             this.log.warn("Could not open config file. Loading default settings.", ioe);
-            return new JobDispatcherParameters();
+            return new CostCacheParameters();
         }
 
         Boolean enableROS = Boolean.parseBoolean(prop.getProperty(ROS_DEBUG_KEY));
@@ -153,7 +153,7 @@ public class ParameterContributor
 
         this.log.info("Job Dispatcher config loaded.");
 
-        JobDispatcherParameters jobDispatcherParameters = new JobDispatcherParameters(this.readBackendParameters(propertiesFile), enableROS, rosURL);
+        CostCacheParameters costCacheParameters = new CostCacheParameters(this.readBackendParameters(propertiesFile), enableROS, rosURL);
 
         try
         {
@@ -164,7 +164,7 @@ public class ParameterContributor
             this.log.warn("Could not close config file.", ioe);
         }
 
-        return jobDispatcherParameters;
+        return costCacheParameters;
     }
 
     public ParameterContributor()
@@ -196,7 +196,7 @@ public class ParameterContributor
 
     @Bean
     @Qualifier("jobdispatcher")
-    JobDispatcherParameters jobDispatcherParameters()
+    CostCacheParameters jobDispatcherParameters()
     {
         return this.readJobDispatcherParameters(this.DEFAULT_PROPERTIES_FILE);
     }
