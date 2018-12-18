@@ -169,12 +169,10 @@ public class MapManager implements MQTTListener
 		{
 			this.currentMap = mapName;
 
-			for (Iterator it = this.vehicleManager.getIdIterator(); it.hasNext(); )
+			for (long vehicleId: this.vehicleManager.getVehicleIds())
 			{
-				long ID = (long) it.next();
-
-				this.log.info("change map command send to vehicle with ID: " + ID);
-				this.mqttUtils.publishMessage("racecar/" + ID + "/changeMap", mapName);
+				this.log.info("change map command sent to vehicle with ID: " + vehicleId);
+				this.mqttUtils.publishMessage("racecar/" + vehicleId + "/changeMap", mapName);
 			}
 
 			loadWayPoints();
