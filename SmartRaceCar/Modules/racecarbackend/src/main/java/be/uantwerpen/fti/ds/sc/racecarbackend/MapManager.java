@@ -29,7 +29,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 @Controller
-public class MapManager implements MQTTListener
+public class MapManager implements MQTTListener, WaypointValidator
 {
 	private Logger log;
 	private MapManagerParameters params;
@@ -37,7 +37,6 @@ public class MapManager implements MQTTListener
 	private VehicleManager vehicleManager;
 
 	private MQTTUtils mqttUtils;
-	private RESTUtils backboneRESTUtils;
 
 	private Map<Long, WayPoint> wayPoints;
 	private String currentMap;
@@ -55,8 +54,6 @@ public class MapManager implements MQTTListener
 		this.mapPath = params.getMapPath();
 
 		this.mqttUtils = new MQTTUtils(params.getMqttBroker(), params.getMqttUserName(), params.getMqttPassword(), this);
-
-		this.backboneRESTUtils = new RESTUtils(params.getBackboneRESTURL());
 
 		this.wayPoints = new HashMap<>();
 

@@ -17,7 +17,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Controller
-public class VehicleManager implements MQTTListener
+public class VehicleManager implements MQTTListener, VehicleValidator
 {
 	private static class MQTTConstants
 	{
@@ -26,7 +26,6 @@ public class VehicleManager implements MQTTListener
 
 	private BackendParameters parameters;
 	private Logger log;
-	private MQTTUtils mqttUtils;
 	private RESTUtils backboneRestUtils;
 	private NavigationManager navigationManager;
 	private MapManager mapManager;
@@ -52,8 +51,8 @@ public class VehicleManager implements MQTTListener
 
 		this.log.info("Initializing Vehicle Manager...");
 
-		this.mqttUtils = new MQTTUtils(this.parameters.getMqttBroker(), this.parameters.getMqttUserName(), this.parameters.getMqttPassword(), this);
-		this.mqttUtils.subscribeToTopic(this.parameters.getMqttTopic());
+		MQTTUtils mqttUtils = new MQTTUtils(this.parameters.getMqttBroker(), this.parameters.getMqttUserName(), this.parameters.getMqttPassword(), this);
+		mqttUtils.subscribeToTopic(this.parameters.getMqttTopic());
 
 		this.backboneRestUtils = new RESTUtils(parameters.getBackboneRESTURL());
 
@@ -66,13 +65,8 @@ public class VehicleManager implements MQTTListener
 		this.log.info("Initialized Vehicle Manager.");
 	}
 
-	/**
-	 * Checks whether or not a vehicle exists.
-	 *
-	 * @param vehicleId The id of the vehicle to be checked
-	 * @return
-	 */
-	public boolean existsOld(long vehicleId)
+	@Override
+	public boolean exists(long vehicleId)
 	{
 		return this.vehicles.containsKey(vehicleId);
 	}
@@ -84,7 +78,7 @@ public class VehicleManager implements MQTTListener
 	 */
 	public Vehicle get(long vehicleId)
 	{
-		if (this.existsOld(vehicleId))
+		if (this.exists(vehicleId))
 		{
 			return this.vehicles.get(vehicleId);
 		}
@@ -223,7 +217,7 @@ public class VehicleManager implements MQTTListener
 	{
 		long id = TopicUtils.getCarId(topic);
 
-		if (this.existsOld(id))
+		if (this.exists(id))
 		{
 			if (this.isAvailabilityUpdate(topic))
 			{

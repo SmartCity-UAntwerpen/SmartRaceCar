@@ -17,7 +17,6 @@ import javax.ws.rs.core.MediaType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -220,7 +219,7 @@ public class NavigationManager implements MQTTListener
 	{
 		long vehicleId = TopicUtils.getCarId(topic);
 
-		if (!this.vehicleManager.existsOld(vehicleId))
+		if (!this.vehicleManager.exists(vehicleId))
 		{
 			this.log.warn("Received MQTT message from non-existent vehicle " + vehicleId);
 			return;

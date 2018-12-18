@@ -1,7 +1,6 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
 import be.uantwerpen.fti.ds.sc.common.*;
-import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,9 +9,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.Type;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
@@ -136,7 +133,7 @@ class HeartbeatChecker implements MQTTListener
 	{
 		long id = TopicUtils.getCarId(topic);
 
-		if (this.vehicleManager.existsOld(id))
+		if (this.vehicleManager.exists(id))
 		{
 			if (this.isHeartbeat(topic))
 			{
