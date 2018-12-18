@@ -40,9 +40,9 @@ public class MapManager
 		this.log = LoggerFactory.getLogger(MapManager.class);
 		this.log.info("starting to load maps");
 		this.loadedMaps = new HashMap<>();
-		String mapsFolder = findMapsFolder();
+		String mapsFolder = this.findMapsFolder();
 		this.log.info("Found maps folder = " + mapsFolder);
-		this.loadedMaps = loadMaps(mapsFolder);
+		this.loadedMaps = this.loadMaps(mapsFolder);
 		this.log.info("Maps loaded");
 	}
 
@@ -94,8 +94,12 @@ public class MapManager
 	 */
 	private String findMapsFolder()
 	{
+		this.log.info("starting to search map folder");
 		FileUtils fileUtils = new FileUtils();
 		fileUtils.searchDirectory(new File("."), "maps.xml");
+		this.log.info("search complete");
+		this.log.info("Found " + fileUtils.getResult().size() + " matches for maps.xml");
+
 		if(fileUtils.getResult().size() == 0)
 		{
 			this.log.debug("could not find maps.xml");
@@ -107,6 +111,9 @@ public class MapManager
 		{
 			output = matched;
 		}
+
+		this.log.info("Maps folder found at " + output);
+
 		return output;
 	}
 
@@ -115,10 +122,10 @@ public class MapManager
 	 * REST GET request to download the map files and store it in the mapfolder and add it to the maps.xml file.
 	 * After that it sends this information to the vehicle SimKernel/SimKernel over the socket connection.
 	 */
-	public boolean requestMap()
+	public boolean configureMap()
 	{
 		boolean contains;
-		String mapDir = this.findMapsFolder();
+		File mapDir = new File(this.findMapsFolder());
 		String mapPath = mapDir + "/maps.xml";
 
 		String mapName = this.core.getRestUtils().getTextPlain("getmapname");
@@ -126,59 +133,85 @@ public class MapManager
 		{
 			contains = true;
 			this.log.info("Current used map '" + mapName + "' found in folder, setting as current map.");
-			if (!this.core.getParams().isDebug())
-			{
-				this.core.getTcpUtils().sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", this.loadedMaps.get(mapName)));
-			}
-		} else
+
+		}
+		else
 		{
 			contains = false;
-			this.log.info("Current used map '" + mapName + "' not found. Downloading...");
-			this.core.getRestUtils().getFile("getmappgm/" + mapName, mapDir, mapName, "pgm");
-			this.core.getRestUtils().getFile("getmapyaml/" + mapName, mapDir, mapName, "yaml");
+			this.downloadMap(mapName);
+
+
 			Map map = new Map(mapName);
-			try
-			{
-				DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-				DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-
-				Document document = documentBuilder.parse(mapPath);
-				Element root = document.getDocumentElement();
-
-				Element newMap = document.createElement("map");
-
-				Element newName = document.createElement("name");
-				newName.appendChild(document.createTextNode(mapName));
-				newMap.appendChild(newName);
-
-				root.appendChild(newMap);
-
-				TransformerFactory transformerFactory = TransformerFactory.newInstance();
-				Transformer transformer = transformerFactory.newTransformer();
-				transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-				transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-				transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-				DOMSource source = new DOMSource(document);
-
-				StreamResult result = new StreamResult(mapPath);
-
-				transformer.transform(source, result);
-
-			} catch (ParserConfigurationException | SAXException | IOException | TransformerException e)
-			{
-				e.printStackTrace();
-				this.log.warn("Could not add map to XML of maps." + e);
-			}
 			this.loadedMaps.put(mapName, map);
-			this.log.info("Added downloaded map : " + mapName + ".");
-			this.log.info("Current map '" + mapName + "' downloaded and set as current map.");
-			if (!this.core.getParams().isDebug())
-			{
-				this.core.getTcpUtils().sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentMap", this.loadedMaps.get(mapName)));
+			this.log.info("Added downloaded map : " + mapName);
 
-			}
+			this.writeMapsXML(mapPath, mapName);
+
+			this.log.info("Current map '" + mapName + "' downloaded and set as current map.");
+		}
+
+		if (!this.core.getParams().isDebug())
+		{
+			String json = JSONUtils.objectToJSONStringWithKeyWord("currentMap", this.loadedMaps.get(mapName));
+			this.log.info("Setting current map on NAVSTACK to " + json);
+			this.core.getTcpUtils().sendUpdate(json);
 		}
 
 		return contains;
+	}
+
+	/**
+	 * Writes new map info to maps.xml file.
+	 * @param mapPath path to maps.xml file
+	 * @param mapName name of new map
+	 */
+	private void writeMapsXML(String mapPath, String mapName)
+	{
+		try
+		{
+			DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+
+			Document document = documentBuilder.parse(mapPath);
+			Element root = document.getDocumentElement();
+
+			Element newMap = document.createElement("map");
+
+			Element newName = document.createElement("name");
+			newName.appendChild(document.createTextNode(mapName));
+			newMap.appendChild(newName);
+
+			root.appendChild(newMap);
+
+			TransformerFactory transformerFactory = TransformerFactory.newInstance();
+			Transformer transformer = transformerFactory.newTransformer();
+			transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+			DOMSource source = new DOMSource(document);
+
+			StreamResult result = new StreamResult(mapPath);
+
+			transformer.transform(source, result);
+
+		}
+		catch (ParserConfigurationException | SAXException | IOException | TransformerException e)
+		{
+			e.printStackTrace();
+			this.log.warn("Could not add map to XML of maps." + e);
+		}
+	}
+
+	/**
+	 * Downloads new map from backend.
+	 * @param mapName name of new map
+	 */
+	private void downloadMap(String mapName)
+	{
+
+		this.log.info("Current used map '" + mapName + "' not found. Downloading... to " + this.core.getParams().getNavstackPath() + "/" + mapName);
+		this.core.getRestUtils().getFile("getmappgm/" + mapName, this.core.getParams().getNavstackPath(), mapName, "pgm");
+		this.core.getRestUtils().getFile("getmapyaml/" + mapName, this.core.getParams().getNavstackPath(), mapName, "yaml");
+
 	}
 }

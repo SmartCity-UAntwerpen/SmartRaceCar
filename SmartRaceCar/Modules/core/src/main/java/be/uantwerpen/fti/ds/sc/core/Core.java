@@ -113,7 +113,7 @@ class Core implements TCPListener, MQTTListener
 		this.mapManager = new MapManager(this);
 		this.log.info("Map manager started");
 
-		if(!this.mapManager.requestMap())
+		if(!this.mapManager.configureMap())
 		{
 			// TODO find better mechanism to wait for download
 			// map not downloaded yet -> waiting for download to finish
@@ -299,7 +299,7 @@ class Core implements TCPListener, MQTTListener
 		}
 		else if (topic.matches("racecar/[0-9]+/changeMap"))
 		{
-			this.mapManager.requestMap();
+			this.mapManager.configureMap();
 		}
 	}
 

@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,11 +16,12 @@ public class FileUtils
 	private Logger log;
 
 	private String fileNameToSearch; // Name of the file that is being searched.
-	private List<String> result = new ArrayList<>(); // List of all found files matching the searched files. Full path is stored.
+	private List<String> result; // List of all found files matching the searched files. Full path is stored.
 
 	public FileUtils()
 	{
 		this.log = LoggerFactory.getLogger(FileUtils.class);
+		this.result = new ArrayList<>();
 	}
 
 	/**
@@ -29,7 +31,7 @@ public class FileUtils
 	 */
 	public String getFileNameToSearch()
 	{
-		return fileNameToSearch;
+		return this.fileNameToSearch;
 	}
 
 	/**
@@ -49,7 +51,7 @@ public class FileUtils
 	 */
 	public List<String> getResult()
 	{
-		return result;
+		return this.result;
 	}
 
 	/**
@@ -61,11 +63,18 @@ public class FileUtils
 	 */
 	public void searchDirectory(File directory, String fileNameToSearch)
 	{
+		try
+		{
+			this.log.info("Searching for directory with file " + fileNameToSearch + " in " + directory.getCanonicalPath());
+		} catch (IOException e)
+		{
+			e.printStackTrace();
+		}
 		setFileNameToSearch(fileNameToSearch);
 
 		if (directory.isDirectory())
 		{
-			search(directory);
+			this.search(directory);
 		} else
 		{
 			this.log.error(directory.getName() + " is not a directory. Cannot search.");
@@ -95,7 +104,8 @@ public class FileUtils
 					{
 						if (getFileNameToSearch().equals(temp.getName().toLowerCase()))
 						{
-							result.add(temp.getParent());
+							this.result.add(temp.getParent());
+							this.log.info("added " + temp.getParent() + " to results");
 						}
 
 					}

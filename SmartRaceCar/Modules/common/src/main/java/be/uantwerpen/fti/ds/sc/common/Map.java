@@ -5,8 +5,7 @@ package be.uantwerpen.fti.ds.sc.common;
  */
 public class Map
 {
-
-	private String name = ""; //Name of the mapfile.
+	private String name; // Name of the mapfile
 
 	/**
 	 * Model of a offline kept map.
