@@ -35,7 +35,6 @@ class HeartbeatChecker implements MQTTListener
 	private Logger log;
 	private RESTUtils restUtils;
 	private MQTTUtils mqttUtils;
-	private VehicleValidator vehicleValidator;
 	private Map<Long, Date> heartbeats;
 
 	private boolean isHeartbeat(String topic)
@@ -110,10 +109,9 @@ class HeartbeatChecker implements MQTTListener
 	 * constructor for the HeartbeatChecker class
 	 *
 	 * @param parameters parameters used to start backend
-	 * @param vehicleValidator
 	 */
 	@Autowired
-	public HeartbeatChecker(Parameters parameters, @Lazy VehicleValidator vehicleValidator)
+	public HeartbeatChecker(Parameters parameters)
 	{
 		this.log = LoggerFactory.getLogger(HeartbeatChecker.class);
 
@@ -123,8 +121,6 @@ class HeartbeatChecker implements MQTTListener
 		this.mqttUtils = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
 		this.mqttUtils.subscribeToTopic(parameters.getMqttTopic());
 
-		this.vehicleValidator = vehicleValidator;
-
 		this.heartbeats = new ConcurrentHashMap<>();
 	}
 
@@ -133,13 +129,10 @@ class HeartbeatChecker implements MQTTListener
 	{
 		long id = TopicUtils.getCarId(topic);
 
-		if (this.vehicleValidator.exists(id))
+		if (this.isHeartbeat(topic))
 		{
-			if (this.isHeartbeat(topic))
-			{
-				this.log.info("Received Heartbeat from " + id);
-				this.updateHeartbeat(id);
-			}
+			this.log.info("Received Heartbeat from " + id);
+			this.updateHeartbeat(id);
 		}
 	}
 }

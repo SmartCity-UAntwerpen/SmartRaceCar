@@ -17,7 +17,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Controller
-public class VehicleManager implements MQTTListener, VehicleValidator, VehicleRepository
+public class VehicleManager implements MQTTListener, VehicleRepository
 {
 	private static class MQTTConstants
 	{
@@ -43,6 +43,16 @@ public class VehicleManager implements MQTTListener, VehicleValidator, VehicleRe
 		return matcher.matches();
 	}
 
+	/**
+	 * Check if a vehicle with the given ID exists.
+	 * @param vehicleId
+	 * @return
+	 */
+	private boolean exists(long vehicleId)
+	{
+		return this.vehicles.containsKey(vehicleId);
+	}
+
 	@Autowired
 	public VehicleManager(@Qualifier("backend") BackendParameters parameters, WaypointValidator waypointValidator, NavigationManager navigationManager, HeartbeatChecker heartbeatChecker)
 	{
@@ -63,12 +73,6 @@ public class VehicleManager implements MQTTListener, VehicleValidator, VehicleRe
 		this.vehicles = new HashMap<>();
 
 		this.log.info("Initialized Vehicle Manager.");
-	}
-
-	@Override
-	public boolean exists(long vehicleId)
-	{
-		return this.vehicles.containsKey(vehicleId);
 	}
 
 	@Override

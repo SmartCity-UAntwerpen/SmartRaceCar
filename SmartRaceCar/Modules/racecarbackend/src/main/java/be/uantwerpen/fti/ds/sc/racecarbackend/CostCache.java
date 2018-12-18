@@ -28,6 +28,7 @@ public class CostCache
 {
 	private Logger log;
 	private VehicleRepository vehicleRepository;
+	private WaypointValidator waypointValidator;
 	private MapManager mapManager;
 	private CostCacheParameters costCacheParameters;
 	private Map<Link, Integer> costCache;
@@ -41,6 +42,7 @@ public class CostCache
 		this.costCacheParameters = costCacheParameters;
 		this.vehicleRepository = vehicleRepository;
 		this.mapManager = mapManager;
+		this.waypointValidator = mapManager;
 		this.costCache = new HashMap<>();
 		this.log.info("Initialized CostCache.");
 	}
@@ -57,14 +59,14 @@ public class CostCache
 
 		this.log.info("Got cache miss for link " + link);
 
-		if (!this.mapManager.exists(startId))
+		if (!this.waypointValidator.exists(startId))
 		{
 			String errorString = "Requested cost for start waypoint " + startId + ", but waypoint doesn't exist.";
 			this.log.error(errorString);
 			throw new IndexOutOfBoundsException(errorString);
 		}
 
-		if (!this.mapManager.exists(endId))
+		if (!this.waypointValidator.exists(endId))
 		{
 			String errorString = "Requested cost for end waypoint " + startId + ", but waypoint doesn't exist.";
 			this.log.error(errorString);

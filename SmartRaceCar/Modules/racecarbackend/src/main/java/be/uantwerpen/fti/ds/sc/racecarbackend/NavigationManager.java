@@ -4,20 +4,10 @@ import be.uantwerpen.fti.ds.sc.common.*;
 import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
 
-import javax.ws.rs.core.MediaType;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,18 +28,16 @@ public class NavigationManager implements MQTTListener, LocationRepository
 
 	private Logger log;
 	private MQTTUtils mqttUtils;
-	private List<Cost> costList;
-	private VehicleRepository vehicleRepository;
-	private VehicleValidator vehicleValidator;
-	private WaypointValidator waypointValidator;
 	private java.util.Map<Long, Long> vehicleLocations;	// This map keeps track of the location of every vehicle
 	// The key is the vehicleId, the value is the locationId
 
+	/*
 	private boolean isCostAnswer(String topic)
 	{
 		Matcher matcher = MQTTConstants.COST_ANSWER_REGEX.matcher(topic);
 		return matcher.matches();
 	}
+	*/
 
 	private boolean isLocationUpdate(String topic)
 	{
@@ -57,7 +45,7 @@ public class NavigationManager implements MQTTListener, LocationRepository
 		return matcher.matches();
 	}
 
-	public NavigationManager(@Lazy VehicleRepository vehicleRepository, VehicleValidator vehicleValidator, WaypointValidator waypointValidator, Parameters parameters)
+	public NavigationManager(Parameters parameters)
 	{
 		this.log = LoggerFactory.getLogger(NavigationManager.class);
 
@@ -66,11 +54,7 @@ public class NavigationManager implements MQTTListener, LocationRepository
 		this.mqttUtils = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
 		this.mqttUtils.subscribeToTopic(parameters.getMqttTopic());
 
-		this.costList = new ArrayList<>();
 		this.vehicleLocations = new HashMap<>();
-		this.vehicleRepository = vehicleRepository;
-		this.vehicleValidator = vehicleValidator;
-		this.waypointValidator = waypointValidator;
 
 		this.log.info("Initialized Navigation Manager.");
 	}
@@ -80,7 +64,8 @@ public class NavigationManager implements MQTTListener, LocationRepository
 	 * 	REST ENDPOINTS
 	 *
 	 */
-
+	/*
+	@Deprecated
 	@RequestMapping(value="/carmanager/posAll", method=RequestMethod.GET, produces=MediaType.APPLICATION_JSON)
 	public @ResponseBody ResponseEntity<String> getPositions()
 	{
@@ -96,20 +81,12 @@ public class NavigationManager implements MQTTListener, LocationRepository
 
 		return new ResponseEntity<>(JSONUtils.arrayToJSONString(locations), HttpStatus.OK);
 	}
+	*/
 
 	@Override
 	public void setLocation(long vehicleId, long locationId)
 	{
 		this.log.info("Setting the location of vehicle " + vehicleId + " to " + locationId + ".");
-
-		if (!this.waypointValidator.exists(locationId))
-		{
-			String errorString = "Tried to set location of " + vehicleId + " to a non-existent location: " + locationId;
-			this.log.error(errorString);
-
-			throw new IndexOutOfBoundsException (errorString);
-		}
-
 		this.vehicleLocations.put(vehicleId, locationId);
 	}
 
@@ -137,6 +114,7 @@ public class NavigationManager implements MQTTListener, LocationRepository
 	 * @param endId   Ending waypoint ID.
 	 * @return REST response of the type JSON containg all calculated costs of each vehicle.
 	 */
+	/*
 	@Deprecated
 	@RequestMapping(value = "calcWeight/{startId}/{endId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON)
 	public @ResponseBody ResponseEntity<String> calculateCostsRequest(@PathVariable("startId") long startId, @PathVariable("endId") long endId) throws InterruptedException
@@ -203,6 +181,7 @@ public class NavigationManager implements MQTTListener, LocationRepository
 
 		return new ResponseEntity<>(JSONUtils.arrayToJSONString(costCopy), HttpStatus.OK);
 	}
+	*/
 
 	/*
 	 *
@@ -214,20 +193,15 @@ public class NavigationManager implements MQTTListener, LocationRepository
 	{
 		long vehicleId = TopicUtils.getCarId(topic);
 
-		if (!this.vehicleValidator.exists(vehicleId))
-		{
-			this.log.warn("Received MQTT message from non-existent vehicle " + vehicleId);
-			return;
-		}
-
+		/*
 		// We received an MQTT cost answer
 		if (this.isCostAnswer(topic))
 		{
 			Cost cost = (Cost) JSONUtils.getObject("value", COST_TYPE);
 			this.costList.add(cost);
-		}
+		}*/
 		// We received an MQTT location update
-		else if (this.isLocationUpdate(topic))
+		/*else*/ if (this.isLocationUpdate(topic))
 		{
 			long locationId = Long.parseLong(message);
 			this.vehicleLocations.put(vehicleId, locationId);

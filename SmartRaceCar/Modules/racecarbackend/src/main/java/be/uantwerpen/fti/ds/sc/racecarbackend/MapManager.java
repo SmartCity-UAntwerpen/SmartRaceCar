@@ -29,7 +29,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 @Controller
-public class MapManager implements MQTTListener, WaypointValidator
+public class MapManager implements MQTTListener, WaypointValidator, WaypointRepository
 {
 	private Logger log;
 	private MapManagerParameters params;
@@ -225,11 +225,8 @@ public class MapManager implements MQTTListener, WaypointValidator
 
 		this.log.info("All possible wayPoints(" + wayPoints.size() + ") received.");
 	}
-	/**
-	 * Get the coordinates (x,y,z,w) of a point with a certain ID.
-	 * @param waypointId
-	 * @return
-	 */
+
+	@Override
 	public Point getCoordinates(long waypointId)
 	{
 		this.log.info("Fetching coordinates for waypoint " + waypointId + ".");
