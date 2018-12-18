@@ -190,7 +190,7 @@ public class VehicleManager implements MQTTListener, VehicleValidator, VehicleRe
 			throw new NoSuchElementException(errorString);
 		}
 
-		return this.vehicles.get(vehicleId).getOccupied();
+		return this.vehicles.get(vehicleId).isOccupied();
 	}
 
 	/*
