@@ -10,6 +10,7 @@ import java.util.Properties;
 public class CoreParameterParser extends ParameterParser
 {
 	private static final String DEBUG = "debugWithoutRosKernel";
+	private static final String NAVSTACK_PATH = "navstack.path";
 
 	private CoreParameters readParameters(String propertiesFile)
 	{
@@ -30,10 +31,11 @@ public class CoreParameterParser extends ParameterParser
 		}
 
 		boolean debug = Boolean.parseBoolean(prop.getProperty(DEBUG));
+		String navstackPath = (String) prop.get(NAVSTACK_PATH);
 
 		this.log.info("Core config loaded.");
 
-		CoreParameters coreParameters = new CoreParameters(parameters, debug);
+		CoreParameters coreParameters = new CoreParameters(parameters, debug, navstackPath);
 
 		try
 		{

@@ -34,6 +34,6 @@ public class Main
 			if (!args[1].isEmpty()) serverPort = Integer.parseInt(args[1]);
 			if (!args[2].isEmpty()) clientPort = Integer.parseInt(args[2]);
 		}
-		final Core core = new Core(startPoint, serverPort, clientPort, new CoreParameters(false));
+		final Core core = new Core(startPoint, serverPort, clientPort, new CoreParameters(false, ""));
 	}
 }

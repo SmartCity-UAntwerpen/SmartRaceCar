@@ -76,8 +76,7 @@ public class MapManager
 
 					Element eElement = (Element) nNode;
 					String name = eElement.getElementsByTagName("name").item(0).getTextContent();
-					String path = eElement.getElementsByTagName("path").item(0).getTextContent();
-					loadedMaps.put(name, new Map(name, path));
+					loadedMaps.put(name, new Map(name));
 					this.log.info("Added map: " + name + ".");
 				}
 			}
@@ -146,8 +145,8 @@ public class MapManager
 			{
 				e.printStackTrace();
 			}
-			this.core.getRestUtils().getFile("getmappgm/" + mapName, mapDir.getPath(), mapName, "pgm");
-			this.core.getRestUtils().getFile("getmapyaml/" + mapName, mapDir.getPath(), mapName, "yaml");
+			this.core.getRestUtils().getFile("getmappgm/" + mapName, this.core.getParams().getNavstackPath(), mapName, "pgm");
+			this.core.getRestUtils().getFile("getmapyaml/" + mapName, this.core.getParams().getNavstackPath(), mapName, "yaml");
 
 			try
 			{
@@ -161,12 +160,7 @@ public class MapManager
 
 				Element newName = document.createElement("name");
 				newName.appendChild(document.createTextNode(mapName));
-
-				Element newPath = document.createElement("path");
-				newPath.appendChild(document.createTextNode(mapDir.getCanonicalPath() + "/" + mapName));
-
 				newMap.appendChild(newName);
-				newMap.appendChild(newPath);
 
 				root.appendChild(newMap);
 
@@ -187,16 +181,11 @@ public class MapManager
 				e.printStackTrace();
 				this.log.warn("Could not add map to XML of maps." + e);
 			}
-			try
-			{
-				Map map = new Map(mapName, mapDir.getCanonicalPath() + mapName);
-				this.loadedMaps.put(mapName, map);
-				this.log.info("Added downloaded map : " + mapName + ".");
-			}
-			catch (IOException e)
-			{
-				e.printStackTrace();
-			}
+
+			Map map = new Map(mapName);
+			this.loadedMaps.put(mapName, map);
+			this.log.info("Added downloaded map : " + mapName);
+
 			this.log.info("Current map '" + mapName + "' downloaded and set as current map.");
 		}
 
