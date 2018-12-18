@@ -46,7 +46,7 @@ public class CostCache
 		this.log.info("Initialized CostCache.");
 	}
 
-	public int calculateCost (long startId, long endId) throws IndexOutOfBoundsException
+	public int calculateCost (long startId, long endId) throws IndexOutOfBoundsException, IOException
 	{
 		Link link = new Link(startId, endId);
 
@@ -107,7 +107,7 @@ public class CostCache
 			catch (IOException ioe)
 			{
 				this.log.error("An exception was thrown while trying to calculate the cost for " + startId + " -> " + endId, ioe);
-				return Integer.MAX_VALUE;
+				throw ioe;
 			}
 		}
 		else
@@ -142,8 +142,15 @@ public class CostCache
 		}
 		catch (IndexOutOfBoundsException ioobe)
 		{
-			this.log.error("Cost calculation caused an exception: ", ioobe);
-			return new ResponseEntity<>(ioobe.getMessage(), HttpStatus.BAD_REQUEST);
+			String errorString = "Cost calculation caused an IndexOutOfBoundsException: " + ioobe.getCause();
+			this.log.error(errorString, ioobe);
+			return new ResponseEntity<>(errorString, HttpStatus.BAD_REQUEST);
+		}
+		catch (IOException ioe)
+		{
+			String errorString = "Cost calculation caused an IOException: " + ioe.getCause();
+			this.log.error(errorString, ioe);
+			return new ResponseEntity<>(errorString, HttpStatus.SERVICE_UNAVAILABLE);
 		}
 	}
 }

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Controller;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,7 +21,10 @@ public class JobTracker implements MQTTListener
     private BackendParameters backendParameters;
     private VehicleManager vehicleManager;
     private MQTTUtils mqttUtils;
-    private Map<Long, Job> jobs;        // Map containing jobs mapped to their job ID's
+    private Map<Long, Job> localJobs;       // Map containing local jobs mapped to their IDs
+                                            // Local jobs are jobs not present in the backbone,
+                                            // they are tracked locally to send vehicles to the startpoint of jobs etc.
+    private Map<Long, Job> globalJobs;      // Map containing jobs mapped to their job ID's
 
     private static final String ROUTE_UPDATE_DONE = "done";
     private static final String ROUTE_UPDATE_ERROR = "error";
@@ -30,8 +34,6 @@ public class JobTracker implements MQTTListener
     // We need to contact the backbone if we're "almost there"
     // No concrete definition of "almost" has been given, so
     // I'm choosing one here. It's 90%.
-
-    private static final Type LOCATION_TYPE = new TypeToken<Location>(){}.getType();
 
     private static class MQTTConstants
     {
@@ -51,20 +53,39 @@ public class JobTracker implements MQTTListener
         return matcher.matches();
     }
 
+    /**
+     * Return the job being executed by the vehicle with id vehicleID.
+     * Returns -1 if no job was found for the given vehicle.
+     * @param vehicleID
+     * @return
+     */
+    private long findJobByVehicleId(long vehicleID) throws NoSuchElementException
+    {
+        for (long jobId: this.globalJobs.keySet())
+        {
+            if (this.globalJobs.get(jobId).getVehicleId() == vehicleID)
+            {
+                return jobId;
+            }
+        }
+
+        for (long jobId: this.localJobs.keySet())
+        {
+            if (this.localJobs.get(jobId).getVehicleId() == vehicleID)
+            {
+                return jobId;
+            }
+        }
+
+        throw new NoSuchElementException("Failed to find job associated with vehicle " + vehicleID);
+    }
 
     private void completeJob(long jobId, long vehicleId)
     {
         this.log.debug("Completing job, setting vehicle " + vehicleId + " to unoccupied.");
         this.vehicleManager.setOccupied(vehicleId, false);
 
-        if (!this.backendParameters.isMaaSDisabled())
-        {
-            this.log.debug("Informing MaaS about job completion.");
-
-            RESTUtils maasRESTUtils = new RESTUtils(this.backendParameters.getMaaSRESTUrl());
-            maasRESTUtils.getTextPlain("completeJob/" + jobId);
-        }
-
+        // We should only inform the backend if the job was a global job.
         if (!this.backendParameters.isBackboneDisabled())
         {
             this.log.debug("Informing Backbone about job completion.");
@@ -73,12 +94,12 @@ public class JobTracker implements MQTTListener
             backboneRESTUtil.postEmpty("/jobs/complete/" + jobId);
         }
 
-        this.jobs.remove(jobId);
+        this.removeJob(jobId);
     }
 
     private void updateRoute(long jobId, String mqttMessage)
     {
-        long vehicleId = this.jobs.get(jobId).getVehicleId();
+        long vehicleId =
 
         switch (mqttMessage)
         {
@@ -90,7 +111,7 @@ public class JobTracker implements MQTTListener
             case ROUTE_UPDATE_ERROR:
                 this.log.info("Vehicle " + vehicleId + " completed its route with errors.");
                 this.vehicleManager.setOccupied(vehicleId, false);
-                this.jobs.remove(jobId);
+                this.removeJob(jobId);
                 break;
 
             case ROUTE_UPDATE_NOT_COMPLETE:
@@ -113,25 +134,6 @@ public class JobTracker implements MQTTListener
         }
     }
 
-    /**
-     * Return the job being executed by the vehicle with id vehicleID.
-     * Returns -1 if no job was found for the given vehicle.
-     * @param vehicleID
-     * @return
-     */
-    private long findJobByVehicleId(long vehicleID)
-    {
-        for (long jobId: this.jobs.keySet())
-        {
-            if (this.jobs.get(jobId).getVehicleId() == vehicleID)
-            {
-                return jobId;
-            }
-        }
-
-        return -1L;
-    }
-
     @Autowired
     public JobTracker(@Qualifier("backend") BackendParameters backendParameters, VehicleManager vehicleManager)
     {
@@ -144,16 +146,24 @@ public class JobTracker implements MQTTListener
         mqttUtils = new MQTTUtils(backendParameters.getMqttBroker(), backendParameters.getMqttUserName(), backendParameters.getMqttPassword(), this);
         mqttUtils.subscribeToTopic(backendParameters.getMqttTopic());
 
-        this.jobs = new HashMap<>();
+        this.globalJobs = new HashMap<>();
+        this.localJobs = new HashMap<>();
 
         this.log.info("Initialized JobTracker.");
     }
 
-    public void addJob (long jobId, long vehicleId, long startId, long endId)
+    public void addGlobalJob(long jobId, long vehicleId, long startId, long endId)
     {
-        this.log.info("Adding new Job for tracking (Job ID: " + jobId + ", " + startId + " -> " + endId + ", Vehicle: " + vehicleId + ").");
+        this.log.info("Adding new Global Job for tracking (Job ID: " + jobId + ", " + startId + " -> " + endId + ", Vehicle: " + vehicleId + ").");
         Job job = new Job(startId, endId, vehicleId);
-        this.jobs.put(jobId, job);
+        this.globalJobs.put(jobId, job);
+    }
+
+    public void addLocalJob(long jobId, long vehicleId, long startId, long endId)
+    {
+        this.log.info("Adding new Local Job for tracking (Job ID: " + jobId + ", " + startId + " -> " + endId + ", Vehicle: " + vehicleId + ").");
+        Job job = new Job(startId, endId, vehicleId);
+        this.localJobs.put(jobId, job);
     }
 
     /*
@@ -161,7 +171,6 @@ public class JobTracker implements MQTTListener
      *  MQTT Parsing
      *
      */
-
     /**
      *
      * @param topic   received MQTT topic
