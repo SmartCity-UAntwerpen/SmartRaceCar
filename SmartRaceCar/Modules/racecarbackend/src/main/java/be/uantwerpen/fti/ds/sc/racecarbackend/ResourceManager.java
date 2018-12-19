@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.NoSuchElementException;
 import java.util.TreeSet;
 
@@ -57,7 +58,7 @@ public class ResourceManager
 	 * @param waypointId
 	 * @return
 	 */
-	public long getOptimalCar (long waypointId) throws NoSuchElementException
+	public long getOptimalCar (long waypointId) throws NoSuchElementException, IOException
 	{
 		if (this.vehicleRepository.getNumVehicles() == 0)
 		{

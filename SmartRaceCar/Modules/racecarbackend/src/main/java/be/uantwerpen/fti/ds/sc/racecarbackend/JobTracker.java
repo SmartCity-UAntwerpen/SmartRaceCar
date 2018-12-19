@@ -10,6 +10,7 @@ import org.springframework.stereotype.Controller;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,7 +21,10 @@ public class JobTracker implements MQTTListener
     private BackendParameters backendParameters;
     private VehicleManager vehicleManager;
     private MQTTUtils mqttUtils;
-    private Map<Long, Job> jobs;        // Map containing jobs mapped to their job ID's
+    private Map<Long, Job> localJobs;       // Map containing local jobs mapped to their IDs
+                                            // Local jobs are jobs not present in the backbone,
+                                            // they are tracked locally to send vehicles to the startpoint of jobs etc.
+    private Map<Long, Job> globalJobs;      // Map containing jobs mapped to their job ID's
 
     private static final String ROUTE_UPDATE_DONE = "done";
     private static final String ROUTE_UPDATE_ERROR = "error";
@@ -31,12 +35,39 @@ public class JobTracker implements MQTTListener
     // No concrete definition of "almost" has been given, so
     // I'm choosing one here. It's 90%.
 
-    private static final Type LOCATION_TYPE = new TypeToken<Location>(){}.getType();
-
     private static class MQTTConstants
     {
         private static final Pattern PERCENTAGE_UPDATE_REGEX = Pattern.compile("racecar/[0-9]+/percentage");
         private static final Pattern ROUTE_UPDATE_REGEX = Pattern.compile("racecar/[0-9]+/route");
+    }
+
+    private JobType findJobType(long jobId, long vehicleId)
+    {
+        if (this.localJobs.containsKey(jobId))
+        {
+            if (this.localJobs.get(jobId).getVehicleId() == vehicleId)
+            {
+                return JobType.LOCAL;
+            }
+        }
+        else if (this.globalJobs.containsKey(jobId))
+        {
+            if (this.globalJobs.get(jobId).getVehicleId() == vehicleId)
+            {
+                return JobType.GLOBAL;
+            }
+        }
+
+        throw new NoSuchElementException("Tried to find type for job " + jobId + " (Vehicle: " + vehicleId + "), but no job matched the IDs.");
+    }
+
+    private void removeJob(long jobId, long vehicleId)
+    {
+        switch (this.findJobType(jobId, vehicleId))
+        {
+            case GLOBAL:
+                this.globalJobs.remove(jobId);
+        }
     }
 
     private boolean isPercentageUpdate(String topic)
@@ -51,35 +82,53 @@ public class JobTracker implements MQTTListener
         return matcher.matches();
     }
 
+    /**
+     * Return the job being executed by the vehicle with id vehicleID.
+     * Returns -1 if no job was found for the given vehicle.
+     * @param vehicleID
+     * @return
+     */
+    @Deprecated
+    private long findJobByVehicleId(long vehicleID) throws NoSuchElementException
+    {
+        for (long jobId: this.globalJobs.keySet())
+        {
+            if (this.globalJobs.get(jobId).getVehicleId() == vehicleID)
+            {
+                return jobId;
+            }
+        }
+
+        for (long jobId: this.localJobs.keySet())
+        {
+            if (this.localJobs.get(jobId).getVehicleId() == vehicleID)
+            {
+                return jobId;
+            }
+        }
+
+        throw new NoSuchElementException("Failed to find job associated with vehicle " + vehicleID);
+    }
 
     private void completeJob(long jobId, long vehicleId)
     {
         this.log.debug("Completing job, setting vehicle " + vehicleId + " to unoccupied.");
         this.vehicleManager.setOccupied(vehicleId, false);
 
-        if (!this.backendParameters.isMaaSDisabled())
-        {
-            this.log.debug("Informing MaaS about job completion.");
-
-            RESTUtils maasRESTUtils = new RESTUtils(this.backendParameters.getMaaSRESTUrl());
-            maasRESTUtils.getTextPlain("completeJob/" + jobId);
-        }
-
-        if (!this.backendParameters.isBackboneDisabled())
-        {
+        // We should only inform the backend if the job was a global job.
+        if ((!this.backendParameters.isBackboneDisabled()) && (this.findJobType(jobId, vehicleId) == JobType.GLOBAL))
+    {
             this.log.debug("Informing Backbone about job completion.");
 
             RESTUtils backboneRESTUtil = new RESTUtils(this.backendParameters.getBackboneRESTURL());
             backboneRESTUtil.postEmpty("/jobs/complete/" + jobId);
         }
 
-        this.jobs.remove(jobId);
+        this.removeJob(jobId, vehicleId);
     }
 
-    private void updateRoute(long jobId, String mqttMessage)
+    private void updateRoute(long jobId, long vehicleId, String mqttMessage)
     {
-        long vehicleId = this.jobs.get(jobId).getVehicleId();
-
         switch (mqttMessage)
         {
             case ROUTE_UPDATE_DONE:
@@ -90,7 +139,7 @@ public class JobTracker implements MQTTListener
             case ROUTE_UPDATE_ERROR:
                 this.log.info("Vehicle " + vehicleId + " completed its route with errors.");
                 this.vehicleManager.setOccupied(vehicleId, false);
-                this.jobs.remove(jobId);
+                this.removeJob(jobId, vehicleId);
                 break;
 
             case ROUTE_UPDATE_NOT_COMPLETE:
@@ -100,10 +149,30 @@ public class JobTracker implements MQTTListener
         }
     }
 
-    private void updateProgress(long jobId, int progress)
+    private void updateProgress(long jobId, long vehicleId, int progress)
     {
-        Job job = this.jobs.get(jobId);
+        JobType type = this.findJobType(jobId, vehicleId);
+        Job job = null;
+
+        switch (type)
+        {
+            case GLOBAL:
+                job = this.globalJobs.get(jobId);
+                break;
+
+            case LOCAL:
+                job = this.localJobs.get(jobId);
+                break;
+        }
+
         job.setProgress(progress);
+
+        // Now we just need to inform the backbone if the job is "almost" complete.
+        // If the job is local, the backbone is not aware of the job and we're done now
+        if (type == JobType.LOCAL)
+        {
+            return;
+        }
 
         if ((!this.backendParameters.isBackboneDisabled()) && (!job.isBackboneNotified()) && (progress >= ALMOST_DONE_PERCENTAGE))
         {
@@ -111,25 +180,6 @@ public class JobTracker implements MQTTListener
             backboneRESTUtil.postEmpty("/jobs/vehiclecloseby/" + jobId);
             job.setBackboneNotified(true);
         }
-    }
-
-    /**
-     * Return the job being executed by the vehicle with id vehicleID.
-     * Returns -1 if no job was found for the given vehicle.
-     * @param vehicleID
-     * @return
-     */
-    private long findJobByVehicleId(long vehicleID)
-    {
-        for (long jobId: this.jobs.keySet())
-        {
-            if (this.jobs.get(jobId).getVehicleId() == vehicleID)
-            {
-                return jobId;
-            }
-        }
-
-        return -1L;
     }
 
     @Autowired
@@ -144,16 +194,35 @@ public class JobTracker implements MQTTListener
         mqttUtils = new MQTTUtils(backendParameters.getMqttBroker(), backendParameters.getMqttUserName(), backendParameters.getMqttPassword(), this);
         mqttUtils.subscribeToTopic(backendParameters.getMqttTopic());
 
-        this.jobs = new HashMap<>();
+        this.globalJobs = new HashMap<>();
+        this.localJobs = new HashMap<>();
 
         this.log.info("Initialized JobTracker.");
     }
 
-    public void addJob (long jobId, long vehicleId, long startId, long endId)
+    public void addGlobalJob(long jobId, long vehicleId, long startId, long endId)
     {
-        this.log.info("Adding new Job for tracking (Job ID: " + jobId + ", " + startId + " -> " + endId + ", Vehicle: " + vehicleId + ").");
+        this.log.info("Adding new Global Job for tracking (Job ID: " + jobId + ", " + startId + " -> " + endId + ", Vehicle: " + vehicleId + ").");
         Job job = new Job(startId, endId, vehicleId);
-        this.jobs.put(jobId, job);
+        this.globalJobs.put(jobId, job);
+    }
+
+    public void addLocalJob(long jobId, long vehicleId, long startId, long endId)
+    {
+        this.log.info("Adding new Local Job for tracking (Job ID: " + jobId + ", " + startId + " -> " + endId + ", Vehicle: " + vehicleId + ").");
+        Job job = new Job(startId, endId, vehicleId);
+        this.localJobs.put(jobId, job);
+    }
+
+    public long generateLocalJobId()
+    {
+        // We iterate over i and find the first (lowest) value not present in the map
+        long i = 0;
+        for (i = 0; this.localJobs.containsKey(i); ++i)
+        {
+        }
+
+        return i;
     }
 
     /*
@@ -161,7 +230,6 @@ public class JobTracker implements MQTTListener
      *  MQTT Parsing
      *
      */
-
     /**
      *
      * @param topic   received MQTT topic
@@ -171,31 +239,26 @@ public class JobTracker implements MQTTListener
     public void parseMQTT(String topic, String message)
     {
         long vehicleId = TopicUtils.getCarId(topic);
-        long jobId = this.findJobByVehicleId(vehicleId);
-        boolean jobExists = jobId != -1L;
 
-        if (this.isPercentageUpdate(topic))
+        try
         {
-            if (!jobExists)
+            if (this.isPercentageUpdate(topic))
             {
-                this.log.warn("Couldn't find job associated with vehicle " + vehicleId);
-                return;
+                long jobId = this.findJobByVehicleId(vehicleId);
+                int percentage = Integer.parseInt(message);
+                this.log.info("Received Percentage update for vehicle " + vehicleId + ", Job: " + jobId + ", Status: " + percentage + "%.");
+                this.updateProgress(jobId, vehicleId, percentage);
             }
-
-            int percentage = Integer.parseInt(message);
-            this.log.info("Received Percentage update for vehicle " + vehicleId + ", Job: " + jobId + ", Status: " + percentage + "%.");
-            this.updateProgress(jobId, percentage);
+            else if (this.isRouteUpdate(topic))
+            {
+                long jobId = this.findJobByVehicleId(vehicleId);
+                this.log.info("Received Route Update for vehicle " + vehicleId + "");
+                this.updateRoute(jobId, vehicleId, message);
+            }
         }
-        else if (this.isRouteUpdate(topic))
+        catch (NoSuchElementException nsee)
         {
-            if (!jobExists)
-            {
-                this.log.warn("Couldn't find job associated with vehicle " + vehicleId);
-                return;
-            }
-
-            this.log.info("Received Route Update for vehicle " + vehicleId + "");
-            this.updateRoute(jobId, message);
+            this.log.error("Failed to find job for vehicle " + vehicleId, nsee);
         }
     }
 }

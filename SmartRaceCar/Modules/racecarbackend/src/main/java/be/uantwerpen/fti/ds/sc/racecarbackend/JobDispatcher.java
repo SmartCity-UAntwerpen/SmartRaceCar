@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.ws.rs.core.MediaType;
+import java.io.IOException;
 import java.util.NoSuchElementException;
 
 @Controller
@@ -56,6 +57,12 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 			this.log.error(errorString, nsee);
 			return new ResponseEntity<>(errorString, HttpStatus.PRECONDITION_FAILED);
 		}
+		catch (IOException ioe)
+		{
+			String errorString = "An IOException was thrown while trying to find the optimal car for a job.";
+			this.log.error(errorString, ioe);
+			return new ResponseEntity<>(errorString, HttpStatus.SERVICE_UNAVAILABLE);
+		}
 
 		// Check if starting waypoint exists
 		if (!this.waypointValidator.exists(startId))
@@ -77,7 +84,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 
 		this.locationRepository.setLocation(vehicleId, startId);
 		this.vehicleManager.setOccupied(vehicleId, true);
-		this.jobTracker.addJob(jobId, vehicleId, startId, endId);
+		this.jobTracker.addGlobalJob(jobId, vehicleId, startId, endId);
 
 		this.mqttUtils.publishMessage("racecar/" + vehicleId + "/job", startId + " " + endId);
 		return new ResponseEntity<>("starting", HttpStatus.OK);
@@ -87,8 +94,24 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 	public @ResponseBody ResponseEntity<String> goToPoint (@PathVariable long destId)
 	{
 		this.log.info("Received GOTO command for waypoint " + destId);
+		long vehicleId = -1;
 
-		long vehicleId = this.resourceManager.getOptimalCar(destId);
+		try
+		{
+			vehicleId = this.resourceManager.getOptimalCar(destId);
+		}
+		catch (NoSuchElementException nsee)
+		{
+			String errorString = "An error occurred while determining the optimal car for a go-to command.";
+			this.log.error(errorString, nsee);
+			return new ResponseEntity<>(errorString, HttpStatus.PRECONDITION_FAILED);
+		}
+		catch (IOException ioe)
+		{
+			String errorString = "An IOException was thrown while trying to find the optimal car for a go-to command.";
+			this.log.error(errorString, ioe);
+			return new ResponseEntity<>(errorString, HttpStatus.SERVICE_UNAVAILABLE);
+		}
 
 		if (!this.waypointValidator.exists(destId))
 		{
@@ -99,8 +122,8 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 
 		long vehicleLocation = this.locationRepository.getLocation(vehicleId);
 
-		//todo: find a way to track this job, without conflicting with the backbone's job ID's
 		this.mqttUtils.publishMessage("racecar/" + vehicleId + "/job", vehicleLocation + " " + destId);
+		this.jobTracker.addLocalJob(this.jobTracker.generateLocalJobId(), vehicleId, vehicleLocation, destId);
 
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
