@@ -12,8 +12,8 @@ import java.util.TreeSet;
 public class ResourceManager
 {
 	private Logger log;
-	private NavigationManager navigationManager;
-	private VehicleManager vehicleManager;
+	private LocationRepository locationRepository;
+	private VehicleRepository vehicleRepository;
 	private CostCache costCache;
 
 	// Cost object used to sort according to cost, but keep association with ID
@@ -41,13 +41,13 @@ public class ResourceManager
 	}
 
 	@Autowired
-	public ResourceManager (CostCache costCache, NavigationManager navigationManager, VehicleManager vehicleManager)
+	public ResourceManager (CostCache costCache, LocationRepository locationRepository, VehicleRepository vehicleRepository)
 	{
 		this.log = LoggerFactory.getLogger(ResourceManager.class);
 
 		this.log.info("Initializing ResourceManager...");
-		this.navigationManager = navigationManager;
-		this.vehicleManager = vehicleManager;
+		this.locationRepository = locationRepository;
+		this.vehicleRepository = vehicleRepository;
 		this.costCache = costCache;
 		this.log.info("Initialized ResourceManager.");
 	}
@@ -59,7 +59,7 @@ public class ResourceManager
 	 */
 	public long getOptimalCar (long waypointId) throws NoSuchElementException
 	{
-		if (this.vehicleManager.getNumVehicles() == 0)
+		if (this.vehicleRepository.getNumVehicles() == 0)
 		{
 			String errorString = "Requested optimal car, but no cars exist.";
 			this.log.error(errorString);
@@ -71,15 +71,15 @@ public class ResourceManager
 		// This helps us extract the element with the least cost in the end
 		TreeSet<Cost> costSet = new TreeSet<>();
 
-		for (long vehicleId: this.vehicleManager.getVehicleIds())
+		for (long vehicleId: this.vehicleRepository.getVehicleIds())
 		{
 			// isOccupied can potentially throw an exception if we request a non-existent vehicle
 			// But this shouldn't happen since we just asked the vehicle manager for its vehicles
 			// this exception will be caught higher up the call stack, since we can also throw
 			// it ourselves.
-			if (!this.vehicleManager.isOccupied(vehicleId))
+			if (!this.vehicleRepository.get(vehicleId).isOccupied())
 			{
-				long vehiclePosition = this.navigationManager.getLocation(vehicleId);
+				long vehiclePosition = this.locationRepository.getLocation(vehicleId);
 				int cost = this.costCache.calculateCost(vehiclePosition, waypointId);
 				costSet.add(new Cost(vehicleId, cost));
 			}

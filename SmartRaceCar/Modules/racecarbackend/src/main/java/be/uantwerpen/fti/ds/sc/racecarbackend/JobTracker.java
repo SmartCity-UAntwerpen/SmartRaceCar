@@ -20,7 +20,6 @@ public class JobTracker implements MQTTListener
     private BackendParameters backendParameters;
     private VehicleManager vehicleManager;
     private MQTTUtils mqttUtils;
-    private RESTUtils racecarApi;
     private Map<Long, Job> jobs;        // Map containing jobs mapped to their job ID's
 
     private static final String ROUTE_UPDATE_DONE = "done";
@@ -55,16 +54,21 @@ public class JobTracker implements MQTTListener
 
     private void completeJob(long jobId, long vehicleId)
     {
+        this.log.debug("Completing job, setting vehicle " + vehicleId + " to unoccupied.");
         this.vehicleManager.setOccupied(vehicleId, false);
 
         if (!this.backendParameters.isMaaSDisabled())
         {
+            this.log.debug("Informing MaaS about job completion.");
+
             RESTUtils maasRESTUtils = new RESTUtils(this.backendParameters.getMaaSRESTUrl());
             maasRESTUtils.getTextPlain("completeJob/" + jobId);
         }
 
         if (!this.backendParameters.isBackboneDisabled())
         {
+            this.log.debug("Informing Backbone about job completion.");
+
             RESTUtils backboneRESTUtil = new RESTUtils(this.backendParameters.getBackboneRESTURL());
             backboneRESTUtil.postEmpty("/jobs/complete/" + jobId);
         }
@@ -137,10 +141,8 @@ public class JobTracker implements MQTTListener
 
         this.log.info("Initializing JobTracker...");
 
-        this.mqttUtils = new MQTTUtils(backendParameters.getMqttBroker(), backendParameters.getMqttUserName(), backendParameters.getMqttPassword(), this);
-        this.mqttUtils.subscribeToTopic(backendParameters.getMqttTopic());
-
-        this.racecarApi = new RESTUtils(backendParameters.getRESTCarmanagerURL());
+        mqttUtils = new MQTTUtils(backendParameters.getMqttBroker(), backendParameters.getMqttUserName(), backendParameters.getMqttPassword(), this);
+        mqttUtils.subscribeToTopic(backendParameters.getMqttTopic());
 
         this.jobs = new HashMap<>();
 
@@ -171,13 +173,6 @@ public class JobTracker implements MQTTListener
         long vehicleId = TopicUtils.getCarId(topic);
         long jobId = this.findJobByVehicleId(vehicleId);
         boolean jobExists = jobId != -1L;
-
-
-        if (!this.vehicleManager.existsOld(vehicleId))
-        {
-            this.log.warn("Received MQTT message from non-existent vehicle " + vehicleId);
-            return;
-        }
 
         if (this.isPercentageUpdate(topic))
         {

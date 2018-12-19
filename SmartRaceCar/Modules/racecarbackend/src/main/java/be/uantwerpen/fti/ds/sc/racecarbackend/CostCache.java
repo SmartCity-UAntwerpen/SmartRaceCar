@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.ws.rs.core.MediaType;
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,20 +28,20 @@ import java.util.Map;
 public class CostCache
 {
 	private Logger log;
-	private VehicleManager vehicleManager;
-	private MapManager mapManager;
+	private WaypointValidator waypointValidator;
+	private WaypointRepository waypointRepository;
 	private CostCacheParameters costCacheParameters;
 	private Map<Link, Integer> costCache;
 
 	@Autowired
-	public CostCache (CostCacheParameters costCacheParameters, VehicleManager vehicleManager, MapManager mapManager)
+	public CostCache (CostCacheParameters costCacheParameters, WaypointRepository waypointRepository, WaypointValidator waypointValidator)
 	{
 		this.log = LoggerFactory.getLogger(CostCache.class);
 
 		this.log.info("Initializing CostCache...");
 		this.costCacheParameters = costCacheParameters;
-		this.vehicleManager = vehicleManager;
-		this.mapManager = mapManager;
+		this.waypointRepository = waypointRepository;
+		this.waypointValidator = waypointValidator;
 		this.costCache = new HashMap<>();
 		this.log.info("Initialized CostCache.");
 	}
@@ -57,23 +58,16 @@ public class CostCache
 
 		this.log.info("Got cache miss for link " + link);
 
-		if (!this.mapManager.exists(startId))
+		if (!this.waypointValidator.exists(startId))
 		{
 			String errorString = "Requested cost for start waypoint " + startId + ", but waypoint doesn't exist.";
 			this.log.error(errorString);
 			throw new IndexOutOfBoundsException(errorString);
 		}
 
-		if (!this.mapManager.exists(endId))
+		if (!this.waypointValidator.exists(endId))
 		{
 			String errorString = "Requested cost for end waypoint " + startId + ", but waypoint doesn't exist.";
-			this.log.error(errorString);
-			throw new IndexOutOfBoundsException(errorString);
-		}
-
-		if (this.vehicleManager.getNumVehicles() == 0)
-		{
-			String errorString = "Requested cost, but no vehicles are available, returning " + Integer.MAX_VALUE;
 			this.log.error(errorString);
 			throw new IndexOutOfBoundsException(errorString);
 		}
@@ -86,8 +80,8 @@ public class CostCache
 
 			Type costType = new TypeToken<Cost>(){}.getType();
 
-			Point startPointTmp = this.mapManager.getCoordinates(startId);
-			Point endPointTmp = this.mapManager.getCoordinates(endId);
+			Point startPointTmp = this.waypointRepository.getCoordinates(startId);
+			Point endPointTmp = this.waypointRepository.getCoordinates(endId);
 
 			Point startPoint = new Point(startPointTmp.getX(), startPointTmp.getY(), startPointTmp.getZ(), startPointTmp.getW());
 			Point endPoint = new Point(endPointTmp.getX(), endPointTmp.getY(), endPointTmp.getZ(), endPointTmp.getW());
@@ -98,15 +92,23 @@ public class CostCache
 			points.add(endPoint);
 
 			String jsonString = JSONUtils.arrayToJSONString(points);
-			String costString = ROSAPI.postJSONGetJSON("calcWeight", jsonString);
-			Cost costObj = (Cost) JSONUtils.getObjectWithKeyWord(costString, costType);
 
-			cost = costObj.getWeight();
+			try
+			{
+				String costString = ROSAPI.postJSONGetJSON("calcWeight", jsonString);
+				Cost costObj = (Cost) JSONUtils.getObjectWithKeyWord(costString, costType);
+				cost = costObj.getWeight();
 
-			// We only cache if we're using the ROS Server
-			// The whole point of caching was to take some load off the ROS Server,
-			// so caching in case we don't use the ROS server is useless
-			this.costCache.put(link, cost);
+				// We only cache if we're using the ROS Server
+				// The whole point of caching was to take some load off the ROS Server,
+				// so caching in case we don't use the ROS server is useless
+				this.costCache.put(link, cost);
+			}
+			catch (IOException ioe)
+			{
+				this.log.error("An exception was thrown while trying to calculate the cost for " + startId + " -> " + endId, ioe);
+				return Integer.MAX_VALUE;
+			}
 		}
 		else
 		{

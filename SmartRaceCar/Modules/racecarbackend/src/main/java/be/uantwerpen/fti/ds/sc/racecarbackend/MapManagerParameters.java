@@ -24,6 +24,11 @@ public class MapManagerParameters extends BackendParameters
 		return this.currentMap;
 	}
 
+	public void setCurrentMap(String map)
+	{
+		this.currentMap = map;
+	}
+
 	public String getMapPath()
 	{
 		return this.mapPath;

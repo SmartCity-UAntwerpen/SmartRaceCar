@@ -17,7 +17,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Controller
-public class VehicleManager implements MQTTListener
+public class VehicleManager implements MQTTListener, VehicleRepository
 {
 	private static class MQTTConstants
 	{
@@ -26,10 +26,9 @@ public class VehicleManager implements MQTTListener
 
 	private BackendParameters parameters;
 	private Logger log;
-	private MQTTUtils mqttUtils;
 	private RESTUtils backboneRestUtils;
 	private NavigationManager navigationManager;
-	private MapManager mapManager;
+	private WaypointValidator waypointValidator;
 	private HeartbeatChecker heartbeatChecker;
 	private Map<Long, Vehicle> vehicles;
 
@@ -44,21 +43,31 @@ public class VehicleManager implements MQTTListener
 		return matcher.matches();
 	}
 
+	/**
+	 * Check if a vehicle with the given ID exists.
+	 * @param vehicleId
+	 * @return
+	 */
+	private boolean exists(long vehicleId)
+	{
+		return this.vehicles.containsKey(vehicleId);
+	}
+
 	@Autowired
-	public VehicleManager(@Qualifier("backend") BackendParameters parameters, MapManager mapManager, NavigationManager navigationManager, HeartbeatChecker heartbeatChecker)
+	public VehicleManager(@Qualifier("backend") BackendParameters parameters, WaypointValidator waypointValidator, NavigationManager navigationManager, HeartbeatChecker heartbeatChecker)
 	{
 		this.parameters = parameters;
 		this.log = LoggerFactory.getLogger(this.getClass());
 
 		this.log.info("Initializing Vehicle Manager...");
 
-		this.mqttUtils = new MQTTUtils(this.parameters.getMqttBroker(), this.parameters.getMqttUserName(), this.parameters.getMqttPassword(), this);
-		this.mqttUtils.subscribeToTopic(this.parameters.getMqttTopic());
+		MQTTUtils mqttUtils = new MQTTUtils(this.parameters.getMqttBroker(), this.parameters.getMqttUserName(), this.parameters.getMqttPassword(), this);
+		mqttUtils.subscribeToTopic(this.parameters.getMqttTopic());
 
 		this.backboneRestUtils = new RESTUtils(parameters.getBackboneRESTURL());
 
 		this.navigationManager = navigationManager;
-		this.mapManager = mapManager;
+		this.waypointValidator = waypointValidator;
 		this.heartbeatChecker = heartbeatChecker;
 
 		this.vehicles = new HashMap<>();
@@ -66,25 +75,10 @@ public class VehicleManager implements MQTTListener
 		this.log.info("Initialized Vehicle Manager.");
 	}
 
-	/**
-	 * Checks whether or not a vehicle exists.
-	 *
-	 * @param vehicleId The id of the vehicle to be checked
-	 * @return
-	 */
-	public boolean existsOld(long vehicleId)
-	{
-		return this.vehicles.containsKey(vehicleId);
-	}
-
-	/**
-	 * @param vehicleId
-	 * @return
-	 * @throws IndexOutOfBoundsException When a non-existent vehicle is queried, an exception is thrown
-	 */
+	@Override
 	public Vehicle get(long vehicleId)
 	{
-		if (this.existsOld(vehicleId))
+		if (this.exists(vehicleId))
 		{
 			return this.vehicles.get(vehicleId);
 		}
@@ -97,10 +91,7 @@ public class VehicleManager implements MQTTListener
 		}
 	}
 
-	/**
-	 * Returns a list of with the ID of every vehicle.
-	 * @return
-	 */
+	@Override
 	public List<Long> getVehicleIds()
 	{
 		List<Long> idList = new ArrayList<>();
@@ -108,6 +99,7 @@ public class VehicleManager implements MQTTListener
 		return idList;
 	}
 
+	@Override
 	public int getNumVehicles()
 	{
 		return this.vehicles.size();
@@ -147,7 +139,7 @@ public class VehicleManager implements MQTTListener
 	@RequestMapping(value="/carmanager/register/{startWaypoint}", method=RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
 	public @ResponseBody ResponseEntity<String> register(@PathVariable long startWaypoint)
 	{
-		if (!this.mapManager.exists(startWaypoint))
+		if (!this.waypointValidator.exists(startWaypoint))
 		{
 			String errorString = "Tried to register vehicle with non-existent start id. (Start Waypoint: " + startWaypoint + ")";
 			this.log.error(errorString);
@@ -157,14 +149,8 @@ public class VehicleManager implements MQTTListener
 
 		long newVehicleId = -1;
 
-		if (this.parameters.isBackboneDisabled())
-		{
-			newVehicleId = this.vehicles.size();
-		}
-		else
-		{
-			newVehicleId = Long.parseLong(this.backboneRestUtils.getJSON("bot/newBot/car"));
-		}
+		//todo: Implement a proper way to give out vehicle IDs
+		newVehicleId = this.vehicles.size();
 
 		this.vehicles.put(newVehicleId, new Vehicle(newVehicleId));
 		this.navigationManager.setLocation(newVehicleId, startWaypoint);
@@ -208,7 +194,7 @@ public class VehicleManager implements MQTTListener
 			throw new NoSuchElementException(errorString);
 		}
 
-		return this.vehicles.get(vehicleId).getOccupied();
+		return this.vehicles.get(vehicleId).isOccupied();
 	}
 
 	/*
@@ -221,7 +207,7 @@ public class VehicleManager implements MQTTListener
 	{
 		long id = TopicUtils.getCarId(topic);
 
-		if (this.existsOld(id))
+		if (this.exists(id))
 		{
 			if (this.isAvailabilityUpdate(topic))
 			{

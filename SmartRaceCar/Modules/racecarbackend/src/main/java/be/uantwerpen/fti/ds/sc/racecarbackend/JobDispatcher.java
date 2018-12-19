@@ -20,93 +20,24 @@ import java.util.NoSuchElementException;
 public class JobDispatcher implements MQTTListener//todo: Get rid of this, still needed because MQTTUtils will crash if you don't provide it with a listener
 {
 	private Logger log;
-	private BackendParameters backendParameters;
 	private JobTracker jobTracker;
-	private MapManager mapManager;
+	private WaypointValidator waypointValidator;
 	private VehicleManager vehicleManager;
-	private NavigationManager navigationManager;
+	private LocationRepository locationRepository;
 	private ResourceManager resourceManager;
 	private MQTTUtils mqttUtils;
 
 	@Autowired
-	public JobDispatcher(@Qualifier("backend") BackendParameters backendParameters, JobTracker jobTracker, MapManager mapManager, VehicleManager vehicleManager, NavigationManager navigationManager, ResourceManager resourceManager)
+	public JobDispatcher(@Qualifier("backend") BackendParameters backendParameters, JobTracker jobTracker, WaypointValidator waypointValidator, VehicleManager vehicleManager, LocationRepository locationRepository, ResourceManager resourceManager)
 	{
 		this.log = LoggerFactory.getLogger(this.getClass());
-		this.backendParameters = backendParameters;
 		this.jobTracker = jobTracker;
-		this.mapManager = mapManager;
+		this.waypointValidator = waypointValidator;
 		this.vehicleManager = vehicleManager;
-		this.navigationManager = navigationManager;
+		this.locationRepository = locationRepository;
 		this.resourceManager = resourceManager;
 		this.mqttUtils = new MQTTUtils(backendParameters.getMqttBroker(), backendParameters.getMqttUserName(), backendParameters.getMqttPassword(), this);
 	}
-
-	/*
-	@Deprecated
-	@RequestMapping(value = "/carmanager/executeJob/{jobId}/{vehicleId}/{startId}/{endId}", method=RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
-	public @ResponseBody ResponseEntity<String> jobRequest(@PathVariable long jobId, @PathVariable long vehicleId, @PathVariable long startId, @PathVariable long endId)
-	{
-		Job job = new Job(jobId, startId, endId, vehicleId);
-
-		// Check if vehicle exists
-		if (!this.vehicleManager.exists(vehicleId))
-		{
-			String errorString = "Tried to execute job on non-existent vehicle (" + vehicleId + ")";
-			this.log.error(errorString);
-
-			return new ResponseEntity<>(errorString, HttpStatus.BAD_REQUEST);
-		}
-
-		// Check if vehicle is occupied
-		if (this.vehicleManager.get(vehicleId).getOccupied())
-		{
-			String errorString = "Vehicle " + vehicleId + " is currently occupied and can't accept any job requests.";
-			this.log.error(errorString);
-
-			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
-		}
-
-		// Check if vehicle is available
-		if (!this.vehicleManager.get(vehicleId).isAvailable())
-		{
-			String errorString = "Vehicle " + vehicleId + " is currently not available for job requests.";
-			this.log.error(errorString);
-
-			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
-		}
-
-		// Check if starting waypoint exists
-		if (!this.mapManager.exists(startId))
-		{
-			String errorString = "Request job with non-existent start waypoint " + startId + ".";
-			this.log.error(errorString);
-
-			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
-		}
-
-		// Check if end waypoint exists
-		if (!this.mapManager.exists(endId))
-		{
-			String errorString = "Request job with non-existent end waypoint " + endId + ".";
-			this.log.error(errorString);
-
-			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
-		}
-
-		this.log.info("Received Job request for " + vehicleId + " from " + startId + " to " + endId + " (JobID: " + jobId + ")");
-
-		Vehicle vehicle = this.vehicleManager.get(vehicleId);
-		Location location = new Location(vehicleId, startId, endId);
-
-		vehicle.setJob(job);
-		vehicle.setLocation(location);
-		vehicle.setOccupied(true);
-
-		this.mqttUtils.publishMessage("racecar/" + vehicleId + "/job", startId + " " + endId);
-
-		return new ResponseEntity<>(HttpStatus.OK);
-	}
-	*/
 
 	@RequestMapping(value="/job/execute/{startId}/{endId}/{jobId}", method=RequestMethod.POST, produces=MediaType.TEXT_PLAIN)
 	public @ResponseBody ResponseEntity<String> executeJob(@PathVariable long startId, @PathVariable long endId, @PathVariable long jobId)
@@ -126,36 +57,8 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 			return new ResponseEntity<>(errorString, HttpStatus.PRECONDITION_FAILED);
 		}
 
-		//todo: move to resource manager
-		/*
-		// Check if vehicle exists
-		if (!this.vehicleManager.exists(vehicleId))
-		{
-			String errorString = "Tried to execute job on non-existent vehicle (" + vehicleId + ")";
-			this.log.error(errorString);
-
-			return new ResponseEntity<>(errorString, HttpStatus.BAD_REQUEST);
-		}
-
-		// Check if vehicle is occupied
-		if (this.vehicleManager.get(vehicleId).getOccupied())
-		{
-			String errorString = "Vehicle " + vehicleId + " is currently occupied and can't accept any job requests.";
-			this.log.error(errorString);
-
-			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
-		}
-		// Check if vehicle is available
-		if (!this.vehicleManager.get(vehicleId).isAvailable())
-		{
-			String errorString = "Vehicle " + vehicleId + " is currently not available for job requests.";
-			this.log.error(errorString);
-
-			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
-		}*/
-
 		// Check if starting waypoint exists
-		if (!this.mapManager.exists(startId))
+		if (!this.waypointValidator.exists(startId))
 		{
 			String errorString = "Request job with non-existent start waypoint " + startId + ".";
 			this.log.error(errorString);
@@ -164,7 +67,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		}
 
 		// Check if end waypoint exists
-		if (!this.mapManager.exists(endId))
+		if (!this.waypointValidator.exists(endId))
 		{
 			String errorString = "Request job with non-existent end waypoint " + endId + ".";
 			this.log.error(errorString);
@@ -172,7 +75,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
 		}
 
-		this.navigationManager.setLocation(vehicleId, startId);
+		this.locationRepository.setLocation(vehicleId, startId);
 		this.vehicleManager.setOccupied(vehicleId, true);
 		this.jobTracker.addJob(jobId, vehicleId, startId, endId);
 
@@ -183,18 +86,18 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 	@RequestMapping(value="/job/gotopoint/{destId}", method=RequestMethod.POST, produces=MediaType.TEXT_PLAIN)
 	public @ResponseBody ResponseEntity<String> goToPoint (@PathVariable long destId)
 	{
-		//todo: Replace this with actual resource management
-		long dummyVehicleId = 0;
-		long vehicleId = dummyVehicleId;
+		this.log.info("Received GOTO command for waypoint " + destId);
 
-		if (!this.mapManager.exists(destId))
+		long vehicleId = this.resourceManager.getOptimalCar(destId);
+
+		if (!this.waypointValidator.exists(destId))
 		{
 			String errorString = "Tried to send vehicle to non-existent waypoint " + destId + ".";
 			this.log.error(errorString);
 			return new ResponseEntity<>(errorString, HttpStatus.BAD_REQUEST);
 		}
 
-		long vehicleLocation = this.navigationManager.getLocation(vehicleId);
+		long vehicleLocation = this.locationRepository.getLocation(vehicleId);
 
 		//todo: find a way to track this job, without conflicting with the backbone's job ID's
 		this.mqttUtils.publishMessage("racecar/" + vehicleId + "/job", vehicleLocation + " " + destId);

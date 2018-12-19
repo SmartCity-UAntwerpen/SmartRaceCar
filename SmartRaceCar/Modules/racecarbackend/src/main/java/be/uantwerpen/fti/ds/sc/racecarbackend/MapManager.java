@@ -29,40 +29,32 @@ import java.util.Iterator;
 import java.util.Map;
 
 @Controller
-public class MapManager implements MQTTListener
+public class MapManager implements MQTTListener, WaypointValidator, WaypointRepository
 {
 	private Logger log;
 	private MapManagerParameters params;
 
-	private VehicleManager vehicleManager;
+	private VehicleRepository vehicleRepository;
 
 	private MQTTUtils mqttUtils;
-	private RESTUtils backboneRESTUtils;
 
 	private Map<Long, WayPoint> wayPoints;
-	private String currentMap;
-	private String mapPath;
 
 	@Autowired
-	public MapManager(MapManagerParameters params, @Lazy VehicleManager vehicleManager)
+	public MapManager(MapManagerParameters params, @Lazy VehicleRepository vehicleRepository)
 	{
 		this.log = LoggerFactory.getLogger(this.getClass());
 		this.params = params;
 
 		this.log.info("Initializing Map Manager...");
 
-		this.currentMap = params.getCurrentMap();
-		this.mapPath = params.getMapPath();
-
 		this.mqttUtils = new MQTTUtils(params.getMqttBroker(), params.getMqttUserName(), params.getMqttPassword(), this);
-
-		this.backboneRESTUtils = new RESTUtils(params.getBackboneRESTURL());
 
 		this.wayPoints = new HashMap<>();
 
-		this.vehicleManager = vehicleManager;
+		this.vehicleRepository = vehicleRepository;
 
-		this.loadWayPoints();
+		this.loadWayPoints(params.getCurrentMap());
 
 		this.log.info("Initialized Map Manager.");
 	}
@@ -81,7 +73,7 @@ public class MapManager implements MQTTListener
 	@RequestMapping(value="/carmanager/getmapname", method=RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
 	public @ResponseBody ResponseEntity<String> getMapName()
 	{
-		return new ResponseEntity<>(this.currentMap, HttpStatus.OK);
+		return new ResponseEntity<>(this.params.getCurrentMap(), HttpStatus.OK);
 	}
 
 	/**
@@ -95,7 +87,7 @@ public class MapManager implements MQTTListener
 	{
 		try
 		{
-			String resourcePath = this.mapPath + "/" + mapName + ".pgm";
+			String resourcePath = this.params.getMapPath() + "/" + mapName + ".pgm";
 
 			InputStreamResource resource = new InputStreamResource(new FileInputStream(resourcePath));
 			HttpHeaders headers = new HttpHeaders();
@@ -136,7 +128,7 @@ public class MapManager implements MQTTListener
 	{
 		try
 		{
-			String resourcePath = this.mapPath + "/" + mapName + ".yaml";
+			String resourcePath = this.params.getMapPath() + "/" + mapName + ".yaml";
 
 			InputStreamResource resource = new InputStreamResource(new FileInputStream(resourcePath));
 			HttpHeaders headers = new HttpHeaders();
@@ -163,19 +155,19 @@ public class MapManager implements MQTTListener
 	@RequestMapping(value = "/carmanager/changeMap/{mapName}", method = RequestMethod.GET, produces = MediaType.TEXT_PLAIN)
 	public @ResponseBody ResponseEntity<String> changeMap(@PathVariable("mapName") String mapName)
 	{
-		File mapFile = new File(mapPath + "/" + mapName + ".yaml");
+		File mapFile = new File(this.params.getMapPath() + "/" + mapName + ".yaml");
 
 		if (mapFile.exists() && mapFile.isFile())
 		{
-			this.currentMap = mapName;
+			this.params.setCurrentMap(mapName);
 
-			for (long vehicleId: this.vehicleManager.getVehicleIds())
+			for (long vehicleId: this.vehicleRepository.getVehicleIds())
 			{
 				this.log.info("change map command sent to vehicle with ID: " + vehicleId);
 				this.mqttUtils.publishMessage("racecar/" + vehicleId + "/changeMap", mapName);
 			}
 
-			loadWayPoints();
+			loadWayPoints(this.params.getCurrentMap());
 
 			this.log.info("Changed current map to " + mapName);
 
@@ -192,42 +184,39 @@ public class MapManager implements MQTTListener
 	/**
 	 * Request all possible wayPoints from the BackBone through a REST Get request.
 	 */
-	private void loadWayPoints()
+	private void loadWayPoints(String mapName)
 	{
+		this.log.info("Loading wayPoints for " + mapName);
 		this.wayPoints.clear();
 		// Temp wayPoints for when they can't be requested from back-end services.
-		switch (this.currentMap)
+		switch (mapName)
 		{
 			case "zbuilding":
-				this.log.info("Loading wayPoints for " + this.currentMap);
 				this.wayPoints.put(46L, new WayPoint(46, 0.5f, (float) 0, (float) -1, (float) 0.02));
 				this.wayPoints.put(47L, new WayPoint(47, -13.4f, (float) -0.53, (float) 0.71, (float) 0.71));
 				this.wayPoints.put(48L, new WayPoint(48, -27.14f, (float) -1.11, (float) -0.3, (float) 0.95));
 				this.wayPoints.put(49L, new WayPoint(49, -28.25f, (float) -9.19, (float) -0.71, (float) 0.71));
 				break;
 			case "V314":
-				this.log.info("Loading wayPoints for " + this.currentMap);
 				this.wayPoints.put(46L, new WayPoint(46, (float) -3.0, (float) -1.5, (float) 0.07, (float) 1.00));
 				this.wayPoints.put(47L, new WayPoint(47, (float) 1.10, (float) -1.20, (float) 0.07, (float) 1.00));
 				this.wayPoints.put(48L, new WayPoint(48, (float) 4.0, (float) -0.90, (float) -0.68, (float) 0.73));
 				this.wayPoints.put(49L, new WayPoint(49, (float) 4.54, (float) -4.49, (float) -0.60, (float) 0.80));
 				break;
 			case "gangV":
-				this.log.info("Loading wayPoints for " + this.currentMap);
 				this.wayPoints.put(46L, new WayPoint(46, -6.1f, -28.78f, 0.73f, 0.69f));
 				this.wayPoints.put(47L, new WayPoint(47, -6.47f, -21.69f, 0.66f, 0.75f));
 				this.wayPoints.put(48L, new WayPoint(48, -5.91f, -1.03f, 0.52f, 0.85f));
 				this.wayPoints.put(49L, new WayPoint(49, 6.09f, 0.21f, -0.04f, 1.00f));
 				break;
 			case "U014":
-				this.log.info("Loading waypoints for " + this.currentMap);
 				this.wayPoints.put(46L, new WayPoint(46, (float) 0.07, (float) 0.15, (float) 0.99, (float) 0.05));
 				this.wayPoints.put(47L, new WayPoint(47, (float) 4.61, (float) 1.82, (float) 0.72, (float) 0.69));
 				this.wayPoints.put(48L, new WayPoint(48, (float) 0.3, (float) 3.85, (float) -0.99, (float) 0.18));
 				this.wayPoints.put(49L, new WayPoint(49, (float) 4.35, (float) 1.86, (float) -0.70, (float) 0.711));
 				break;
 			default:
-				log.warn("The backbone could not be reached and there were no default wayPoints for this map");
+				log.warn("There are no default wayPoints for \"" + mapName + "\".");
 				this.wayPoints.put((long) 46, new WayPoint(46, (float) 0.5, (float) 0, (float) -1, (float) 0.02));
 				this.wayPoints.put((long) 47, new WayPoint(47, (float) -13.4, (float) -0.53, (float) 0.71, (float) 0.71));
 				this.wayPoints.put((long) 48, new WayPoint(48, (float) -27.14, (float) -1.11, (float) -0.3, (float) 0.95));
@@ -236,11 +225,8 @@ public class MapManager implements MQTTListener
 
 		this.log.info("All possible wayPoints(" + wayPoints.size() + ") received.");
 	}
-	/**
-	 * Get the coordinates (x,y,z,w) of a point with a certain ID.
-	 * @param waypointId
-	 * @return
-	 */
+
+	@Override
 	public Point getCoordinates(long waypointId)
 	{
 		this.log.info("Fetching coordinates for waypoint " + waypointId + ".");
