@@ -12,7 +12,6 @@ import java.util.List;
 public class WeightManager
 {
 	private Core core;
-
 	private Logger log;
 
 
@@ -32,10 +31,12 @@ public class WeightManager
 		List<Point> points = new ArrayList<>();
 		points.add(this.core.getWayPoints().get(wayPointIDs[0]));
 		points.add(this.core.getWayPoints().get(wayPointIDs[1]));
+
 		if (!this.core.getParams().isDebug())
 		{
 			this.core.getTcpUtils().sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("cost", points));
-		} else
+		}
+		else
 		{
 			costCalculationComplete(new Cost(false, 5, 5, this.core.getID()));
 		}

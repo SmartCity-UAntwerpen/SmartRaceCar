@@ -287,7 +287,6 @@ class Core implements TCPListener, MQTTListener
 				long[] wayPointValues = new long[wayPointStringValues.length];
 				for (int index = 0; index < wayPointStringValues.length; index++)
 				{
-
 					wayPointValues[index] = Integer.parseInt(wayPointStringValues[index]);
 				}
 				this.weightManager.costRequest(wayPointValues);
@@ -332,9 +331,11 @@ class Core implements TCPListener, MQTTListener
 					break;
 				case "stop":
 					this.sendAvailability(false);
+					this.log.info("Vehicle stopped");
 					break;
 				case "start":
 					this.sendAvailability(true);
+					this.log.info("Vehicle started");
 					break;
 				case "startpoint":
 					this.startPoint = (long) JSONUtils.getObjectWithKeyWord(message, Long.class);
