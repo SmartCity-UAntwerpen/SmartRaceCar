@@ -239,31 +239,26 @@ public class JobTracker implements MQTTListener
     public void parseMQTT(String topic, String message)
     {
         long vehicleId = TopicUtils.getCarId(topic);
-        long jobId = this.findJobByVehicleId(vehicleId);
-        boolean jobExists = jobId != -1L;
 
-        if (this.isPercentageUpdate(topic))
+        try
         {
-            if (!jobExists)
+            if (this.isPercentageUpdate(topic))
             {
-                this.log.warn("Couldn't find job associated with vehicle " + vehicleId);
-                return;
+                long jobId = this.findJobByVehicleId(vehicleId);
+                int percentage = Integer.parseInt(message);
+                this.log.info("Received Percentage update for vehicle " + vehicleId + ", Job: " + jobId + ", Status: " + percentage + "%.");
+                this.updateProgress(jobId, vehicleId, percentage);
             }
-
-            int percentage = Integer.parseInt(message);
-            this.log.info("Received Percentage update for vehicle " + vehicleId + ", Job: " + jobId + ", Status: " + percentage + "%.");
-            this.updateProgress(jobId, vehicleId, percentage);
+            else if (this.isRouteUpdate(topic))
+            {
+                long jobId = this.findJobByVehicleId(vehicleId);
+                this.log.info("Received Route Update for vehicle " + vehicleId + "");
+                this.updateRoute(jobId, vehicleId, message);
+            }
         }
-        else if (this.isRouteUpdate(topic))
+        catch (NoSuchElementException nsee)
         {
-            if (!jobExists)
-            {
-                this.log.warn("Couldn't find job associated with vehicle " + vehicleId);
-                return;
-            }
-
-            this.log.info("Received Route Update for vehicle " + vehicleId + "");
-            this.updateRoute(jobId, vehicleId, message);
+            this.log.error("Failed to find job for vehicle " + vehicleId, nsee);
         }
     }
 }
