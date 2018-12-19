@@ -123,6 +123,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		long vehicleLocation = this.locationRepository.getLocation(vehicleId);
 
 		this.mqttUtils.publishMessage("racecar/" + vehicleId + "/job", vehicleLocation + " " + destId);
+		this.jobTracker.addLocalJob(this.jobTracker.generateLocalJobId(), vehicleId, vehicleLocation, destId);
 
 		return new ResponseEntity<>(HttpStatus.OK);
 	}

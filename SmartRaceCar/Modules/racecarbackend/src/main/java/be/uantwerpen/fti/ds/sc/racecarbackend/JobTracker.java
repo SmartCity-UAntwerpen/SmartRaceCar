@@ -41,6 +41,35 @@ public class JobTracker implements MQTTListener
         private static final Pattern ROUTE_UPDATE_REGEX = Pattern.compile("racecar/[0-9]+/route");
     }
 
+    private JobType findJobType(long jobId, long vehicleId)
+    {
+        if (this.localJobs.containsKey(jobId))
+        {
+            if (this.localJobs.get(jobId).getVehicleId() == vehicleId)
+            {
+                return JobType.LOCAL;
+            }
+        }
+        else if (this.globalJobs.containsKey(jobId))
+        {
+            if (this.globalJobs.get(jobId).getVehicleId() == vehicleId)
+            {
+                return JobType.GLOBAL;
+            }
+        }
+
+        throw new NoSuchElementException("Tried to find type for job " + jobId + " (Vehicle: " + vehicleId + "), but no job matched the IDs.");
+    }
+
+    private void removeJob(long jobId, long vehicleId)
+    {
+        switch (this.findJobType(jobId, vehicleId))
+        {
+            case GLOBAL:
+                this.globalJobs.remove(jobId);
+        }
+    }
+
     private boolean isPercentageUpdate(String topic)
     {
         Matcher matcher = JobTracker.MQTTConstants.PERCENTAGE_UPDATE_REGEX.matcher(topic);
@@ -59,6 +88,7 @@ public class JobTracker implements MQTTListener
      * @param vehicleID
      * @return
      */
+    @Deprecated
     private long findJobByVehicleId(long vehicleID) throws NoSuchElementException
     {
         for (long jobId: this.globalJobs.keySet())
@@ -86,21 +116,19 @@ public class JobTracker implements MQTTListener
         this.vehicleManager.setOccupied(vehicleId, false);
 
         // We should only inform the backend if the job was a global job.
-        if (!this.backendParameters.isBackboneDisabled())
-        {
+        if ((!this.backendParameters.isBackboneDisabled()) && (this.findJobType(jobId, vehicleId) == JobType.GLOBAL))
+    {
             this.log.debug("Informing Backbone about job completion.");
 
             RESTUtils backboneRESTUtil = new RESTUtils(this.backendParameters.getBackboneRESTURL());
             backboneRESTUtil.postEmpty("/jobs/complete/" + jobId);
         }
 
-        this.removeJob(jobId);
+        this.removeJob(jobId, vehicleId);
     }
 
-    private void updateRoute(long jobId, String mqttMessage)
+    private void updateRoute(long jobId, long vehicleId, String mqttMessage)
     {
-        long vehicleId =
-
         switch (mqttMessage)
         {
             case ROUTE_UPDATE_DONE:
@@ -111,7 +139,7 @@ public class JobTracker implements MQTTListener
             case ROUTE_UPDATE_ERROR:
                 this.log.info("Vehicle " + vehicleId + " completed its route with errors.");
                 this.vehicleManager.setOccupied(vehicleId, false);
-                this.removeJob(jobId);
+                this.removeJob(jobId, vehicleId);
                 break;
 
             case ROUTE_UPDATE_NOT_COMPLETE:
@@ -121,10 +149,30 @@ public class JobTracker implements MQTTListener
         }
     }
 
-    private void updateProgress(long jobId, int progress)
+    private void updateProgress(long jobId, long vehicleId, int progress)
     {
-        Job job = this.jobs.get(jobId);
+        JobType type = this.findJobType(jobId, vehicleId);
+        Job job = null;
+
+        switch (type)
+        {
+            case GLOBAL:
+                job = this.globalJobs.get(jobId);
+                break;
+
+            case LOCAL:
+                job = this.localJobs.get(jobId);
+                break;
+        }
+
         job.setProgress(progress);
+
+        // Now we just need to inform the backbone if the job is "almost" complete.
+        // If the job is local, the backbone is not aware of the job and we're done now
+        if (type == JobType.LOCAL)
+        {
+            return;
+        }
 
         if ((!this.backendParameters.isBackboneDisabled()) && (!job.isBackboneNotified()) && (progress >= ALMOST_DONE_PERCENTAGE))
         {
@@ -166,6 +214,17 @@ public class JobTracker implements MQTTListener
         this.localJobs.put(jobId, job);
     }
 
+    public long generateLocalJobId()
+    {
+        // We iterate over i and find the first (lowest) value not present in the map
+        long i = 0;
+        for (i = 0; this.localJobs.containsKey(i); ++i)
+        {
+        }
+
+        return i;
+    }
+
     /*
      *
      *  MQTT Parsing
@@ -193,7 +252,7 @@ public class JobTracker implements MQTTListener
 
             int percentage = Integer.parseInt(message);
             this.log.info("Received Percentage update for vehicle " + vehicleId + ", Job: " + jobId + ", Status: " + percentage + "%.");
-            this.updateProgress(jobId, percentage);
+            this.updateProgress(jobId, vehicleId, percentage);
         }
         else if (this.isRouteUpdate(topic))
         {
@@ -204,7 +263,7 @@ public class JobTracker implements MQTTListener
             }
 
             this.log.info("Received Route Update for vehicle " + vehicleId + "");
-            this.updateRoute(jobId, message);
+            this.updateRoute(jobId, vehicleId, message);
         }
     }
 }
