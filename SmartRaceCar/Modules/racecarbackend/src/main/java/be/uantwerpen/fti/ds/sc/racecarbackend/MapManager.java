@@ -215,6 +215,12 @@ public class MapManager implements MQTTListener, WaypointValidator, WaypointRepo
 				this.wayPoints.put(48L, new WayPoint(48, (float) 0.3, (float) 3.85, (float) -0.99, (float) 0.18));
 				this.wayPoints.put(49L, new WayPoint(49, (float) 4.35, (float) 1.86, (float) -0.70, (float) 0.711));
 				break;
+			case "U014Circle":
+				this.wayPoints.put(0L, new WayPoint(0, 0.0f, -0.0f, 0.0f, 0.99f));
+				this.wayPoints.put(1L, new WayPoint(1, 6.54f, 3.33f, 0.71f, 0.7f));
+				this.wayPoints.put(2L, new WayPoint(2, 3.84f, 2.73f, -0.63f, 0.77f));
+				this.wayPoints.put(3L, new WayPoint(3, 0.5f, 2.74f, -0.99f, 0.04f));
+				break;
 			default:
 				log.warn("There are no default wayPoints for \"" + mapName + "\".");
 				this.wayPoints.put(46L, new WayPoint(46, 0.5f, 0.0f, -1.0f, 0.02f));
