@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.regex.Matcher;
@@ -32,8 +33,8 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 	}
 
 	private Logger log;
-	private Queue<Job> globalJobQueue;
-	private Queue<Job> localJobQueue;
+	private List<Job> globalJobQueue;
+	private List<Job> localJobQueue;
 	private JobTracker jobTracker;
 	private WaypointValidator waypointValidator;
 	private VehicleManager vehicleManager;
@@ -51,11 +52,11 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 	{
 		if (!this.localJobQueue.isEmpty())
 		{
-			this.scheduleJob(this.localJobQueue.remove(), JobType.LOCAL);
+			this.scheduleJob(this.localJobQueue.remove(0), JobType.LOCAL);
 		}
 		else if (!this.globalJobQueue.isEmpty())
 		{
-			this.scheduleJob(this.globalJobQueue.remove(), JobType.GLOBAL);
+			this.scheduleJob(this.globalJobQueue.remove(0), JobType.GLOBAL);
 		}
 	}
 
@@ -91,6 +92,44 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		this.mqttUtils = new MQTTUtils(backendParameters.getMqttBroker(), backendParameters.getMqttUserName(), backendParameters.getMqttPassword(), this);
 	}
 
+	public boolean isInQueue(long jobId, JobType type)
+	{
+		switch (type)
+		{
+			case GLOBAL:
+				for (Job globalJob: this.globalJobQueue)
+				{
+					if (globalJob.getJobId() == jobId)
+					{
+						return true;
+					}
+				}
+
+				return false;
+
+			case LOCAL:
+				for (Job localJob: this.localJobQueue)
+				{
+					if (localJob.getJobId() == jobId)
+					{
+						return true;
+					}
+				}
+
+				return false;
+		}
+
+		String errorString = "Failed to check if job " + jobId + " (Type: " + type + ") was enqueued.";
+		this.log.error(errorString);
+		throw new NoSuchElementException(errorString);
+	}
+
+	/*
+	 *
+	 *  REST Endpoints
+	 *
+	 */
+
 	@RequestMapping(value="/job/execute/{startId}/{endId}/{jobId}", method=RequestMethod.POST, produces=MediaType.TEXT_PLAIN)
 	public @ResponseBody ResponseEntity<String> executeJob(@PathVariable long startId, @PathVariable long endId, @PathVariable long jobId)
 	{
@@ -98,7 +137,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 
 		if (this.resourceManager.getNumAvailableCars() == 0)
 		{
-			this.log.info("There are currently no vehicles available, adding to global queue (No. " + (this.globalJobQueue.size() + 1) + " in line.");
+			this.log.info("There are currently no vehicles available, adding to global queue (No. " + (this.globalJobQueue.size() + 1) + " in line.)");
 			this.globalJobQueue.add(new Job(jobId, startId, endId, -1));
 			return new ResponseEntity<>("starting", HttpStatus.OK);
 		}
@@ -110,7 +149,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 			return new ResponseEntity<>("starting", HttpStatus.OK);
 		}
 
-		long vehicleId = 0;
+		long vehicleId = -1;
 
 		try
 		{
@@ -159,13 +198,23 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		this.log.info("Received GOTO command for waypoint " + destId);
 
 		long vehicleId = -1;
+		long vehicleLocation = -1;
 
 		try
 		{
 			vehicleId = this.resourceManager.getOptimalCar(destId);
+			vehicleLocation = this.locationRepository.getLocation(vehicleId);
 		}
 		catch (NoSuchElementException nsee)
 		{
+			// If the exception was caused because no cars are available, enqueue the job
+			if (this.resourceManager.getNumAvailableCars() == 0)
+			{
+				this.log.info("There are currently no vehicles available, adding to local queue (No. " + (this.localJobQueue.size() + 1) + " in line.)");
+				this.localJobQueue.add(new Job(this.jobTracker.generateLocalJobId(), vehicleLocation, destId, -1));
+				return new ResponseEntity<>("starting", HttpStatus.OK);
+			}
+
 			String errorString = "An error occurred while determining the optimal car for a go-to command.";
 			this.log.error(errorString, nsee);
 			return new ResponseEntity<>(errorString, HttpStatus.PRECONDITION_FAILED);
@@ -175,15 +224,6 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 			String errorString = "An IOException was thrown while trying to find the optimal car for a go-to command.";
 			this.log.error(errorString, ioe);
 			return new ResponseEntity<>(errorString, HttpStatus.SERVICE_UNAVAILABLE);
-		}
-
-		long vehicleLocation = this.locationRepository.getLocation(vehicleId);
-
-		if (this.resourceManager.getNumAvailableCars() == 0)
-		{
-			this.log.info("There are currently no vehicles available, adding to local queue (No. " + (this.localJobQueue.size() + 1) + " in line.");
-			this.localJobQueue.add(new Job(this.jobTracker.generateLocalJobId(), vehicleLocation, destId, -1));
-			return new ResponseEntity<>("starting", HttpStatus.OK);
 		}
 
 		if (!this.globalJobQueue.isEmpty())
