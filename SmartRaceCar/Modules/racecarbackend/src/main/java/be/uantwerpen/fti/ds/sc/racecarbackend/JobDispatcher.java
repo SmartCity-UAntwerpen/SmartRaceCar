@@ -61,7 +61,6 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 
 	private void scheduleJob(Job job, JobType type)
 	{
-		this.locationRepository.setLocation(job.getVehicleId(), job.getStartId());  //todo: remove this, its fishy
 		this.vehicleManager.setOccupied(job.getVehicleId(), true);
 
 		switch (type)
@@ -97,9 +96,18 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 	{
 		this.log.info("Received Job request for " + startId + " -> " + endId + " (JobID: " + jobId + ")");
 
-		if (this.vehicleManager.getNumVehicles() == 0)
+		if (this.resourceManager.getNumAvailableCars() == 0)
 		{
+			this.log.info("There are currently no vehicles available, adding to global queue (No. " + (this.globalJobQueue.size() + 1) + " in line.");
 			this.globalJobQueue.add(new Job(jobId, startId, endId, -1));
+			return new ResponseEntity<>("starting", HttpStatus.OK);
+		}
+
+		if (!this.globalJobQueue.isEmpty())
+		{
+			this.log.info("There's already " + this.globalJobQueue.size() + " jobs in the global queue, adding to global queue.");
+			this.globalJobQueue.add(new Job(jobId, startId, endId, -1));
+			return new ResponseEntity<>("starting", HttpStatus.OK);
 		}
 
 		long vehicleId = 0;
@@ -149,6 +157,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 	public @ResponseBody ResponseEntity<String> goToPoint (@PathVariable long destId)
 	{
 		this.log.info("Received GOTO command for waypoint " + destId);
+
 		long vehicleId = -1;
 
 		try
@@ -168,14 +177,28 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 			return new ResponseEntity<>(errorString, HttpStatus.SERVICE_UNAVAILABLE);
 		}
 
+		long vehicleLocation = this.locationRepository.getLocation(vehicleId);
+
+		if (this.resourceManager.getNumAvailableCars() == 0)
+		{
+			this.log.info("There are currently no vehicles available, adding to local queue (No. " + (this.localJobQueue.size() + 1) + " in line.");
+			this.localJobQueue.add(new Job(this.jobTracker.generateLocalJobId(), vehicleLocation, destId, -1));
+			return new ResponseEntity<>("starting", HttpStatus.OK);
+		}
+
+		if (!this.globalJobQueue.isEmpty())
+		{
+			this.log.info("There's already " + this.localJobQueue.size() + " jobs in the local queue, adding to local queue.");
+			this.localJobQueue.add(new Job(this.jobTracker.generateLocalJobId(), vehicleLocation, destId, -1));
+			return new ResponseEntity<>("starting", HttpStatus.OK);
+		}
+
 		if (!this.waypointValidator.exists(destId))
 		{
 			String errorString = "Tried to send vehicle to non-existent waypoint " + destId + ".";
 			this.log.error(errorString);
 			return new ResponseEntity<>(errorString, HttpStatus.BAD_REQUEST);
 		}
-
-		long vehicleLocation = this.locationRepository.getLocation(vehicleId);
 
 		Job job = new Job(this.jobTracker.generateLocalJobId(), vehicleLocation, destId, vehicleId);
 		this.scheduleJob(job, JobType.GLOBAL);
