@@ -6,7 +6,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import javax.ws.rs.core.MediaType;
+import java.awt.*;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,6 +30,7 @@ public class JobTracker implements MQTTListener
     private Logger log;
     private BackendParameters backendParameters;
     private VehicleManager vehicleManager;
+    private JobDispatcher jobDispatcher;
     private MQTTUtils mqttUtils;
     private Map<Long, Job> localJobs;       // Map containing local jobs mapped to their IDs
                                             // Local jobs are jobs not present in the backbone,
@@ -183,11 +194,12 @@ public class JobTracker implements MQTTListener
     }
 
     @Autowired
-    public JobTracker(@Qualifier("backend") BackendParameters backendParameters, VehicleManager vehicleManager)
+    public JobTracker(@Qualifier("backend") BackendParameters backendParameters, VehicleManager vehicleManager, @Lazy JobDispatcher jobDispatcher)
     {
         this.log = LoggerFactory.getLogger(JobTracker.class);
         this.backendParameters = backendParameters;
         this.vehicleManager = vehicleManager;
+        this.jobDispatcher = jobDispatcher;
 
         this.log.info("Initializing JobTracker...");
 
@@ -223,6 +235,31 @@ public class JobTracker implements MQTTListener
         }
 
         return i;
+    }
+
+    /*
+     *
+     *  REST Endpoints
+     *
+     */
+    @RequestMapping(value="/job/getprogress/{jobId}", method= RequestMethod.GET, produces=MediaType.APPLICATION_JSON)
+    public @ResponseBody ResponseEntity<String> getProgress(@PathVariable long jobId)
+    {
+        if (!this.globalJobs.containsKey(jobId))
+        {
+            String errorString = "Tried to query progress of job " + jobId + ", but job doesn't exist.";
+            this.log.error(errorString);
+            return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
+        }
+
+        if (this.jobDispatcher.isInQueue(jobId, JobType.GLOBAL))
+        {
+            String jsonString = JSONUtils.objectToJSONStringWithKeyWord("progress", 0);
+            return new ResponseEntity<>(jsonString, HttpStatus.OK);
+        }
+
+        String jsonString = JSONUtils.objectToJSONStringWithKeyWord("progress", this.globalJobs.get(jobId).getProgress());
+        return new ResponseEntity<>(jsonString, HttpStatus.OK);
     }
 
     /*
