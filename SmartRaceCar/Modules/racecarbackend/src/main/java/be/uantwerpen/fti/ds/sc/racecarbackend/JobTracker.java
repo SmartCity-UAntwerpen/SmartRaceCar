@@ -237,6 +237,20 @@ public class JobTracker implements MQTTListener
         return i;
     }
 
+    public boolean exists(long jobId)
+    {
+    	if (this.globalJobs.containsKey(jobId))
+	    {
+	    	return true;
+	    }
+    	else if (this.localJobs.containsKey(jobId))
+	    {
+	    	return true;
+	    }
+
+    	return false;
+    }
+
     /*
      *
      *  REST Endpoints
