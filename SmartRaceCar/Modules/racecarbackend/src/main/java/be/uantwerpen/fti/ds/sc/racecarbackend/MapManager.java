@@ -217,10 +217,10 @@ public class MapManager implements MQTTListener, WaypointValidator, WaypointRepo
 				break;
 			default:
 				log.warn("There are no default wayPoints for \"" + mapName + "\".");
-				this.wayPoints.put((long) 46, new WayPoint(46, (float) 0.5, (float) 0, (float) -1, (float) 0.02));
-				this.wayPoints.put((long) 47, new WayPoint(47, (float) -13.4, (float) -0.53, (float) 0.71, (float) 0.71));
-				this.wayPoints.put((long) 48, new WayPoint(48, (float) -27.14, (float) -1.11, (float) -0.3, (float) 0.95));
-				this.wayPoints.put((long) 49, new WayPoint(49, (float) -28.25, (float) -9.19, (float) -0.71, (float) 0.71));
+				this.wayPoints.put(46L, new WayPoint(46, 0.5f, 0.0f, -1.0f, 0.02f));
+				this.wayPoints.put(47L, new WayPoint(47, -13.4f, -0.53f, 0.71f, 0.71f));
+				this.wayPoints.put(48L, new WayPoint(48, -27.14f, -1.11f, -0.3f, 0.95f));
+				this.wayPoints.put(49L, new WayPoint(49, -28.25f, -9.19f, -0.71f, 0.71f));
 		}
 
 		this.log.info("All possible wayPoints(" + wayPoints.size() + ") received.");

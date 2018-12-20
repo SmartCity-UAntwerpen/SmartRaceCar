@@ -50,6 +50,11 @@ public class CostCache
 	{
 		Link link = new Link(startId, endId);
 
+		if (startId == endId)
+		{
+			return 0;
+		}
+
 		if (this.costCache.containsKey(link))
 		{
 			this.log.info("Got cache hit for link " + link);

@@ -53,6 +53,21 @@ public class ResourceManager
 		this.log.info("Initialized ResourceManager.");
 	}
 
+	public int getNumAvailableCars()
+	{
+		int numAvailableCars = 0;
+
+		for (long vehicleId: this.vehicleRepository.getVehicleIds())
+		{
+			if (!this.vehicleRepository.get(vehicleId).isOccupied())
+			{
+				++numAvailableCars;
+			}
+		}
+
+		return numAvailableCars;
+	}
+
 	/**
 	 *
 	 * @param waypointId
@@ -74,10 +89,6 @@ public class ResourceManager
 
 		for (long vehicleId: this.vehicleRepository.getVehicleIds())
 		{
-			// isOccupied can potentially throw an exception if we request a non-existent vehicle
-			// But this shouldn't happen since we just asked the vehicle manager for its vehicles
-			// this exception will be caught higher up the call stack, since we can also throw
-			// it ourselves.
 			if (!this.vehicleRepository.get(vehicleId).isOccupied())
 			{
 				long vehiclePosition = this.locationRepository.getLocation(vehicleId);
