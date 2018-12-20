@@ -16,10 +16,6 @@ import java.util.Properties;
 @Configuration
 public class ParameterContributor
 {
-    // MAAS KEYS
-    private static final String MAAS_DEBUG_KEY = "MaaS.debug";
-    private static final String MAAS_URL_KEY = "MaaS.URL";
-
     // BACKBONE KEYS
     private static final String BACKBONE_DEBUG_KEY = "Backbone.debug";
     private static final String BACKBONE_URL_KEY = "Backbone.URL";
@@ -56,22 +52,17 @@ public class ParameterContributor
             return new BackendParameters();
         }
 
-        boolean debugWithoutMAAS = Boolean.parseBoolean(prop.getProperty(MAAS_DEBUG_KEY));
         boolean debugWithoutBackBone = Boolean.parseBoolean(prop.getProperty(BACKBONE_DEBUG_KEY));
 
-        this.log.debug("Debug Without MaaS: " + debugWithoutMAAS);
         this.log.debug("Debug Without Backbone: " + debugWithoutBackBone);
 
-        String restURLMAAS = prop.getProperty(MAAS_URL_KEY);
         String restURLBackBone = prop.getProperty(BACKBONE_URL_KEY);
 
-
-        this.log.debug("MaaS REST URL: " + restURLMAAS);
         this.log.debug("Backbone REST URL: " + restURLBackBone);
 
         this.log.info("Backend Config loaded.");
 
-        BackendParameters backendParameters = new BackendParameters(this.parameters(), debugWithoutMAAS, debugWithoutBackBone, restURLMAAS, restURLBackBone);
+        BackendParameters backendParameters = new BackendParameters(this.parameters(), debugWithoutBackBone, restURLBackBone);
 
         try
         {

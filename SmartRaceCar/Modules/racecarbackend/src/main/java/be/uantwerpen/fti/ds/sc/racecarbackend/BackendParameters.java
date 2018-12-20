@@ -5,17 +5,12 @@ import org.springframework.beans.factory.annotation.Value;
 
 public class BackendParameters extends Parameters
 {
-	private boolean disableMaaS;
-	private String MaaSRESTUrl;
-
 	private boolean disableBackbone;
 	private String backboneRESTUrl;
 
 	public BackendParameters()
 	{
 		super();
-		this.disableMaaS = true;
-		this.MaaSRESTUrl = "http://smartcity.ddns.net:8090";
 		this.disableBackbone = true;
 		this.backboneRESTUrl = "http://smartcity.ddns.net:8090";
 	}
@@ -23,34 +18,20 @@ public class BackendParameters extends Parameters
 	public BackendParameters(BackendParameters backendParameters)
 	{
 		super(backendParameters);
-		this.disableMaaS = backendParameters.isMaaSDisabled();
 		this.disableBackbone = backendParameters.isBackboneDisabled();
-		this.MaaSRESTUrl = backendParameters.getMaaSRESTUrl();
 		this.backboneRESTUrl = backendParameters.getBackboneRESTURL();
 	}
 
-	public BackendParameters(Parameters parameters, boolean disableMaaS, boolean disableBackbone, String MaasRESTUrl, String backboneRESTUrl)
+	public BackendParameters(Parameters parameters, boolean disableBackbone, String String backboneRESTUrl)
 	{
 		super(parameters);
-		this.disableMaaS = disableMaaS;
 		this.disableBackbone = disableBackbone;
-		this.MaaSRESTUrl = MaasRESTUrl;
 		this.backboneRESTUrl = backboneRESTUrl;
-	}
-
-	public boolean isMaaSDisabled()
-	{
-		return this.disableMaaS;
 	}
 
 	public boolean isBackboneDisabled()
 	{
 		return this.disableBackbone;
-	}
-
-	public String getMaaSRESTUrl()
-	{
-		return this.MaaSRESTUrl;
 	}
 
 	public String getBackboneRESTURL()
