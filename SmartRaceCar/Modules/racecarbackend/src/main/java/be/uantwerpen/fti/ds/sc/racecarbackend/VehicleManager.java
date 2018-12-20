@@ -21,9 +21,7 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 {
 	private static final String MQTT_POSTFIX = "available/#";
 
-	private BackendParameters parameters;
 	private Logger log;
-	private RESTUtils backboneRestUtils;
 	private MQTTUtils mqttUtils;
 	private NavigationManager navigationManager;
 	private WaypointValidator waypointValidator;
@@ -48,15 +46,15 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 	@Autowired
 	public VehicleManager(@Qualifier("backend") BackendParameters parameters, WaypointValidator waypointValidator, NavigationManager navigationManager, HeartbeatChecker heartbeatChecker)
 	{
-		this.parameters = parameters;
+		BackendParameters parameters1 = parameters;
 		this.log = LoggerFactory.getLogger(this.getClass());
 
 		this.log.info("Initializing Vehicle Manager...");
 
-		this.mqttUtils = new MQTTUtils(this.parameters.getMqttBroker(), this.parameters.getMqttUserName(), this.parameters.getMqttPassword(), this);
-		this.mqttUtils.subscribeToTopic(this.parameters.getMqttTopic() + MQTT_POSTFIX);
+		this.mqttUtils = new MQTTUtils(parameters1.getMqttBroker(), parameters1.getMqttUserName(), parameters1.getMqttPassword(), this);
+		this.mqttUtils.subscribeToTopic(parameters1.getMqttTopic() + MQTT_POSTFIX);
 
-		this.backboneRestUtils = new RESTUtils(parameters.getBackboneRESTURL());
+		RESTUtils backboneRestUtils = new RESTUtils(parameters.getBackboneRESTURL());
 
 		this.navigationManager = navigationManager;
 		this.waypointValidator = waypointValidator;

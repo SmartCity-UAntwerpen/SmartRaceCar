@@ -79,6 +79,7 @@ public class NavigationManager implements MQTTListener, LocationRepository
 		long vehicleId = TopicUtils.getCarId(topic);
 		long locationId = Long.parseLong(message);
 		this.vehicleLocations.put(vehicleId, locationId);
+		this.log.info("Received location update from vehicle " + vehicleId + ", new location is " + locationId);
 	}
 
 	public void removeVehicle(long vehicleId)
