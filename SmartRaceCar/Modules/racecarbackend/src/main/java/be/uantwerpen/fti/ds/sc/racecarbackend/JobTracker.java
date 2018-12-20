@@ -41,15 +41,22 @@ public class JobTracker implements MQTTListener
     private static final String ROUTE_UPDATE_ERROR = "error";
     private static final String ROUTE_UPDATE_NOT_COMPLETE = "notcomplete";
 
+    private static final String MQTT_PROGRESS_POSTFIX = "percentage/#";
+    private static final String MQTT_ROUTEUPDATE_POSTFIX = "route/#";
+
     private static final int ALMOST_DONE_PERCENTAGE = 90;
     // We need to contact the backbone if we're "almost there"
     // No concrete definition of "almost" has been given, so
     // I'm choosing one here. It's 90%.
 
-    private static class MQTTConstants
+    private boolean isProgressUpdate(String topic)
     {
-        private static final Pattern PERCENTAGE_UPDATE_REGEX = Pattern.compile("racecar/[0-9]+/percentage");
-        private static final Pattern ROUTE_UPDATE_REGEX = Pattern.compile("racecar/[0-9]+/route");
+        return topic.startsWith(this.backendParameters.getMqttTopic() + MQTT_PROGRESS_POSTFIX);
+    }
+
+    private boolean isRouteUpdate(String topic)
+    {
+        return topic.startsWith(this.backendParameters.getMqttTopic() + MQTT_ROUTEUPDATE_POSTFIX);
     }
 
     private JobType findJobType(long jobId, long vehicleId)
@@ -78,19 +85,12 @@ public class JobTracker implements MQTTListener
         {
             case GLOBAL:
                 this.globalJobs.remove(jobId);
+                break;
+
+            case LOCAL:
+                this.localJobs.remove(jobId);
+                break;
         }
-    }
-
-    private boolean isPercentageUpdate(String topic)
-    {
-        Matcher matcher = JobTracker.MQTTConstants.PERCENTAGE_UPDATE_REGEX.matcher(topic);
-        return matcher.matches();
-    }
-
-    private boolean isRouteUpdate(String topic)
-    {
-        Matcher matcher = JobTracker.MQTTConstants.ROUTE_UPDATE_REGEX.matcher(topic);
-        return matcher.matches();
     }
 
     /**
@@ -204,7 +204,8 @@ public class JobTracker implements MQTTListener
         this.log.info("Initializing JobTracker...");
 
         mqttUtils = new MQTTUtils(backendParameters.getMqttBroker(), backendParameters.getMqttUserName(), backendParameters.getMqttPassword(), this);
-        mqttUtils.subscribeToTopic(backendParameters.getMqttTopic());
+        mqttUtils.subscribeToTopic(backendParameters.getMqttTopic() + MQTT_PROGRESS_POSTFIX);
+        mqttUtils.subscribeToTopic(backendParameters.getMqttTopic() + MQTT_ROUTEUPDATE_POSTFIX);
 
         this.globalJobs = new HashMap<>();
         this.localJobs = new HashMap<>();
@@ -293,7 +294,7 @@ public class JobTracker implements MQTTListener
 
         try
         {
-            if (this.isPercentageUpdate(topic))
+            if (this.isProgressUpdate(topic))
             {
                 long jobId = this.findJobByVehicleId(vehicleId);
                 int percentage = Integer.parseInt(message);

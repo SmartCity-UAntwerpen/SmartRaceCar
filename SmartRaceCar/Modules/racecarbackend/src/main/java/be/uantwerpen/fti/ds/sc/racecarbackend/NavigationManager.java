@@ -16,22 +16,20 @@ import java.util.regex.Pattern;
 @Controller
 public class NavigationManager implements MQTTListener, LocationRepository
 {
+	/*
 	private static class MQTTConstants
 	{
 		private static final Pattern LOCATION_UPDATE_REGEX = Pattern.compile("racecar/[0-9]+/locationupdate");
 	}
+	*/
+
+	private static final String MQTT_POSTFIX = "locationupdate/#";
 
 	private Logger log;
 	private MQTTUtils mqttUtils;
 	private java.util.Map<Long, Long> vehicleLocations;
 	// This map keeps track of the location of every vehicle
 	// The key is the vehicleId, the value is the locationId
-
-	private boolean isLocationUpdate(String topic)
-	{
-		Matcher matcher = MQTTConstants.LOCATION_UPDATE_REGEX.matcher(topic);
-		return matcher.matches();
-	}
 
 	public NavigationManager(Parameters parameters)
 	{
@@ -40,7 +38,7 @@ public class NavigationManager implements MQTTListener, LocationRepository
 		this.log.info("Initializing Navigation Manager...");
 
 		this.mqttUtils = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
-		this.mqttUtils.subscribeToTopic(parameters.getMqttTopic());
+		this.mqttUtils.subscribeToTopic(parameters.getMqttTopic() + MQTT_POSTFIX);
 
 		this.vehicleLocations = new HashMap<>();
 
@@ -79,12 +77,8 @@ public class NavigationManager implements MQTTListener, LocationRepository
 	public void parseMQTT(String topic, String message)
 	{
 		long vehicleId = TopicUtils.getCarId(topic);
-
-		if (this.isLocationUpdate(topic))
-		{
-			long locationId = Long.parseLong(message);
-			this.vehicleLocations.put(vehicleId, locationId);
-		}
+		long locationId = Long.parseLong(message);
+		this.vehicleLocations.put(vehicleId, locationId);
 	}
 
 	public void removeVehicle(long vehicleId)
