@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.util.LinkedList;
 import java.util.Queue;
 
-public class Navigator
+public class Navigator implements MQTTListener
 {
 	private Core core;
 
@@ -26,7 +26,8 @@ public class Navigator
 
 		this.core = core;
 
-		this.mqttUtils = new MQTTUtils(this.core.getParams().getMqttBroker(), this.core.getParams().getMqttUserName(), this.core.getParams().getMqttPassword(), this.core);
+		this.mqttUtils = new MQTTUtils(this.core.getParams().getMqttBroker(), this.core.getParams().getMqttUserName(), this.core.getParams().getMqttPassword(), this);
+		this.mqttUtils.subscribeToTopic(this.core.getParams().getMqttTopic() + "/job/" + this.core.getID());
 
 		this.costCurrentToStartTiming = -1;
 		this.costStartToEndTiming = -1;
@@ -166,14 +167,16 @@ public class Navigator
 		{
 			float weight = (float) this.costStartToEndTiming / (float) (this.costCurrentToStartTiming + this.costStartToEndTiming);
 			location.setPercentage(Math.round((1 - weight) * 100 + location.getPercentage() * weight));
-		} else if (this.currentRoute.size() == 1)
+		}
+		else if (this.currentRoute.size() == 1)
 		{
 			float weight = (float) this.costCurrentToStartTiming / (float) (this.costCurrentToStartTiming + this.costStartToEndTiming);
 			location.setPercentage(Math.round(location.getPercentage() * weight));
 		}
 		this.log.info("Location Updated. Vehicle has " + location.getPercentage() + "% of route completed");
 		//this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/percentage", JSONUtils.objectToJSONString(location));
-		this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/percentage", Integer.toString(location.getPercentage()));
+		//this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/percentage", Integer.toString(location.getPercentage()));
+		this.mqttUtils.publishMessage(this.core.getParams().getMqttTopic() + "/percentage/" + this.core.getID(), Integer.toString(location.getPercentage()));
 	}
 
 	/**
@@ -183,7 +186,8 @@ public class Navigator
 	private void routeNotComplete()
 	{
 		this.core.setOccupied(false);
-		this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/route", "notcomplete");
+		//this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/route", "notcomplete");
+		this.mqttUtils.publishMessage(this.core.getParams().getMqttTopic() + "/route/" + this.core.getID(), "notcomplete");
 	}
 
 	/**
@@ -194,7 +198,8 @@ public class Navigator
 	{
 		this.log.warn("Route error. Route Cancelled");
 		this.core.setOccupied(false);
-		this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/route", "error");
+		//this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/route", "error");
+		this.mqttUtils.publishMessage(this.core.getParams().getMqttTopic() + "/route/" + this.core.getID() , "error");
 	}
 
 	/**
@@ -242,7 +247,8 @@ public class Navigator
 	{
 		this.log.info("Route Completed.");
 		this.core.setOccupied(false);
-		this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/route", "done");
+		//this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/route", "done");
+		this.mqttUtils.publishMessage(this.core.getParams().getMqttTopic()  + "/route/" + this.core.getID(), "done");
 	}
 
 	/**
@@ -279,4 +285,9 @@ public class Navigator
 	}
 
 
+	@Override
+	public void parseMQTT(String topic, String message)
+	{
+		this.handleJobRequest(message);
+	}
 }

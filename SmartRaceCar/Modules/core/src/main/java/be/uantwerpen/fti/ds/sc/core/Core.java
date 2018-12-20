@@ -97,7 +97,7 @@ class Core implements TCPListener, MQTTListener
 
         this.log.info("Starting MQTT connection on " + this.params.getMqttBroker());
 		this.mqttUtils = new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this);
-		this.mqttUtils.subscribeToTopic("racecar/" + ID + "/#");
+		//this.mqttUtils.subscribeToTopic("racecar/" + ID + "/#");
 
 		this.log.info("Connecting TCP on port " + clientPort + " and " + serverPort);
 		this.tcpUtils = new TCPUtils(clientPort, serverPort, this);
@@ -155,11 +155,6 @@ class Core implements TCPListener, MQTTListener
 		return this.tcpUtils;
 	}
 
-	public MQTTUtils getMqttUtils()
-	{
-		return this.mqttUtils;
-	}
-
 	public boolean isOccupied()
 	{
 		return this.occupied;
@@ -204,8 +199,8 @@ class Core implements TCPListener, MQTTListener
 	private void loadConfig()
 	{
 		CoreParameterParser parser = new CoreParameterParser();
-		this.params = parser.parse("/home/ubuntu/Git/SmartRacecar/SmartRaceCar/release/core.properties");
-		//this.params = parser.parse("core.properties");
+		//this.params = parser.parse("/home/ubuntu/Git/SmartRacecar/SmartRaceCar/release/core.properties");
+		this.params = parser.parse("core.properties");
 	}
 
 
@@ -273,7 +268,7 @@ class Core implements TCPListener, MQTTListener
 	 */
 	public void parseMQTT(String topic, String message)
 	{
-		this.log.info("received MQTT message: " + message);
+		/*this.log.info("received MQTT message: " + message);
 
 		if (topic.matches("racecar/[0-9]+/job"))
 		{
@@ -299,7 +294,7 @@ class Core implements TCPListener, MQTTListener
 		else if (topic.matches("racecar/[0-9]+/changeMap"))
 		{
 			this.mapManager.configureMap();
-		}
+		}*/
 	}
 
 	/**
@@ -339,7 +334,8 @@ class Core implements TCPListener, MQTTListener
 					break;
 				case "startpoint":
 					this.startPoint = (long) JSONUtils.getObjectWithKeyWord(message, Long.class);
-					this.mqttUtils.publishMessage("racecar/" + ID + "/locationupdate", Long.toString((Long) JSONUtils.getObjectWithKeyWord(message, Long.class)));
+					//this.mqttUtils.publishMessage("racecar/" + ID + "/locationupdate", Long.toString((Long) JSONUtils.getObjectWithKeyWord(message, Long.class)));
+					this.mqttUtils.publishMessage(this.params.getMqttTopic() + "/locationupdate/" + this.ID , Long.toString((Long) JSONUtils.getObjectWithKeyWord(message, Long.class)));
 					this.log.info("Setting new starting point with ID " + JSONUtils.getObjectWithKeyWord(message, Long.class));
 					break;
 				case "restart":
@@ -372,7 +368,8 @@ class Core implements TCPListener, MQTTListener
 	 */
 	private void sendAvailability(boolean state)
 	{
-		this.mqttUtils.publishMessage("racecar/" + ID + "/available", Boolean.toString(state));
+		//this.mqttUtils.publishMessage("racecar/" + ID + "/available", Boolean.toString(state));
+		this.mqttUtils.publishMessage(this.params.getMqttTopic() + "/available/" + this.ID, Boolean.toString(state));
 		this.log.info("Vehicle's availability status set to " + state + '.');
 	}
 
