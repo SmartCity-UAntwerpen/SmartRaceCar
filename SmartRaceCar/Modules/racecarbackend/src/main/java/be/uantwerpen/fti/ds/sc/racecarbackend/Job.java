@@ -5,6 +5,7 @@ package be.uantwerpen.fti.ds.sc.racecarbackend;
  */
 class Job
 {
+	private long jobId;     // ID of the job
 	private long startId; 	// ID of the start waypoint of the route.
 	private long endId; 	// ID of the end waypoint of the route.
 	private long vehicleId; // ID of the vehicle.
@@ -21,13 +22,19 @@ class Job
 	 * @param endId     ID of the end waypoint of the route
 	 * @param vehicleId ID of the vehicle
 	 */
-	public Job(long startId, long endId, long vehicleId)
+	public Job(long jobId, long startId, long endId, long vehicleId)
 	{
+		this.jobId = jobId;
 		this.startId = startId;
 		this.endId = endId;
 		this.vehicleId = vehicleId;
 		this.progress = 0;
 		this.backboneNotified = false;
+	}
+
+	public long getJobId()
+	{
+		return this.jobId;
 	}
 
 	/**
