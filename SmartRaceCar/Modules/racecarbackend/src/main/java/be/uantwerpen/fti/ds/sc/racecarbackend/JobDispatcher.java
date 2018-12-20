@@ -18,18 +18,12 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Controller
 public class JobDispatcher implements MQTTListener//todo: Get rid of this, still needed because MQTTUtils will crash if you don't provide it with a listener
 {
 	private static final String ROUTE_UPDATE_DONE = "done";
-
-	private static class MQTTConstants
-	{
-		private static final Pattern ROUTE_UPDATE_REGEX = Pattern.compile("racecar/[0-9]+/route");
-	}
+	private static final String MQTT_POSTFIX = "route/#";
 
 	private Logger log;
 	private List<Job> globalJobQueue;
@@ -40,12 +34,6 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 	private LocationRepository locationRepository;
 	private ResourceManager resourceManager;
 	private MQTTUtils mqttUtils;
-
-	private boolean isRouteUpdate(String topic)
-	{
-		Matcher matcher = JobDispatcher.MQTTConstants.ROUTE_UPDATE_REGEX.matcher(topic);
-		return matcher.matches();
-	}
 
 	private void checkJobQueue() throws IOException
 	{
@@ -80,7 +68,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 				break;
 		}
 
-		this.mqttUtils.publishMessage("racecar/" + job.getVehicleId() + "/job", job.getStartId() + " " + job.getEndId());
+		this.mqttUtils.publishMessage("racecar/job/" + job.getVehicleId() , job.getStartId() + " " + job.getEndId());
 	}
 
 	@Autowired
@@ -95,7 +83,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		this.locationRepository = locationRepository;
 		this.resourceManager = resourceManager;
 		this.mqttUtils = new MQTTUtils(backendParameters.getMqttBroker(), backendParameters.getMqttUserName(), backendParameters.getMqttPassword(), this);
-		this.mqttUtils.subscribeToTopic(backendParameters.getMqttTopic());
+		this.mqttUtils.subscribeToTopic(backendParameters.getMqttTopic() + MQTT_POSTFIX);
 	}
 
 	public boolean isInQueue(long jobId, JobType type)
@@ -265,7 +253,6 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 
 		Job job = new Job(this.jobTracker.generateLocalJobId(), vehicleLocation, destId, vehicleId);
 
-
 		try
 		{
 			this.scheduleJob(job, JobType.LOCAL);
@@ -295,7 +282,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 	{
 		long vehicleId = TopicUtils.getCarId(topic);
 
-		if (this.isRouteUpdate(topic) && (message.equals(ROUTE_UPDATE_DONE)))
+		if (message.equals(ROUTE_UPDATE_DONE))
 		{
 			this.log.info("Vehicle " + vehicleId + " completed its job. Checking for other queued jobs.");
 

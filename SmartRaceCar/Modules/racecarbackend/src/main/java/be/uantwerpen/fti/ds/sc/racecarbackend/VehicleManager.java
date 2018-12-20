@@ -19,14 +19,10 @@ import java.util.regex.Pattern;
 @Controller
 public class VehicleManager implements MQTTListener, VehicleRepository
 {
-	private static class MQTTConstants
-	{
-		private static final Pattern AVAILABILITY_UPDATE_REGEX = Pattern.compile("racecar/[0-9]+/available");
-	}
+	private static final String MQTT_POSTFIX = "available/#";
 
-	private BackendParameters parameters;
 	private Logger log;
-	private RESTUtils backboneRestUtils;
+	private MQTTUtils mqttUtils;
 	private NavigationManager navigationManager;
 	private WaypointValidator waypointValidator;
 	private HeartbeatChecker heartbeatChecker;
@@ -35,12 +31,6 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 	private String getAvailabilityString(boolean available)
 	{
 		return available ? "Available" : "Not Available";
-	}
-
-	private boolean isAvailabilityUpdate(String topic)
-	{
-		Matcher matcher = MQTTConstants.AVAILABILITY_UPDATE_REGEX.matcher(topic);
-		return matcher.matches();
 	}
 
 	/**
@@ -56,15 +46,15 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 	@Autowired
 	public VehicleManager(@Qualifier("backend") BackendParameters parameters, WaypointValidator waypointValidator, NavigationManager navigationManager, HeartbeatChecker heartbeatChecker)
 	{
-		this.parameters = parameters;
+		BackendParameters parameters1 = parameters;
 		this.log = LoggerFactory.getLogger(this.getClass());
 
 		this.log.info("Initializing Vehicle Manager...");
 
-		MQTTUtils mqttUtils = new MQTTUtils(this.parameters.getMqttBroker(), this.parameters.getMqttUserName(), this.parameters.getMqttPassword(), this);
-		mqttUtils.subscribeToTopic(this.parameters.getMqttTopic());
+		this.mqttUtils = new MQTTUtils(parameters1.getMqttBroker(), parameters1.getMqttUserName(), parameters1.getMqttPassword(), this);
+		this.mqttUtils.subscribeToTopic(parameters1.getMqttTopic() + MQTT_POSTFIX);
 
-		this.backboneRestUtils = new RESTUtils(parameters.getBackboneRESTURL());
+		RESTUtils backboneRestUtils = new RESTUtils(parameters.getBackboneRESTURL());
 
 		this.navigationManager = navigationManager;
 		this.waypointValidator = waypointValidator;
@@ -115,11 +105,6 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 	{
 		if (this.vehicles.containsKey(vehicleId))
 		{
-			if (!this.parameters.isBackboneDisabled())
-			{
-				this.backboneRestUtils.getTextPlain("bot/delete/" + vehicleId);
-			}
-
 			this.vehicles.remove(vehicleId);
 			this.navigationManager.removeVehicle(vehicleId);
 			this.heartbeatChecker.removeVehicle(vehicleId);
@@ -185,6 +170,7 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 		this.vehicles.get(vehicleId).setOccupied(occupied);
 	}
 
+	@Deprecated
 	public boolean isOccupied(long vehicleId) throws NoSuchElementException
 	{
 		if (!this.vehicles.containsKey(vehicleId))
@@ -207,14 +193,13 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 	{
 		long id = TopicUtils.getCarId(topic);
 
-		if (this.exists(id))
+		if (!this.exists(id))
 		{
-			if (this.isAvailabilityUpdate(topic))
-			{
-				boolean availability = Boolean.parseBoolean(message);
-				this.vehicles.get(id).setAvailable(availability);
-				this.log.info("Received Availability update for vehicle " + id + ", Status: " + this.getAvailabilityString(availability));
-			}
+			this.log.error("Received MQTT Message from non-existent car (" + id + ".");
 		}
+
+		boolean availability = Boolean.parseBoolean(message);
+		this.vehicles.get(id).setAvailable(availability);
+		this.log.info("Received Availability update for vehicle " + id + ", Status: " + this.getAvailabilityString(availability));
 	}
 }
