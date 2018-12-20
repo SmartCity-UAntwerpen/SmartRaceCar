@@ -90,6 +90,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		this.locationRepository = locationRepository;
 		this.resourceManager = resourceManager;
 		this.mqttUtils = new MQTTUtils(backendParameters.getMqttBroker(), backendParameters.getMqttUserName(), backendParameters.getMqttPassword(), this);
+		this.mqttUtils.subscribeToTopic(backendParameters.getMqttTopic());
 	}
 
 	public boolean isInQueue(long jobId, JobType type)
@@ -135,6 +136,13 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 	{
 		this.log.info("Received Job request for " + startId + " -> " + endId + " (JobID: " + jobId + ")");
 
+		if (this.jobTracker.exists(jobId))
+		{
+			String errorString = "A job with ID " + jobId + " already exists.";
+			this.log.error(errorString);
+			return new ResponseEntity<>(errorString, HttpStatus.SERVICE_UNAVAILABLE);
+		}
+
 		if (this.resourceManager.getNumAvailableCars() == 0)
 		{
 			this.log.info("There are currently no vehicles available, adding to global queue (No. " + (this.globalJobQueue.size() + 1) + " in line.)");
@@ -159,7 +167,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		{
 			String errorString = "An error occurred while determining the optimal car for a job.";
 			this.log.error(errorString, nsee);
-			return new ResponseEntity<>(errorString, HttpStatus.PRECONDITION_FAILED);
+			return new ResponseEntity<>(errorString, HttpStatus.SERVICE_UNAVAILABLE);
 		}
 		catch (IOException ioe)
 		{
