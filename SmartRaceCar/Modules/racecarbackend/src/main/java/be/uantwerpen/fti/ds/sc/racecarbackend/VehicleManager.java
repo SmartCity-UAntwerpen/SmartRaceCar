@@ -179,7 +179,7 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 		{
 			String errorString = "Tried to set non-existent vehicle's occupation to " + occupied + ", vehicle ID: " + vehicleId;
 			this.log.error(errorString);
-			return;
+			throw new NoSuchElementException(errorString);
 		}
 
 		this.vehicles.get(vehicleId).setOccupied(occupied);
