@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Queue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -48,7 +47,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		return matcher.matches();
 	}
 
-	private void checkJobQueue()
+	private void checkJobQueue() throws IOException
 	{
 		if (!this.localJobQueue.isEmpty())
 		{
@@ -60,9 +59,15 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		}
 	}
 
-	private void scheduleJob(Job job, JobType type)
+	private void scheduleJob(Job job, JobType type) throws IOException
 	{
 		this.vehicleManager.setOccupied(job.getVehicleId(), true);
+
+		if (job.getVehicleId() == -1)
+		{
+			long vehicleId = this.resourceManager.getOptimalCar(job.getStartId());
+			job.setVehicleId(vehicleId);
+		}
 
 		switch (type)
 		{
@@ -195,7 +200,17 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		}
 
 		Job job = new Job(jobId, startId, endId, vehicleId);
-		this.scheduleJob(job, JobType.GLOBAL);
+
+		try
+		{
+			this.scheduleJob(job, JobType.GLOBAL);
+		}
+		catch (IOException ioe)
+		{
+			String errorString = "Failed to schedule global job " + jobId;
+			this.log.error(errorString, ioe);
+			return new ResponseEntity<>(errorString, HttpStatus.SERVICE_UNAVAILABLE);
+		}
 
 		return new ResponseEntity<>("starting", HttpStatus.OK);
 	}
@@ -249,7 +264,18 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		}
 
 		Job job = new Job(this.jobTracker.generateLocalJobId(), vehicleLocation, destId, vehicleId);
-		this.scheduleJob(job, JobType.GLOBAL);
+
+
+		try
+		{
+			this.scheduleJob(job, JobType.LOCAL);
+		}
+		catch (IOException ioe)
+		{
+			String errorString = "Failed to schedule local job " + job.getJobId();
+			this.log.error(errorString, ioe);
+			return new ResponseEntity<>(errorString, HttpStatus.SERVICE_UNAVAILABLE);
+		}
 
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
@@ -272,7 +298,16 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		if (this.isRouteUpdate(topic) && (message.equals(ROUTE_UPDATE_DONE)))
 		{
 			this.log.info("Vehicle " + vehicleId + " completed its job. Checking for other queued jobs.");
-			this.checkJobQueue();
+
+			try
+			{
+				this.checkJobQueue();
+			}
+			catch (IOException ioe)
+			{
+				String errorString = "An error occurred while checking the job queue.";
+				this.log.error(errorString);
+			}
 		}
 	}
 }

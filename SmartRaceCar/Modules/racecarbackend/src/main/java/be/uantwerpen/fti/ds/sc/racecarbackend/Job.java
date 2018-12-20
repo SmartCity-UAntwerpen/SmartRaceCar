@@ -67,6 +67,11 @@ class Job
 		return vehicleId;
 	}
 
+	public void setVehicleId(long vehicleId)
+	{
+		this.vehicleId = vehicleId;
+	}
+
 	/**
 	 * Return the progress of this job (As a percentage)
 	 * @return
