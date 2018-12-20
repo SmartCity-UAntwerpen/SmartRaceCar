@@ -185,6 +185,7 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 		this.vehicles.get(vehicleId).setOccupied(occupied);
 	}
 
+	@Deprecated
 	public boolean isOccupied(long vehicleId) throws NoSuchElementException
 	{
 		if (!this.vehicles.containsKey(vehicleId))
