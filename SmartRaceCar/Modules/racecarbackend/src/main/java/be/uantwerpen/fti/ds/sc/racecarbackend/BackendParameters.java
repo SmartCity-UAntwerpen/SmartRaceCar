@@ -22,7 +22,7 @@ public class BackendParameters extends Parameters
 		this.backboneRESTUrl = backendParameters.getBackboneRESTURL();
 	}
 
-	public BackendParameters(Parameters parameters, boolean disableBackbone, String String backboneRESTUrl)
+	public BackendParameters(Parameters parameters, boolean disableBackbone, String backboneRESTUrl)
 	{
 		super(parameters);
 		this.disableBackbone = disableBackbone;
