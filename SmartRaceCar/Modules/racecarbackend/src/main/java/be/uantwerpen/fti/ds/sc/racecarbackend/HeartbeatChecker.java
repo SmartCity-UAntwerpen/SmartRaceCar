@@ -21,27 +21,18 @@ import java.util.regex.Pattern;
 @Component
 class HeartbeatChecker implements MQTTListener
 {
+	private static final String MQTT_POSTFIX = "heartbeat/#";
+
 	@Value("${Racecar.Heartbeat.interval}")
 	private long CHECK_INTERVAL;				// Interval between heartbeat checks (in s)
 
 	@Value("${Racecar.Heartbeat.max_age}")
 	private long MAX_DELTA;			// Maximum amount of time between consecutive heartbeats (in ms)
 
-	private static class MQTTConstants
-	{
-		private static final Pattern HEARTBEAT_REGEX = Pattern.compile("racecar/[0-9]+/heartbeat");
-	}
-
 	private Logger log;
 	private RESTUtils restUtils;
 	private MQTTUtils mqttUtils;
 	private Map<Long, Date> heartbeats;
-
-	private boolean isHeartbeat(String topic)
-	{
-		Matcher matcher = HeartbeatChecker.MQTTConstants.HEARTBEAT_REGEX.matcher(topic);
-		return matcher.matches();
-	}
 
 	private void updateHeartbeat(long vehicleId)
 	{
@@ -70,7 +61,7 @@ class HeartbeatChecker implements MQTTListener
 
 			if (delta > MAX_DELTA) //longer than 90 seconds
 			{
-				restUtils.getCall("delete/" + vehicleId);
+				this.restUtils.getCall("delete/" + vehicleId);
 				this.log.warn("Vehicle with ID: " + vehicleId + " was removed since it hasn't responded for over 90s");
 			}
 		}
@@ -115,24 +106,22 @@ class HeartbeatChecker implements MQTTListener
 	{
 		this.log = LoggerFactory.getLogger(HeartbeatChecker.class);
 
-		this.log.debug("Creating REST Utils for \"" + parameters.getRESTCarmanagerURL() + "\"...");
+		this.log.debug("Initializing Heartbeat checker...");
 
 		this.restUtils = new RESTUtils(parameters.getRESTCarmanagerURL());
 		this.mqttUtils = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
-		this.mqttUtils.subscribeToTopic(parameters.getMqttTopic());
+		this.mqttUtils.subscribeToTopic(parameters.getMqttTopic() + MQTT_POSTFIX);
 
 		this.heartbeats = new ConcurrentHashMap<>();
+
+		this.log.debug("Initialized Heartbeat checker.");
 	}
 
 	@Override
 	public void parseMQTT(String topic, String message)
 	{
-		long id = TopicUtils.getCarId(topic);
-
-		if (this.isHeartbeat(topic))
-		{
-			this.log.info("Received Heartbeat from " + id);
-			this.updateHeartbeat(id);
-		}
+		long vehicleId = TopicUtils.getCarId(topic);
+		this.log.info("Received Heartbeat from " + vehicleId);
+		this.updateHeartbeat(vehicleId);
 	}
 }

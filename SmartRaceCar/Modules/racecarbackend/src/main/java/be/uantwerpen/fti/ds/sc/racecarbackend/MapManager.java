@@ -164,10 +164,10 @@ public class MapManager implements MQTTListener, WaypointValidator, WaypointRepo
 			for (long vehicleId: this.vehicleRepository.getVehicleIds())
 			{
 				this.log.info("change map command sent to vehicle with ID: " + vehicleId);
-				this.mqttUtils.publishMessage("racecar/" + vehicleId + "/changeMap", mapName);
+				this.mqttUtils.publishMessage("racecar/changeMap/" + vehicleId, mapName);
 			}
 
-			loadWayPoints(this.params.getCurrentMap());
+			this.loadWayPoints(this.params.getCurrentMap());
 
 			this.log.info("Changed current map to " + mapName);
 
@@ -192,10 +192,10 @@ public class MapManager implements MQTTListener, WaypointValidator, WaypointRepo
 		switch (mapName)
 		{
 			case "zbuilding":
-				this.wayPoints.put(46L, new WayPoint(46, 0.5f, (float) 0, (float) -1, (float) 0.02));
-				this.wayPoints.put(47L, new WayPoint(47, -13.4f, (float) -0.53, (float) 0.71, (float) 0.71));
-				this.wayPoints.put(48L, new WayPoint(48, -27.14f, (float) -1.11, (float) -0.3, (float) 0.95));
-				this.wayPoints.put(49L, new WayPoint(49, -28.25f, (float) -9.19, (float) -0.71, (float) 0.71));
+				this.wayPoints.put(46L, new WayPoint(46, 0.5f, 0.0f, -1.0f, 0.02f));
+				this.wayPoints.put(47L, new WayPoint(47, -13.4f, -0.53f, 0.71f, 0.71f));
+				this.wayPoints.put(48L, new WayPoint(48, -27.14f, -1.11f, -0.3f, 0.95f));
+				this.wayPoints.put(49L, new WayPoint(49, -28.25f, -9.19f, -0.71f, 0.71f));
 				break;
 			case "V314":
 				this.wayPoints.put(46L, new WayPoint(46, (float) -3.0, (float) -1.5, (float) 0.07, (float) 1.00));

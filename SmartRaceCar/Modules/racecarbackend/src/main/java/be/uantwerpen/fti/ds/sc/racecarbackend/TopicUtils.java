@@ -10,7 +10,7 @@ public class TopicUtils
 {
 	private static class MQTTConstants
 	{
-		private static final Pattern CAR_ID_REGEX = Pattern.compile("racecar/([0-9]+)/.*");
+		private static final Pattern CAR_ID_REGEX = Pattern.compile("racecar/[A-Za-z_/]+/([0-9]+)");
 	}
 
 	/**
