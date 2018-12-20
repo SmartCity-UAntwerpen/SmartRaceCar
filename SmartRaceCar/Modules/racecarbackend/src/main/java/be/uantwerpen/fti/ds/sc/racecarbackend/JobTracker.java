@@ -203,14 +203,14 @@ public class JobTracker implements MQTTListener
     public void addGlobalJob(long jobId, long vehicleId, long startId, long endId)
     {
         this.log.info("Adding new Global Job for tracking (Job ID: " + jobId + ", " + startId + " -> " + endId + ", Vehicle: " + vehicleId + ").");
-        Job job = new Job(startId, endId, vehicleId);
+        Job job = new Job(jobId, startId, endId, vehicleId);
         this.globalJobs.put(jobId, job);
     }
 
     public void addLocalJob(long jobId, long vehicleId, long startId, long endId)
     {
         this.log.info("Adding new Local Job for tracking (Job ID: " + jobId + ", " + startId + " -> " + endId + ", Vehicle: " + vehicleId + ").");
-        Job job = new Job(startId, endId, vehicleId);
+        Job job = new Job(jobId, startId, endId, vehicleId);
         this.localJobs.put(jobId, job);
     }
 
