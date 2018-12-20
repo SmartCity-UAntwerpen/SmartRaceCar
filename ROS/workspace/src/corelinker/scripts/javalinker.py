@@ -43,7 +43,8 @@ currentz = 3
 currentw = 4
 
 navplan_tolerance = 0.5
-navplan_speed = 1.5
+navplan_speed = 3.0
+initial_pose_run = 5.0
 
 navstack_speed = 4.0
 
@@ -104,7 +105,8 @@ def set_startpoint(json_string):
                     str(start_location.orz) + "," + str(start_location.orw))
     current_location = start_location
 
-    rosmodule.publish_initialpose(start_location)
+    for i in range(0, initial_pose_run):
+        rosmodule.publish_initialpose(start_location)
 
 
 def set_next_waypoint(json_string):
