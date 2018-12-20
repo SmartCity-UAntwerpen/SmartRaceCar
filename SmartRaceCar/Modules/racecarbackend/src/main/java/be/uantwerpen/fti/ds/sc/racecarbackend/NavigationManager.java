@@ -18,26 +18,14 @@ public class NavigationManager implements MQTTListener, LocationRepository
 {
 	private static class MQTTConstants
 	{
-		private static final Pattern COST_ANSWER_REGEX = Pattern.compile("racecar/[0-9]+/costanswer");
 		private static final Pattern LOCATION_UPDATE_REGEX = Pattern.compile("racecar/[0-9]+/locationupdate");
 	}
 
-	private static final Type COST_TYPE = (new TypeToken<Cost>()
-	{
-	}).getType();
-
 	private Logger log;
 	private MQTTUtils mqttUtils;
-	private java.util.Map<Long, Long> vehicleLocations;	// This map keeps track of the location of every vehicle
+	private java.util.Map<Long, Long> vehicleLocations;
+	// This map keeps track of the location of every vehicle
 	// The key is the vehicleId, the value is the locationId
-
-	/*
-	private boolean isCostAnswer(String topic)
-	{
-		Matcher matcher = MQTTConstants.COST_ANSWER_REGEX.matcher(topic);
-		return matcher.matches();
-	}
-	*/
 
 	private boolean isLocationUpdate(String topic)
 	{
@@ -58,30 +46,6 @@ public class NavigationManager implements MQTTListener, LocationRepository
 
 		this.log.info("Initialized Navigation Manager.");
 	}
-
-	/*
-	 *
-	 * 	REST ENDPOINTS
-	 *
-	 */
-	/*
-	@Deprecated
-	@RequestMapping(value="/carmanager/posAll", method=RequestMethod.GET, produces=MediaType.APPLICATION_JSON)
-	public @ResponseBody ResponseEntity<String> getPositions()
-	{
-		List<Location> locations = new ArrayList<>();
-
-		for (Long vehicleId : this.vehicleLocations.keySet())
-		{
-			Location location = new Location(vehicleId, this.vehicleLocations.get(vehicleId), this.vehicleLocations.get(vehicleId), 0);
-			locations.add(location);
-		}
-
-		this.log.info("Request for all positions processed, returning " + locations.size() + " locations.");
-
-		return new ResponseEntity<>(JSONUtils.arrayToJSONString(locations), HttpStatus.OK);
-	}
-	*/
 
 	@Override
 	public void setLocation(long vehicleId, long locationId)
@@ -106,83 +70,6 @@ public class NavigationManager implements MQTTListener, LocationRepository
 		return this.vehicleLocations.get(vehicleId);
 	}
 
-	/**
-	 * REST GET server service to get a calculation cost of all available vehicles. It requests from each vehicle a calculation
-	 * of a possible route and returns a JSON containing all answers.
-	 *
-	 * @param startId Starting waypoint ID.
-	 * @param endId   Ending waypoint ID.
-	 * @return REST response of the type JSON containg all calculated costs of each vehicle.
-	 */
-	/*
-	@Deprecated
-	@RequestMapping(value = "calcWeight/{startId}/{endId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON)
-	public @ResponseBody ResponseEntity<String> calculateCostsRequest(@PathVariable("startId") long startId, @PathVariable("endId") long endId) throws InterruptedException
-	{
-		this.log.info("Received cost request for " + startId + " -> " + endId + ".");
-
-		if (!this.waypointValidator.exists(startId))
-		{
-			String errorString = "Request cost with non-existent start waypoint " + startId + ".";
-			this.log.error(errorString);
-
-			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
-		}
-
-		if (!this.waypointValidator.exists(endId))
-		{
-			String errorString = "Request cost with non-existent end waypoint " + endId + ".";
-			this.log.error(errorString);
-
-			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
-		}
-
-		if (this.vehicleRepository.getNumVehicles() == 0)
-		{
-			String errorString = "No vehicles exist.";
-			this.log.error(errorString);
-
-			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
-		}
-
-		int totalVehicles = 0;
-		int timer = 0;
-
-		for (long vehicleId: this.vehicleRepository.getVehicleIds())
-		{
-			Vehicle vehicle = this.vehicleRepository.get(vehicleId);
-
-			if (vehicle.isAvailable())
-			{
-				totalVehicles++;
-				this.mqttUtils.publishMessage("racecar/" + vehicle.getID() + "/costrequest", startId + " " + endId);
-			}
-		}
-
-		// Runs for 100 iterations, each a little over 200ms
-		while ((this.costList.size() < totalVehicles) && (timer != 100))
-		{
-			// Wait for each vehicle to complete the request or timeout after 100 attempts.
-			this.log.info("waiting for vehicles to complete request.");
-			Thread.sleep(200);
-			timer++;
-		}
-
-		List<Cost> costCopy = new ArrayList<>();
-
-		for (Cost cost : this.costList)
-		{
-			costCopy.add(cost.clone());
-		}
-
-		this.costList.clear();
-
-		this.log.info("Cost calculation request completed.");
-
-		return new ResponseEntity<>(JSONUtils.arrayToJSONString(costCopy), HttpStatus.OK);
-	}
-	*/
-
 	/*
 	 *
 	 *      MQTT Parsing
@@ -193,15 +80,7 @@ public class NavigationManager implements MQTTListener, LocationRepository
 	{
 		long vehicleId = TopicUtils.getCarId(topic);
 
-		/*
-		// We received an MQTT cost answer
-		if (this.isCostAnswer(topic))
-		{
-			Cost cost = (Cost) JSONUtils.getObject("value", COST_TYPE);
-			this.costList.add(cost);
-		}*/
-		// We received an MQTT location update
-		/*else*/ if (this.isLocationUpdate(topic))
+		if (this.isLocationUpdate(topic))
 		{
 			long locationId = Long.parseLong(message);
 			this.vehicleLocations.put(vehicleId, locationId);
