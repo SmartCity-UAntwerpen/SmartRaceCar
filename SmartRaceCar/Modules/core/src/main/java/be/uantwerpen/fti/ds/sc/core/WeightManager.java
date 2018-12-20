@@ -1,24 +1,24 @@
 package be.uantwerpen.fti.ds.sc.core;
 
-import be.uantwerpen.fti.ds.sc.common.Cost;
-import be.uantwerpen.fti.ds.sc.common.JSONUtils;
-import be.uantwerpen.fti.ds.sc.common.Point;
+import be.uantwerpen.fti.ds.sc.common.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class WeightManager
+public class WeightManager implements MQTTListener
 {
 	private Core core;
 	private Logger log;
+	private MQTTUtils mqttUtils;
 
 
 	public WeightManager(Core core)
 	{
 		this.log = LoggerFactory.getLogger(WeightManager.class);
 		this.core = core;
+		this.mqttUtils = new MQTTUtils(this.core.getParams().getMqttBroker(), this.core.getParams().getMqttUserName(), this.core.getParams().getMqttPassword(), this);
 	}
 
 	/**
@@ -53,8 +53,13 @@ public class WeightManager
 		this.log.info("Cost request calculated.");
 		cost.setStatus(this.core.isOccupied());
 		cost.setIdVehicle(this.core.getID());
-		this.core.getMqttUtils().publishMessage("racecar/" + this.core.getID() + "/costanswer", JSONUtils.objectToJSONString(cost));
+		this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/costanswer", JSONUtils.objectToJSONString(cost));
 	}
 
 
+	@Override
+	public void parseMQTT(String topic, String message)
+	{
+
+	}
 }

@@ -1,8 +1,6 @@
 package be.uantwerpen.fti.ds.sc.core;
 
-import be.uantwerpen.fti.ds.sc.common.FileUtils;
-import be.uantwerpen.fti.ds.sc.common.JSONUtils;
-import be.uantwerpen.fti.ds.sc.common.Map;
+import be.uantwerpen.fti.ds.sc.common.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -24,9 +22,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 
-public class MapManager
+public class MapManager implements MQTTListener
 {
 	private Core core;
+	private MQTTUtils mqttUtils;
 
 	private HashMap<String, Map> loadedMaps;                                // Map of all loaded maps.
 
@@ -34,10 +33,13 @@ public class MapManager
 
 	public MapManager(Core core)
 	{
-
 		this.core = core;
 
 		this.log = LoggerFactory.getLogger(MapManager.class);
+
+		this.mqttUtils = new MQTTUtils(this.core.getParams().getMqttBroker(), this.core.getParams().getMqttUserName(), this.core.getParams().getMqttPassword(), this);
+		this.mqttUtils.subscribeToTopic("racecar/changeMap/" + this.core.getID());
+
 		this.log.info("starting to load maps");
 		this.loadedMaps = new HashMap<>();
 		String mapsFolder = this.findMapsFolder();
@@ -125,8 +127,7 @@ public class MapManager
 	public boolean configureMap()
 	{
 		boolean contains;
-		File mapDir = new File(this.findMapsFolder());
-		String mapPath = mapDir + "/maps.xml";
+
 
 		String mapName = this.core.getRestUtils().getTextPlain("getmapname");
 		if (this.loadedMaps.containsKey(mapName))
@@ -145,6 +146,8 @@ public class MapManager
 			this.loadedMaps.put(mapName, map);
 			this.log.info("Added downloaded map : " + mapName);
 
+			File mapDir = new File(this.findMapsFolder());
+			String mapPath = mapDir + "/maps.xml";
 			this.writeMapsXML(mapPath, mapName);
 
 			this.log.info("Current map '" + mapName + "' downloaded and set as current map.");
@@ -213,5 +216,11 @@ public class MapManager
 		this.core.getRestUtils().getFile("getmappgm/" + mapName, this.core.getParams().getNavstackPath(), mapName, "pgm");
 		this.core.getRestUtils().getFile("getmapyaml/" + mapName, this.core.getParams().getNavstackPath(), mapName, "yaml");
 
+	}
+
+	@Override
+	public void parseMQTT(String topic, String message)
+	{
+		this.configureMap();
 	}
 }
