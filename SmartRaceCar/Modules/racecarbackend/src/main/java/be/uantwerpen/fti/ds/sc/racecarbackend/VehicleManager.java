@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import javax.management.QueryEval;
 import javax.ws.rs.core.MediaType;
 import java.util.*;
 import java.util.Map;
@@ -22,10 +23,11 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 	private static final String MQTT_POSTFIX = "available/#";
 
 	private Logger log;
+	private Parameters parameters;
 	private MQTTUtils mqttUtils;
-	private NavigationManager navigationManager;
 	private WaypointValidator waypointValidator;
-	private HeartbeatChecker heartbeatChecker;
+	private Queue<Long> unusedIds;                    // This set contains all IDs of vehicles that were assigned once and then deleted
+													// its a simple way to reuse IDs.
 	private Map<Long, Vehicle> vehicles;
 
 	private String getAvailabilityString(boolean available)
@@ -44,23 +46,20 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 	}
 
 	@Autowired
-	public VehicleManager(@Qualifier("backend") BackendParameters parameters, WaypointValidator waypointValidator, NavigationManager navigationManager, HeartbeatChecker heartbeatChecker)
+	public VehicleManager(@Qualifier("backend") BackendParameters parameters, WaypointValidator waypointValidator)
 	{
-		BackendParameters parameters1 = parameters;
+		this.parameters = parameters;
 		this.log = LoggerFactory.getLogger(this.getClass());
 
 		this.log.info("Initializing Vehicle Manager...");
 
-		this.mqttUtils = new MQTTUtils(parameters1.getMqttBroker(), parameters1.getMqttUserName(), parameters1.getMqttPassword(), this);
-		this.mqttUtils.subscribeToTopic(parameters1.getMqttTopic() + MQTT_POSTFIX);
+		this.mqttUtils = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
+		this.mqttUtils.subscribeToTopic(parameters.getMqttTopic() + MQTT_POSTFIX);
 
-		RESTUtils backboneRestUtils = new RESTUtils(parameters.getBackboneRESTURL());
-
-		this.navigationManager = navigationManager;
 		this.waypointValidator = waypointValidator;
-		this.heartbeatChecker = heartbeatChecker;
 
 		this.vehicles = new HashMap<>();
+		this.unusedIds = new LinkedList<>();
 
 		this.log.info("Initialized Vehicle Manager.");
 	}
@@ -84,9 +83,7 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 	@Override
 	public List<Long> getVehicleIds()
 	{
-		List<Long> idList = new ArrayList<>();
-		idList.addAll(this.vehicles.keySet());
-		return idList;
+		return new ArrayList<>(this.vehicles.keySet());
 	}
 
 	@Override
@@ -106,10 +103,10 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 		if (this.vehicles.containsKey(vehicleId))
 		{
 			this.vehicles.remove(vehicleId);
-			this.navigationManager.removeVehicle(vehicleId);
-			this.heartbeatChecker.removeVehicle(vehicleId);
+			this.mqttUtils.publishMessage(this.parameters.getMqttTopic() + "/delete/" + vehicleId, "");
 
 			this.log.info("Removing vehicle " + vehicleId);
+			this.unusedIds.add(vehicleId);
 
 			return new ResponseEntity<>(HttpStatus.OK);
 		}
@@ -134,12 +131,18 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 
 		long newVehicleId = -1;
 
-		//todo: Implement a proper way to give out vehicle IDs
-		newVehicleId = this.vehicles.size();
+		if (!this.unusedIds.isEmpty())
+		{
+			newVehicleId = this.unusedIds.remove();
+		}
+		else
+		{
+			newVehicleId = this.vehicles.size();
+		}
+
+		this.mqttUtils.publishMessage(this.parameters.getMqttTopic() + "register/" + newVehicleId, Long.toString(startWaypoint));
 
 		this.vehicles.put(newVehicleId, new Vehicle(newVehicleId));
-		this.navigationManager.setLocation(newVehicleId, startWaypoint);
-		this.heartbeatChecker.addVehicle(newVehicleId);
 
 		this.log.info("Registered new vehicle (" + newVehicleId + "), Current Waypoint: " + startWaypoint);
 

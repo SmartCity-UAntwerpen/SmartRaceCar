@@ -16,29 +16,51 @@ import java.util.regex.Pattern;
 @Controller
 public class NavigationManager implements MQTTListener, LocationRepository
 {
-	/*
-	private static class MQTTConstants
-	{
-		private static final Pattern LOCATION_UPDATE_REGEX = Pattern.compile("racecar/[0-9]+/locationupdate");
-	}
-	*/
-
-	private static final String MQTT_POSTFIX = "locationupdate/#";
+	private static final String MQTT_LOCATION_POSTFIX = "locationupdate/#";
+	private static final String MQTT_REGISTER_POSTFIX = "register/#";
+	private static final String MQTT_DELETE_POSTFIX = "delete/#";
 
 	private Logger log;
+	private Parameters parameters;
 	private MQTTUtils mqttUtils;
 	private java.util.Map<Long, Long> vehicleLocations;
 	// This map keeps track of the location of every vehicle
 	// The key is the vehicleId, the value is the locationId
 
+	private boolean isDeletion(String topic)
+	{
+		// Remove the trailing '#' and check the topic
+		String deleteTopic = MQTT_DELETE_POSTFIX.substring(0, MQTT_DELETE_POSTFIX.length() - 2);
+		return topic.startsWith(deleteTopic);
+	}
+
+	private void removeVehicle(long vehicleId)
+	{
+		this.log.info("Removing vehicle " + vehicleId);
+
+		if (this.vehicleLocations.containsKey(vehicleId))
+		{
+			this.vehicleLocations.remove(vehicleId);
+		}
+		else
+		{
+			String errorString = "Tried to remove non-existent vehicle (" + vehicleId + ").";
+			this.log.error(errorString);
+			throw new IndexOutOfBoundsException (errorString);
+		}
+	}
+
 	public NavigationManager(Parameters parameters)
 	{
 		this.log = LoggerFactory.getLogger(NavigationManager.class);
+		this.parameters = parameters;
 
 		this.log.info("Initializing Navigation Manager...");
 
 		this.mqttUtils = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
-		this.mqttUtils.subscribeToTopic(parameters.getMqttTopic() + MQTT_POSTFIX);
+		this.mqttUtils.subscribeToTopic(parameters.getMqttTopic() + MQTT_LOCATION_POSTFIX);
+		this.mqttUtils.subscribeToTopic(parameters.getMqttTopic() + MQTT_REGISTER_POSTFIX);
+		this.mqttUtils.subscribeToTopic(parameters.getMqttTopic() + MQTT_DELETE_POSTFIX);
 
 		this.vehicleLocations = new HashMap<>();
 
@@ -76,25 +98,24 @@ public class NavigationManager implements MQTTListener, LocationRepository
 	@Override
 	public void parseMQTT(String topic, String message)
 	{
+
 		long vehicleId = TopicUtils.getCarId(topic);
-		long locationId = Long.parseLong(message);
-		this.vehicleLocations.put(vehicleId, locationId);
-		this.log.info("Received location update from vehicle " + vehicleId + ", new location is " + locationId);
-	}
 
-	public void removeVehicle(long vehicleId)
-	{
-		this.log.info("Removing vehicle " + vehicleId);
-
-		if (this.vehicleLocations.containsKey(vehicleId))
+		if (this.isDeletion(topic))
 		{
-			this.vehicleLocations.remove(vehicleId);
+			this.removeVehicle(vehicleId);
 		}
 		else
 		{
-			String errorString = "Tried to remove non-existent vehicle (" + vehicleId + ").";
-			this.log.error(errorString);
-			throw new IndexOutOfBoundsException (errorString);
+			// If the message isn't a deletion its a registration or a location update.
+			// Parsing is the same either way.
+
+			// The content of the location update and register messages is the same (The vehicle's location)
+			// So we don't need any special parsing
+			long locationId = Long.parseLong(message);
+
+			this.vehicleLocations.put(vehicleId, locationId);
+			this.log.info("Received location update from vehicle " + vehicleId + ", new location is " + locationId);
 		}
 	}
 }
