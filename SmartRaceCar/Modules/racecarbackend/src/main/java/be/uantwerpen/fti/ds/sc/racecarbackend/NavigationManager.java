@@ -36,7 +36,7 @@ public class NavigationManager implements MQTTListener, LocationRepository
 
 	private void removeVehicle(long vehicleId)
 	{
-		this.log.info("Removing vehicle " + vehicleId);
+		this.log.info("Removing vehicle " + vehicleId + " from NavigationManager.");
 
 		if (this.vehicleLocations.containsKey(vehicleId))
 		{
