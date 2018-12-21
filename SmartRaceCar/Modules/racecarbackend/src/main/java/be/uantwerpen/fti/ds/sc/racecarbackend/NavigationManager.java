@@ -31,7 +31,7 @@ public class NavigationManager implements MQTTListener, LocationRepository
 	{
 		// Remove the trailing '#' and check the topic
 		String deleteTopic = MQTT_DELETE_POSTFIX.substring(0, MQTT_DELETE_POSTFIX.length() - 2);
-		return topic.startsWith(deleteTopic);
+		return topic.startsWith(this.parameters.getMqttTopic() + deleteTopic);
 	}
 
 	private void removeVehicle(long vehicleId)
