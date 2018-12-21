@@ -1,6 +1,8 @@
 package be.uantwerpen.fti.ds.sc.core;
 
 import be.uantwerpen.fti.ds.sc.common.*;
+import be.uantwerpen.fti.ds.sc.core.Communication.Communicator;
+import be.uantwerpen.fti.ds.sc.core.Communication.CoreLinkerCommunicator;
 import com.github.lalyos.jfiglet.FigletFont;
 import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
@@ -34,9 +36,10 @@ class Core implements TCPListener, MQTTListener
 	// Subsystems
 	private HeartbeatPublisher heartbeatPublisher;
 	private Navigator navigator;
-	private WeightManager weightManager;
+	//private WeightManager weightManager;
 	private CoreParameters params;
 	private MapManager mapManager;
+	private CoreLinkerCommunicator coreLinkerCommunicator;
 
 
 	/**
@@ -75,39 +78,22 @@ class Core implements TCPListener, MQTTListener
 		this.requestWaypoints();
 		this.register();
 
-        /*Runtime.getRuntime().addShutdownHook(
-                new Thread(new Runnable() {public void run() {
-                    Thread thread = new Thread(new Runnable() {public void run(){
-                        killCar();
-                    }});
-                    thread.start();
-                    long endTimeMillis = System.currentTimeMillis() + 10000; //10 second timeout
-                    while (thread.isAlive()) {
-                        if (System.currentTimeMillis() > endTimeMillis) {
-                            this.log.warning("CORE", "Timeout was exceeded on exiting the system");
-                            System.exit(1);
-                        }
-                        try {
-                            Thread.sleep(500);
-                        }
-                        catch (InterruptedException t) {}
-                    }
-            }
-        }));*/
-
         this.log.info("Starting MQTT connection on " + this.params.getMqttBroker());
 		this.mqttUtils = new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this);
 		//this.mqttUtils.subscribeToTopic("racecar/" + ID + "/#");
 
 		this.log.info("Connecting TCP on port " + clientPort + " and " + serverPort);
-		this.tcpUtils = new TCPUtils(clientPort, serverPort, this);
-		this.tcpUtils.start();
+		//this.tcpUtils = new TCPUtils(clientPort, serverPort, this);
+		//this.tcpUtils.start();
+
+		this.coreLinkerCommunicator = new Communicator(this.params, this, clientPort, serverPort);
+		this.coreLinkerCommunicator.start();
 
 		if (!this.params.isDebug())
 		{
 			this.log.debug("Waiting 3 seconds before sending connect");
 			Thread.sleep(3000);
-			this.connectSend();
+			this.coreLinkerCommunicator.connect();
 		}
 
 		this.mapManager = new MapManager(this);
@@ -122,7 +108,7 @@ class Core implements TCPListener, MQTTListener
 		}
 
 
-		this.sendStartPoint();
+		this.coreLinkerCommunicator.sendStartpoint(this.wayPoints.get(this.startPoint));
 
 		this.heartbeatPublisher = new HeartbeatPublisher(new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this), this.ID);
 		this.heartbeatPublisher.start();
@@ -131,7 +117,7 @@ class Core implements TCPListener, MQTTListener
 		this.navigator = new Navigator(this);
 		this.log.info("Navigator was started.");
 
-		this.weightManager = new WeightManager(this);
+		//this.weightManager = new WeightManager(this);
 		this.log.info("Weightmanager was started");
 	}
 
@@ -152,7 +138,8 @@ class Core implements TCPListener, MQTTListener
 
 	public TCPUtils getTcpUtils()
 	{
-		return this.tcpUtils;
+		//return this.tcpUtils;
+		return this.coreLinkerCommunicator.getTCPUtils();
 	}
 
 	public boolean isOccupied()
@@ -184,11 +171,14 @@ class Core implements TCPListener, MQTTListener
 		points.add(this.wayPoints.get(wayPointIDs[1]));
 		if (!this.params.isDebug())
 		{
-			this.tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("costtiming", points));
-		} else
+			//this.tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("costtiming", points));
+			this.coreLinkerCommunicator.timeRequest(points);
+		}
+		else
 		{
 			this.log.info("Debug mode -> timing = 5");
-			this.weightManager.costCalculationComplete(new Cost(false, 5, 5, this.ID));
+			//this.weightManager.costCalculationComplete(new Cost(false, 5, 5, this.ID));
+			this.navigator.timingCalculationComplete(new Cost(false, 5, 5, this.ID));
 		}
 	}
 
@@ -268,33 +258,6 @@ class Core implements TCPListener, MQTTListener
 	 */
 	public void parseMQTT(String topic, String message)
 	{
-		/*this.log.info("received MQTT message: " + message);
-
-		if (topic.matches("racecar/[0-9]+/job"))
-		{
-			this.navigator.handleJobRequest(message);
-		}
-		else if (topic.matches("racecar/[0-9]+/costrequest"))
-		{
-			String[] wayPointStringValues = message.split(" ");
-			try
-			{
-				long[] wayPointValues = new long[wayPointStringValues.length];
-				for (int index = 0; index < wayPointStringValues.length; index++)
-				{
-					wayPointValues[index] = Integer.parseInt(wayPointStringValues[index]);
-				}
-				this.weightManager.costRequest(wayPointValues);
-			}
-			catch (NumberFormatException e)
-			{
-				this.log.warn("Parsing MQTT gives bad result: " + e);
-			}
-		}
-		else if (topic.matches("racecar/[0-9]+/changeMap"))
-		{
-			this.mapManager.configureMap();
-		}*/
 	}
 
 	/**
@@ -340,11 +303,12 @@ class Core implements TCPListener, MQTTListener
 					break;
 				case "restart":
 					this.sendAvailability(true);
-					this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentPosition", this.wayPoints.get(this.startPoint)));
+					//this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentPosition", this.wayPoints.get(this.startPoint)));
+					this.coreLinkerCommunicator.sendCurrentPosition(this.wayPoints.get(this.startPoint));
 					this.log.info("Vehicle restarted.");
 					break;
 				case "cost":
-					this.weightManager.costCalculationComplete((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
+					//this.weightManager.costCalculationComplete((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
 					break;
 				case "costtiming":
 					this.navigator.timingCalculationComplete((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
@@ -380,8 +344,9 @@ class Core implements TCPListener, MQTTListener
 	{
 		this.log.info("Vehicle kill request. Closing connections and shutting down...");
 		this.restUtils.getCall("delete/" + this.ID);
-		if (!this.params.isDebug()) this.tcpUtils.closeTCP();
+		if (!this.params.isDebug())
 		{
+			this.coreLinkerCommunicator.disconnect();
 			this.mqttUtils.closeMQTT();
 		}
 		System.exit(0);
