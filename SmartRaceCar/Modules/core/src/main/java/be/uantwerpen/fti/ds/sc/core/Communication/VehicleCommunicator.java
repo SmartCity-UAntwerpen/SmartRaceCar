@@ -80,12 +80,6 @@ public class VehicleCommunicator implements GeneralVehicleCommunicator, MapVehic
 	}
 
 	@Override
-	public TCPUtils getTCPUtils()
-	{
-		return this.tcpUtils;
-	}
-
-	@Override
 	public void setMap(Map map)
 	{
 		String json = JSONUtils.objectToJSONStringWithKeyWord("currentMap", map);

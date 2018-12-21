@@ -60,12 +60,6 @@ public class BackendCommunicator implements GeneralBackendCommunicator, MapBacke
 	}
 
 	@Override
-	public RESTUtils getRESTUtils()
-	{
-		return this.restUtils;
-	}
-
-	@Override
 	public String getMapName()
 	{
 		return this.restUtils.getTextPlain("getmapname");

@@ -97,7 +97,7 @@ class Core implements TCPListener, MQTTListener
 			Thread.sleep(10000); //10 seconds delay so the map can load before publishing the startpoint
 		}
 
-		this.navigator = new Navigator(this, this.params, vehicleCommunicator, wayPoints);
+		this.navigator = new Navigator(this.ID, this.params, vehicleCommunicator, wayPoints);
 		this.navigator.sendStartPoint(this.startPoint);
 
 		this.heartbeatPublisher = new HeartbeatPublisher(new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this), this.ID);
@@ -120,18 +120,6 @@ class Core implements TCPListener, MQTTListener
 	public CoreParameters getParams()
 	{
 		return this.params;
-	}
-
-	@Deprecated
-	public TCPUtils getTcpUtils()
-	{
-		return this.vehicleCommunicator.getTCPUtils();
-	}
-
-	@Deprecated
-	public RESTUtils getRestUtils()
-	{
-		return this.backendCommunicator.getRESTUtils();
 	}
 
 	/**

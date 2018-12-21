@@ -10,7 +10,7 @@ import java.util.*;
 
 public class Navigator implements MQTTListener
 {
-	private Core core;
+	private long ID;
 	private CoreParameters params;
 	private Logger log;
 	private MQTTUtils mqttUtils;
@@ -27,11 +27,11 @@ public class Navigator implements MQTTListener
 	private int routeSize;                                                   // Current route's size.
 
 
-	public Navigator(Core core, CoreParameters params, NavigationVehicleCommunication vehicle, HashMap<Long, WayPoint> wayPoints)
+	public Navigator(long ID, CoreParameters params, NavigationVehicleCommunication vehicle, HashMap<Long, WayPoint> wayPoints)
 	{
 		this.log = LoggerFactory.getLogger(Navigator.class);
 
-		this.core = core;
+		this.ID = ID;
 		this.params = params;
 
 		this.wayPoints = wayPoints;
@@ -39,7 +39,7 @@ public class Navigator implements MQTTListener
 		this.vehicle = vehicle;
 
 		this.mqttUtils = new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this);
-		this.mqttUtils.subscribeToTopic(this.params.getMqttTopic() + "/job/" + this.core.getID());
+		this.mqttUtils.subscribeToTopic(this.params.getMqttTopic() + "/job/" + this.ID);
 
 		this.costCurrentToStartTiming = -1;
 		this.costStartToEndTiming = -1;
@@ -189,7 +189,7 @@ public class Navigator implements MQTTListener
 		this.log.info("Location Updated. Vehicle has " + location.getPercentage() + "% of route completed");
 		//this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/percentage", JSONUtils.objectToJSONString(location));
 		//this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/percentage", Integer.toString(location.getPercentage()));
-		this.mqttUtils.publishMessage(this.params.getMqttTopic() + "/percentage/" + this.core.getID(), Integer.toString(location.getPercentage()));
+		this.mqttUtils.publishMessage(this.params.getMqttTopic() + "/percentage/" + this.ID, Integer.toString(location.getPercentage()));
 	}
 
 	/**
@@ -200,7 +200,7 @@ public class Navigator implements MQTTListener
 	{
 		this.occupied = false;
 		//this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/route", "notcomplete");
-		this.mqttUtils.publishMessage(this.params.getMqttTopic() + "/route/" + this.core.getID(), "notcomplete");
+		this.mqttUtils.publishMessage(this.params.getMqttTopic() + "/route/" + this.ID, "notcomplete");
 	}
 
 	/**
@@ -212,7 +212,7 @@ public class Navigator implements MQTTListener
 		this.log.warn("Route error. Route Cancelled");
 		this.occupied = false;
 		//this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/route", "error");
-		this.mqttUtils.publishMessage(this.params.getMqttTopic() + "/route/" + this.core.getID() , "error");
+		this.mqttUtils.publishMessage(this.params.getMqttTopic() + "/route/" + this.ID, "error");
 	}
 
 	/**
@@ -227,7 +227,7 @@ public class Navigator implements MQTTListener
 
 			this.log.info("Sending next waypoint with ID " + nextWayPoint.getID() + " (" + (this.routeSize - this.currentRoute.size()) + "/" + this.routeSize + ")");
 
-			if (!this.core.getParams().isDebug())
+			if (!this.params.isDebug())
 			{
 				this.vehicle.sendNextWayPoint(nextWayPoint);
 			}
@@ -261,7 +261,7 @@ public class Navigator implements MQTTListener
 		this.log.info("Route Completed.");
 		this.occupied = false;
 		//this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/route", "done");
-		this.mqttUtils.publishMessage(this.params.getMqttTopic()  + "/route/" + this.core.getID(), "done");
+		this.mqttUtils.publishMessage(this.params.getMqttTopic()  + "/route/" + this.ID, "done");
 	}
 
 	/**
@@ -296,7 +296,7 @@ public class Navigator implements MQTTListener
 		else
 		{
 			this.log.info("Debug mode -> timing = 5");
-			this.timingCalculationComplete(new Cost(false, 5, 5, this.core.getID()));
+			this.timingCalculationComplete(new Cost(false, 5, 5, this.ID));
 		}
 	}
 

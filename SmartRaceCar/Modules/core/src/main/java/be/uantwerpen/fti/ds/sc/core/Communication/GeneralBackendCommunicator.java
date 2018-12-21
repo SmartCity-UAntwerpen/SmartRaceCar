@@ -10,5 +10,4 @@ public interface GeneralBackendCommunicator
 	public long register(long startPoint);
 	public HashMap<Long, WayPoint> requestWayPoints();
 	public void disconnect(long ID);
-	public RESTUtils getRESTUtils(); // TODO remove
 }
