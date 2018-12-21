@@ -19,13 +19,11 @@ class Core implements TCPListener, MQTTListener
 {
 
 	// Help services
-	private MQTTUtils mqttUtils;
 	private Logger log;
 
 
 	// Variables
 	private long ID;                                                        	// ID given by RacecarBackend to identify vehicle.
-	private long startPoint;                                        			// Starting position on map. Given by Main argument.
 
 	// Subsystems
 	private HeartbeatPublisher heartbeatPublisher;
@@ -55,10 +53,8 @@ class Core implements TCPListener, MQTTListener
 		System.out.println("------------------------------------------------------------------");
 
 		this.params = params;
-
 		this.log = LoggerFactory.getLogger(Core.class);
 
-		this.startPoint = startPoint;
 
 		this.loadConfig();
 		this.log.info("Current parameters: \n" + this.params.toString());
@@ -68,12 +64,9 @@ class Core implements TCPListener, MQTTListener
 		BackendCommunicator backendCommunicator = new BackendCommunicator(this.params);
 		this.backendCommunicator = backendCommunicator;
 
-		HashMap<Long, WayPoint> wayPoints = new HashMap<>();
-		wayPoints = this.backendCommunicator.requestWayPoints();
-		this.ID = this.backendCommunicator.register(this.startPoint);
+		this.ID = this.backendCommunicator.register(startPoint);
 
         this.log.info("Starting MQTT connection on " + this.params.getMqttBroker());
-		this.mqttUtils = new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this);
 
 		VehicleCommunicator vehicleCommunicator = new VehicleCommunicator(this.params, this, clientPort, serverPort);
 		this.vehicleCommunicator = vehicleCommunicator;
@@ -97,8 +90,8 @@ class Core implements TCPListener, MQTTListener
 			Thread.sleep(10000); //10 seconds delay so the map can load before publishing the startpoint
 		}
 
-		this.navigator = new Navigator(this.ID, this.params, vehicleCommunicator, wayPoints);
-		this.navigator.sendStartPoint(this.startPoint);
+		this.navigator = new Navigator(this.ID, this.params, vehicleCommunicator, backendCommunicator);
+		this.navigator.sendStartPoint(startPoint);
 
 		this.heartbeatPublisher = new HeartbeatPublisher(new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this), this.ID);
 		this.heartbeatPublisher.start();
@@ -106,9 +99,6 @@ class Core implements TCPListener, MQTTListener
 
 
 		this.log.info("Navigator was started.");
-
-		//this.weightManager = new WeightManager(this);
-		//this.log.info("Weightmanager was started");
 	}
 
 	public long getID()
@@ -131,18 +121,6 @@ class Core implements TCPListener, MQTTListener
 		CoreParameterParser parser = new CoreParameterParser();
 		//this.params = parser.parse("/home/ubuntu/Git/SmartRacecar/SmartRaceCar/release/core.properties");
 		this.params = parser.parse("core.properties");
-	}
-
-
-	/**
-	 * Interfaced method to parse MQTT message and topic after MQTT callback is triggered by incoming message.
-	 * Used by messages coming from RacecarBackend to request a route job or a cost calculation request.
-	 *
-	 * @param topic   received MQTT topic
-	 * @param message received MQTT message string
-	 */
-	public void parseMQTT(String topic, String message)
-	{
 	}
 
 	/**
@@ -172,26 +150,6 @@ class Core implements TCPListener, MQTTListener
 				case "kill":
 					this.exit();
 					break;
-				case "stop":
-					this.sendAvailability(false);
-					this.log.info("Vehicle stopped");
-					break;
-				case "start":
-					this.sendAvailability(true);
-					this.log.info("Vehicle started");
-					break;
-				case "startpoint":
-					this.startPoint = (long) JSONUtils.getObjectWithKeyWord(message, Long.class);
-					//this.mqttUtils.publishMessage("racecar/" + ID + "/locationupdate", Long.toString((Long) JSONUtils.getObjectWithKeyWord(message, Long.class)));
-					this.mqttUtils.publishMessage(this.params.getMqttTopic() + "/locationupdate/" + this.ID , Long.toString((Long) JSONUtils.getObjectWithKeyWord(message, Long.class)));
-					this.log.info("Setting new starting point with ID " + JSONUtils.getObjectWithKeyWord(message, Long.class));
-					break;
-				case "restart":
-					this.sendAvailability(true);
-					//this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentPosition", this.wayPoints.get(this.startPoint)));
-					this.navigator.sendCurrentPosition(this.startPoint);
-					this.log.info("Vehicle restarted.");
-					break;
 				case "cost":
 					//this.weightManager.costCalculationComplete((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
 					break;
@@ -211,18 +169,6 @@ class Core implements TCPListener, MQTTListener
 	}
 
 	/**
-	 * Set availability status of vehicle in the RacecarBackend by sending MQTT message.
-	 *
-	 * @param state state to be send. (available=true, unavailable=false)
-	 */
-	private void sendAvailability(boolean state)
-	{
-		//this.mqttUtils.publishMessage("racecar/" + ID + "/available", Boolean.toString(state));
-		this.mqttUtils.publishMessage(this.params.getMqttTopic() + "/available/" + this.ID, Boolean.toString(state));
-		this.log.info("Vehicle's availability status set to " + state + '.');
-	}
-
-	/**
 	 * Closes all connections (TCP & MQTT), unregisters the vehicle with the RacecarBackend and shut the module down.
 	 */
 	private void exit()
@@ -232,8 +178,13 @@ class Core implements TCPListener, MQTTListener
 		if (!this.params.isDebug())
 		{
 			this.vehicleCommunicator.disconnect();
-			this.mqttUtils.closeMQTT();
 		}
 		System.exit(0);
+	}
+
+	@Override
+	public void parseMQTT(String topic, String message)
+	{
+
 	}
 }

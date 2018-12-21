@@ -2,6 +2,7 @@ package be.uantwerpen.fti.ds.sc.core;
 
 
 import be.uantwerpen.fti.ds.sc.common.*;
+import be.uantwerpen.fti.ds.sc.core.Communication.NavigationBackendCommunication;
 import be.uantwerpen.fti.ds.sc.core.Communication.NavigationVehicleCommunication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,14 +28,14 @@ public class Navigator implements MQTTListener
 	private int routeSize;                                                   // Current route's size.
 
 
-	public Navigator(long ID, CoreParameters params, NavigationVehicleCommunication vehicle, HashMap<Long, WayPoint> wayPoints)
+	public Navigator(long ID, CoreParameters params, NavigationVehicleCommunication vehicle, NavigationBackendCommunication backend)
 	{
 		this.log = LoggerFactory.getLogger(Navigator.class);
 
 		this.ID = ID;
 		this.params = params;
 
-		this.wayPoints = wayPoints;
+		this.wayPoints = backend.requestWayPoints();
 
 		this.vehicle = vehicle;
 
