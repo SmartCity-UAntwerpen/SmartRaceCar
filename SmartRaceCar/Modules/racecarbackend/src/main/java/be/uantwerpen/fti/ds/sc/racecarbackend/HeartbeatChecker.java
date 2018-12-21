@@ -21,7 +21,9 @@ import java.util.regex.Pattern;
 @Component
 class HeartbeatChecker implements MQTTListener
 {
-	private static final String MQTT_POSTFIX = "heartbeat/#";
+	private static final String MQTT_HEARTBEAT_POSTFIX = "heartbeat/#";
+	private static final String MQTT_REGISTER_POSTFIX = "register/#";
+	private static final String MQTT_DELETE_POSTFIX = "delete/#";
 
 	@Value("${Racecar.Heartbeat.interval}")
 	private long CHECK_INTERVAL;				// Interval between heartbeat checks (in s)
@@ -30,9 +32,31 @@ class HeartbeatChecker implements MQTTListener
 	private long MAX_DELTA;			// Maximum amount of time between consecutive heartbeats (in ms)
 
 	private Logger log;
+	private Parameters parameters;
 	private RESTUtils restUtils;
 	private MQTTUtils mqttUtils;
 	private Map<Long, Date> heartbeats;
+
+	private boolean isHeartbeat(String topic)
+	{
+		// Remove the trailing '#' and compare the topic
+		String heartbeatTopic = MQTT_HEARTBEAT_POSTFIX.substring(0, MQTT_HEARTBEAT_POSTFIX.length() - 2);
+		return topic.startsWith(this.parameters.getMqttTopic() +  heartbeatTopic);
+	}
+
+	private boolean isRegistration(String topic)
+	{
+		// Remove the trailing '#' and compare the topic
+		String heartbeatTopic = MQTT_REGISTER_POSTFIX.substring(0, MQTT_REGISTER_POSTFIX.length() - 2);
+		return topic.startsWith(this.parameters.getMqttTopic() +  heartbeatTopic);
+	}
+
+	private boolean isDeletion(String topic)
+	{
+		// Remove the trailing '#' and check the topic
+		String deleteTopic = MQTT_DELETE_POSTFIX.substring(0, MQTT_DELETE_POSTFIX.length() - 2);
+		return topic.startsWith(this.parameters.getMqttTopic() +  deleteTopic);
+	}
 
 	private void updateHeartbeat(long vehicleId)
 	{
@@ -105,12 +129,15 @@ class HeartbeatChecker implements MQTTListener
 	public HeartbeatChecker(Parameters parameters)
 	{
 		this.log = LoggerFactory.getLogger(HeartbeatChecker.class);
+		this.parameters = parameters;
 
 		this.log.debug("Initializing Heartbeat checker...");
 
 		this.restUtils = new RESTUtils(parameters.getRESTCarmanagerURL());
 		this.mqttUtils = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
-		this.mqttUtils.subscribeToTopic(parameters.getMqttTopic() + MQTT_POSTFIX);
+		this.mqttUtils.subscribeToTopic(parameters.getMqttTopic() + MQTT_HEARTBEAT_POSTFIX);
+		this.mqttUtils.subscribeToTopic(parameters.getMqttTopic() + MQTT_REGISTER_POSTFIX);
+		this.mqttUtils.subscribeToTopic(parameters.getMqttTopic() + MQTT_DELETE_POSTFIX);
 
 		this.heartbeats = new ConcurrentHashMap<>();
 
@@ -121,7 +148,21 @@ class HeartbeatChecker implements MQTTListener
 	public void parseMQTT(String topic, String message)
 	{
 		long vehicleId = TopicUtils.getCarId(topic);
-		this.log.info("Received Heartbeat from " + vehicleId);
-		this.updateHeartbeat(vehicleId);
+
+		if (this.isHeartbeat(topic))
+		{
+			this.log.info("Received Heartbeat from " + vehicleId);
+			this.updateHeartbeat(vehicleId);
+		}
+		else if (this.isRegistration(topic))
+		{
+			this.log.info("Registered vehicle " + vehicleId + " with HeartbeatChecker.");
+			this.addVehicle(vehicleId);
+		}
+		else if (this.isDeletion(topic))
+		{
+			this.log.info("Removing vehicle " + vehicleId + " from HeartbeatChecker.");
+			this.removeVehicle(vehicleId);
+		}
 	}
 }

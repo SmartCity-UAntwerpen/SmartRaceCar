@@ -11,7 +11,7 @@ public class Main
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	public static void main(String[] args) throws IOException, InterruptedException
+	public static void main(String[] args) throws IOException
 	{
 		final SimDeployer simDeployer = new SimDeployer();
 	}
