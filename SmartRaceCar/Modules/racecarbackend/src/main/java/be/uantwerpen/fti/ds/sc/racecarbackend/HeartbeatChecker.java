@@ -156,12 +156,12 @@ class HeartbeatChecker implements MQTTListener
 		}
 		else if (this.isRegistration(topic))
 		{
-			this.log.info("Registered vehicle " + vehicleId + " with HeartbeatChekcer.");
+			this.log.info("Registered vehicle " + vehicleId + " with HeartbeatChecker.");
 			this.addVehicle(vehicleId);
 		}
 		else if (this.isDeletion(topic))
 		{
-			this.log.info("Removing vehicle " + vehicleId + " from HeartbeatChekcer.");
+			this.log.info("Removing vehicle " + vehicleId + " from HeartbeatChecker.");
 			this.removeVehicle(vehicleId);
 		}
 	}
