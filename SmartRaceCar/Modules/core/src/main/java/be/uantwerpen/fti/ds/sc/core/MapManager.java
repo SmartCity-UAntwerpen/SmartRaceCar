@@ -1,6 +1,8 @@
 package be.uantwerpen.fti.ds.sc.core;
 
 import be.uantwerpen.fti.ds.sc.common.*;
+import be.uantwerpen.fti.ds.sc.core.Communication.MapBackendCommunicator;
+import be.uantwerpen.fti.ds.sc.core.Communication.MapVehicleCommunicator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -24,21 +26,25 @@ import java.util.HashMap;
 
 public class MapManager implements MQTTListener
 {
-	private Core core;
+	private CoreParameters params;
+	private MapBackendCommunicator backend;
+	private MapVehicleCommunicator vehicle;
 	private MQTTUtils mqttUtils;
 
 	private HashMap<String, Map> loadedMaps;                                // Map of all loaded maps.
 
 	private Logger log;
 
-	public MapManager(Core core)
+	public MapManager(Core core, CoreParameters params, MapBackendCommunicator backend, MapVehicleCommunicator vehicle)
 	{
-		this.core = core;
-
 		this.log = LoggerFactory.getLogger(MapManager.class);
+		this.params = params;
 
-		this.mqttUtils = new MQTTUtils(this.core.getParams().getMqttBroker(), this.core.getParams().getMqttUserName(), this.core.getParams().getMqttPassword(), this);
-		this.mqttUtils.subscribeToTopic("racecar/changeMap/" + this.core.getID());
+		this.backend = backend;
+		this.vehicle = vehicle;
+
+		this.mqttUtils = new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this);
+		this.mqttUtils.subscribeToTopic("racecar/changeMap/" + core.getID());
 
 		this.log.info("starting to load maps");
 		this.loadedMaps = new HashMap<>();
@@ -129,7 +135,7 @@ public class MapManager implements MQTTListener
 		boolean contains;
 
 
-		String mapName = this.core.getRestUtils().getTextPlain("getmapname");
+		String mapName = this.backend.getMapName();
 		if (this.loadedMaps.containsKey(mapName))
 		{
 			contains = true;
@@ -139,7 +145,7 @@ public class MapManager implements MQTTListener
 		else
 		{
 			contains = false;
-			this.downloadMap(mapName);
+			this.backend.downloadMap(mapName);
 
 
 			Map map = new Map(mapName);
@@ -153,11 +159,9 @@ public class MapManager implements MQTTListener
 			this.log.info("Current map '" + mapName + "' downloaded and set as current map.");
 		}
 
-		if (!this.core.getParams().isDebug())
+		if (!this.params.isDebug())
 		{
-			String json = JSONUtils.objectToJSONStringWithKeyWord("currentMap", this.loadedMaps.get(mapName));
-			this.log.info("Setting current map on NAVSTACK to " + json);
-			this.core.getTcpUtils().sendUpdate(json);
+			this.vehicle.setMap(this.loadedMaps.get(mapName));
 		}
 
 		return contains;
@@ -203,19 +207,6 @@ public class MapManager implements MQTTListener
 			e.printStackTrace();
 			this.log.warn("Could not add map to XML of maps." + e);
 		}
-	}
-
-	/**
-	 * Downloads new map from backend.
-	 * @param mapName name of new map
-	 */
-	private void downloadMap(String mapName)
-	{
-
-		this.log.info("Current used map '" + mapName + "' not found. Downloading... to " + this.core.getParams().getNavstackPath() + "/" + mapName);
-		this.core.getRestUtils().getFile("getmappgm/" + mapName, this.core.getParams().getNavstackPath(), mapName, "pgm");
-		this.core.getRestUtils().getFile("getmapyaml/" + mapName, this.core.getParams().getNavstackPath(), mapName, "yaml");
-
 	}
 
 	@Override
