@@ -51,7 +51,7 @@ public class WeightManager implements MQTTListener
 	public void costCalculationComplete(Cost cost)
 	{
 		this.log.info("Cost request calculated.");
-		cost.setStatus(this.core.isOccupied());
+		//cost.setStatus(this.core.isOccupied());
 		cost.setIdVehicle(this.core.getID());
 		this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/costanswer", JSONUtils.objectToJSONString(cost));
 	}

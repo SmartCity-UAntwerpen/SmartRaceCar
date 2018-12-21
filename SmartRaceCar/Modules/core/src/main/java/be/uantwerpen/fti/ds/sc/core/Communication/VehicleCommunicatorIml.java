@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-public class VehicleCommunicatorIml implements VehicleCommunicator
+public class VehicleCommunicatorIml implements VehicleCommunicator, VehicleMapCommunicator
 {
 	private CoreParameters params;
 	private Logger log;
@@ -47,7 +47,7 @@ public class VehicleCommunicatorIml implements VehicleCommunicator
 		this.log.debug("Sending start point");
 		if(!this.params.isDebug())
 		{
-			this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("startpoint", startPoint));
+			this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("startPoint", startPoint));
 		}
 		else
 		{
@@ -75,5 +75,13 @@ public class VehicleCommunicatorIml implements VehicleCommunicator
 	public TCPUtils getTCPUtils()
 	{
 		return this.tcpUtils;
+	}
+
+	@Override
+	public void setMap(Map map)
+	{
+		String json = JSONUtils.objectToJSONStringWithKeyWord("currentMap", map);
+		this.log.info("Setting current map on NAVSTACK to " + json);
+		this.tcpUtils.sendUpdate(json);
 	}
 }

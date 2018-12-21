@@ -123,16 +123,19 @@ class Core implements TCPListener, MQTTListener
 		return this.ID;
 	}
 
+	@Deprecated
 	public CoreParameters getParams()
 	{
 		return this.params;
 	}
 
+	@Deprecated
 	public TCPUtils getTcpUtils()
 	{
 		return this.vehicleCommunicator.getTCPUtils();
 	}
 
+	@Deprecated
 	public RESTUtils getRestUtils()
 	{
 		return this.backendCommunicator.getRESTUtils();

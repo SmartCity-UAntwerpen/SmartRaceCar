@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 
-public class BackendCommunicatorImpl implements BackendCommunicator
+public class BackendCommunicatorImpl implements BackendCommunicator, BackendMapCommunicator
 {
 	private Logger log;
 	private CoreParameters params;
@@ -63,5 +63,19 @@ public class BackendCommunicatorImpl implements BackendCommunicator
 	public RESTUtils getRESTUtils()
 	{
 		return this.restUtils;
+	}
+
+	@Override
+	public String getMapName()
+	{
+		return this.restUtils.getTextPlain("getmapname");
+	}
+
+	@Override
+	public void downloadMap(String mapName)
+	{
+		this.log.info("Current used map '" + mapName + "' not found. Downloading... to " + this.params.getNavstackPath() + "/" + mapName);
+		this.restUtils.getFile("getmappgm/" + mapName, this.params.getNavstackPath(), mapName, "pgm");
+		this.restUtils.getFile("getmapyaml/" + mapName, this.params.getNavstackPath(), mapName, "yaml");
 	}
 }
