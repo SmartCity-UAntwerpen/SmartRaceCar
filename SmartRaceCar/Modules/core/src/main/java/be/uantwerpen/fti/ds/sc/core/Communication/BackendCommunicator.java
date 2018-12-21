@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 
-public class BackendCommunicator implements GeneralBackendCommunicator, MapBackendCommunicator
+public class BackendCommunicator implements GeneralBackendCommunicator, MapBackendCommunicator, NavigationBackendCommunication
 {
 	private Logger log;
 	private CoreParameters params;
