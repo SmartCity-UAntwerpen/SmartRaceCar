@@ -1,8 +1,8 @@
 package be.uantwerpen.fti.ds.sc.core;
 
 import be.uantwerpen.fti.ds.sc.common.*;
-import be.uantwerpen.fti.ds.sc.core.Communication.BackendMapCommunicator;
-import be.uantwerpen.fti.ds.sc.core.Communication.VehicleMapCommunicator;
+import be.uantwerpen.fti.ds.sc.core.Communication.MapBackendCommunicator;
+import be.uantwerpen.fti.ds.sc.core.Communication.MapVehicleCommunicator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -27,15 +27,15 @@ import java.util.HashMap;
 public class MapManager implements MQTTListener
 {
 	private CoreParameters params;
-	private BackendMapCommunicator backend;
-	private VehicleMapCommunicator vehicle;
+	private MapBackendCommunicator backend;
+	private MapVehicleCommunicator vehicle;
 	private MQTTUtils mqttUtils;
 
 	private HashMap<String, Map> loadedMaps;                                // Map of all loaded maps.
 
 	private Logger log;
 
-	public MapManager(Core core, CoreParameters params, BackendMapCommunicator backend, VehicleMapCommunicator vehicle)
+	public MapManager(Core core, CoreParameters params, MapBackendCommunicator backend, MapVehicleCommunicator vehicle)
 	{
 		this.log = LoggerFactory.getLogger(MapManager.class);
 		this.params = params;

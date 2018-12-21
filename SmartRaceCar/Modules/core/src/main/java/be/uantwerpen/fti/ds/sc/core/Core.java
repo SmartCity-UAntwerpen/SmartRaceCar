@@ -2,17 +2,15 @@ package be.uantwerpen.fti.ds.sc.core;
 
 import be.uantwerpen.fti.ds.sc.common.*;
 import be.uantwerpen.fti.ds.sc.core.Communication.BackendCommunicator;
-import be.uantwerpen.fti.ds.sc.core.Communication.BackendCommunicatorImpl;
-import be.uantwerpen.fti.ds.sc.core.Communication.VehicleCommunicatorIml;
+import be.uantwerpen.fti.ds.sc.core.Communication.GeneralBackendCommunicator;
 import be.uantwerpen.fti.ds.sc.core.Communication.VehicleCommunicator;
+import be.uantwerpen.fti.ds.sc.core.Communication.GeneralVehicleCommunicator;
 import com.github.lalyos.jfiglet.FigletFont;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 /**
  * Module representing the high-level of a vehicle.
@@ -27,7 +25,6 @@ class Core implements TCPListener, MQTTListener
 
 	// Variables
 	private long ID;                                                        	// ID given by RacecarBackend to identify vehicle.
-	private HashMap<Long, WayPoint> wayPoints;                                	// Map of all loaded waypoints.
 	private long startPoint;                                        			// Starting position on map. Given by Main argument.
 
 	// Subsystems
@@ -38,8 +35,8 @@ class Core implements TCPListener, MQTTListener
 	private MapManager mapManager;
 
 	// Communication
-	private VehicleCommunicator vehicleCommunicator;
-	private BackendCommunicator backendCommunicator;
+	private GeneralVehicleCommunicator vehicleCommunicator;
+	private GeneralBackendCommunicator backendCommunicator;
 
 
 	/**
@@ -63,24 +60,22 @@ class Core implements TCPListener, MQTTListener
 
 		this.startPoint = startPoint;
 
-		this.wayPoints = new HashMap<>();
-
-
 		this.loadConfig();
 		this.log.info("Current parameters: \n" + this.params.toString());
 
 		this.log.info("Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
 
-		BackendCommunicatorImpl backendCommunicator = new BackendCommunicatorImpl(this.params);
+		BackendCommunicator backendCommunicator = new BackendCommunicator(this.params);
 		this.backendCommunicator = backendCommunicator;
 
-		this.wayPoints = this.backendCommunicator.requestWayPoints();
+		HashMap<Long, WayPoint> wayPoints = new HashMap<>();
+		wayPoints = this.backendCommunicator.requestWayPoints();
 		this.ID = this.backendCommunicator.register(this.startPoint);
 
         this.log.info("Starting MQTT connection on " + this.params.getMqttBroker());
 		this.mqttUtils = new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this);
 
-		VehicleCommunicatorIml vehicleCommunicator = new VehicleCommunicatorIml(this.params, this, clientPort, serverPort);
+		VehicleCommunicator vehicleCommunicator = new VehicleCommunicator(this.params, this, clientPort, serverPort);
 		this.vehicleCommunicator = vehicleCommunicator;
 		this.vehicleCommunicator.start();
 
@@ -102,22 +97,18 @@ class Core implements TCPListener, MQTTListener
 			Thread.sleep(10000); //10 seconds delay so the map can load before publishing the startpoint
 		}
 
-		this.vehicleCommunicator.sendStartpoint(this.wayPoints.get(this.startPoint));
+		this.navigator = new Navigator(this, this.params, vehicleCommunicator, wayPoints);
+		this.navigator.sendStartPoint(this.startPoint);
 
 		this.heartbeatPublisher = new HeartbeatPublisher(new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this), this.ID);
 		this.heartbeatPublisher.start();
 		this.log.info("Heartbeat publisher was started.");
 
-		this.navigator = new Navigator(this, this.params);
+
 		this.log.info("Navigator was started.");
 
 		//this.weightManager = new WeightManager(this);
 		//this.log.info("Weightmanager was started");
-	}
-
-	public HashMap<Long, WayPoint> getWayPoints()
-	{
-		return this.wayPoints;
 	}
 
 	public long getID()
@@ -141,29 +132,6 @@ class Core implements TCPListener, MQTTListener
 	public RESTUtils getRestUtils()
 	{
 		return this.backendCommunicator.getRESTUtils();
-	}
-
-	/**
-	 * Called by incoming timing calculation requests. Sends the request further to the RosKernel/SimKernel.
-	 *
-	 * @param wayPointIDs Array of waypoint ID's to have their timing calculated.
-	 */
-	public void timeRequest(long[] wayPointIDs)
-	{
-		this.log.info("Requesting timing");
-
-		List<Point> points = new ArrayList<>();
-		points.add(this.wayPoints.get(wayPointIDs[0]));
-		points.add(this.wayPoints.get(wayPointIDs[1]));
-		if (!this.params.isDebug())
-		{
-			this.vehicleCommunicator.timeRequest(points);
-		}
-		else
-		{
-			this.log.info("Debug mode -> timing = 5");
-			this.navigator.timingCalculationComplete(new Cost(false, 5, 5, this.ID));
-		}
 	}
 
 	/**
@@ -233,7 +201,7 @@ class Core implements TCPListener, MQTTListener
 				case "restart":
 					this.sendAvailability(true);
 					//this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentPosition", this.wayPoints.get(this.startPoint)));
-					this.vehicleCommunicator.sendCurrentPosition(this.wayPoints.get(this.startPoint));
+					this.navigator.sendCurrentPosition(this.startPoint);
 					this.log.info("Vehicle restarted.");
 					break;
 				case "cost":

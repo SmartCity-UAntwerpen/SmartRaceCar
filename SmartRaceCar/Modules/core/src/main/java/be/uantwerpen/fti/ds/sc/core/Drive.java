@@ -3,7 +3,7 @@ package be.uantwerpen.fti.ds.sc.core;
 /**
  * Drive parameters store object.
  */
-class Drive
+public class Drive
 {
 
 	private float steer; //Rotation of the wheels.
@@ -15,7 +15,7 @@ class Drive
 	 * @param steer    rotation value for the vehicle wheels.
 	 * @param throttle throttle value for the vehicle wheels.
 	 */
-	Drive(float steer, float throttle)
+	public Drive(float steer, float throttle)
 	{
 		this.steer = steer;
 		this.throttle = throttle;

@@ -29,8 +29,8 @@ public class WeightManager implements MQTTListener
 	public void costRequest(long[] wayPointIDs)
 	{
 		List<Point> points = new ArrayList<>();
-		points.add(this.core.getWayPoints().get(wayPointIDs[0]));
-		points.add(this.core.getWayPoints().get(wayPointIDs[1]));
+		//points.add(this.core.getWayPoints().get(wayPointIDs[0]));
+		//points.add(this.core.getWayPoints().get(wayPointIDs[1]));
 
 		if (!this.core.getParams().isDebug())
 		{
