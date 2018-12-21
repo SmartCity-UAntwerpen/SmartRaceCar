@@ -103,7 +103,7 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 		if (this.vehicles.containsKey(vehicleId))
 		{
 			this.vehicles.remove(vehicleId);
-			this.mqttUtils.publishMessage(this.parameters.getMqttTopic() + "/delete/" + vehicleId, "");
+			this.mqttUtils.publishMessage(this.parameters.getMqttTopic() + "delete/" + vehicleId, "");
 
 			this.log.info("Removing vehicle " + vehicleId);
 			this.unusedIds.add(vehicleId);
