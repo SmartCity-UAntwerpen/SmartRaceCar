@@ -161,11 +161,8 @@ public class MapManager implements MQTTListener, WaypointValidator, WaypointRepo
 		{
 			this.params.setCurrentMap(mapName);
 
-			for (long vehicleId: this.vehicleRepository.getVehicleIds())
-			{
-				this.log.info("change map command sent to vehicle with ID: " + vehicleId);
-				this.mqttUtils.publishMessage("racecar/changeMap/" + vehicleId, mapName);
-			}
+			this.log.info("Publishing map change over MQTT.");
+			this.mqttUtils.publishMessage(this.params.getMqttTopic() + "changeMap/#", mapName);
 
 			this.loadWayPoints(this.params.getCurrentMap());
 
