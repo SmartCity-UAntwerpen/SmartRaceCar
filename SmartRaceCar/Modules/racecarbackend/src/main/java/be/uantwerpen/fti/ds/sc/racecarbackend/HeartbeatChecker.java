@@ -32,6 +32,7 @@ class HeartbeatChecker implements MQTTListener
 	private long MAX_DELTA;			// Maximum amount of time between consecutive heartbeats (in ms)
 
 	private Logger log;
+	private Parameters parameters;
 	private RESTUtils restUtils;
 	private MQTTUtils mqttUtils;
 	private Map<Long, Date> heartbeats;
@@ -40,21 +41,21 @@ class HeartbeatChecker implements MQTTListener
 	{
 		// Remove the trailing '#' and compare the topic
 		String heartbeatTopic = MQTT_HEARTBEAT_POSTFIX.substring(0, MQTT_HEARTBEAT_POSTFIX.length() - 2);
-		return topic.startsWith(heartbeatTopic);
+		return topic.startsWith(this.parameters.getMqttTopic() +  heartbeatTopic);
 	}
 
 	private boolean isRegistration(String topic)
 	{
 		// Remove the trailing '#' and compare the topic
 		String heartbeatTopic = MQTT_REGISTER_POSTFIX.substring(0, MQTT_REGISTER_POSTFIX.length() - 2);
-		return topic.startsWith(heartbeatTopic);
+		return topic.startsWith(this.parameters.getMqttTopic() +  heartbeatTopic);
 	}
 
 	private boolean isDeletion(String topic)
 	{
 		// Remove the trailing '#' and check the topic
 		String deleteTopic = MQTT_DELETE_POSTFIX.substring(0, MQTT_DELETE_POSTFIX.length() - 2);
-		return topic.startsWith(deleteTopic);
+		return topic.startsWith(this.parameters.getMqttTopic() +  deleteTopic);
 	}
 
 	private void updateHeartbeat(long vehicleId)
@@ -128,6 +129,7 @@ class HeartbeatChecker implements MQTTListener
 	public HeartbeatChecker(Parameters parameters)
 	{
 		this.log = LoggerFactory.getLogger(HeartbeatChecker.class);
+		this.parameters = parameters;
 
 		this.log.debug("Initializing Heartbeat checker...");
 
@@ -146,8 +148,6 @@ class HeartbeatChecker implements MQTTListener
 	public void parseMQTT(String topic, String message)
 	{
 		long vehicleId = TopicUtils.getCarId(topic);
-
-		this.log.info("Received MQTT message: " + topic + ": " + message);
 
 		if (this.isHeartbeat(topic))
 		{
