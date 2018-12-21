@@ -11,27 +11,32 @@ import java.util.Queue;
 public class Navigator implements MQTTListener
 {
 	private Core core;
+	private CoreParameters params;
 
 	private int costCurrentToStartTiming;                                    // Time in seconds from current position to start position of route.
 	private int costStartToEndTiming;                                        // Time in seconds from start position to end position of route.
+	private boolean occupied;
+
 
 	private Queue<Long> currentRoute;                                        // All waypoint IDs to be handled in the current route.
 	private int routeSize;                                                   // Current route's size.
 	private Logger log;
 	private MQTTUtils mqttUtils;
 
-	public Navigator(Core core)
+	public Navigator(Core core, CoreParameters params)
 	{
 		this.log = LoggerFactory.getLogger(Navigator.class);
 
 		this.core = core;
+		this.params = params;
 
-		this.mqttUtils = new MQTTUtils(this.core.getParams().getMqttBroker(), this.core.getParams().getMqttUserName(), this.core.getParams().getMqttPassword(), this);
-		this.mqttUtils.subscribeToTopic(this.core.getParams().getMqttTopic() + "/job/" + this.core.getID());
+		this.mqttUtils = new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this);
+		this.mqttUtils.subscribeToTopic(this.params.getMqttTopic() + "/job/" + this.core.getID());
 
 		this.costCurrentToStartTiming = -1;
 		this.costStartToEndTiming = -1;
 		this.routeSize = -1;
+		this.occupied = false;
 
 		this.currentRoute = new LinkedList<>();
 	}
@@ -58,7 +63,7 @@ public class Navigator implements MQTTListener
 			sendWheelStates(0, 0);
 		} else
 		{
-			if (!this.core.isOccupied())
+			if (!this.occupied)
 			{
 				String[] wayPointStringValues = message.split(" ");
 				try
@@ -97,9 +102,9 @@ public class Navigator implements MQTTListener
 
 		boolean error = false;
 
-		if (!this.core.isOccupied())
+		if (!this.occupied)
 		{
-			this.core.setOccupied(true);
+			this.occupied = true;
 			this.core.timeRequest(wayPointIDs);
 			while (this.costCurrentToStartTiming == -1 && this.costStartToEndTiming == -1)
 			{
@@ -185,7 +190,7 @@ public class Navigator implements MQTTListener
 	 */
 	private void routeNotComplete()
 	{
-		this.core.setOccupied(false);
+		this.occupied = false;
 		//this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/route", "notcomplete");
 		this.mqttUtils.publishMessage(this.core.getParams().getMqttTopic() + "/route/" + this.core.getID(), "notcomplete");
 	}
@@ -197,7 +202,7 @@ public class Navigator implements MQTTListener
 	private void routeError()
 	{
 		this.log.warn("Route error. Route Cancelled");
-		this.core.setOccupied(false);
+		this.occupied = false;
 		//this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/route", "error");
 		this.mqttUtils.publishMessage(this.core.getParams().getMqttTopic() + "/route/" + this.core.getID() , "error");
 	}
@@ -246,7 +251,7 @@ public class Navigator implements MQTTListener
 	private void routeCompleted()
 	{
 		this.log.info("Route Completed.");
-		this.core.setOccupied(false);
+		this.occupied = false;
 		//this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/route", "done");
 		this.mqttUtils.publishMessage(this.core.getParams().getMqttTopic()  + "/route/" + this.core.getID(), "done");
 	}

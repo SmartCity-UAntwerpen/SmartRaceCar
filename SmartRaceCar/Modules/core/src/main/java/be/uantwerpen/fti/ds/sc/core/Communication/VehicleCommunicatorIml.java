@@ -6,19 +6,17 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-public class Communicator implements CoreLinkerCommunicator
+public class VehicleCommunicatorIml implements VehicleCommunicator
 {
 	private CoreParameters params;
 	private Logger log;
 	private TCPUtils tcpUtils;
-	private RESTUtils restUtils;
 
-	public Communicator(CoreParameters params, TCPListener listener, int clientPort, int serverPort)
+	public VehicleCommunicatorIml(CoreParameters params, TCPListener listener, int clientPort, int serverPort)
 	{
-		this.log = LoggerFactory.getLogger(Communicator.class);
+		this.log = LoggerFactory.getLogger(VehicleCommunicatorIml.class);
 		this.params = params;
 		this.tcpUtils = new TCPUtils(clientPort, serverPort, listener);
-		this.restUtils = new RESTUtils(this.params.getRESTCarmanagerURL());
 	}
 
 	public void start()
@@ -34,7 +32,6 @@ public class Communicator implements CoreLinkerCommunicator
 
 	public void connect()
 	{
-		this.log.info("Trying to connect to car");
 		if(!this.params.isDebug())
 		{
 			this.tcpUtils.sendUpdate(JSONUtils.keywordToJSONString("connect"));

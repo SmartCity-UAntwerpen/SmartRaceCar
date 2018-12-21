@@ -6,7 +6,7 @@ import be.uantwerpen.fti.ds.sc.common.WayPoint;
 
 import java.util.List;
 
-public interface CoreLinkerCommunicator
+public interface VehicleCommunicator
 {
 	public void start();
 	public void connect();
