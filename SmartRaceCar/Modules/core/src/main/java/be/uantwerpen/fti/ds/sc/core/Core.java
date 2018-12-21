@@ -71,7 +71,8 @@ class Core implements TCPListener, MQTTListener
 
 		this.log.info("Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
 
-		this.backendCommunicator = new BackendCommunicatorImpl(this.params);
+		BackendCommunicatorImpl backendCommunicator = new BackendCommunicatorImpl(this.params);
+		this.backendCommunicator = backendCommunicator;
 
 		this.wayPoints = this.backendCommunicator.requestWayPoints();
 		this.ID = this.backendCommunicator.register(this.startPoint);
@@ -79,7 +80,8 @@ class Core implements TCPListener, MQTTListener
         this.log.info("Starting MQTT connection on " + this.params.getMqttBroker());
 		this.mqttUtils = new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this);
 
-		this.vehicleCommunicator = new VehicleCommunicatorIml(this.params, this, clientPort, serverPort);
+		VehicleCommunicatorIml vehicleCommunicator = new VehicleCommunicatorIml(this.params, this, clientPort, serverPort);
+		this.vehicleCommunicator = vehicleCommunicator;
 		this.vehicleCommunicator.start();
 
 		if (!this.params.isDebug())
@@ -89,7 +91,7 @@ class Core implements TCPListener, MQTTListener
 			this.vehicleCommunicator.connect();
 		}
 
-		this.mapManager = new MapManager(this);
+		this.mapManager = new MapManager(this, this.params, backendCommunicator, vehicleCommunicator);
 		this.log.info("Map manager started");
 
 		if(!this.mapManager.configureMap())
