@@ -23,6 +23,7 @@ class HeartbeatChecker implements MQTTListener
 {
 	private static final String MQTT_HEARTBEAT_POSTFIX = "heartbeat/#";
 	private static final String MQTT_REGISTER_POSTFIX = "register/#";
+	private static final String MQTT_DELETE_POSTFIX = "delete/#";
 
 	@Value("${Racecar.Heartbeat.interval}")
 	private long CHECK_INTERVAL;				// Interval between heartbeat checks (in s)
@@ -47,6 +48,13 @@ class HeartbeatChecker implements MQTTListener
 		// Remove the trailing '#' and compare the topic
 		String heartbeatTopic = MQTT_REGISTER_POSTFIX.substring(0, MQTT_REGISTER_POSTFIX.length() - 2);
 		return topic.startsWith(heartbeatTopic);
+	}
+
+	private boolean isDeletion(String topic)
+	{
+		// Remove the trailing '#' and check the topic
+		String deleteTopic = MQTT_DELETE_POSTFIX.substring(0, MQTT_DELETE_POSTFIX.length() - 2);
+		return topic.startsWith(deleteTopic);
 	}
 
 	private void updateHeartbeat(long vehicleId)
@@ -127,6 +135,7 @@ class HeartbeatChecker implements MQTTListener
 		this.mqttUtils = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
 		this.mqttUtils.subscribeToTopic(parameters.getMqttTopic() + MQTT_HEARTBEAT_POSTFIX);
 		this.mqttUtils.subscribeToTopic(parameters.getMqttTopic() + MQTT_REGISTER_POSTFIX);
+		this.mqttUtils.subscribeToTopic(parameters.getMqttTopic() + MQTT_DELETE_POSTFIX);
 
 		this.heartbeats = new ConcurrentHashMap<>();
 
@@ -145,7 +154,13 @@ class HeartbeatChecker implements MQTTListener
 		}
 		else if (this.isRegistration(topic))
 		{
+			this.log.info("Registered vehicle " + vehicleId + " with HeartbeatChekcer.");
 			this.addVehicle(vehicleId);
+		}
+		else if (this.isDeletion(topic))
+		{
+			this.log.info("Removing vehicle " + vehicleId + " from HeartbeatChekcer.");
+			this.removeVehicle(vehicleId);
 		}
 	}
 }
