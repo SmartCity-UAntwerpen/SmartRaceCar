@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
-STARTPOINT=$1
+START_POINT=$1
 SERVER_PORT=$2
 CLIENT_PORT=$3
 
-java -jar /home/jars/SimKernel.jar $CLIENT_PORT $SERVER_PORT
-java -jar /home/jars/Core.jar $STARTPOINT $SERVER_PORT $CLIENT_PORT
+cd /home/docker
+
+nohup java -jar SimKernel.jar ${CLIENT_PORT} ${SERVER_PORT} &
+java -jar Core.jar ${START_POINT} ${SERVER_PORT} ${CLIENT_PORT}
