@@ -4,7 +4,7 @@ import be.uantwerpen.fti.ds.sc.simdeployer.docker.Container;
 
 public class VirtualMachineFactory
 {
-	public Container createDockerContainer(String name)
+	public VirtualMachine createDockerContainer(String name)
 	{
 		return new Container(name);
 	}
