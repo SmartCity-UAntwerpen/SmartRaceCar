@@ -8,6 +8,9 @@ import java.util.*;
 
 public class HyperVisor
 {
+	private static final int SIMULATION_PORT_1 = 1024;
+	private static final int SIMULATION_PORT_2 = 1025;
+
 	private Logger log;
 	private SimDeployerParameters simDeployerParameters;
 	private Map<Long, VirtualMachine> virtualMachines;
@@ -19,24 +22,27 @@ public class HyperVisor
 		this.virtualMachines = new HashMap<>();
 	}
 
-	public void launch(long simulationId) throws IOException
+	public void launch(long simulationId, long startpoint) throws Exception
 	{
 		VirtualMachineFactory factory = new VirtualMachineFactory();
 		VirtualMachine vm = factory.createDockerContainer(this.simDeployerParameters.getDockerImage());
 		this.virtualMachines.put(simulationId, vm);
 
 		List<String> arguments = new ArrayList<>();
+		arguments.add(Long.toString(startpoint));
+		arguments.add(Integer.toString(SIMULATION_PORT_1));
+		arguments.add(Integer.toString(SIMULATION_PORT_2));
 		arguments.add(Long.toString(simulationId));
 
 		try
 		{
 			vm.run(arguments);
 		}
-		catch (IOException ioe)
+		catch (Exception e)
 		{
 			// Catch, log and rethrow
-			this.log.error("Failed to run Docker container.", ioe);
-			throw ioe;
+			this.log.error("Failed to run Virtual Machine.", e);
+			throw e;
 		}
 	}
 

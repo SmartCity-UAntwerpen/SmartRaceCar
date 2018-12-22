@@ -5,7 +5,16 @@ import java.util.List;
 
 public interface VirtualMachine
 {
-	public void run(List<String> args) throws IOException;
+	/**
+	 * Launch a virtual machine with the given command line arguments.
+	 * @param args          Command line arguments passed to the VM
+	 * @throws IOException  Exceptions can be thrown when starting the VM.
+	 */
+	public void run(List<String> args) throws Exception;
 
-	public void stop();
+	/**
+	 * Stop the Virtual Machine and return the process' return value.
+	 * @return
+	 */
+	public int stop();
 }
