@@ -14,6 +14,7 @@ public class SimDeployerV2 implements TCPListener
 	private static final String ACK = "ACK";
 	private static final String NACK = "NACK";
 	private static final String PONG = "PONG";
+	private static final String DEFAULT_CONFIG_FILE = "./SimDeployer.properties";
 
 	private Logger log;
 	private TCPUtils simulationFrontend;
@@ -48,11 +49,11 @@ public class SimDeployerV2 implements TCPListener
 
 		try
 		{
-			this.hyperVisor.launch(simulationId);
+			this.hyperVisor.launch(simulationId, this.startPoints.get(simulationId));
 		}
-		catch (IOException ioe)
+		catch (Exception e)
 		{
-			this.log.error("An error occurred while trying to launch a container.", ioe);
+			this.log.error("An error occurred while trying to launch a virtual machine.", e);
 			return NACK;
 		}
 
@@ -97,7 +98,7 @@ public class SimDeployerV2 implements TCPListener
 		}
 		catch (NoSuchElementException nsee)
 		{
-			String errorString = "An exception was thrown while trying to stop simulation " + simulationId + ".";
+			String errorString = "An exception was thrown while trying to stop virtual machine " + simulationId + ".";
 			this.log.error(errorString, nsee);
 			return NACK;
 		}
@@ -155,7 +156,7 @@ public class SimDeployerV2 implements TCPListener
 
 			// The effect of a restart is the same as that of a "run",
 			// This is something that needs to be cleaned up in the simulation front end,
-			// Nothing we can do about this, I'm afraid
+			// Nothing we can do about this, I'm afraid...
 			case RESTART:
 			{
 				VehicleCommand restartCommand = (VehicleCommand) command;
@@ -203,9 +204,11 @@ public class SimDeployerV2 implements TCPListener
 
 	public static void main(String[] args)
 	{
+		SimDeployerParameterParser parameterParser = new SimDeployerParameterParser();
+
 		try
 		{
-			final SimDeployerV2 simDeployerV2 = new SimDeployerV2(new SimDeployerParameters(9999, "ubuntu:14.04"));
+			final SimDeployerV2 simDeployerV2 = new SimDeployerV2(parameterParser.parse(DEFAULT_CONFIG_FILE));
 		}
 		catch (IOException ioe)
 		{

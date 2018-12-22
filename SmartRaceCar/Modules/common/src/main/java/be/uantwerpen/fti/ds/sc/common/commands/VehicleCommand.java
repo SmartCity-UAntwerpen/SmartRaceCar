@@ -14,4 +14,10 @@ public class VehicleCommand extends Command
 	{
 		return this.simulationId;
 	}
+
+	@Override
+	public String toString()
+	{
+		return super.toString() + " " + this.simulationId;
+	}
 }
