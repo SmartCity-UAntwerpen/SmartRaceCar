@@ -116,7 +116,7 @@ public class ParameterContributor
         return mapManagerParameters;
     }
 
-    private CostCacheParameters readJobDispatcherParameters(String propertiesFile)
+    private CostCacheParameters readCostCacheParameters(String propertiesFile)
     {
         Properties prop = new Properties();
         InputStream input = null;
@@ -187,8 +187,8 @@ public class ParameterContributor
 
     @Bean
     @Qualifier("jobdispatcher")
-    CostCacheParameters jobDispatcherParameters()
+    CostCacheParameters costCacheParameters()
     {
-        return this.readJobDispatcherParameters(this.DEFAULT_PROPERTIES_FILE);
+        return this.readCostCacheParameters(this.DEFAULT_PROPERTIES_FILE);
     }
 }

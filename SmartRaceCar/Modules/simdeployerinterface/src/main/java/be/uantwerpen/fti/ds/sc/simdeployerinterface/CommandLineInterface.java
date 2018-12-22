@@ -1,6 +1,7 @@
 package be.uantwerpen.fti.ds.sc.simdeployerinterface;
 
 import be.uantwerpen.fti.ds.sc.common.commands.Command;
+import be.uantwerpen.fti.ds.sc.common.commands.CommandType;
 import be.uantwerpen.fti.ds.sc.simdeployerinterface.commands.InteractiveCommand;
 import be.uantwerpen.fti.ds.sc.simdeployerinterface.commands.InteractiveCommandParser;
 
@@ -13,7 +14,7 @@ public class CommandLineInterface
 
 	private String remoteHost;
 	private int remotePort;
-	boolean interactiveMode;
+	private boolean interactiveMode;
 	private File scriptFile;
 
 	private String sendCommand(Command command, String remoteHost, int remotePort) throws IOException
@@ -104,29 +105,28 @@ public class CommandLineInterface
 				continue;
 			}
 
+			// The return value for the command is captured in this variable and displayed at the end of the loop
 			String response = "";
 
 			try
 			{
-				switch (command.getCommandType())
+				if (command.getCommandType() == CommandType.OTHER)
 				{
-					case OTHER:
+					InteractiveCommand interactiveCommand = (InteractiveCommand) command;
+
+					switch (interactiveCommand.getInteractiveCommandType())
 					{
-						InteractiveCommand interactiveCommand = (InteractiveCommand) command;
+						case HELP:
+							response = help();
+							break;
 
-						switch (interactiveCommand.getInteractiveCommandType())
-						{
-							case HELP:
-								help();
-
-							case QUIT:
-								return;
-						}
-						break;
+						case QUIT:
+							return;
 					}
-
-					default:
-						this.sendCommand(command, remoteHost, remotePort);
+				}
+				else
+				{
+					response = this.sendCommand(command, remoteHost, remotePort);
 				}
 			}
 			catch (IOException ioe)
