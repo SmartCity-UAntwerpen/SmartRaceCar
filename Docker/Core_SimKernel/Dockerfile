@@ -3,11 +3,6 @@
 
 FROM ubuntu:14.04
 
-# Arguments
-ARG startpoint
-ARG client_port
-ARG server_port
-
 # Variables
 ENV CORE=https://github.com/SmartCity-UAntwerpen/SmartRaceCar/raw/master/SmartRaceCar/Modules/core/release/core.jar
 ENV SIMKERNEL=https://github.com/SmartCity-UAntwerpen/SmartRaceCar/raw/master/SmartRaceCar/Modules/simkernel/release/simkernel.jar
@@ -26,9 +21,19 @@ RUN apt-get update && \
 
 # Adding Core.jar and SimKernel.jar
 
-ADD $CORE /home/jars/Core.jar
-ADD $SIMKERNEL /home/jars/SimKernel.jar
-ADD run.sh /home/bash/run.sh
+ADD $CORE /home/docker/Core.jar
+ADD $SIMKERNEL /home/docker/SimKernel.jar
+
+ADD Simkernel.properties /home/docker/Simkernel.properties
+ADD core.properties /home/docker/core.properties
+ADD maps.xml /home/docker/maps/maps.xml
+
+ADD run.sh /home/docker/run.sh
+
+RUN chmod +x /home/docker/run.sh
 
 
-ENTRYPOINT /home/bash/run.sh
+ENTRYPOINT ["/home/docker/run.sh"]
+CMD ["46"]
+CMD ["5005"]
+CMD ["5006"]
