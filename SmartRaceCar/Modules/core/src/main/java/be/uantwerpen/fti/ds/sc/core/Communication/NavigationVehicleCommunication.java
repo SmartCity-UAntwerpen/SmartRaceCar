@@ -8,11 +8,6 @@ import java.util.List;
 
 public interface NavigationVehicleCommunication
 {
-	/**
-	 * Will request the waypoints of the current map from the backend
-	 * @return
-	 */
-	public HashMap<Long, WayPoint> requestWayPoints();
 	public void timeRequest(List<Point> points);
 	public void sendWheelStates(float throttle, float steer);
 	public void sendCurrentPosition(WayPoint wayPoint);
