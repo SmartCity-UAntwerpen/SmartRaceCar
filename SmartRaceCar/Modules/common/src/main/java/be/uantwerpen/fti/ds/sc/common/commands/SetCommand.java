@@ -26,7 +26,7 @@ public class SetCommand extends VehicleCommand
 	public String toString()
 	{
 		StringBuilder commandBuilder = new StringBuilder();
-		commandBuilder.append(super.toString());
+		commandBuilder.append(super.getCommandType().toString());
 		commandBuilder.append(' ');
 		commandBuilder.append(this.key);
 		commandBuilder.append(' ');

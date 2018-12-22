@@ -37,7 +37,15 @@ public class Container implements VirtualMachine
 		commandLine.addAll(args);
 
 		ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
-		processBuilder = processBuilder.redirectOutput(new File("Docker-Simulation-" + this.simulationId + "-" + this.name + "-stdout.log"));
+
+		String logFilePath = "Docker-Simulation-" + this.simulationId + "-" + this.name.replace(File.pathSeparatorChar, '_') + "-stdout.log";
+
+		// Make sure the log file exists, otherwise, the processbuilder will crash
+		File logFile = new File(logFilePath);
+		logFile.getParentFile().mkdirs();
+		logFile.createNewFile();
+
+		processBuilder = processBuilder.redirectOutput(logFile);
 
 		this.log.info("Running Docker Container " + this.name + ", with Simulation ID " + this.simulationId);
 

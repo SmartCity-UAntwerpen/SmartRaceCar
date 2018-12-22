@@ -25,7 +25,7 @@ public class HyperVisor
 	public void launch(long simulationId, long startpoint) throws Exception
 	{
 		VirtualMachineFactory factory = new VirtualMachineFactory();
-		VirtualMachine vm = factory.createDockerContainer(this.simDeployerParameters.getDockerImage());
+		VirtualMachine vm = factory.createDockerContainer(simulationId, this.simDeployerParameters.getDockerImage());
 		this.virtualMachines.put(simulationId, vm);
 
 		List<String> arguments = new ArrayList<>();
