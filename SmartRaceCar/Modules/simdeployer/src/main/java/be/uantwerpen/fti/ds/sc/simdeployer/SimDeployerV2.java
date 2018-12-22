@@ -206,4 +206,18 @@ public class SimDeployerV2 implements TCPListener
 		String payload = payloadBuilder.toString();
 		return this.executeCommand(command, payload);
 	}
+
+	public static void main(String[] args)
+	{
+		try
+		{
+			final SimDeployerV2 simDeployerV2 = new SimDeployerV2(new SimDeployerParameters(9999, "ubuntu:14.04"));
+		}
+		catch (IOException ioe)
+		{
+			System.out.println("Failed to start SimDeployer: " + ioe.getMessage());
+			ioe.printStackTrace();
+			System.exit(-1);
+		}
+	}
 }
