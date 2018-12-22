@@ -36,34 +36,7 @@
                             <transformers>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>be.uantwerpen.fti.ds.sc.simdeployer.Main</mainClass>
-                                </transformer>
-                            </transformers>
-                            <filters>
-                                <filter>
-                                    <artifact>*:*</artifact>
-                                    <excludes>
-                                        <exclude>META-INF/*.SF</exclude>
-                                        <exclude>META-INF/*.DSA</exclude>
-                                        <exclude>META-INF/*.RSA</exclude>
-                                    </excludes>
-                                </filter>
-                            </filters>
-                        </configuration>
-                    </execution>
-
-                    <execution>
-                        <id>Command</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <outputFile>release/Command.jar</outputFile>
-                            <transformers>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>be.uantwerpen.fti.ds.sc.smartracecar.simdeployer.Commands</mainClass>
+                                    <mainClass>be.uantwerpen.fti.ds.sc.simdeployer.SimDeployerV2</mainClass>
                                 </transformer>
                             </transformers>
                             <filters>
@@ -93,12 +66,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.github.lalyos</groupId>
-            <artifactId>jfiglet</artifactId>
-            <version>0.0.8</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>RELEASE</version>
@@ -121,12 +88,6 @@
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.8.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>be.uantwerpen.fti.ds.sc</groupId>
-            <artifactId>common</artifactId>
-            <version>1.0</version>
         </dependency>
 
         <dependency>

@@ -17,6 +17,7 @@
         <module>racecarbackend</module>
         <module>simdeployer</module>
         <module>simkernel</module>
+        <module>simdeployerinterface</module>
     </modules>
 
     <build>
