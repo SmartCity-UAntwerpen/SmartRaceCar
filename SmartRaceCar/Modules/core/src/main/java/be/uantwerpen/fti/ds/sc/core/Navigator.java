@@ -2,36 +2,50 @@ package be.uantwerpen.fti.ds.sc.core;
 
 
 import be.uantwerpen.fti.ds.sc.common.*;
+import be.uantwerpen.fti.ds.sc.core.Communication.NavigationBackendCommunication;
+import be.uantwerpen.fti.ds.sc.core.Communication.NavigationVehicleCommunication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.*;
 
 public class Navigator implements MQTTListener
 {
-	private Core core;
-
-	private int costCurrentToStartTiming;                                    // Time in seconds from current position to start position of route.
-	private int costStartToEndTiming;                                        // Time in seconds from start position to end position of route.
-
-	private Queue<Long> currentRoute;                                        // All waypoint IDs to be handled in the current route.
-	private int routeSize;                                                   // Current route's size.
+	private long ID;
+	private CoreParameters params;
 	private Logger log;
 	private MQTTUtils mqttUtils;
 
-	public Navigator(Core core)
+	private NavigationVehicleCommunication vehicle;
+
+	private HashMap<Long, WayPoint> wayPoints;
+	private int costCurrentToStartTiming;                                    // Time in seconds from current position to start position of route.
+	private int costStartToEndTiming;                                        // Time in seconds from start position to end position of route.
+	private boolean occupied;
+
+
+	private Queue<Long> currentRoute;                                        // All waypoint IDs to be handled in the current route.
+	private int routeSize;                                                   // Current route's size.
+
+
+	public Navigator(long ID, CoreParameters params, NavigationVehicleCommunication vehicle, NavigationBackendCommunication backend)
 	{
 		this.log = LoggerFactory.getLogger(Navigator.class);
 
-		this.core = core;
+		this.ID = ID;
+		this.params = params;
 
-		this.mqttUtils = new MQTTUtils(this.core.getParams().getMqttBroker(), this.core.getParams().getMqttUserName(), this.core.getParams().getMqttPassword(), this);
-		this.mqttUtils.subscribeToTopic(this.core.getParams().getMqttTopic() + "/job/" + this.core.getID());
+		this.wayPoints = backend.requestWayPoints();
+
+		this.vehicle = vehicle;
+
+		this.mqttUtils = new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this);
+		this.mqttUtils.subscribeToTopic(this.params.getMqttTopic() + "/job/" + this.ID);
 
 		this.costCurrentToStartTiming = -1;
 		this.costStartToEndTiming = -1;
 		this.routeSize = -1;
+		this.occupied = false;
 
 		this.currentRoute = new LinkedList<>();
 	}
@@ -55,10 +69,10 @@ public class Navigator implements MQTTListener
 	{
 		if (message.equals("stop"))
 		{
-			sendWheelStates(0, 0);
+			this.vehicle.sendWheelStates(0, 0);
 		} else
 		{
-			if (!this.core.isOccupied())
+			if (!this.occupied)
 			{
 				String[] wayPointStringValues = message.split(" ");
 				try
@@ -97,10 +111,10 @@ public class Navigator implements MQTTListener
 
 		boolean error = false;
 
-		if (!this.core.isOccupied())
+		if (!this.occupied)
 		{
-			this.core.setOccupied(true);
-			this.core.timeRequest(wayPointIDs);
+			this.occupied = true;
+			this.timeRequest(wayPointIDs);
 			while (this.costCurrentToStartTiming == -1 && this.costStartToEndTiming == -1)
 			{
 				this.log.info("Waiting for cost calculation");
@@ -115,7 +129,7 @@ public class Navigator implements MQTTListener
 			this.log.info("Cost calculation complete");
 			for (long wayPointID : wayPointIDs)
 			{
-				if (this.core.getWayPoints().containsKey(wayPointID))
+				if (this.wayPoints.containsKey(wayPointID))
 				{
 					this.currentRoute.add(wayPointID);
 					this.log.info("Added waypoint with ID " + wayPointID + " to route.");
@@ -176,7 +190,7 @@ public class Navigator implements MQTTListener
 		this.log.info("Location Updated. Vehicle has " + location.getPercentage() + "% of route completed");
 		//this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/percentage", JSONUtils.objectToJSONString(location));
 		//this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/percentage", Integer.toString(location.getPercentage()));
-		this.mqttUtils.publishMessage(this.core.getParams().getMqttTopic() + "/percentage/" + this.core.getID(), Integer.toString(location.getPercentage()));
+		this.mqttUtils.publishMessage(this.params.getMqttTopic() + "/percentage/" + this.ID, Integer.toString(location.getPercentage()));
 	}
 
 	/**
@@ -185,9 +199,9 @@ public class Navigator implements MQTTListener
 	 */
 	private void routeNotComplete()
 	{
-		this.core.setOccupied(false);
+		this.occupied = false;
 		//this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/route", "notcomplete");
-		this.mqttUtils.publishMessage(this.core.getParams().getMqttTopic() + "/route/" + this.core.getID(), "notcomplete");
+		this.mqttUtils.publishMessage(this.params.getMqttTopic() + "/route/" + this.ID, "notcomplete");
 	}
 
 	/**
@@ -197,9 +211,9 @@ public class Navigator implements MQTTListener
 	private void routeError()
 	{
 		this.log.warn("Route error. Route Cancelled");
-		this.core.setOccupied(false);
+		this.occupied = false;
 		//this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/route", "error");
-		this.mqttUtils.publishMessage(this.core.getParams().getMqttTopic() + "/route/" + this.core.getID() , "error");
+		this.mqttUtils.publishMessage(this.params.getMqttTopic() + "/route/" + this.ID, "error");
 	}
 
 	/**
@@ -210,13 +224,13 @@ public class Navigator implements MQTTListener
 	{
 		if (!this.currentRoute.isEmpty())
 		{
-			WayPoint nextWayPoint = this.core.getWayPoints().get(this.currentRoute.poll());
+			WayPoint nextWayPoint = this.wayPoints.get(this.currentRoute.poll());
 
 			this.log.info("Sending next waypoint with ID " + nextWayPoint.getID() + " (" + (this.routeSize - this.currentRoute.size()) + "/" + this.routeSize + ")");
 
-			if (!this.core.getParams().isDebug())
+			if (!this.params.isDebug())
 			{
-				this.core.getTcpUtils().sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("nextWayPoint", nextWayPoint));
+				this.vehicle.sendNextWayPoint(nextWayPoint);
 			}
 			else
 			{
@@ -246,29 +260,9 @@ public class Navigator implements MQTTListener
 	private void routeCompleted()
 	{
 		this.log.info("Route Completed.");
-		this.core.setOccupied(false);
+		this.occupied = false;
 		//this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/route", "done");
-		this.mqttUtils.publishMessage(this.core.getParams().getMqttTopic()  + "/route/" + this.core.getID(), "done");
-	}
-
-	/**
-	 * Send wheel states to the vehicle over the socket connection. useful for emergency stops and other specific requests.
-	 *
-	 * @param throttle throttle value for the vehicle wheels.
-	 * @param steer    rotation value for the vehicle wheels.
-	 */
-	private void sendWheelStates(float throttle, float steer)
-	{
-		this.log.info("Sending wheel state Throttle:" + throttle + ", Steer:" + steer + ".");
-		if (!this.core.getParams().isDebug())
-		{
-			this.core.getTcpUtils().sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("drive", new Drive(steer, throttle)));
-		}
-		else
-		{
-			this.log.info("Debug mode -> not sending wheel states");
-		}
-
+		this.mqttUtils.publishMessage(this.params.getMqttTopic()  + "/route/" + this.ID, "done");
 	}
 
 	/**
@@ -282,6 +276,39 @@ public class Navigator implements MQTTListener
 		this.setCostCurrentToStartTiming(cost.getWeightToStart());
 		this.setCostStartToEndTiming(cost.getWeight());
 		this.log.info("Timing calculation complete");
+	}
+
+	/**
+	 * Called by incoming timing calculation requests. Sends the request further to the RosKernel/SimKernel.
+	 *
+	 * @param wayPointIDs Array of waypoint ID's to have their timing calculated.
+	 */
+	public void timeRequest(long[] wayPointIDs)
+	{
+		this.log.info("Requesting timing");
+
+		List<Point> points = new ArrayList<>();
+		points.add(this.wayPoints.get(wayPointIDs[0]));
+		points.add(this.wayPoints.get(wayPointIDs[1]));
+		if (!this.params.isDebug())
+		{
+			this.vehicle.timeRequest(points);
+		}
+		else
+		{
+			this.log.info("Debug mode -> timing = 5");
+			this.timingCalculationComplete(new Cost(false, 5, 5, this.ID));
+		}
+	}
+
+	public void sendCurrentPosition(long wayPoint)
+	{
+		this.vehicle.sendCurrentPosition(this.wayPoints.get(wayPoint));
+	}
+
+	public void sendStartPoint(long wayPoint)
+	{
+		this.vehicle.sendStartpoint(this.wayPoints.get(wayPoint));
 	}
 
 
