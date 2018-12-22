@@ -1,6 +1,8 @@
 package be.uantwerpen.fti.ds.sc.simkernel;
 
 import be.uantwerpen.fti.ds.sc.common.*;
+import be.uantwerpen.fti.ds.sc.simkernel.Communication.ROSCommunication;
+import be.uantwerpen.fti.ds.sc.simkernel.Communication.ROSCommunicator;
 import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +24,7 @@ class SimKernel implements TCPListener
 
 	//Help services
 	private TCPUtils tcpUtils;
-	private RESTUtils restUtils;
+	private ROSCommunication ROS;
 
 	//variables
 	private Logger log;
@@ -46,7 +48,7 @@ class SimKernel implements TCPListener
 		this.loadConfig();
 
 		this.log.info("Startup parameters: TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
-		this.restUtils = new RESTUtils(this.parameters.getROSServerURL());
+		this.ROS = new ROSCommunicator(this.parameters);
 		this.tcpUtils = new TCPUtils(clientPort, serverPort, this);
 		this.tcpUtils.start();
 		this.calculatedCosts = new HashMap<>();
@@ -180,7 +182,7 @@ class SimKernel implements TCPListener
 
 			try
 			{
-				cost = (Cost) JSONUtils.getObjectWithKeyWord(this.restUtils.postJSONGetJSON("calcWeight", JSONUtils.arrayToJSONString(points)), typeOfCost);
+				cost = this.ROS.requestCost(points, typeOfCost);
 			}
 			catch (IOException ioe)
 			{
@@ -278,7 +280,7 @@ class SimKernel implements TCPListener
 
 				try
 				{
-					cost = (Cost) JSONUtils.getObjectWithKeyWord(this.restUtils.postJSONGetJSON("calcWeight", JSONUtils.arrayToJSONString(allPoints)), typeOfCost);
+					cost = this.ROS.requestCost(points, typeOfCost);
 				}
 				catch (IOException ioe)
 				{
