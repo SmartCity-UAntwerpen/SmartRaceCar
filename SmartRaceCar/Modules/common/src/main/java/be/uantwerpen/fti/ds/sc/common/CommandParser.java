@@ -14,7 +14,7 @@ public class CommandParser
 	{
 	}
 
-	public Command parse(String command)
+	public Command parseCommand(String command)
 	{
 		if (command.equals(CREATE_COMMAND))
 		{
