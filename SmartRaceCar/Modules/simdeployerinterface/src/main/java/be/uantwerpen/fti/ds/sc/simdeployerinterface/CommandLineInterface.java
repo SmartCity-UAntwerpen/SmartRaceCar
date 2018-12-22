@@ -1,12 +1,23 @@
 package be.uantwerpen.fti.ds.sc.simdeployerinterface;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
+import be.uantwerpen.fti.ds.sc.common.TCPUtils;
+
+import java.io.*;
+import java.net.Socket;
+import java.util.*;
 
 public class CommandLineInterface
 {
+	private static final String JAR_NAME = "SimDeployerInterface.jar";
 	private static final String[] SET_SUB_COMMANDS = {"startpoint", "speed", "name"};
+
+	private static void usage()
+	{
+		System.out.println("java -jar " + JAR_NAME + " [REMOTE HOST] [REMOTE TCP PORT] [SCRIPT FILE]");
+		System.out.println("\tREMOTE HOST\t\tThe host the SimDeployer is running on.");
+		System.out.println("\tREMOTE TCP PORT\t\tThe port the SimDeployer is running on.");
+		System.out.println("\tSCRIPT FILE\t\tOptional. A script to be used instead of an interactive command line.");
+	}
 
 	private static String help()
 	{
@@ -37,21 +48,68 @@ public class CommandLineInterface
 
 	public static void main(String[] args)
 	{
-		for (String arg: args)
+		if (args.length < 2)
 		{
-			System.out.println(arg);
+			usage();
 		}
 
-		Scanner scanner = new Scanner(System.in);
+		final String remoteHost = args[0];
+		final int remotePort = Integer.parseInt(args[1]);
+
+		Scanner scanner = null;
+
+		boolean interactiveMode = true;
+		if (args.length == 3)
+		{
+			try
+			{
+				System.out.println("Attempting to read script \"" + args[2] + "\"");
+				scanner = new Scanner(new File(args[2]));
+			}
+			catch (FileNotFoundException fnfe)
+			{
+				System.out.println("Failed to open script file: " + fnfe.getMessage());
+				fnfe.printStackTrace();
+				System.exit(-1);
+			}
+
+			// We succesfully hooked up the scanner to the file.
+			interactiveMode = false;
+		}
+		else
+		{
+			scanner = new Scanner(System.in);
+		}
+
 		InteractiveCommandParser commandParser = new InteractiveCommandParser();
 		boolean quit = false;
 
-		System.out.println("Welcome to the SmartCity SimDeployer Commandline utility.");
-		System.out.println("Type \"help\" for a list of possible commands.");
+		if (interactiveMode)
+		{
+			System.out.println("Welcome to the SmartCity SimDeployer Commandline utility.");
+			System.out.println("Type \"help\" for a list of possible commands.");
+		}
 
 		while (!quit)
 		{
-			String line = scanner.nextLine();
+			String line = "";
+
+			try
+			{
+				line = scanner.nextLine();
+			}
+			catch (NoSuchElementException nsee)
+			{
+				System.out.println("Read final line, exiting...");
+				quit = true;
+				continue;
+			}
+
+			if (!interactiveMode)
+			{
+				System.out.println(line);
+			}
+
 			String[] parts = line.split("\\s"); // Split the input on any whitespace
 
 			InteractiveCommand command = null;
@@ -68,48 +126,65 @@ public class CommandLineInterface
 
 			String response = "";
 
-			switch (command)
+			try
 			{
-				case CREATE:
+				switch (command)
 				{
-					long simulationId = Long.parseLong(parts[1]);
-					break;
+					case CREATE:
+					{
+						long simulationId = Long.parseLong(parts[1]);
+						TCPClient client = new TCPClient(remoteHost, remotePort);
+						client.send("create " + simulationId);
+						response = client.receive();
+						client.close();
+						break;
+					}
+
+					case SET:
+					{
+						break;
+					}
+
+					case RUN:
+					{
+						long simulationId = Long.parseLong(parts[1]);
+						TCPClient client = new TCPClient(remoteHost, remotePort);
+						client.send("run " + simulationId);
+						response = client.receive();
+						client.close();
+						break;
+					}
+
+					case HELP:
+					{
+						response = help();
+						break;
+					}
+
+					case KILL:
+						break;
+
+					case PING:
+						break;
+
+					case QUIT:
+						break;
+
+					case STOP:
+						break;
+
+					case RESTART:
+						break;
+
+					default:
+						continue;
 				}
-
-				case SET:
-				{
-					break;
-				}
-
-				case RUN:
-				{
-					long simulationId = Long.parseLong(parts[1]);
-					break;
-				}
-
-				case HELP:
-				{
-					response = help();
-					break;
-				}
-
-				case KILL:
-					break;
-
-				case PING:
-					break;
-
-				case QUIT:
-					break;
-
-				case STOP:
-					break;
-
-				case RESTART:
-					break;
-
-				default:
-					continue;
+			}
+			catch (IOException ioe)
+			{
+				System.out.println(ioe.getMessage());
+				ioe.printStackTrace();
+				continue;
 			}
 
 			System.out.println(response);

@@ -189,6 +189,8 @@ public class SimDeployerV2 implements TCPListener
 	@Override
 	public String parseTCP(String message)
 	{
+		this.log.info("Received TCP Message \"" + message + "\"");
+
 		// Split off the first part of the message, this is the command, the rest is payload
 		String[] parts = message.split("\\s");
 		StringBuilder payloadBuilder = new StringBuilder();
