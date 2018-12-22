@@ -163,9 +163,10 @@ public class SimDeployerV2 implements TCPListener
 
 			case SET:
 			{
-				String[] split = payload.split("\\s");
-				long simulationId = Long.parseLong(split[0]);
-				String key = split[1];
+				this.log.info("Payload: \"" + payload + "\"");
+				String[] split = payload.split("\\s+");
+				String key = split[0];
+				long simulationId = Long.parseLong(split[1]);
 				String value = split[2];
 				return this.set(simulationId, key, value);
 			}
@@ -198,6 +199,11 @@ public class SimDeployerV2 implements TCPListener
 		for (int i = 1; i < parts.length; ++i)
 		{
 			payloadBuilder.append(parts[i]);
+
+			if ((i + 1) != parts.length)
+			{
+				payloadBuilder.append(' ');
+			}
 		}
 
 		// Parse the command

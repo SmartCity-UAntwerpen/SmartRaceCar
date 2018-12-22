@@ -1,15 +1,46 @@
 package be.uantwerpen.fti.ds.sc.simdeployerinterface;
 
-import be.uantwerpen.fti.ds.sc.common.TCPUtils;
-
 import java.io.*;
-import java.net.Socket;
 import java.util.*;
 
 public class CommandLineInterface
 {
 	private static final String JAR_NAME = "SimDeployerInterface.jar";
-	private static final String[] SET_SUB_COMMANDS = {"startpoint", "speed", "name"};
+
+	private static final String STARTPOINT_KEY = "startpoint";
+	private static final String SPEED_KEY = "speed";
+	private static final String NAME_KEY = "name";
+
+	private static String generateSetCommand (String[] args)
+	{
+		String key = args[0];
+		long simulationID = Long.parseLong(args[1]);
+		String value = args[2];
+
+		if (key.equalsIgnoreCase(STARTPOINT_KEY))
+		{
+			return "set startpoint " + simulationID + " " + Long.parseLong(value);
+		}
+		else if (key.equalsIgnoreCase(SPEED_KEY))
+		{
+			return "set speed " + simulationID + " " + Float.parseFloat(value);
+		}
+		else if (key.equalsIgnoreCase(NAME_KEY))
+		{
+			return "set name " + simulationID + " " + value;
+		}
+
+		return "";
+	}
+
+	private static String sendCommand(String command, String remoteHost, int remotePort) throws IOException
+	{
+		TCPClient client = new TCPClient(remoteHost, remotePort);
+		client.send(command);
+		String response = client.receive();
+		client.close();
+		return response;
+	}
 
 	private static void usage()
 	{
@@ -133,25 +164,26 @@ public class CommandLineInterface
 					case CREATE:
 					{
 						long simulationId = Long.parseLong(parts[1]);
-						TCPClient client = new TCPClient(remoteHost, remotePort);
-						client.send("create " + simulationId);
-						response = client.receive();
-						client.close();
+						response = sendCommand("create " + simulationId, remoteHost, remotePort);
 						break;
 					}
 
 					case SET:
 					{
+						String[] commandArgs = new String [parts.length - 1];
+						for (int i = 1; i < parts.length; ++i)
+						{
+							commandArgs[i-1] = parts[i];
+						}
+						response = sendCommand(generateSetCommand(commandArgs), remoteHost, remotePort);
 						break;
 					}
 
 					case RUN:
 					{
 						long simulationId = Long.parseLong(parts[1]);
-						TCPClient client = new TCPClient(remoteHost, remotePort);
-						client.send("run " + simulationId);
-						response = client.receive();
-						client.close();
+						response = sendCommand("run " + simulationId, remoteHost, remotePort);
+
 						break;
 					}
 
@@ -162,19 +194,37 @@ public class CommandLineInterface
 					}
 
 					case KILL:
+					{
+						long simulationId = Long.parseLong(parts[1]);
+						response = sendCommand("kill " + simulationId, remoteHost, remotePort);
 						break;
+					}
 
 					case PING:
+					{
+						response = sendCommand("ping", remoteHost, remotePort);
 						break;
+					}
 
 					case QUIT:
-						break;
+					{
+						quit = true;
+						continue;
+					}
 
 					case STOP:
+					{
+						long simulationId = Long.parseLong(parts[1]);
+						response = sendCommand("stop " + simulationId, remoteHost, remotePort);
 						break;
+					}
 
 					case RESTART:
+					{
+						long simulationId = Long.parseLong(parts[1]);
+						response = sendCommand("restart " + simulationId, remoteHost, remotePort);
 						break;
+					}
 
 					default:
 						continue;
