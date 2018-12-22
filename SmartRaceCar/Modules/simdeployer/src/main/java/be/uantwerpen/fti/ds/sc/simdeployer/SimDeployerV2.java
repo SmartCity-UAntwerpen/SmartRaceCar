@@ -1,5 +1,7 @@
 package be.uantwerpen.fti.ds.sc.simdeployer;
 
+import be.uantwerpen.fti.ds.sc.common.Command;
+import be.uantwerpen.fti.ds.sc.common.CommandParser;
 import be.uantwerpen.fti.ds.sc.common.TCPListener;
 import be.uantwerpen.fti.ds.sc.common.TCPUtils;
 import org.slf4j.Logger;
