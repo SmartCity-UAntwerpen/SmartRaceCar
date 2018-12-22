@@ -1,7 +1,6 @@
 package be.uantwerpen.fti.ds.sc.simdeployer;
 
-import be.uantwerpen.fti.ds.sc.common.Command;
-import be.uantwerpen.fti.ds.sc.common.CommandParser;
+import be.uantwerpen.fti.ds.sc.common.commands.*;
 import be.uantwerpen.fti.ds.sc.common.TCPListener;
 import be.uantwerpen.fti.ds.sc.common.TCPUtils;
 import org.slf4j.Logger;
@@ -15,10 +14,6 @@ public class SimDeployerV2 implements TCPListener
 	private static final String ACK = "ACK";
 	private static final String NACK = "NACK";
 	private static final String PONG = "PONG";
-
-	private static final String STARTPOINT_KEY = "startpoint";
-	private static final String SPEED_KEY = "speed";
-	private static final String NAME_KEY = "name";
 
 	private Logger log;
 	private TCPUtils simulationFrontend;
@@ -64,25 +59,25 @@ public class SimDeployerV2 implements TCPListener
 		return ACK;
 	}
 
-	private String set(long simulationId, String key, String value)
+	private String set(SetCommand setCommand)
 	{
-		if (key.equalsIgnoreCase(STARTPOINT_KEY))
+		if (setCommand.getKey() == SetParameter.STARTPOINT)
 		{
-			this.startPoints.put(simulationId, Long.parseLong(value));
+			this.startPoints.put(setCommand.getSimulationId(), Long.parseLong(setCommand.getValue()));
 			return ACK;
 		}
-		else if (key.equalsIgnoreCase(SPEED_KEY))
+		else if (setCommand.getKey() == SetParameter.SPEED)
 		{
 			this.log.warn("Got set command for speed, this command is not supported, ignoring.");
 			return NACK;
 		}
-		else if (key.equalsIgnoreCase(NAME_KEY))
+		else if (setCommand.getKey() == SetParameter.NAME)
 		{
 			this.log.warn("Got set command for name, this command is not supported, ignoring.");
 			return NACK;
 		}
 
-		this.log.error("Got unsupported set command \"set " + key + " " + value + "\"");
+		this.log.error("Got unsupported set command \"" + setCommand + "\"");
 
 		return NACK;
 	}
@@ -119,37 +114,43 @@ public class SimDeployerV2 implements TCPListener
 			return NACK;
 		}
 
+		if (this.stopSimulation(simulationId).equalsIgnoreCase(NACK))
+		{
+			return NACK;
+		}
+
 		this.startPoints.remove(simulationId);
 
 		return ACK;
 	}
 
-	private String executeCommand(Command command, String payload)
+	private String executeCommand(Command command)
 	{
-		switch (command)
+		switch (command.getCommandType())
 		{
 			case CREATE:
 			{
-				long simulationId = Long.parseLong(payload);
-				return this.createSimulation(simulationId);
+				VehicleCommand createCommand = (VehicleCommand) command;
+				return this.createSimulation(createCommand.getSimulationId());
 			}
 
 			case RUN:
 			{
-				long simulationId = Long.parseLong(payload);
-				return this.runSimulation(simulationId);
+				VehicleCommand runCommand = (VehicleCommand) command;
+				return this.runSimulation(runCommand.getSimulationId());
 			}
 
 			case STOP:
 			{
-				long simulationId = Long.parseLong(payload);
-				return this.stopSimulation(simulationId);
+				VehicleCommand stopCommand = (VehicleCommand) command;
+				return this.stopSimulation(stopCommand.getSimulationId());
 			}
 
+			// Since kill removes a simulation ID from tracking, it also implies stopping the simulation gracefully first.
 			case KILL:
 			{
-				long simulationId = Long.parseLong(payload);
-				return this.killSimulation(simulationId);
+				VehicleCommand killCommand = (VehicleCommand) command;
+				return this.killSimulation(killCommand.getSimulationId());
 			}
 
 			// The effect of a restart is the same as that of a "run",
@@ -157,18 +158,14 @@ public class SimDeployerV2 implements TCPListener
 			// Nothing we can do about this, I'm afraid
 			case RESTART:
 			{
-				long simulationId = Long.parseLong(payload);
-				return this.runSimulation(simulationId);
+				VehicleCommand restartCommand = (VehicleCommand) command;
+				return this.runSimulation(restartCommand.getSimulationId());
 			}
 
 			case SET:
 			{
-				this.log.info("Payload: \"" + payload + "\"");
-				String[] split = payload.split("\\s+");
-				String key = split[0];
-				long simulationId = Long.parseLong(split[1]);
-				String value = split[2];
-				return this.set(simulationId, key, value);
+				SetCommand setCommand = (SetCommand) command;
+				return this.set(setCommand);
 			}
 
 			case PING:
@@ -190,29 +187,18 @@ public class SimDeployerV2 implements TCPListener
 	@Override
 	public String parseTCP(String message)
 	{
-		this.log.info("Received TCP Message \"" + message + "\"");
+		CommandParser parser = new CommandParser();
 
-		// Split off the first part of the message, this is the command, the rest is payload
-		String[] parts = message.split("\\s");
-		StringBuilder payloadBuilder = new StringBuilder();
-
-		for (int i = 1; i < parts.length; ++i)
+		try
 		{
-			payloadBuilder.append(parts[i]);
-
-			if ((i + 1) != parts.length)
-			{
-				payloadBuilder.append(' ');
-			}
+			Command command = parser.parseCommand(message);
+			return this.executeCommand(command);
 		}
-
-		// Parse the command
-		CommandParser commandParser = new CommandParser();
-		Command command = commandParser.parseCommand(parts[0]);
-
-		// Retrieve the payload
-		String payload = payloadBuilder.toString();
-		return this.executeCommand(command, payload);
+		catch (IllegalArgumentException iae)
+		{
+			this.log.error("Failed to parse command \"" + message + "\"", iae);
+			return NACK;
+		}
 	}
 
 	public static void main(String[] args)
