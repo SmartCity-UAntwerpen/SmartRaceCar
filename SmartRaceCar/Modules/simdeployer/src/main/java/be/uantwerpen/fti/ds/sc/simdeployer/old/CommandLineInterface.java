@@ -1,7 +1,5 @@
 package be.uantwerpen.fti.ds.sc.simdeployer.old;
 
-import be.uantwerpen.fti.ds.sc.simdeployer.old.SimDeployer;
-
 import java.util.Scanner;
 
 /**
