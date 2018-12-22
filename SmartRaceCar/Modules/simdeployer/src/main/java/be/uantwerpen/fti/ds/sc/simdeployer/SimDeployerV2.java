@@ -200,7 +200,7 @@ public class SimDeployerV2 implements TCPListener
 
 		// Parse the command
 		CommandParser commandParser = new CommandParser();
-		Command command = commandParser.parse(parts[0]);
+		Command command = commandParser.parseCommand(parts[0]);
 
 		// Retrieve the payload
 		String payload = payloadBuilder.toString();
