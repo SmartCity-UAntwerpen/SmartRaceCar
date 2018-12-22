@@ -6,6 +6,7 @@ import be.uantwerpen.fti.ds.sc.common.TCPUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.naming.InvalidNameException;
 import java.io.IOException;
 import java.util.*;
 
@@ -51,9 +52,9 @@ public class SimDeployerV2 implements TCPListener
 		{
 			this.hyperVisor.launch(simulationId, this.startPoints.get(simulationId));
 		}
-		catch (Exception e)
+		catch (IOException | InterruptedException | InvalidNameException ie)
 		{
-			this.log.error("An error occurred while trying to launch a virtual machine.", e);
+			this.log.error("An error occurred while trying to launch a virtual machine.", ie);
 			return NACK;
 		}
 
@@ -96,10 +97,10 @@ public class SimDeployerV2 implements TCPListener
 		{
 			this.hyperVisor.stop(simulationId);
 		}
-		catch (NoSuchElementException nsee)
+		catch (NoSuchElementException | IOException | InterruptedException e)
 		{
 			String errorString = "An exception was thrown while trying to stop virtual machine " + simulationId + ".";
-			this.log.error(errorString, nsee);
+			this.log.error(errorString, e);
 			return NACK;
 		}
 
