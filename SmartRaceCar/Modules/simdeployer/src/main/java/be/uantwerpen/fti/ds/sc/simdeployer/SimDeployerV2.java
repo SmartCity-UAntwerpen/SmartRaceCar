@@ -6,9 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SimDeployerV2 implements TCPListener
 {
@@ -21,20 +19,46 @@ public class SimDeployerV2 implements TCPListener
 	private static final String NAME_KEY = "name";
 
 	private Logger log;
-	private SimDeployerParameters parameters;
 	private TCPUtils simulationFrontend;
-	private List<Long> simulationIds;
 	private Map<Long, Long> startPoints;
+	private HyperVisor hyperVisor;
 
 	private String createSimulation(long simulationId)
 	{
-		if (this.simulationIds.contains(simulationId))
+		if (this.startPoints.containsKey(simulationId))
 		{
 			this.log.error("Tried to add simulation with existing ID (" + simulationId + ").");
 			return NACK;
 		}
 
-		this.simulationIds.add(simulationId);
+		this.startPoints.put(simulationId, -1L);
+		return ACK;
+	}
+
+	private String runSimulation(long simulationId)
+	{
+		if (!this.startPoints.containsKey(simulationId))
+		{
+			this.log.error("Tried to start simulation that doesn't exist.");
+			return NACK;
+		}
+
+		if (this.startPoints.get(simulationId) == -1L)
+		{
+			this.log.error("Tried to start simulation that doesn't have a startpoint.");
+			return NACK;
+		}
+
+		try
+		{
+			this.hyperVisor.launch(simulationId);
+		}
+		catch (IOException ioe)
+		{
+			this.log.error("An error occurred while trying to launch a container.", ioe);
+			return NACK;
+		}
+
 		return ACK;
 	}
 
@@ -61,6 +85,43 @@ public class SimDeployerV2 implements TCPListener
 		return NACK;
 	}
 
+	private String stopSimulation(long simulationId)
+	{
+		if (!this.startPoints.containsKey(simulationId))
+		{
+			String errorString = "Tried to stop non-existent simulation (" + simulationId + ").";
+			this.log.error(errorString);
+			return NACK;
+		}
+
+		try
+		{
+			this.hyperVisor.stop(simulationId);
+		}
+		catch (NoSuchElementException nsee)
+		{
+			String errorString = "An exception was thrown while trying to stop simulation " + simulationId + ".";
+			this.log.error(errorString, nsee);
+			return NACK;
+		}
+
+		return ACK;
+	}
+
+	private String killSimulation(long simulationId)
+	{
+		if (!this.startPoints.containsKey(simulationId))
+		{
+			String errorString = "Tried to kill non-existent simulation (" + simulationId + ").";
+			this.log.error(errorString);
+			return NACK;
+		}
+
+		this.startPoints.remove(simulationId);
+
+		return ACK;
+	}
+
 	private String executeCommand(Command command, String payload)
 	{
 		switch (command)
@@ -72,16 +133,31 @@ public class SimDeployerV2 implements TCPListener
 			}
 
 			case RUN:
-				break;
+			{
+				long simulationId = Long.parseLong(payload);
+				return this.runSimulation(simulationId);
+			}
 
 			case STOP:
-				break;
+			{
+				long simulationId = Long.parseLong(payload);
+				return this.stopSimulation(simulationId);
+			}
 
 			case KILL:
-				break;
+			{
+				long simulationId = Long.parseLong(payload);
+				return this.killSimulation(simulationId);
+			}
 
+			// The effect of a restart is the same as that of a "run",
+			// This is something that needs to be cleaned up in the simulation front end,
+			// Nothing we can do about this, I'm afraid
 			case RESTART:
-				break;
+			{
+				long simulationId = Long.parseLong(payload);
+				return this.runSimulation(simulationId);
+			}
 
 			case SET:
 			{
@@ -89,9 +165,7 @@ public class SimDeployerV2 implements TCPListener
 				long simulationId = Long.parseLong(split[0]);
 				String key = split[1];
 				String value = split[2];
-				this.set(simulationId, key, value);
-
-				break;
+				return this.set(simulationId, key, value);
 			}
 
 			case PING:
@@ -104,14 +178,14 @@ public class SimDeployerV2 implements TCPListener
 	public SimDeployerV2(SimDeployerParameters parameters) throws IOException
 	{
 		this.log = LoggerFactory.getLogger(SimDeployerV2.class);
-		this.parameters = parameters;
 		this.simulationFrontend = new TCPUtils(parameters.getServerPort(), this);
 		this.simulationFrontend.start();
-		this.simulationIds = new ArrayList<>();
+		this.startPoints = new HashMap<>();
+		this.hyperVisor = new HyperVisor(parameters);
 	}
 
 	@Override
-	public String parseTCP(String message) throws IOException
+	public String parseTCP(String message)
 	{
 		// Split off the first part of the message, this is the command, the rest is payload
 		String[] parts = message.split("\\s");
