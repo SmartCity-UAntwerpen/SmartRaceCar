@@ -1,5 +1,10 @@
 package be.uantwerpen.fti.ds.sc.simdeployerinterface;
 
+import be.uantwerpen.fti.ds.sc.common.commands.Command;
+import be.uantwerpen.fti.ds.sc.common.commands.CommandType;
+import be.uantwerpen.fti.ds.sc.simdeployerinterface.commands.InteractiveCommand;
+import be.uantwerpen.fti.ds.sc.simdeployerinterface.commands.InteractiveCommandParser;
+
 import java.io.*;
 import java.util.*;
 
@@ -7,50 +12,21 @@ public class CommandLineInterface
 {
 	private static final String JAR_NAME = "SimDeployerInterface.jar";
 
-	private static final String STARTPOINT_KEY = "startpoint";
-	private static final String SPEED_KEY = "speed";
-	private static final String NAME_KEY = "name";
+	private String remoteHost;
+	private int remotePort;
+	private boolean interactiveMode;
+	private File scriptFile;
 
-	private static String generateSetCommand (String[] args)
-	{
-		String key = args[0];
-		long simulationID = Long.parseLong(args[1]);
-		String value = args[2];
-
-		if (key.equalsIgnoreCase(STARTPOINT_KEY))
-		{
-			return "set startpoint " + simulationID + " " + Long.parseLong(value);
-		}
-		else if (key.equalsIgnoreCase(SPEED_KEY))
-		{
-			return "set speed " + simulationID + " " + Float.parseFloat(value);
-		}
-		else if (key.equalsIgnoreCase(NAME_KEY))
-		{
-			return "set name " + simulationID + " " + value;
-		}
-
-		return "";
-	}
-
-	private static String sendCommand(String command, String remoteHost, int remotePort) throws IOException
+	private String sendCommand(Command command, String remoteHost, int remotePort) throws IOException
 	{
 		TCPClient client = new TCPClient(remoteHost, remotePort);
-		client.send(command);
+		client.send(command.toString());
 		String response = client.receive();
 		client.close();
 		return response;
 	}
 
-	private static void usage()
-	{
-		System.out.println("java -jar " + JAR_NAME + " [REMOTE HOST] [REMOTE TCP PORT] [SCRIPT FILE]");
-		System.out.println("\tREMOTE HOST\t\tThe host the SimDeployer is running on.");
-		System.out.println("\tREMOTE TCP PORT\t\tThe port the SimDeployer is running on.");
-		System.out.println("\tSCRIPT FILE\t\tOptional. A script to be used instead of an interactive command line.");
-	}
-
-	private static String help()
+	private String help()
 	{
 		Map<String, String> helpMap = new HashMap<>();
 
@@ -77,51 +53,28 @@ public class CommandLineInterface
 		return helpBuilder.toString();
 	}
 
-	public static void main(String[] args)
+	public void loop() throws FileNotFoundException
 	{
-		if (args.length < 2)
-		{
-			usage();
-		}
-
-		final String remoteHost = args[0];
-		final int remotePort = Integer.parseInt(args[1]);
-
 		Scanner scanner = null;
 
-		boolean interactiveMode = true;
-		if (args.length == 3)
-		{
-			try
-			{
-				System.out.println("Attempting to read script \"" + args[2] + "\"");
-				scanner = new Scanner(new File(args[2]));
-			}
-			catch (FileNotFoundException fnfe)
-			{
-				System.out.println("Failed to open script file: " + fnfe.getMessage());
-				fnfe.printStackTrace();
-				System.exit(-1);
-			}
-
-			// We succesfully hooked up the scanner to the file.
-			interactiveMode = false;
-		}
-		else
+		if (this.interactiveMode)
 		{
 			scanner = new Scanner(System.in);
 		}
+		else
+		{
+			scanner = new Scanner(this.scriptFile);
+		}
 
 		InteractiveCommandParser commandParser = new InteractiveCommandParser();
-		boolean quit = false;
 
-		if (interactiveMode)
+		if (this.interactiveMode)
 		{
 			System.out.println("Welcome to the SmartCity SimDeployer Commandline utility.");
 			System.out.println("Type \"help\" for a list of possible commands.");
 		}
 
-		while (!quit)
+		while (true)
 		{
 			String line = "";
 
@@ -132,8 +85,7 @@ public class CommandLineInterface
 			catch (NoSuchElementException nsee)
 			{
 				System.out.println("Read final line, exiting...");
-				quit = true;
-				continue;
+				return;
 			}
 
 			if (!interactiveMode)
@@ -141,13 +93,11 @@ public class CommandLineInterface
 				System.out.println(line);
 			}
 
-			String[] parts = line.split("\\s"); // Split the input on any whitespace
-
-			InteractiveCommand command = null;
+			Command command = null;
 
 			try
 			{
-				command = commandParser.parseInteractiveCommand(parts[0]);
+				command = commandParser.parseInteractiveCommand(line);
 			}
 			catch (IllegalArgumentException iae)
 			{
@@ -155,79 +105,28 @@ public class CommandLineInterface
 				continue;
 			}
 
+			// The return value for the command is captured in this variable and displayed at the end of the loop
 			String response = "";
 
 			try
 			{
-				switch (command)
+				if (command.getCommandType() == CommandType.OTHER)
 				{
-					case CREATE:
+					InteractiveCommand interactiveCommand = (InteractiveCommand) command;
+
+					switch (interactiveCommand.getInteractiveCommandType())
 					{
-						long simulationId = Long.parseLong(parts[1]);
-						response = sendCommand("create " + simulationId, remoteHost, remotePort);
-						break;
+						case HELP:
+							response = help();
+							break;
+
+						case QUIT:
+							return;
 					}
-
-					case SET:
-					{
-						String[] commandArgs = new String [parts.length - 1];
-						for (int i = 1; i < parts.length; ++i)
-						{
-							commandArgs[i-1] = parts[i];
-						}
-						response = sendCommand(generateSetCommand(commandArgs), remoteHost, remotePort);
-						break;
-					}
-
-					case RUN:
-					{
-						long simulationId = Long.parseLong(parts[1]);
-						response = sendCommand("run " + simulationId, remoteHost, remotePort);
-
-						break;
-					}
-
-					case HELP:
-					{
-						response = help();
-						break;
-					}
-
-					case KILL:
-					{
-						long simulationId = Long.parseLong(parts[1]);
-						response = sendCommand("kill " + simulationId, remoteHost, remotePort);
-						break;
-					}
-
-					case PING:
-					{
-						response = sendCommand("ping", remoteHost, remotePort);
-						break;
-					}
-
-					case QUIT:
-					{
-						quit = true;
-						continue;
-					}
-
-					case STOP:
-					{
-						long simulationId = Long.parseLong(parts[1]);
-						response = sendCommand("stop " + simulationId, remoteHost, remotePort);
-						break;
-					}
-
-					case RESTART:
-					{
-						long simulationId = Long.parseLong(parts[1]);
-						response = sendCommand("restart " + simulationId, remoteHost, remotePort);
-						break;
-					}
-
-					default:
-						continue;
+				}
+				else
+				{
+					response = this.sendCommand(command, remoteHost, remotePort);
 				}
 			}
 			catch (IOException ioe)
@@ -238,6 +137,64 @@ public class CommandLineInterface
 			}
 
 			System.out.println(response);
+		}
+	}
+
+	public CommandLineInterface(String remoteHost, int remotePort)
+	{
+		this.remoteHost = remoteHost;
+		this.remotePort = remotePort;
+		this.interactiveMode = true;
+		this.scriptFile = null;
+	}
+
+	public CommandLineInterface(String remoteHost, int remotePort, String scriptFilename)
+	{
+		this(remoteHost, remotePort);
+		this.interactiveMode = false;
+		this.scriptFile = new File(scriptFilename);
+	}
+
+	private static void usage()
+	{
+		System.out.println("java -jar " + JAR_NAME + " [REMOTE HOST] [REMOTE TCP PORT] [SCRIPT FILE]");
+		System.out.println("\tREMOTE HOST\t\tThe host the SimDeployer is running on.");
+		System.out.println("\tREMOTE TCP PORT\t\tThe port the SimDeployer is running on.");
+		System.out.println("\tSCRIPT FILE\t\tOptional. A script to be used instead of an interactive command line.");
+	}
+
+	public static void main(String[] args)
+	{
+		if (args.length < 2)
+		{
+			usage();
+			System.exit(-1);
+		}
+
+		final String remoteHost = args[0];
+		final int remotePort = Integer.parseInt(args[1]);
+
+		CommandLineInterface cli = null;
+
+		if (args.length == 3)
+		{
+			String scriptFile = args[2];
+			cli = new CommandLineInterface(remoteHost, remotePort, scriptFile);
+		}
+		else
+		{
+			cli = new CommandLineInterface(remoteHost, remotePort);
+		}
+
+		try
+		{
+			cli.loop();
+		}
+		catch (FileNotFoundException fnfe)
+		{
+			System.err.println("Failed to find Script file: " + fnfe.getMessage());
+			fnfe.printStackTrace();
+			System.exit(-1);
 		}
 	}
 }
