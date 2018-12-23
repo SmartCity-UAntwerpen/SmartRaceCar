@@ -1,6 +1,7 @@
 package be.uantwerpen.fti.ds.sc.core.Communication;
 
 import be.uantwerpen.fti.ds.sc.common.JSONUtils;
+import be.uantwerpen.fti.ds.sc.common.Messages;
 import be.uantwerpen.fti.ds.sc.common.RESTUtils;
 import be.uantwerpen.fti.ds.sc.common.WayPoint;
 import be.uantwerpen.fti.ds.sc.core.CoreParameters;
@@ -28,7 +29,7 @@ public class BackendCommunicator implements GeneralBackendCommunicator, MapBacke
 	@Override
 	public long register(long startPoint)
 	{
-		String id = this.restUtils.getTextPlain("register/" + Long.toString(startPoint));
+		String id = this.restUtils.getTextPlain(Messages.BACKEND.REGISTER + "/" + Long.toString(startPoint));
 		long ID = Long.parseLong(id, 10);
 		this.log.info("Vehicle received ID " + ID + ".");
 		return ID;
@@ -41,7 +42,7 @@ public class BackendCommunicator implements GeneralBackendCommunicator, MapBacke
 		Type typeOfHashMap = new TypeToken<HashMap<Long, WayPoint>>()
 		{
 		}.getType();
-		HashMap<Long, WayPoint> wayPoints = (HashMap<Long, WayPoint>) JSONUtils.getObjectWithKeyWord(restUtils.getJSON("getwaypoints"), typeOfHashMap);
+		HashMap<Long, WayPoint> wayPoints = (HashMap<Long, WayPoint>) JSONUtils.getObjectWithKeyWord(restUtils.getJSON(Messages.BACKEND.GET_WAYPOINTS), typeOfHashMap);
 
 		for (WayPoint wayPoint : wayPoints.values())
 		{
@@ -56,20 +57,20 @@ public class BackendCommunicator implements GeneralBackendCommunicator, MapBacke
 	@Override
 	public void disconnect(long ID)
 	{
-		this.restUtils.getCall("delete/" + ID);
+		this.restUtils.getCall(Messages.BACKEND.DELETE + "/" + ID);
 	}
 
 	@Override
 	public String getMapName()
 	{
-		return this.restUtils.getTextPlain("getmapname");
+		return this.restUtils.getTextPlain(Messages.BACKEND.GET_MAP_NAME);
 	}
 
 	@Override
 	public void downloadMap(String mapName)
 	{
 		this.log.info("Current used map '" + mapName + "' not found. Downloading... to " + this.params.getNavstackPath() + "/" + mapName);
-		this.restUtils.getFile("getmappgm/" + mapName, this.params.getNavstackPath(), mapName, "pgm");
-		this.restUtils.getFile("getmapyaml/" + mapName, this.params.getNavstackPath(), mapName, "yaml");
+		this.restUtils.getFile( Messages.BACKEND.GET_MAP_PGM + "/" + mapName, this.params.getNavstackPath(), mapName, "pgm");
+		this.restUtils.getFile( Messages.BACKEND.GET_MAP_YAML + "/" + mapName, this.params.getNavstackPath(), mapName, "yaml");
 	}
 }

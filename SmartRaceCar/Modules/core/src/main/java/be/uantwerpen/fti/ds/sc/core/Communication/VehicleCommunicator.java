@@ -30,7 +30,7 @@ public class VehicleCommunicator implements GeneralVehicleCommunicator, MapVehic
 	public void timeRequest(List<Point> points)
 	{
 		this.log.debug("Performing timing request");
-		this.tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord("costtiming", points));
+		this.tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord(Messages.CORE.COST_TIMING, points));
 	}
 
 	@Override
@@ -38,7 +38,7 @@ public class VehicleCommunicator implements GeneralVehicleCommunicator, MapVehic
 	{
 		if(!this.params.isDebug())
 		{
-			this.tcpUtils.sendUpdate(JSONUtils.keywordToJSONString("connect"));
+			this.tcpUtils.sendUpdate(JSONUtils.keywordToJSONString(Messages.CORE.CONNECT));
 		}
 		else
 		{
@@ -52,7 +52,7 @@ public class VehicleCommunicator implements GeneralVehicleCommunicator, MapVehic
 		this.log.debug("Sending start point");
 		if(!this.params.isDebug())
 		{
-			this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("startPoint", startPoint));
+			this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord(Messages.CORE.START_POINT, startPoint));
 		}
 		else
 		{
@@ -63,7 +63,7 @@ public class VehicleCommunicator implements GeneralVehicleCommunicator, MapVehic
 	@Override
 	public void sendCurrentPosition(WayPoint wayPoint)
 	{
-		this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("currentPosition", wayPoint));
+		this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord(Messages.CORE.CURRENT_POSITION, wayPoint));
 	}
 
 	@Override
@@ -82,7 +82,7 @@ public class VehicleCommunicator implements GeneralVehicleCommunicator, MapVehic
 	@Override
 	public void setMap(Map map)
 	{
-		String json = JSONUtils.objectToJSONStringWithKeyWord("currentMap", map);
+		String json = JSONUtils.objectToJSONStringWithKeyWord(Messages.CORE.CURRENT_MAP, map);
 		this.log.info("Setting current map on NAVSTACK to " + json);
 		this.tcpUtils.sendUpdate(json);
 	}
@@ -93,7 +93,7 @@ public class VehicleCommunicator implements GeneralVehicleCommunicator, MapVehic
 		this.log.info("Sending wheel state Throttle:" + throttle + ", Steer:" + steer + ".");
 		if (!this.params.isDebug())
 		{
-			this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("drive", new Drive(steer, throttle)));
+			this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord(Messages.CORE.DRIVE, new Drive(steer, throttle)));
 		}
 		else
 		{
@@ -104,6 +104,6 @@ public class VehicleCommunicator implements GeneralVehicleCommunicator, MapVehic
 	@Override
 	public void sendNextWayPoint(WayPoint wayPoint)
 	{
-		this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord("nextWayPoint", wayPoint));
+		this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord(Messages.CORE.NEXT_WAYPOINT, wayPoint));
 	}
 }

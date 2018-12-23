@@ -138,27 +138,23 @@ class Core implements TCPListener, MQTTListener
 			//parses keyword to do the correct function call.
 			switch (JSONUtils.getFirst(message))
 			{
-				case "percentage":
+				case Messages.SIMKERNEL.PERCENTAGE:
 					this.navigator.locationUpdate((Location) JSONUtils.getObjectWithKeyWord(message, Location.class));
 					break;
-				case "arrivedWaypoint":
+				case Messages.SIMKERNEL.ARRIVED_WAYPOINT:
 					this.navigator.wayPointReached();
 					break;
-				case "connect":
+				case Messages.SIMKERNEL.CONNECT:
 					this.log.info("Connected to car.");
 					break;
-				case "kill":
+				case Messages.SIMKERNEL.EXIT:
 					this.exit();
 					break;
-				case "cost":
+				case Messages.SIMKERNEL.COST:
 					//this.weightManager.costCalculationComplete((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
 					break;
-				case "costtiming":
+				case Messages.SIMKERNEL.COST_TIMING:
 					this.navigator.timingCalculationComplete((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
-					break;
-				case "location":
-					//this.log.info("CORE", "Car is at coordinates: " + (String) JSONUtils.getObjectWithKeyWord(message, String.class));
-					// the current location is published but is not useful for the smartcityproject, the percentage updates are used
 					break;
 				default:
 					this.log.warn("No matching keyword when parsing JSON from Sockets. Data: " + message);

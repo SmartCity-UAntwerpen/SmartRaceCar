@@ -10,14 +10,16 @@ public class Main
      */
     public static void main(String[] args) throws Exception
     {
-        if (args.length != 2)
+        if (args.length != 3)
         {
             System.out.println("Need 2 arguments to run. Possible arguments: tcpclientport(int) tcpserverport(int)");
             //System.exit(0);
-        } else if (args.length == 2)
+        }
+        else
         {
             int serverPort = 0;
             int clientPort = 0;
+            long simID = 0;
 
             if (!args[0].isEmpty())
             {
@@ -27,8 +29,12 @@ public class Main
             {
                 clientPort = Integer.parseInt(args[1]);
             }
+            if(!args[2].isEmpty())
+			{
+				simID = Long.parseLong(args[2]);
+			}
 
-            final SimKernel simKernel = new SimKernel(serverPort, clientPort);
+            final SimKernel simKernel = new SimKernel(serverPort, clientPort, simID);
         }
     }
 }
