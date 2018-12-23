@@ -24,6 +24,7 @@ class SimKernel implements MessageListener
 	//Help services
 	private CoreCommunication core;
 	private ROSCommunication ROS;
+	private SimDeployerCommunication simdeployer;
 
 	//variables
 	private Logger log;
@@ -40,7 +41,7 @@ class SimKernel implements MessageListener
 	 * @param serverPort Port to listen for messages of  Core. Defined by input arguments of main method.
 	 * @param clientPort Port to send messages to Core. Defined by input arguments of main method.
 	 */
-	public SimKernel(int serverPort, int clientPort) throws InterruptedException, IOException
+	public SimKernel(int serverPort, int clientPort, long simID) throws InterruptedException, IOException
 	{
 		this.log = LoggerFactory.getLogger(SimKernel.class);
 
@@ -50,6 +51,7 @@ class SimKernel implements MessageListener
 		this.ROS = new ROSCommunicator(this.parameters);
 		this.core = new CoreCommunicator(serverPort, clientPort, this);
 		this.core.start();
+		this.simdeployer = new SimDeployerCommunicator(this.parameters, simID, this);
 
 		this.calculatedCosts = new HashMap<>();
 
