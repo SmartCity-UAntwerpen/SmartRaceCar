@@ -8,7 +8,6 @@ public interface CoreCommunication
 	public void connect();
 	public void wayPointReached();
 	public void percentageUpdate(Cost cost);
-	public void sendCost(Cost cost);	 		// TODO check if necessary
 	public void sendTiming(Cost cost);
 	public void disconnect();
 	public void exit();

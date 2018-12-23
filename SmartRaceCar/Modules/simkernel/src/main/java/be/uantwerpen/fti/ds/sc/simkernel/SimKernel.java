@@ -88,13 +88,6 @@ class SimKernel implements MessageListener
 			//parses keyword to do the correct function call.
 			switch (JSONUtils.getFirst(message))
 			{
-				case Messages.CORE.COST:
-					Type typeOfPoints = new TypeToken<ArrayList<Point>>()
-					{
-					}.getType();
-					calculateCost((ArrayList<Point>) JSONUtils.getObjectWithKeyWord(message, typeOfPoints));
-					break;
-
 				case Messages.CORE.COST_TIMING:
 					Type typeOfPointss = new TypeToken<ArrayList<Point>>()
 					{
@@ -192,21 +185,6 @@ class SimKernel implements MessageListener
 		}
 		this.core.wayPointReached();
 		this.currentPosition = new Point(nextPoint.getX(), nextPoint.getY(), nextPoint.getZ(), nextPoint.getW());
-	}
-
-	/**
-	 * Method called for when a cost calculation request is received from the core. It contains a list of waypoints(2)
-	 * to calculate the cost between. This is as simulated vehicle so it can't calculate this cost itself. It will do
-	 * a REST request to the RosServer to calculate the estimated times between the current position and the starting
-	 * location of the route, and between that starting location and the end location of the route.
-	 *
-	 * @param points List of the Point object class containing the 2 points to calculate the weights. (starting and end)
-	 */
-	private void calculateCost(ArrayList<Point> points)
-	{
-		Cost cost = this.calcWeightROS(points);
-		this.log.info("Calculated cost between current and start: " + cost.getWeightToStart() + "s. Cost to end : " + cost.getWeight() + "s.");
-		this.core.sendCost(cost);
 	}
 
 	/**

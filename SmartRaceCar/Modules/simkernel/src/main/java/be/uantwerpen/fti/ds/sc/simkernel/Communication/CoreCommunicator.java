@@ -67,12 +67,6 @@ public class CoreCommunicator implements TCPListener, CoreCommunication
 	}
 
 	@Override
-	public void sendCost(Cost cost)
-	{
-		this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord(Messages.SIMKERNEL.COST, cost));
-	}
-
-	@Override
 	public void sendTiming(Cost cost)
 	{
 		this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord(Messages.SIMKERNEL.COST_TIMING, cost));
