@@ -13,7 +13,7 @@ public class Configuration
 	private Logger log;
 	private Map<AspectType, Aspect> aspects;
 
-	public Configuration ()
+	public Configuration()
 	{
 		this.log = LoggerFactory.getLogger(Configuration.class);
 		this.aspects = new HashMap<>();
@@ -36,6 +36,22 @@ public class Configuration
 				{
 					case MQTT:
 						this.aspects.put(type, new MqttAspect(configFile));
+						continue;
+
+					case RACECAR:
+						this.aspects.put(type, new RacecarAspect(configFile));
+						continue;
+
+					case ROS:
+						this.aspects.put(type, new RosAspect(configFile));
+						continue;
+
+					case BACKBONE:
+						this.aspects.put(type, new BackboneAspect(configFile));
+						continue;
+
+					default:
+						this.log.warn("Ignoring unsupported aspect type: " + type);
 						continue;
 				}
 			}
