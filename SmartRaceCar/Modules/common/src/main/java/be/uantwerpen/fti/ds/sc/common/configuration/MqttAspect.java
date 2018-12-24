@@ -1,7 +1,6 @@
 package be.uantwerpen.fti.ds.sc.common.configuration;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -28,13 +27,11 @@ public class MqttAspect extends Aspect
 
 	public MqttAspect (File configFile) throws IOException
 	{
-		super(AspectType.MQTT, PREFIX);
+		super(AspectType.MQTT);
 
 		try
 		{
-			FileInputStream inputStream = this.openFileStream(configFile);
-			Properties properties = new Properties();
-			properties.load(inputStream);
+			Properties properties = this.openPropertiesFile(configFile);
 
 			this.mqttBroker = properties.getProperty(MQTT_BROKER_KEY, DEFAULT_MQTT_BROKER);
 			this.mqttUsername = properties.getProperty(MQTT_USERNAME_KEY, DEFAULT_MQTT_USERNAME);
@@ -50,7 +47,7 @@ public class MqttAspect extends Aspect
 
 	public MqttAspect(String mqttBroker, String mqttUsername, String mqttPassword, String mqttTopicPrefix)
 	{
-		super(AspectType.MQTT, PREFIX);
+		super(AspectType.MQTT);
 		this.mqttBroker = mqttBroker;
 		this.mqttUsername = mqttUsername;
 		this.mqttPassword = mqttPassword;

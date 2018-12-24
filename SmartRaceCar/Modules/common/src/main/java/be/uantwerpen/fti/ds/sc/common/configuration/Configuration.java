@@ -37,6 +37,10 @@ public class Configuration
 					case MQTT:
 						this.aspects.put(type, new MqttAspect(configFile));
 						continue;
+
+					case ROS:
+						this.aspects.put(type, new RosAspect(configFile));
+						continue;
 				}
 			}
 			catch (IOException ioe)

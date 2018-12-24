@@ -8,19 +8,22 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.util.Properties;
 
 public class Aspect
 {
 	private AspectType type;
 	protected Logger log;
-	public String PREFIX;
 
-	protected FileInputStream openFileStream(File file) throws IOException
+	protected Properties openPropertiesFile(File file) throws IOException
 	{
 		try
 		{
 			String decodedPath = URLDecoder.decode(file.getAbsolutePath(), "UTF-8");
-			return new FileInputStream(decodedPath);
+			FileInputStream fileStream = new FileInputStream(decodedPath);
+			Properties properties = new Properties();
+			properties.load(fileStream);
+			return properties;
 		}
 		catch (UnsupportedEncodingException uee)
 		{
@@ -38,10 +41,9 @@ public class Aspect
 		}
 	}
 
-	protected Aspect (AspectType type, String prefix)
+	protected Aspect (AspectType type)
 	{
 		this.log = LoggerFactory.getLogger(Aspect.class);
 		this.type = type;
-		this.PREFIX = prefix;
 	}
 }
