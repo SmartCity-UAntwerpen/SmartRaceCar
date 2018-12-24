@@ -30,22 +30,26 @@ public class CommandLineInterface
 
 	private String help()
 	{
-		Map<String, String> helpMap = new HashMap<>();
+		Map<String, String> helpMap = new TreeMap<>();  // TreeMap is used to sort commands alphabetically.
 
 		// Add some extra space after each command to make them all the same length
-		helpMap.put("create ", "Create a simulation instance. This just announces the ID of the simulation to the SimDeployer.");
-		helpMap.put("set    ", "Set a parameter of the simulation. Currently only \"startpoint\" is supported. \"speed\" and \"name\" will be parsed correctly, but don't have any effect.");
-		helpMap.put("run    ", "Run a simulation instance created using the \"create\" command. Requires that the simulation has a start point. This starts an actual Docker container.");
-		helpMap.put("stop   ", "Kill a simulation instance. The corresponding Docker process will be killed and the simulation will lose any held state.");
-		helpMap.put("kill   ", "Remove a simulation instance from the list of IDs.");
-		helpMap.put("restart", "Same as run.");
-		helpMap.put("ping   ", "Used by Simulation front end to keep an eye on SimDeployers. Returns \"pong\".");
-		helpMap.put("help   ", "Show this help message.");
-		helpMap.put("quit   ", "Kill the interactive console session.");
-		helpMap.put("echo   ", "Print a given string.");
-		helpMap.put("wait   ", "Wait the specified number of seconds.");
+		helpMap.put("create          SIM_ID       ", "Create a simulation instance. This just announces the ID of the simulation to the SimDeployer.");
+		helpMap.put("set    PROPERTY SIM_ID VALUE ", "Set a parameter of the simulation. Currently only \"startpoint\" is supported. \"speed\" and \"name\" will be parsed correctly, but don't have any effect.");
+		helpMap.put("run             SIM_ID       ", "Run a simulation instance created using the \"create\" command. Requires that the simulation has a start point. This starts an actual Docker container.");
+		helpMap.put("stop            SIM_ID       ", "Kill a simulation instance. The corresponding Docker process will be killed and the simulation will lose any held state.");
+		helpMap.put("kill            SIM_ID       ", "Remove a simulation instance from the list of IDs.");
+		helpMap.put("restart         SIM_ID       ", "Same as run.");
+		helpMap.put("ping                         ", "Used by Simulation front end to keep an eye on SimDeployers. Returns \"pong\".");
+		helpMap.put("help                         ", "Show this help message.");
+		helpMap.put("quit                         ", "Kill the interactive console session. (Leaves the SimDeployer running as normal, doesn't kill any simulations.)");
+		helpMap.put("echo                   STRING", "Print a given string. Multi-word strings should be properly quoted, escaped quotes are reduced to normal quotes.");
+		helpMap.put("wait                   TIME  ", "Wait the specified number of seconds.");
 
 		StringBuilder helpBuilder = new StringBuilder();
+
+		helpBuilder.append("Simulation IDs can be specified as a single number (\"1\" for example) or as an inclusive range, with high and low separated by an ellision sign. (\"0...10\" for example (This is equivalent to [0,10])).");
+		helpBuilder.append("\n\n");
+
 		for (String command: helpMap.keySet())
 		{
 			helpBuilder.append(command);
@@ -90,11 +94,6 @@ public class CommandLineInterface
 			{
 				System.out.println("Read final line, exiting...");
 				return;
-			}
-
-			if (!interactiveMode)
-			{
-				System.out.println(line);
 			}
 
 			Command command = null;
@@ -156,7 +155,10 @@ public class CommandLineInterface
 				continue;
 			}
 
-			System.out.println(response);
+			if (this.interactiveMode)
+			{
+				System.out.println(response);
+			}
 		}
 	}
 
