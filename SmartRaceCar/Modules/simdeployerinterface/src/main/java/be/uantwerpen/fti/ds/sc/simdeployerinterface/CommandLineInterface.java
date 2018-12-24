@@ -7,6 +7,7 @@ import be.uantwerpen.fti.ds.sc.simdeployerinterface.commands.SimpleInteractiveCo
 import be.uantwerpen.fti.ds.sc.simdeployerinterface.commands.InteractiveCommandParser;
 
 import java.io.*;
+import java.text.ParseException;
 import java.util.*;
 
 public class CommandLineInterface
@@ -102,9 +103,10 @@ public class CommandLineInterface
 			{
 				command = commandParser.parseInteractiveCommand(line);
 			}
-			catch (IllegalArgumentException iae)
+			catch (IllegalArgumentException | ParseException iae)
 			{
 				System.err.println("\"" + line + "\" is not a valid command.");
+				iae.printStackTrace();
 				continue;
 			}
 

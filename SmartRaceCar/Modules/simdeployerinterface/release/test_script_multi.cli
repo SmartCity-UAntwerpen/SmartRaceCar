@@ -1,3 +1,15 @@
-create 0...10
-set startpoint 0...10 46
-run 0...10
+echo "Creating 10 Simulations"
+
+create 0...9
+
+set startpoint 0...9 1
+
+run 0...9
+
+echo "Waiting 10 seconds."
+
+wait 10
+
+echo "Killing 10 Simulations"
+
+kill 0...9
