@@ -54,22 +54,22 @@ public class MqttAspect extends Aspect
 		this.mqttTopicPrefix = mqttTopicPrefix;
 	}
 
-	public String getMqttBroker()
+	public String getBroker()
 	{
 		return this.mqttBroker;
 	}
 
-	public String getMqttUsername()
+	public String getUsername()
 	{
 		return this.mqttUsername;
 	}
 
-	public String getMqttPassword()
+	public String getPassword()
 	{
 		return this.mqttPassword;
 	}
 
-	public String getMqttTopicPrefix()
+	public String getTopic()
 	{
 		return this.mqttTopicPrefix;
 	}

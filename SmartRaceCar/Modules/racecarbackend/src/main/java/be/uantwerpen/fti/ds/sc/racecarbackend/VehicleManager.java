@@ -50,7 +50,7 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 		try
 		{
 			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
-			this.messageQueueClient = new MQTTUtils(mqttAspect.getMqttBroker(), mqttAspect.getMqttUsername(), mqttAspect.getMqttPassword(), this);
+			this.messageQueueClient = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
 		}
 		catch (MqttException me)
 		{
@@ -108,7 +108,7 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 			try
 			{
 				MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
-				this.messageQueueClient.publish(mqttAspect.getMqttTopicPrefix() + "delete/" + vehicleId, "");
+				this.messageQueueClient.publish(mqttAspect.getTopic() + "delete/" + vehicleId, "");
 			}
 			catch (Exception e)
 			{
@@ -153,7 +153,7 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 		try
 		{
 			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
-			this.messageQueueClient.publish(mqttAspect.getMqttTopicPrefix() + "register/" + newVehicleId, Long.toString(startWaypoint));
+			this.messageQueueClient.publish(mqttAspect.getTopic() + "register/" + newVehicleId, Long.toString(startWaypoint));
 		}
 		catch (Exception e)
 		{
