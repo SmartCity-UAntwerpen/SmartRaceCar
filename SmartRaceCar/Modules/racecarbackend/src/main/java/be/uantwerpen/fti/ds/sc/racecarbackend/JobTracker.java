@@ -144,7 +144,7 @@ public class JobTracker implements MQTTListener
         this.removeJob(jobId, vehicleId);
     }
 
-    private void updateRoute(long jobId, long vehicleId, String mqttMessage)
+    private void updateRoute(long jobId, long vehicleId, String mqttMessage) throws IOException
     {
         switch (mqttMessage)
         {
@@ -321,13 +321,29 @@ public class JobTracker implements MQTTListener
                 long jobId = this.findJobByVehicleId(vehicleId);
                 int percentage = Integer.parseInt(message);
                 this.log.info("Received Percentage update for vehicle " + vehicleId + ", Job: " + jobId + ", Status: " + percentage + "%.");
-                this.updateProgress(jobId, vehicleId, percentage);
+
+                try
+                {
+                    this.updateProgress(jobId, vehicleId, percentage);
+                }
+                catch (IOException ioe)
+                {
+                    this.log.error("Failed to process job progress update for job " + jobId, ioe);
+                }
             }
             else if (this.isRouteUpdate(topic))
             {
                 long jobId = this.findJobByVehicleId(vehicleId);
                 this.log.info("Received Route Update for vehicle " + vehicleId + "");
-                this.updateRoute(jobId, vehicleId, message);
+
+                try
+                {
+                    this.updateRoute(jobId, vehicleId, message);
+                }
+                catch (IOException ioe)
+                {
+                    this.log.error("Failed to process route update for job " + jobId, ioe);
+                }
             }
         }
         catch (NoSuchElementException nsee)

@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.MediaType;
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 
@@ -71,7 +72,23 @@ public class BackendCommunicator implements GeneralBackendCommunicator, MapBacke
 	public void downloadMap(String mapName)
 	{
 		this.log.info("Current used map '" + mapName + "' not found. Downloading... to " + this.params.getNavstackPath() + "/" + mapName);
-		this.restUtils.getFile( Messages.BACKEND.GET_MAP_PGM + "/" + mapName, this.params.getNavstackPath(), mapName, "pgm");
-		this.restUtils.getFile( Messages.BACKEND.GET_MAP_YAML + "/" + mapName, this.params.getNavstackPath(), mapName, "yaml");
+
+		try
+		{
+			this.restUtils.getFile(Messages.BACKEND.GET_MAP_PGM + "/" + mapName, this.params.getNavstackPath(), mapName, "pgm");
+		}
+		catch (IOException ioe)
+		{
+			this.log.error("Failed to download map PGM file.", ioe);
+		}
+
+		try
+		{
+			this.restUtils.getFile(Messages.BACKEND.GET_MAP_YAML + "/" + mapName, this.params.getNavstackPath(), mapName, "yaml");
+		}
+		catch (IOException ioe)
+		{
+			this.log.error("Failed to download map YAML file.", ioe);
+		}
 	}
 }
