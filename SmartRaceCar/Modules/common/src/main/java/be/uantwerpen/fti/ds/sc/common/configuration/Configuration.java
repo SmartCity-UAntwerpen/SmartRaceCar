@@ -24,7 +24,12 @@ public class Configuration
 		this.aspects.put(aspectType, null);
 	}
 
-	public void load(String configurationFilename)
+	public Aspect get(AspectType aspectType)
+	{
+		return this.aspects.get(aspectType);
+	}
+
+	public Configuration load(String configurationFilename)
 	{
 		File configFile = new File(configurationFilename);
 
@@ -64,5 +69,7 @@ public class Configuration
 				this.log.error("Failed to load configuration for aspect \"" + type + "\".", ioe);
 			}
 		}
+
+		return this;
 	}
 }
