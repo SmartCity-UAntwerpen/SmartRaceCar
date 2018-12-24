@@ -183,7 +183,7 @@ public class RESTUtils
 	 * @return REST response of the type Text Plain.
 	 */
 	@Deprecated
-	public String getTextPlain(String URL)
+	public String getTextPlain(String URL) throws ProcessingException
 	{
 		WebTarget resourceWebTarget = this.webTarget.path(URL);
 		Invocation.Builder invocationBuilder = resourceWebTarget.request("text/plain");
@@ -194,10 +194,10 @@ public class RESTUtils
 		{
 			response = invocationBuilder.get();
 		}
-		catch (ProcessingException e)
+		catch (ProcessingException pe)
 		{
-			this.log.error("Cannot connect to REST service: " + e);
-			System.exit(0); //make sure the correct mode is selected (debugwithoutBackbone/debugwithoutMAAS)
+			this.log.error("Cannot connect to REST service: ", pe);
+			throw pe;
 		}
 
 		checkForError(response, resourceWebTarget.getUri());
