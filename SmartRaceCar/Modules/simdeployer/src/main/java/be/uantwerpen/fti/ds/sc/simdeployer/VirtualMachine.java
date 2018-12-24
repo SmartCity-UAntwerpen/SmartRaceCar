@@ -13,7 +13,7 @@ public interface VirtualMachine
 	 * @throws IOException  Exceptions can be thrown when starting the VM.
 	 * @return The return value from the VM start command.
 	 */
-	public int run(List<String> args) throws IOException, InterruptedException;
+	public void run(List<String> args) throws IOException;
 
 	/**
 	 * Stop the Virtual Machine and return the process' return value.
