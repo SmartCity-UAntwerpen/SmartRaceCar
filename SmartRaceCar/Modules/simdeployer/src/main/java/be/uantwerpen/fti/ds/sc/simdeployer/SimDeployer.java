@@ -12,9 +12,6 @@ import java.util.*;
 
 public class SimDeployer implements TCPListener
 {
-	private static final String ACK = "ACK";
-	private static final String NACK = "NACK";
-	private static final String PONG = "PONG";
 	private static final String DEFAULT_CONFIG_FILE = "./SimDeployer.properties";
 
 	private Logger log;
@@ -24,34 +21,39 @@ public class SimDeployer implements TCPListener
 
 	private String createSimulation(Range simulationIds)
 	{
+		boolean success = true;
+
 		for (long simulationId: simulationIds.generate())
 		{
 			if (this.startPoints.containsKey(simulationId))
 			{
 				this.log.error("Tried to add simulation with existing ID (" + simulationId + ").");
-				return NACK;
+				success = false;
 			}
 
 			this.startPoints.put(simulationId, -1L);
 		}
 
-		return ACK;
+		return success ? Command.ACK : Command.NACK;
 	}
 
 	private String runSimulation(Range simulationIds)
 	{
+		// Make sure to start all VMs before reporting that one of them failed
+		boolean success = true;
+
 		for (long simulationId: simulationIds.generate())
 		{
 			if (!this.startPoints.containsKey(simulationId))
 			{
 				this.log.error("Tried to start simulation that doesn't exist.");
-				return NACK;
+				success = false;
 			}
 
 			if (this.startPoints.get(simulationId) == -1L)
 			{
 				this.log.error("Tried to start simulation that doesn't have a startpoint.");
-				return NACK;
+				success = false;
 			}
 
 			try
@@ -61,10 +63,11 @@ public class SimDeployer implements TCPListener
 			catch (IOException | InvalidNameException ie)
 			{
 				this.log.error("An error occurred while trying to launch a virtual machine.", ie);
-				return NACK;
+				success = false;
 			}
 		}
-		return ACK;
+
+		return success ? Command.ACK : Command.NACK;
 	}
 
 	private String set(SetCommand setCommand)
@@ -76,32 +79,34 @@ public class SimDeployer implements TCPListener
 				this.startPoints.put(simulationId, Long.parseLong(setCommand.getValue()));
 			}
 
-			return ACK;
+			return Command.ACK;
 		}
 		else if (setCommand.getKey() == SetParameter.SPEED)
 		{
 			this.log.warn("Got set command for speed, this command is not supported, ignoring.");
-			return NACK;
+			return Command.NACK;
 		}
 		else if (setCommand.getKey() == SetParameter.NAME)
 		{
 			this.log.warn("Got set command for name, this command is not supported, ignoring.");
-			return NACK;
+			return Command.NACK;
 		}
 
 		this.log.error("Got unsupported set command \"" + setCommand + "\"");
-		return NACK;
+		return Command.NACK;
 	}
 
 	private String stopSimulation(Range simulationIds)
 	{
+		boolean success = true;
+
 		for (long simulationId: simulationIds.generate())
 		{
 			if (!this.startPoints.containsKey(simulationId))
 			{
 				String errorString = "Tried to stop non-existent simulation (" + simulationId + ").";
 				this.log.error(errorString);
-				return NACK;
+				success = false;
 			}
 
 			try
@@ -112,18 +117,20 @@ public class SimDeployer implements TCPListener
 			{
 				String errorString = "An exception was thrown while trying to stop virtual machine " + simulationId + ".";
 				this.log.error(errorString, e);
-				return NACK;
+				success = false;
 			}
 		}
 
-		return ACK;
+		return success ? Command.ACK : Command.NACK;
 	}
 
 	private String killSimulation(Range simulationIds)
 	{
-		if (this.stopSimulation(simulationIds).equalsIgnoreCase(NACK))
+		boolean success = true;
+
+		if (this.stopSimulation(simulationIds).equalsIgnoreCase(Command.NACK))
 		{
-			return NACK;
+			success = false;
 		}
 
 		for (long simulationId: simulationIds.generate())
@@ -132,13 +139,13 @@ public class SimDeployer implements TCPListener
 			{
 				String errorString = "Tried to kill non-existent simulation (" + simulationId + ").";
 				this.log.error(errorString);
-				return NACK;
+				success = false;
 			}
 
 			this.startPoints.remove(simulationId);
 		}
 
-		return ACK;
+		return success ? Command.ACK : Command.NACK;
 	}
 
 	private String executeCommand(Command command)
@@ -186,10 +193,10 @@ public class SimDeployer implements TCPListener
 			}
 
 			case PING:
-				return PONG;
+				return PingCommand.PONG;
 		}
 
-		return NACK;
+		return Command.NACK;
 	}
 
 	public SimDeployer(SimDeployerParameters parameters) throws IOException
@@ -214,7 +221,7 @@ public class SimDeployer implements TCPListener
 		catch (IllegalArgumentException iae)
 		{
 			this.log.error("Failed to parse command \"" + message + "\"", iae);
-			return NACK;
+			return Command.NACK;
 		}
 	}
 

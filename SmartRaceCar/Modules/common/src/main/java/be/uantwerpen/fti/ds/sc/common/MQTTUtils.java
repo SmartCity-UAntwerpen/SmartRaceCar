@@ -52,8 +52,9 @@ public class MQTTUtils implements MqttCallback
 		}
 		catch (MqttException e)
 		{
-			this.log.error("Could not connect to '" + brokerURL + "'." + e);
-			System.exit(0);
+			String errorString = "Could not connect to '" + brokerURL + "': " + e.getMessage();
+			this.log.error(errorString, e);
+			//throw e;  //todo: put this in
 		}
 	}
 

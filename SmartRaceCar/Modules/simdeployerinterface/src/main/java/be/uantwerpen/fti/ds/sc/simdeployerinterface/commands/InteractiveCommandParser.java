@@ -16,6 +16,14 @@ public class InteractiveCommandParser extends CommandParser
 		{
 			return InteractiveCommandType.QUIT;
 		}
+		else if (commandType.equalsIgnoreCase((InteractiveCommandType.ECHO.toString())))
+		{
+			return InteractiveCommandType.ECHO;
+		}
+		else if (commandType.equalsIgnoreCase((InteractiveCommandType.WAIT.toString())))
+		{
+			return InteractiveCommandType.WAIT;
+		}
 		else
 		{
 			throw new IllegalArgumentException("Command Type \"" + commandType + "\" didn't match any known command type.");
@@ -37,7 +45,15 @@ public class InteractiveCommandParser extends CommandParser
 		{
 			String[] split = super.splitCommand(commandString);
 			InteractiveCommandType type = this.findInteractiveCommandType(split[0]);
-			return new InteractiveCommand(type);
+
+			if ((type == InteractiveCommandType.ECHO) || (type == InteractiveCommandType.WAIT))
+			{
+				return new InteractiveCommand(type, split[1]);
+			}
+			else
+			{
+				return new SimpleInteractiveCommand(type);
+			}
 		}
 	}
 }
