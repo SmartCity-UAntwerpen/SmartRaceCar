@@ -44,7 +44,7 @@ public class MapManager implements MQTTListener
 		this.vehicle = vehicle;
 
 		this.mqttUtils = new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this);
-		this.mqttUtils.subscribeToTopic("racecar/changeMap/" + core.getID());
+		this.mqttUtils.subscribeToTopic(this.params.getMqttTopic() + "/" + Messages.BACKEND.CHANGE_MAP +  "/" + core.getID());
 
 		this.log.info("starting to load maps");
 		this.loadedMaps = new HashMap<>();

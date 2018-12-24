@@ -3,7 +3,7 @@
   <component name="MavenProjectsManager">
     <option name="originalFiles">
       <list>
-        <option value="$PROJECT_DIR$/SmartRaceCar/pom.xml" />
+        <option value="$PROJECT_DIR$/SmartRaceCar/Modules/pom.xml" />
       </list>
     </option>
   </component>

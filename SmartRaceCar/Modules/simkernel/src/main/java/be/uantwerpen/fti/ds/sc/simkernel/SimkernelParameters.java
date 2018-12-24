@@ -1,12 +1,15 @@
 package be.uantwerpen.fti.ds.sc.simkernel;
 
-public class SimkernelParameters
+import be.uantwerpen.fti.ds.sc.common.Parameters;
+
+public class SimkernelParameters extends Parameters
 {
     private boolean isRosServerDisabled;
     private String rosServerURL;
 
-    public SimkernelParameters(boolean isRosServerDisabled, String rosServerURL)
+    public SimkernelParameters(Parameters params, boolean isRosServerDisabled, String rosServerURL)
     {
+        super(params);
         this.isRosServerDisabled = isRosServerDisabled;
         this.rosServerURL = rosServerURL;
     }

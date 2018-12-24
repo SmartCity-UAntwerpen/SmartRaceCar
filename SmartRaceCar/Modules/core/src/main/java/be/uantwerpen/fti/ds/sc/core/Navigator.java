@@ -40,7 +40,7 @@ public class Navigator implements MQTTListener
 		this.vehicle = vehicle;
 
 		this.mqttUtils = new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this);
-		this.mqttUtils.subscribeToTopic(this.params.getMqttTopic() + "/job/" + this.ID);
+		this.mqttUtils.subscribeToTopic(this.params.getMqttTopic() + "/" + Messages.BACKEND.JOB  + "/" + this.ID);
 
 		this.costCurrentToStartTiming = -1;
 		this.costStartToEndTiming = -1;

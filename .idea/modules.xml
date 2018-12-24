@@ -2,7 +2,14 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/SmartRaceCar/SmartRaceCar.iml" filepath="$PROJECT_DIR$/SmartRaceCar/SmartRaceCar.iml" />
+      <module fileurl="file://$PROJECT_DIR$/SmartRaceCar/Modules/Modules.iml" filepath="$PROJECT_DIR$/SmartRaceCar/Modules/Modules.iml" />
+      <module fileurl="file://$PROJECT_DIR$/RacecarV2.iml" filepath="$PROJECT_DIR$/RacecarV2.iml" />
+      <module fileurl="file://$PROJECT_DIR$/SmartRaceCar/Modules/common/common.iml" filepath="$PROJECT_DIR$/SmartRaceCar/Modules/common/common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/SmartRaceCar/Modules/core/core.iml" filepath="$PROJECT_DIR$/SmartRaceCar/Modules/core/core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/SmartRaceCar/Modules/racecarbackend/racecarBackend.iml" filepath="$PROJECT_DIR$/SmartRaceCar/Modules/racecarbackend/racecarBackend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/SmartRaceCar/Modules/simdeployer/simdeployer.iml" filepath="$PROJECT_DIR$/SmartRaceCar/Modules/simdeployer/simdeployer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/SmartRaceCar/Modules/simdeployerinterface/simdeployerinterface.iml" filepath="$PROJECT_DIR$/SmartRaceCar/Modules/simdeployerinterface/simdeployerinterface.iml" />
+      <module fileurl="file://$PROJECT_DIR$/SmartRaceCar/Modules/simkernel/simkernel.iml" filepath="$PROJECT_DIR$/SmartRaceCar/Modules/simkernel/simkernel.iml" />
     </modules>
   </component>
 </project>
