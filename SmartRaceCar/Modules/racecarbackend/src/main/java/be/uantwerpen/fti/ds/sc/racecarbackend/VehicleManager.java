@@ -1,6 +1,7 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
 import be.uantwerpen.fti.ds.sc.common.*;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,18 +11,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import javax.management.QueryEval;
 import javax.ws.rs.core.MediaType;
 import java.util.*;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Controller
 public class VehicleManager implements MQTTListener, VehicleRepository
 {
-	private static final String MQTT_POSTFIX = "available/#";
-
 	private Logger log;
 	private Parameters parameters;
 	private MQTTUtils mqttUtils;
@@ -29,11 +25,6 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 	private Queue<Long> unusedIds;                    // This set contains all IDs of vehicles that were assigned once and then deleted
 													// its a simple way to reuse IDs.
 	private Map<Long, Vehicle> vehicles;
-
-	private String getAvailabilityString(boolean available)
-	{
-		return available ? "Available" : "Not Available";
-	}
 
 	/**
 	 * Check if a vehicle with the given ID exists.
@@ -53,8 +44,14 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 
 		this.log.info("Initializing Vehicle Manager...");
 
-		this.mqttUtils = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
-		this.mqttUtils.subscribeToTopic(parameters.getMqttTopic() + MQTT_POSTFIX);
+		try
+		{
+			this.mqttUtils = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
+		}
+		catch (MqttException me)
+		{
+			this.log.error("Failed to set up MQTTUtils for VehicleManager.", me);
+		}
 
 		this.waypointValidator = waypointValidator;
 
@@ -103,7 +100,15 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 		if (this.vehicles.containsKey(vehicleId))
 		{
 			this.vehicles.remove(vehicleId);
-			this.mqttUtils.publishMessage(this.parameters.getMqttTopic() + "delete/" + vehicleId, "");
+
+			try
+			{
+				this.mqttUtils.publish(this.parameters.getMqttTopic() + "delete/" + vehicleId, "");
+			}
+			catch (MqttException me)
+			{
+				this.log.error("Failed to publish vehicle deletion.", me);
+			}
 
 			this.log.info("Removing vehicle " + vehicleId);
 			this.unusedIds.add(vehicleId);
@@ -140,7 +145,14 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 			newVehicleId = this.vehicles.size();
 		}
 
-		this.mqttUtils.publishMessage(this.parameters.getMqttTopic() + "register/" + newVehicleId, Long.toString(startWaypoint));
+		try
+		{
+			this.mqttUtils.publish(this.parameters.getMqttTopic() + "register/" + newVehicleId, Long.toString(startWaypoint));
+		}
+		catch (MqttException me)
+		{
+			this.log.error("Failed to publish vehicle registration.", me);
+		}
 
 		this.vehicles.put(newVehicleId, new Vehicle(newVehicleId));
 
@@ -194,15 +206,5 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 	@Override
 	public void parseMQTT(String topic, String message)
 	{
-		long id = TopicUtils.getCarId(topic);
-
-		if (!this.exists(id))
-		{
-			this.log.error("Received MQTT Message from non-existent car (" + id + ".");
-		}
-
-		boolean availability = Boolean.parseBoolean(message);
-		this.vehicles.get(id).setAvailable(availability);
-		this.log.info("Received Availability update for vehicle " + id + ", Status: " + this.getAvailabilityString(availability));
 	}
 }

@@ -43,7 +43,7 @@ public class Navigator implements MQTTListener
 		try
 		{
 			this.mqttUtils = new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this);
-			this.mqttUtils.subscribeToTopic(this.params.getMqttTopic() + "/" + Messages.BACKEND.JOB + "/" + this.ID);
+			this.mqttUtils.subscribe(this.params.getMqttTopic() + "/" + Messages.BACKEND.JOB + "/" + this.ID);
 		}
 		catch (MqttException me)
 		{
@@ -205,11 +205,11 @@ public class Navigator implements MQTTListener
 		}
 
 		this.log.info("Location Updated. Vehicle has " + location.getPercentage() + "% of route completed");
-		//this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/percentage", JSONUtils.objectToJSONString(location));
-		//this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/percentage", Integer.toString(location.getPercentage()));
+		//this.mqttUtils.publish("racecar/" + this.core.getID() + "/percentage", JSONUtils.objectToJSONString(location));
+		//this.mqttUtils.publish("racecar/" + this.core.getID() + "/percentage", Integer.toString(location.getPercentage()));
 		try
 		{
-			this.mqttUtils.publishMessage(this.params.getMqttTopic() + "/percentage/" + this.ID, Integer.toString(location.getPercentage()));
+			this.mqttUtils.publish(this.params.getMqttTopic() + "/percentage/" + this.ID, Integer.toString(location.getPercentage()));
 		}
 		catch (MqttException me)
 		{
@@ -224,10 +224,10 @@ public class Navigator implements MQTTListener
 	private void routeNotComplete()
 	{
 		this.occupied = false;
-		//this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/route", "notcomplete");
+		//this.mqttUtils.publish("racecar/" + this.core.getID() + "/route", "notcomplete");
 		try
 		{
-			this.mqttUtils.publishMessage(this.params.getMqttTopic() + "/route/" + this.ID, "notcomplete");
+			this.mqttUtils.publish(this.params.getMqttTopic() + "/route/" + this.ID, "notcomplete");
 		}
 		catch (MqttException me)
 		{
@@ -243,10 +243,10 @@ public class Navigator implements MQTTListener
 	{
 		this.log.warn("Route error. Route Cancelled");
 		this.occupied = false;
-		//this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/route", "error");
+		//this.mqttUtils.publish("racecar/" + this.core.getID() + "/route", "error");
 		try
 		{
-			this.mqttUtils.publishMessage(this.params.getMqttTopic() + "/route/" + this.ID, "error");
+			this.mqttUtils.publish(this.params.getMqttTopic() + "/route/" + this.ID, "error");
 		}
 		catch (MqttException me)
 		{
@@ -299,11 +299,11 @@ public class Navigator implements MQTTListener
 	{
 		this.log.info("Route Completed.");
 		this.occupied = false;
-		//this.mqttUtils.publishMessage("racecar/" + this.core.getID() + "/route", "done");
+		//this.mqttUtils.publish("racecar/" + this.core.getID() + "/route", "done");
 
 		try
 		{
-			this.mqttUtils.publishMessage(this.params.getMqttTopic() + "/route/" + this.ID, "done");
+			this.mqttUtils.publish(this.params.getMqttTopic() + "/route/" + this.ID, "done");
 		}
 		catch (MqttException me)
 		{

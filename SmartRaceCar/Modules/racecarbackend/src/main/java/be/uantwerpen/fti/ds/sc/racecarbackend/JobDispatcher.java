@@ -1,6 +1,7 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
 import be.uantwerpen.fti.ds.sc.common.*;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,7 +69,14 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 				break;
 		}
 
-		this.mqttUtils.publishMessage("racecar/job/" + job.getVehicleId() , job.getStartId() + " " + job.getEndId());
+		try
+		{
+			this.mqttUtils.publish("racecar/job/" + job.getVehicleId(), job.getStartId() + " " + job.getEndId());
+		}
+		catch (MqttException me)
+		{
+			this.log.error("Failed to publish job " + job.getJobId(), me);
+		}
 	}
 
 	@Autowired
@@ -82,8 +90,16 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 		this.vehicleManager = vehicleManager;
 		this.locationRepository = locationRepository;
 		this.resourceManager = resourceManager;
-		this.mqttUtils = new MQTTUtils(backendParameters.getMqttBroker(), backendParameters.getMqttUserName(), backendParameters.getMqttPassword(), this);
-		this.mqttUtils.subscribeToTopic(backendParameters.getMqttTopic() + MQTT_POSTFIX);
+
+		try
+		{
+			this.mqttUtils = new MQTTUtils(backendParameters.getMqttBroker(), backendParameters.getMqttUserName(), backendParameters.getMqttPassword(), this);
+			this.mqttUtils.subscribe(backendParameters.getMqttTopic() + MQTT_POSTFIX);
+		}
+		catch (MqttException me)
+		{
+			this.log.error("Failed to start MQTTUtils for JobDispatcher.", me);
+		}
 	}
 
 	public boolean isInQueue(long jobId, JobType type)

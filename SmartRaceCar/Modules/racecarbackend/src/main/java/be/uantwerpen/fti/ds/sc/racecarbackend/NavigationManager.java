@@ -1,15 +1,12 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
 import be.uantwerpen.fti.ds.sc.common.*;
-import com.google.gson.reflect.TypeToken;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 
-import java.lang.reflect.Type;
 import java.util.HashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 // Route Update
 // Cost Answers
@@ -57,10 +54,17 @@ public class NavigationManager implements MQTTListener, LocationRepository
 
 		this.log.info("Initializing Navigation Manager...");
 
-		this.mqttUtils = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
-		this.mqttUtils.subscribeToTopic(parameters.getMqttTopic() + MQTT_LOCATION_POSTFIX);
-		this.mqttUtils.subscribeToTopic(parameters.getMqttTopic() + MQTT_REGISTER_POSTFIX);
-		this.mqttUtils.subscribeToTopic(parameters.getMqttTopic() + MQTT_DELETE_POSTFIX);
+		try
+		{
+			this.mqttUtils = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
+			this.mqttUtils.subscribe(parameters.getMqttTopic() + MQTT_LOCATION_POSTFIX);
+			this.mqttUtils.subscribe(parameters.getMqttTopic() + MQTT_REGISTER_POSTFIX);
+			this.mqttUtils.subscribe(parameters.getMqttTopic() + MQTT_DELETE_POSTFIX);
+		}
+		catch (MqttException me)
+		{
+			this.log.error("Failed to set up MQTTUtils for NavigationManager.", me);
+		}
 
 		this.vehicleLocations = new HashMap<>();
 

@@ -95,7 +95,7 @@ public class Container implements VirtualMachine, MQTTListener
 	{
 		this.log.info("Stopping Docker Container " + this.imageName + ", with Simulation ID " + this.simulationId);
 
-		this.mqttUtils.publishMessage("/racecar/simdeployer/" + Messages.SIMDEPLOYER.KILL +  "/" + this.simulationId, Messages.SIMDEPLOYER.KILL);
+		this.mqttUtils.publish("/racecar/simdeployer/" + Messages.SIMDEPLOYER.KILL +  "/" + this.simulationId, Messages.SIMDEPLOYER.KILL);
 
 		int returnValue = this.simulationProcess.waitFor();
 

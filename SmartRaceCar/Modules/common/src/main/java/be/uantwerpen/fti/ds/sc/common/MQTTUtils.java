@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
  * Help model to deal with MQTT. Uses Paho library.
  * Can subscribe and publish on various topics chosen.
  */
-public class MQTTUtils implements MqttCallback
+public class MQTTUtils implements MqttCallback, MessageQueueClient
 {
 	private static final int DEFAULT_QoS = 2;
 
@@ -139,7 +139,7 @@ public class MQTTUtils implements MqttCallback
 	 *
 	 * @param topic The topic to subscribe on.
 	 */
-	public void subscribeToTopic(String topic)
+	public void subscribe(String topic)
 	{
 		try
 		{
@@ -158,7 +158,7 @@ public class MQTTUtils implements MqttCallback
 	 * @param topic   The topic to publish on.
 	 * @param message The message to be published.
 	 */
-	public void publishMessage(String topic, String message) throws MqttException
+	public void publish(String topic, String message) throws MqttException
 	{
 		MqttMessage mqttMessage = new MqttMessage(message.getBytes());
 		mqttMessage.setRetained(false);

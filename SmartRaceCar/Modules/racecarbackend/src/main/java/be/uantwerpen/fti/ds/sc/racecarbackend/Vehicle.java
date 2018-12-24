@@ -7,7 +7,6 @@ public class Vehicle
 {
 	private Long ID; // ID of the vehicle.
 	private boolean occupied = false; // If the vehicle is occupied by a current route job.
-	private boolean available = true; // If the vehicle is available for jobs or other requests.
 
 	/**
 	 * Model that describes a F1 vehicle.
@@ -47,25 +46,5 @@ public class Vehicle
 	Long getID()
 	{
 		return ID;
-	}
-
-	/**
-	 * Method to set the status if the vehicle is available for jobs or other requests.
-	 *
-	 * @param available Status of availability of the vehicle
-	 */
-	void setAvailable(boolean available)
-	{
-		this.available = available;
-	}
-
-	/**
-	 * Method to get the status if the vehicle is available for jobs or other requests.
-	 *
-	 * @return Status of availability of the vehicle
-	 */
-	boolean isAvailable()
-	{
-		return available;
 	}
 }

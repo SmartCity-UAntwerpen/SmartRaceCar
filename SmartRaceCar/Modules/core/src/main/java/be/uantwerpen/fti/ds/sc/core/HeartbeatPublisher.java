@@ -43,7 +43,7 @@ public class HeartbeatPublisher extends Thread
 			{
 				Thread.sleep(WAITING_PERIOD); //Sleep for 10s
 				this.log.info("Publishing Heartbeat...");
-				this.mqttUtils.publishMessage("racecar/heartbeat/" + this.ID , "heartbeat"); //status can also be send in this message
+				this.mqttUtils.publish("racecar/heartbeat/" + this.ID , "heartbeat"); //status can also be send in this message
 			}
 			catch (InterruptedException ie)
 			{

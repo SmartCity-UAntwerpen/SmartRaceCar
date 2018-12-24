@@ -1,7 +1,7 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
 import be.uantwerpen.fti.ds.sc.common.*;
-import com.google.gson.reflect.TypeToken;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,27 +16,13 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.ws.rs.core.MediaType;
-import java.awt.*;
-import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Controller
 public class JobTracker implements MQTTListener
 {
-    private Logger log;
-    private BackendParameters backendParameters;
-    private VehicleManager vehicleManager;
-    private JobDispatcher jobDispatcher;
-    private MQTTUtils mqttUtils;
-    private Map<Long, Job> localJobs;       // Map containing local jobs mapped to their IDs
-                                            // Local jobs are jobs not present in the backbone,
-                                            // they are tracked locally to send vehicles to the startpoint of jobs etc.
-    private Map<Long, Job> globalJobs;      // Map containing jobs mapped to their job ID's
-
     private static final String ROUTE_UPDATE_DONE = "done";
     private static final String ROUTE_UPDATE_ERROR = "error";
     private static final String ROUTE_UPDATE_NOT_COMPLETE = "notcomplete";
@@ -48,6 +34,16 @@ public class JobTracker implements MQTTListener
     // We need to contact the backbone if we're "almost there"
     // No concrete definition of "almost" has been given, so
     // I'm choosing one here. It's 90%.
+
+    private Logger log;
+    private BackendParameters backendParameters;
+    private VehicleManager vehicleManager;
+    private JobDispatcher jobDispatcher;
+    private MQTTUtils mqttUtils;
+    private Map<Long, Job> localJobs;       // Map containing local jobs mapped to their IDs
+                                            // Local jobs are jobs not present in the backbone,
+                                            // they are tracked locally to send vehicles to the startpoint of jobs etc.
+    private Map<Long, Job> globalJobs;      // Map containing jobs mapped to their job ID's
 
     private boolean isProgressUpdate(String topic)
     {
@@ -203,9 +199,16 @@ public class JobTracker implements MQTTListener
 
         this.log.info("Initializing JobTracker...");
 
-        mqttUtils = new MQTTUtils(backendParameters.getMqttBroker(), backendParameters.getMqttUserName(), backendParameters.getMqttPassword(), this);
-        mqttUtils.subscribeToTopic(backendParameters.getMqttTopic() + MQTT_PROGRESS_POSTFIX);
-        mqttUtils.subscribeToTopic(backendParameters.getMqttTopic() + MQTT_ROUTEUPDATE_POSTFIX);
+        try
+        {
+            this.mqttUtils = new MQTTUtils(backendParameters.getMqttBroker(), backendParameters.getMqttUserName(), backendParameters.getMqttPassword(), this);
+            this.mqttUtils.subscribe(backendParameters.getMqttTopic() + MQTT_PROGRESS_POSTFIX);
+            this.mqttUtils.subscribe(backendParameters.getMqttTopic() + MQTT_ROUTEUPDATE_POSTFIX);
+        }
+        catch (MqttException me)
+        {
+            this.log.error("Failed to create MQTTUtils for JobTracker.", me);
+        }
 
         this.globalJobs = new HashMap<>();
         this.localJobs = new HashMap<>();

@@ -16,7 +16,7 @@ public class SimDeployerCommunicator implements MQTTListener, SimDeployerCommuni
 	{
 		this.params = params;
 		this.mqttUtils = new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this);
-		this.mqttUtils.subscribeToTopic(this.params.getMqttTopic() + "/simdeployer");
+		this.mqttUtils.subscribe(this.params.getMqttTopic() + "/simdeployer");
 		this.simID = simID;
 		this.listener = listener;
 	}
