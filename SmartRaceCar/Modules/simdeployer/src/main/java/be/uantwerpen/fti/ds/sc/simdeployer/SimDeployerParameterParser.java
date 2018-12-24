@@ -1,6 +1,6 @@
 package be.uantwerpen.fti.ds.sc.simdeployer;
 
-import be.uantwerpen.fti.ds.sc.common.Parameters;
+import be.uantwerpen.fti.ds.sc.common.ParameterParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,7 +62,9 @@ public class SimDeployerParameterParser
 
 		this.log.info("SimDeployer config loaded.");
 
-		SimDeployerParameters parameters = new SimDeployerParameters(serverPort, dockerImage);
+		ParameterParser parameterParser = new ParameterParser();
+
+		SimDeployerParameters parameters = new SimDeployerParameters(parameterParser.parse(propertiesFile), serverPort, dockerImage);
 
 		try
 		{

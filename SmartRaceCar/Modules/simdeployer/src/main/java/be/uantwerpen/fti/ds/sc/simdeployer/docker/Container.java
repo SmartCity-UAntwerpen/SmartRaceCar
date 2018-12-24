@@ -1,6 +1,9 @@
 package be.uantwerpen.fti.ds.sc.simdeployer.docker;
 
+import be.uantwerpen.fti.ds.sc.common.MQTTListener;
 import be.uantwerpen.fti.ds.sc.common.MQTTUtils;
+import be.uantwerpen.fti.ds.sc.common.Messages;
+import be.uantwerpen.fti.ds.sc.simdeployer.SimDeployerParameters;
 import be.uantwerpen.fti.ds.sc.simdeployer.VirtualMachine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,11 +16,10 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Container implements VirtualMachine
+public class Container implements VirtualMachine, MQTTListener
 {
 	private static final String DOCKER_COMMAND = "docker";
 	private static final String DOCKER_RUN = "run";
-	private static final String DOCKER_STOP = "stop";
 	private static final String DOCKER_REMOVE = "rm";
 
 	private static final String DOCKER_NAME_OPTION = "--name";
@@ -31,13 +33,13 @@ public class Container implements VirtualMachine
 	private Process simulationProcess;
 	private MQTTUtils mqttUtils;
 
-	public Container (long simulationId, String imageName, String containerName) throws InvalidNameException
+	public Container (SimDeployerParameters parameters, long simulationId, String imageName, String containerName) throws InvalidNameException
 	{
 		this.log = LoggerFactory.getLogger(Container.class);
 		this.log.info("Created Docker Container " + imageName + ", with Simulation ID " + simulationId);
 		this.simulationId = simulationId;
 		this.imageName = imageName;
-		this.mqttUtils = new MQTTUtils("", "", "", null);
+		this.mqttUtils = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
 
 		Pattern containerNamePattern = Pattern.compile(DOCKER_CONTAINER_NAME_REGEX);
 		Matcher containerNameMatcher = containerNamePattern.matcher(containerName);
@@ -93,7 +95,7 @@ public class Container implements VirtualMachine
 	{
 		this.log.info("Stopping Docker Container " + this.imageName + ", with Simulation ID " + this.simulationId);
 
-		this.mqttUtils.publishMessage("", "");
+		this.mqttUtils.publishMessage("/racecar/simdeployer/" + Messages.SIMDEPLOYER.KILL +  "/" + this.simulationId, Messages.SIMDEPLOYER.KILL);
 
 		int returnValue = this.simulationProcess.waitFor();
 
@@ -117,5 +119,15 @@ public class Container implements VirtualMachine
 			this.log.error("Failed to remove Docker process.", ie);
 			throw ie;
 		}
+	}
+
+	/**
+	 * We don't listen for anything but we do have to provide this method to prevent problems with MQTT.
+	 * @param topic   received MQTT topic
+	 * @param message received MQTT message string
+	 */
+	@Override
+	public void parseMQTT(String topic, String message)
+	{
 	}
 }

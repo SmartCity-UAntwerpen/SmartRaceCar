@@ -58,7 +58,7 @@ public class SimDeployer implements TCPListener
 			{
 				this.hyperVisor.launch(simulationId, this.startPoints.get(simulationId));
 			}
-			catch (IOException | InterruptedException | InvalidNameException | VirtualMachineException ie)
+			catch (IOException | InvalidNameException ie)
 			{
 				this.log.error("An error occurred while trying to launch a virtual machine.", ie);
 				return NACK;

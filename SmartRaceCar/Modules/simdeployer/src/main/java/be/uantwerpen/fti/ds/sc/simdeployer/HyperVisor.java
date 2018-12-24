@@ -23,9 +23,9 @@ public class HyperVisor
 		this.virtualMachines = new HashMap<>();
 	}
 
-	public void launch(long simulationId, long startpoint) throws IOException, InterruptedException, InvalidNameException, VirtualMachineException
+	public void launch(long simulationId, long startpoint) throws IOException, InvalidNameException
 	{
-		VirtualMachineFactory factory = new VirtualMachineFactory();
+		VirtualMachineFactory factory = new VirtualMachineFactory(this.simDeployerParameters);
 		VirtualMachine vm = null;
 
 		try
@@ -49,16 +49,9 @@ public class HyperVisor
 
 		try
 		{
-			int returnValue = vm.run(arguments);
-
-			if (returnValue != 0)
-			{
-				String errorString = "Failed to start Virtual Machine, process returned " + returnValue;
-				this.log.error(errorString);
-				throw new VirtualMachineException(errorString);
-			}
+			vm.run(arguments);
 		}
-		catch (IOException | InterruptedException ie)
+		catch (IOException ie)
 		{
 			// Catch, log and rethrow
 			this.log.error("Failed to run Virtual Machine.", ie);
