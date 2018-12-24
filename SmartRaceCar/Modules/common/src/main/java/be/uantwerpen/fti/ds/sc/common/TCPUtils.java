@@ -194,7 +194,7 @@ public class TCPUtils extends Thread
 		{
 			try
 			{
-				clientSocket = new Socket("localhost", clientPort);
+				clientSocket = new Socket("localhost", this.clientPort);
 				connected = true;
 				try
 				{
@@ -221,6 +221,18 @@ public class TCPUtils extends Thread
 			{
 				this.log.warn("Cannot connect to receiver to send   " + data + "   Trying again. Error:" + e);
 				connected = false;
+			}
+
+			if(!connected)
+			{
+				try
+				{
+					Thread.sleep(1000);
+				}
+				catch (InterruptedException ie)
+				{
+					this.log.warn(ie.toString());
+				}
 			}
 		}
 	}
