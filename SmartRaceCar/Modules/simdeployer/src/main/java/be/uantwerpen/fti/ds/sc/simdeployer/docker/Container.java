@@ -3,6 +3,10 @@ package be.uantwerpen.fti.ds.sc.simdeployer.docker;
 import be.uantwerpen.fti.ds.sc.common.MQTTListener;
 import be.uantwerpen.fti.ds.sc.common.MQTTUtils;
 import be.uantwerpen.fti.ds.sc.common.Messages;
+import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
+import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
+import be.uantwerpen.fti.ds.sc.common.configuration.DockerAspect;
+import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
 import be.uantwerpen.fti.ds.sc.simdeployer.SimDeployerParameters;
 import be.uantwerpen.fti.ds.sc.simdeployer.VirtualMachine;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -35,7 +39,7 @@ public class Container implements VirtualMachine, MQTTListener
 	private Process simulationProcess;
 	private MQTTUtils mqttUtils;
 
-	public Container (SimDeployerParameters parameters, long simulationId, String imageName, String containerName) throws InvalidNameException
+	public Container (Configuration configuration, long simulationId, String imageName, String containerName) throws InvalidNameException
 	{
 		this.log = LoggerFactory.getLogger(Container.class);
 		this.log.info("Created Docker Container " + imageName + ", with Simulation ID " + simulationId);
@@ -44,7 +48,8 @@ public class Container implements VirtualMachine, MQTTListener
 
 		try
 		{
-			this.mqttUtils = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
+			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
+			this.mqttUtils = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
 		}
 		catch (MqttException me)
 		{

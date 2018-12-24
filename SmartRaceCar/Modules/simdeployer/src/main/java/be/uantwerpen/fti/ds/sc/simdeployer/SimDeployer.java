@@ -5,6 +5,7 @@ import be.uantwerpen.fti.ds.sc.common.TCPListener;
 import be.uantwerpen.fti.ds.sc.common.TCPUtils;
 import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
 import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
+import be.uantwerpen.fti.ds.sc.common.configuration.TcpServerAspect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -204,7 +205,8 @@ public class SimDeployer implements TCPListener
 	public SimDeployer(Configuration configuration) throws IOException
 	{
 		this.log = LoggerFactory.getLogger(SimDeployer.class);
-		this.simulationFrontend = new TCPUtils(parameters.getServerPort(), this);
+		TcpServerAspect tcpServerAspect = (TcpServerAspect) configuration.get(AspectType.TCP_SERVER);
+		this.simulationFrontend = new TCPUtils(tcpServerAspect.getServerPort(), this);
 		this.simulationFrontend.start();
 		this.startPoints = new HashMap<>();
 		this.hyperVisor = new HyperVisor(configuration);
@@ -231,6 +233,7 @@ public class SimDeployer implements TCPListener
 	{
 		Configuration configuration = new Configuration();
 		configuration.add(AspectType.DOCKER);
+		configuration.add(AspectType.MQTT);
 
 		try
 		{
