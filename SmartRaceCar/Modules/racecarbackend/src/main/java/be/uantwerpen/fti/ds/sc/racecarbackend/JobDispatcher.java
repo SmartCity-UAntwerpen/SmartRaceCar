@@ -1,6 +1,9 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
 import be.uantwerpen.fti.ds.sc.common.*;
+import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
+import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
+import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +24,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 @Controller
-public class JobDispatcher implements MQTTListener//todo: Get rid of this, still needed because MQTTUtils will crash if you don't provide it with a listener
+public class JobDispatcher implements MQTTListener  //todo: Get rid of this, still needed because MQTTUtils will crash if you don't provide it with a listener
 {
 	private static final String ROUTE_UPDATE_DONE = "done";
 	private static final String MQTT_POSTFIX = "route/#";
@@ -80,7 +83,7 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 	}
 
 	@Autowired
-	public JobDispatcher(@Qualifier("backend") BackendParameters backendParameters, JobTracker jobTracker, WaypointValidator waypointValidator, VehicleManager vehicleManager, LocationRepository locationRepository, ResourceManager resourceManager)
+	public JobDispatcher(@Qualifier("jobDispatcher") Configuration configuration, JobTracker jobTracker, WaypointValidator waypointValidator, VehicleManager vehicleManager, LocationRepository locationRepository, ResourceManager resourceManager)
 	{
 		this.log = LoggerFactory.getLogger(this.getClass());
 		this.localJobQueue = new LinkedList<>();
@@ -93,8 +96,9 @@ public class JobDispatcher implements MQTTListener//todo: Get rid of this, still
 
 		try
 		{
-			this.mqttUtils = new MQTTUtils(backendParameters.getMqttBroker(), backendParameters.getMqttUserName(), backendParameters.getMqttPassword(), this);
-			this.mqttUtils.subscribe(backendParameters.getMqttTopic() + MQTT_POSTFIX);
+			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
+			this.mqttUtils = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
+			this.mqttUtils.subscribe(mqttAspect.getTopic() + MQTT_POSTFIX);
 		}
 		catch (MqttException me)
 		{

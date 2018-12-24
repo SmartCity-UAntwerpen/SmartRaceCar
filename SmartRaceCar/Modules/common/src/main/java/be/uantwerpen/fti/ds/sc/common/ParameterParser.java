@@ -10,6 +10,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.Properties;
 
+@Deprecated
 public class ParameterParser
 {
     // MQTT PARAMETER KEYS

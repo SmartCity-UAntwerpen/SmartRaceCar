@@ -3,7 +3,9 @@ package be.uantwerpen.fti.ds.sc.simdeployer.docker;
 import be.uantwerpen.fti.ds.sc.common.MQTTListener;
 import be.uantwerpen.fti.ds.sc.common.MQTTUtils;
 import be.uantwerpen.fti.ds.sc.common.Messages;
-import be.uantwerpen.fti.ds.sc.simdeployer.SimDeployerParameters;
+import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
+import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
+import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
 import be.uantwerpen.fti.ds.sc.simdeployer.VirtualMachine;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
@@ -29,22 +31,25 @@ public class Container implements VirtualMachine, MQTTListener
 	private static final String DOCKER_CONTAINER_NAME_REGEX = "[a-zA-Z0-9][a-zA-Z0-9_.-]+";
 
 	private Logger log;
+	private Configuration configuration;
 	private long simulationId;
 	private String imageName;
 	private String containerName;
 	private Process simulationProcess;
 	private MQTTUtils mqttUtils;
 
-	public Container (SimDeployerParameters parameters, long simulationId, String imageName, String containerName) throws InvalidNameException
+	public Container (Configuration configuration, long simulationId, String imageName, String containerName) throws InvalidNameException
 	{
 		this.log = LoggerFactory.getLogger(Container.class);
+		this.configuration = configuration;
 		this.log.info("Created Docker Container " + imageName + ", with Simulation ID " + simulationId);
 		this.simulationId = simulationId;
 		this.imageName = imageName;
 
 		try
 		{
-			this.mqttUtils = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
+			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
+			this.mqttUtils = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
 		}
 		catch (MqttException me)
 		{
@@ -107,7 +112,8 @@ public class Container implements VirtualMachine, MQTTListener
 
 		try
 		{
-			this.mqttUtils.publish("/racecar/simdeployer/" + Messages.SIMDEPLOYER.KILL + "/" + this.simulationId, Messages.SIMDEPLOYER.KILL);
+			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
+			this.mqttUtils.publish(mqttAspect.getTopic() + "/simdeployer/" + Messages.SIMDEPLOYER.KILL + "/" + this.simulationId, Messages.SIMDEPLOYER.KILL);
 		}
 		catch (MqttException me)
 		{

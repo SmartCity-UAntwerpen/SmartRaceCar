@@ -1,10 +1,15 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
 import be.uantwerpen.fti.ds.sc.common.*;
+import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
+import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
+import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
+import be.uantwerpen.fti.ds.sc.common.configuration.RacecarAspect;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -30,30 +35,33 @@ class HeartbeatChecker implements MQTTListener
 	private long MAX_DELTA;			// Maximum amount of time between consecutive heartbeats (in ms)
 
 	private Logger log;
-	private Parameters parameters;
+	private Configuration configuration;
 	private RESTUtils restUtils;
 	private MessageQueueClient messageQueueClient;
 	private Map<Long, Date> heartbeats;
 
 	private boolean isHeartbeat(String topic)
 	{
+		MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
 		// Remove the trailing '#' and compare the topic
 		String heartbeatTopic = MQTT_HEARTBEAT_POSTFIX.substring(0, MQTT_HEARTBEAT_POSTFIX.length() - 2);
-		return topic.startsWith(this.parameters.getMqttTopic() +  heartbeatTopic);
+		return topic.startsWith(mqttAspect.getTopic() +  heartbeatTopic);
 	}
 
 	private boolean isRegistration(String topic)
 	{
+		MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
 		// Remove the trailing '#' and compare the topic
 		String heartbeatTopic = MQTT_REGISTER_POSTFIX.substring(0, MQTT_REGISTER_POSTFIX.length() - 2);
-		return topic.startsWith(this.parameters.getMqttTopic() +  heartbeatTopic);
+		return topic.startsWith(mqttAspect.getTopic() +  heartbeatTopic);
 	}
 
 	private boolean isDeletion(String topic)
 	{
+		MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
 		// Remove the trailing '#' and check the topic
 		String deleteTopic = MQTT_DELETE_POSTFIX.substring(0, MQTT_DELETE_POSTFIX.length() - 2);
-		return topic.startsWith(this.parameters.getMqttTopic() +  deleteTopic);
+		return topic.startsWith(mqttAspect.getTopic() +  deleteTopic);
 	}
 
 	private void updateHeartbeat(long vehicleId)
@@ -124,21 +132,23 @@ class HeartbeatChecker implements MQTTListener
 	 * @param parameters parameters used to start backend
 	 */
 	@Autowired
-	public HeartbeatChecker(Parameters parameters)
+	public HeartbeatChecker(@Qualifier("heartbeatChecker") Configuration configuration)
 	{
 		this.log = LoggerFactory.getLogger(HeartbeatChecker.class);
-		this.parameters = parameters;
+		this.configuration = configuration;
 
 		this.log.debug("Initializing Heartbeat checker...");
 
-		this.restUtils = new RESTUtils(parameters.getRESTCarmanagerURL());
+		RacecarAspect racecarAspect = (RacecarAspect) configuration.get(AspectType.RACECAR);
+		this.restUtils = new RESTUtils(racecarAspect.getRacecarServerUrl());
 
 		try
 		{
-			this.messageQueueClient = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
-			this.messageQueueClient.subscribe(parameters.getMqttTopic() + MQTT_HEARTBEAT_POSTFIX);
-			this.messageQueueClient.subscribe(parameters.getMqttTopic() + MQTT_REGISTER_POSTFIX);
-			this.messageQueueClient.subscribe(parameters.getMqttTopic() + MQTT_DELETE_POSTFIX);
+			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
+			this.messageQueueClient = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
+			this.messageQueueClient.subscribe(mqttAspect.getTopic() + MQTT_HEARTBEAT_POSTFIX);
+			this.messageQueueClient.subscribe(mqttAspect.getTopic() + MQTT_REGISTER_POSTFIX);
+			this.messageQueueClient.subscribe(mqttAspect.getTopic() + MQTT_DELETE_POSTFIX);
 		}
 		catch (Exception e)
 		{

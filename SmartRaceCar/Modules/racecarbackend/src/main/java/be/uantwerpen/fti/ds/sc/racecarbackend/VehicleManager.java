@@ -1,6 +1,9 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
 import be.uantwerpen.fti.ds.sc.common.*;
+import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
+import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
+import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +22,7 @@ import java.util.Map;
 public class VehicleManager implements MQTTListener, VehicleRepository
 {
 	private Logger log;
-	private Parameters parameters;
+	private Configuration configuration;
 	private MessageQueueClient messageQueueClient;
 	private WaypointValidator waypointValidator;
 	private Queue<Long> unusedIds;                    // This set contains all IDs of vehicles that were assigned once and then deleted
@@ -37,16 +40,17 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 	}
 
 	@Autowired
-	public VehicleManager(@Qualifier("backend") BackendParameters parameters, WaypointValidator waypointValidator)
+	public VehicleManager(@Qualifier("vehicleManager") Configuration configuration, WaypointValidator waypointValidator)
 	{
-		this.parameters = parameters;
+		this.configuration = configuration;
 		this.log = LoggerFactory.getLogger(this.getClass());
 
 		this.log.info("Initializing Vehicle Manager...");
 
 		try
 		{
-			this.messageQueueClient = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
+			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
+			this.messageQueueClient = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
 		}
 		catch (MqttException me)
 		{
@@ -103,7 +107,8 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 
 			try
 			{
-				this.messageQueueClient.publish(this.parameters.getMqttTopic() + "delete/" + vehicleId, "");
+				MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
+				this.messageQueueClient.publish(mqttAspect.getTopic() + "delete/" + vehicleId, "");
 			}
 			catch (Exception e)
 			{
@@ -147,7 +152,8 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 
 		try
 		{
-			this.messageQueueClient.publish(this.parameters.getMqttTopic() + "register/" + newVehicleId, Long.toString(startWaypoint));
+			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
+			this.messageQueueClient.publish(mqttAspect.getTopic() + "register/" + newVehicleId, Long.toString(startWaypoint));
 		}
 		catch (Exception e)
 		{

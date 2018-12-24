@@ -1,5 +1,8 @@
 package be.uantwerpen.fti.ds.sc.simdeployer;
 
+import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
+import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
+import be.uantwerpen.fti.ds.sc.common.configuration.DockerAspect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,24 +16,25 @@ public class HyperVisor
 	private static final int SIMULATION_PORT_2 = 1025;
 
 	private Logger log;
-	private SimDeployerParameters simDeployerParameters;
+	private Configuration configuration;
 	private Map<Long, VirtualMachine> virtualMachines;
 
-	public HyperVisor (SimDeployerParameters simDeployerParameters)
+	public HyperVisor (Configuration configuration)
 	{
 		this.log = LoggerFactory.getLogger(HyperVisor.class);
-		this.simDeployerParameters = simDeployerParameters;
+		this.configuration = configuration;
 		this.virtualMachines = new HashMap<>();
 	}
 
 	public void launch(long simulationId, long startpoint) throws IOException, InvalidNameException
 	{
-		VirtualMachineFactory factory = new VirtualMachineFactory(this.simDeployerParameters);
+		DockerAspect dockerAspect = (DockerAspect) configuration.get(AspectType.DOCKER);
+		VirtualMachineFactory factory = new VirtualMachineFactory(configuration);
 		VirtualMachine vm = null;
 
 		try
 		{
-			vm = factory.createDockerContainer(simulationId, this.simDeployerParameters.getDockerImage());
+			vm = factory.createDockerContainer(simulationId, dockerAspect.getImageName());
 		}
 		catch (InvalidNameException ine)
 		{

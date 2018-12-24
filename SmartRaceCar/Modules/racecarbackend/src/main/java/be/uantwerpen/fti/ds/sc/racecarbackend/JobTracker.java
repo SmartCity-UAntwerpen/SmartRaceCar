@@ -1,6 +1,10 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
 import be.uantwerpen.fti.ds.sc.common.*;
+import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
+import be.uantwerpen.fti.ds.sc.common.configuration.BackboneAspect;
+import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
+import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +41,7 @@ public class JobTracker implements MQTTListener
     // I'm choosing one here. It's 90%.
 
     private Logger log;
-    private BackendParameters backendParameters;
+    private Configuration configuration;
     private VehicleManager vehicleManager;
     private JobDispatcher jobDispatcher;
     private MQTTUtils mqttUtils;
@@ -48,12 +52,14 @@ public class JobTracker implements MQTTListener
 
     private boolean isProgressUpdate(String topic)
     {
-        return topic.startsWith(this.backendParameters.getMqttTopic() + MQTT_PROGRESS_POSTFIX);
+        MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
+        return topic.startsWith(mqttAspect.getTopic() + MQTT_PROGRESS_POSTFIX);
     }
 
     private boolean isRouteUpdate(String topic)
     {
-        return topic.startsWith(this.backendParameters.getMqttTopic() + MQTT_ROUTEUPDATE_POSTFIX);
+        MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
+        return topic.startsWith(mqttAspect.getTopic() + MQTT_ROUTEUPDATE_POSTFIX);
     }
 
     private JobType findJobType(long jobId, long vehicleId)
@@ -123,12 +129,13 @@ public class JobTracker implements MQTTListener
         this.log.debug("Completing job, setting vehicle " + vehicleId + " to unoccupied.");
         this.vehicleManager.setOccupied(vehicleId, false);
 
+        BackboneAspect backboneAspect = (BackboneAspect) this.configuration.get(AspectType.BACKBONE);
         // We should only inform the backend if the job was a global job.
-        if ((!this.backendParameters.isBackboneDisabled()) && (this.findJobType(jobId, vehicleId) == JobType.GLOBAL))
+        if ((!backboneAspect.isBackboneDebug()) && (this.findJobType(jobId, vehicleId) == JobType.GLOBAL))
         {
             this.log.debug("Informing Backbone about job completion.");
 
-            RESTUtils backboneRESTUtil = new RESTUtils(this.backendParameters.getBackboneRESTURL());
+            RESTUtils backboneRESTUtil = new RESTUtils(backboneAspect.getBackboneServerUrl());
 
             try
             {
@@ -191,9 +198,10 @@ public class JobTracker implements MQTTListener
             return;
         }
 
-        if ((!this.backendParameters.isBackboneDisabled()) && (!job.isBackboneNotified()) && (progress >= ALMOST_DONE_PERCENTAGE))
+        BackboneAspect backboneAspect = (BackboneAspect) this.configuration.get(AspectType.BACKBONE);
+        if ((!backboneAspect.isBackboneDebug()) && (!job.isBackboneNotified()) && (progress >= ALMOST_DONE_PERCENTAGE))
         {
-            RESTUtils backboneRESTUtil = new RESTUtils(this.backendParameters.getBackboneRESTURL());
+            RESTUtils backboneRESTUtil = new RESTUtils(backboneAspect.getBackboneServerUrl());
 
             try
             {
@@ -209,10 +217,10 @@ public class JobTracker implements MQTTListener
     }
 
     @Autowired
-    public JobTracker(@Qualifier("backend") BackendParameters backendParameters, VehicleManager vehicleManager, @Lazy JobDispatcher jobDispatcher)
+    public JobTracker(@Qualifier("jobTracker") Configuration configuration, VehicleManager vehicleManager, @Lazy JobDispatcher jobDispatcher)
     {
         this.log = LoggerFactory.getLogger(JobTracker.class);
-        this.backendParameters = backendParameters;
+        this.configuration = configuration;
         this.vehicleManager = vehicleManager;
         this.jobDispatcher = jobDispatcher;
 
@@ -220,9 +228,10 @@ public class JobTracker implements MQTTListener
 
         try
         {
-            this.mqttUtils = new MQTTUtils(backendParameters.getMqttBroker(), backendParameters.getMqttUserName(), backendParameters.getMqttPassword(), this);
-            this.mqttUtils.subscribe(backendParameters.getMqttTopic() + MQTT_PROGRESS_POSTFIX);
-            this.mqttUtils.subscribe(backendParameters.getMqttTopic() + MQTT_ROUTEUPDATE_POSTFIX);
+            MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
+            this.mqttUtils = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
+            this.mqttUtils.subscribe(mqttAspect.getTopic() + MQTT_PROGRESS_POSTFIX);
+            this.mqttUtils.subscribe(mqttAspect.getTopic() + MQTT_ROUTEUPDATE_POSTFIX);
         }
         catch (MqttException me)
         {
@@ -279,7 +288,7 @@ public class JobTracker implements MQTTListener
      *  REST Endpoints
      *
      */
-    @RequestMapping(value="/job/getprogress/{jobId}", method= RequestMethod.GET, produces=MediaType.APPLICATION_JSON)
+    @RequestMapping(value="/job/getprogress/{jobId}", method=RequestMethod.GET, produces=MediaType.APPLICATION_JSON)
     public @ResponseBody ResponseEntity<String> getProgress(@PathVariable long jobId)
     {
         if (!this.globalJobs.containsKey(jobId))

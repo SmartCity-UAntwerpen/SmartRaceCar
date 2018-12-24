@@ -2,8 +2,12 @@ package be.uantwerpen.fti.ds.sc.common.configuration;
 
 public enum AspectType
 {
+
+	BACKBONE,
+	DOCKER,
+	MAP_MANAGER,
 	MQTT,
-	ROS,
 	RACECAR,
-	BACKBONE
+	ROS,
+	TCP_SERVER
 }

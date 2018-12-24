@@ -1,10 +1,15 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
 import be.uantwerpen.fti.ds.sc.common.*;
+import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
+import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
+import be.uantwerpen.fti.ds.sc.common.configuration.MapManagerAspect;
+import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
@@ -28,7 +33,9 @@ import java.util.Map;
 public class MapManager implements MQTTListener, WaypointValidator, WaypointRepository
 {
 	private Logger log;
-	private MapManagerParameters params;
+	private Configuration configuration;
+
+	private String currentMap;
 
 	private VehicleRepository vehicleRepository;
 
@@ -37,16 +44,20 @@ public class MapManager implements MQTTListener, WaypointValidator, WaypointRepo
 	private Map<Long, WayPoint> wayPoints;
 
 	@Autowired
-	public MapManager(MapManagerParameters params, @Lazy VehicleRepository vehicleRepository)
+	public MapManager(@Qualifier("mapManager") Configuration configuration, @Lazy VehicleRepository vehicleRepository)
 	{
 		this.log = LoggerFactory.getLogger(this.getClass());
-		this.params = params;
+		this.configuration = configuration;
 
 		this.log.info("Initializing Map Manager...");
 
+		MapManagerAspect mapManagerAspect = (MapManagerAspect) configuration.get(AspectType.MAP_MANAGER);
+		this.currentMap = mapManagerAspect.getCurrentMap();
+
 		try
 		{
-			this.mqttUtils = new MQTTUtils(params.getMqttBroker(), params.getMqttUserName(), params.getMqttPassword(), this);
+			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
+			this.mqttUtils = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
 		}
 		catch (MqttException me)
 		{
@@ -57,7 +68,8 @@ public class MapManager implements MQTTListener, WaypointValidator, WaypointRepo
 
 		this.vehicleRepository = vehicleRepository;
 
-		this.loadWayPoints(params.getCurrentMap());
+
+		this.loadWayPoints(this.currentMap);
 
 		this.log.info("Initialized Map Manager.");
 	}
@@ -76,7 +88,7 @@ public class MapManager implements MQTTListener, WaypointValidator, WaypointRepo
 	@RequestMapping(value="/carmanager/getmapname", method=RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
 	public @ResponseBody ResponseEntity<String> getMapName()
 	{
-		return new ResponseEntity<>(this.params.getCurrentMap(), HttpStatus.OK);
+		return new ResponseEntity<>(this.currentMap, HttpStatus.OK);
 	}
 
 	/**
@@ -90,7 +102,8 @@ public class MapManager implements MQTTListener, WaypointValidator, WaypointRepo
 	{
 		try
 		{
-			String resourcePath = this.params.getMapPath() + "/" + mapName + ".pgm";
+			MapManagerAspect mapManagerAspect = (MapManagerAspect) this.configuration.get(AspectType.MAP_MANAGER);
+			String resourcePath = mapManagerAspect.getMapPath() + "/" + mapName + ".pgm";
 
 			InputStreamResource resource = new InputStreamResource(new FileInputStream(resourcePath));
 			HttpHeaders headers = new HttpHeaders();
@@ -131,7 +144,8 @@ public class MapManager implements MQTTListener, WaypointValidator, WaypointRepo
 	{
 		try
 		{
-			String resourcePath = this.params.getMapPath() + "/" + mapName + ".yaml";
+			MapManagerAspect mapManagerAspect = (MapManagerAspect) this.configuration.get(AspectType.MAP_MANAGER);
+			String resourcePath = mapManagerAspect.getMapPath() + "/" + mapName + ".yaml";
 
 			InputStreamResource resource = new InputStreamResource(new FileInputStream(resourcePath));
 			HttpHeaders headers = new HttpHeaders();
@@ -158,24 +172,26 @@ public class MapManager implements MQTTListener, WaypointValidator, WaypointRepo
 	@RequestMapping(value = "/carmanager/changeMap/{mapName}", method = RequestMethod.GET, produces = MediaType.TEXT_PLAIN)
 	public @ResponseBody ResponseEntity<String> changeMap(@PathVariable("mapName") String mapName)
 	{
-		File mapFile = new File(this.params.getMapPath() + "/" + mapName + ".yaml");
+		MapManagerAspect mapManagerAspect = (MapManagerAspect) this.configuration.get(AspectType.MAP_MANAGER);
+		File mapFile = new File(mapManagerAspect.getMapPath() + "/" + mapName + ".yaml");
 
 		if (mapFile.exists() && mapFile.isFile())
 		{
-			this.params.setCurrentMap(mapName);
+			this.currentMap = mapName;
 
 			this.log.info("Publishing map change.");
 
 			try
 			{
-				this.mqttUtils.publish(this.params.getMqttTopic() + "changeMap/#", mapName);
+				MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
+				this.mqttUtils.publish(mqttAspect.getTopic() + "changeMap/#", mapName);
 			}
 			catch (MqttException me)
 			{
 				this.log.error("Failed to publish map change.", me);
 			}
 
-			this.loadWayPoints(this.params.getCurrentMap());
+			this.loadWayPoints(this.currentMap);
 
 			this.log.info("Changed current map to " + mapName);
 
@@ -218,10 +234,10 @@ public class MapManager implements MQTTListener, WaypointValidator, WaypointRepo
 				this.wayPoints.put(49L, new WayPoint(49, 6.09f, 0.21f, -0.04f, 1.00f));
 				break;
 			case "U014":
-				this.wayPoints.put(46L, new WayPoint(46, (float) 0.07, (float) 0.15, (float) 0.99, (float) 0.05));
-				this.wayPoints.put(47L, new WayPoint(47, (float) 4.61, (float) 1.82, (float) 0.72, (float) 0.69));
-				this.wayPoints.put(48L, new WayPoint(48, (float) 0.3, (float) 3.85, (float) -0.99, (float) 0.18));
-				this.wayPoints.put(49L, new WayPoint(49, (float) 4.35, (float) 1.86, (float) -0.70, (float) 0.711));
+				this.wayPoints.put(46L, new WayPoint(46, 0.07f, 0.15f, 0.99f, 0.05f));
+				this.wayPoints.put(47L, new WayPoint(47,  4.61f, 1.82f,0.72f, 0.69f));
+				this.wayPoints.put(48L, new WayPoint(48, 0.3f, 3.85f, -0.99f, 0.18f));
+				this.wayPoints.put(49L, new WayPoint(49, 4.35f, 1.86f, -0.70f, 0.711f));
 				break;
 			case "U014Circle":
 				this.wayPoints.put(0L, new WayPoint(0, 0.0f, -0.0f, 0.0f, 0.99f));

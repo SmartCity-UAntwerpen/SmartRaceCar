@@ -13,7 +13,7 @@ import java.util.Properties;
 public class Aspect
 {
 	private AspectType type;
-	protected Logger log;
+	private Logger log;
 
 	protected Properties openPropertiesFile(File file) throws IOException
 	{

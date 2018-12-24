@@ -1,6 +1,6 @@
 package be.uantwerpen.fti.ds.sc.common;
 
-
+@Deprecated
 public class Parameters
 {
 	private String mqttBroker;

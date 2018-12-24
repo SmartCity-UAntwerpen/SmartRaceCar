@@ -1,9 +1,13 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
 import be.uantwerpen.fti.ds.sc.common.*;
+import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
+import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
+import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Controller;
 
 import java.util.HashMap;
@@ -18,7 +22,7 @@ public class NavigationManager implements MQTTListener, LocationRepository
 	private static final String MQTT_DELETE_POSTFIX = "delete/#";
 
 	private Logger log;
-	private Parameters parameters;
+	private Configuration configuration;
 	private MessageQueueClient messageQueueClient;
 	private java.util.Map<Long, Long> vehicleLocations;
 	// This map keeps track of the location of every vehicle
@@ -26,9 +30,10 @@ public class NavigationManager implements MQTTListener, LocationRepository
 
 	private boolean isDeletion(String topic)
 	{
+		MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
 		// Remove the trailing '#' and check the topic
 		String deleteTopic = MQTT_DELETE_POSTFIX.substring(0, MQTT_DELETE_POSTFIX.length() - 2);
-		return topic.startsWith(this.parameters.getMqttTopic() + deleteTopic);
+		return topic.startsWith(mqttAspect.getTopic() + deleteTopic);
 	}
 
 	private void removeVehicle(long vehicleId)
@@ -47,19 +52,20 @@ public class NavigationManager implements MQTTListener, LocationRepository
 		}
 	}
 
-	public NavigationManager(Parameters parameters)
+	public NavigationManager(@Qualifier("navigationManager") Configuration configuration)
 	{
 		this.log = LoggerFactory.getLogger(NavigationManager.class);
-		this.parameters = parameters;
+		this.configuration = configuration;
 
 		this.log.info("Initializing Navigation Manager...");
 
 		try
 		{
-			this.messageQueueClient = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
-			this.messageQueueClient.subscribe(parameters.getMqttTopic() + MQTT_LOCATION_POSTFIX);
-			this.messageQueueClient.subscribe(parameters.getMqttTopic() + MQTT_REGISTER_POSTFIX);
-			this.messageQueueClient.subscribe(parameters.getMqttTopic() + MQTT_DELETE_POSTFIX);
+			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
+			this.messageQueueClient = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
+			this.messageQueueClient.subscribe(mqttAspect.getTopic() + MQTT_LOCATION_POSTFIX);
+			this.messageQueueClient.subscribe(mqttAspect.getTopic() + MQTT_REGISTER_POSTFIX);
+			this.messageQueueClient.subscribe(mqttAspect.getTopic() + MQTT_DELETE_POSTFIX);
 		}
 		catch (Exception e)
 		{
