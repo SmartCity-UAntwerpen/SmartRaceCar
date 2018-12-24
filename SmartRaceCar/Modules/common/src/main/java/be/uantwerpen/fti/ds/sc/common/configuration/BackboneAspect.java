@@ -1,6 +1,10 @@
 package be.uantwerpen.fti.ds.sc.common.configuration;
 
-public class BackboneAspect
+import java.io.File;
+import java.io.IOException;
+import java.util.Properties;
+
+public class BackboneAspect extends Aspect
 {
 	private static final String PREFIX = "Backbone";
 
@@ -12,4 +16,38 @@ public class BackboneAspect
 
 	private boolean backboneDebugMode;
 	private String backboneServerUrl;
+
+	public BackboneAspect (File configFile) throws IOException
+	{
+		super(AspectType.BACKBONE);
+		try
+		{
+			Properties properties = this.openPropertiesFile(configFile);
+
+			this.backboneDebugMode = Boolean.parseBoolean(properties.getProperty(BACKBONE_DEBUG_MODE_KEY, DEFAULT_BACKBONE_DEBUG_MODE));
+			this.backboneServerUrl = properties.getProperty(BACKBONE_SERVER_URL_KEY, DEFAULT_BACKBONE_SERVER_URL);
+		}
+		catch (IOException ioe)
+		{
+			this.log.error("Failed to read RosAspect from \"" + configFile.getAbsolutePath() + "\"", ioe);
+			throw ioe;
+		}
+	}
+
+	public BackboneAspect (boolean backboneDebugMode, String backboneServerUrl)
+	{
+		super(AspectType.BACKBONE);
+		this.backboneDebugMode = backboneDebugMode;
+		this.backboneServerUrl = backboneServerUrl;
+	}
+
+	public boolean isBackboneDebug()
+	{
+		return this.backboneDebugMode;
+	}
+
+	public String getBackboneServerUrl()
+	{
+		return this.backboneServerUrl;
+	}
 }

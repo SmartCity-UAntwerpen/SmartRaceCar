@@ -46,6 +46,10 @@ public class Configuration
 						this.aspects.put(type, new RosAspect(configFile));
 						continue;
 
+					case BACKBONE:
+						this.aspects.put(type, new BackboneAspect(configFile));
+						continue;
+
 					default:
 						this.log.warn("Ignoring unsupported aspect type: " + type);
 						continue;
