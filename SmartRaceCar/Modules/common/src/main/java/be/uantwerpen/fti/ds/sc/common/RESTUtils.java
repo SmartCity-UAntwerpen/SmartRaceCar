@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
 import javax.ws.rs.client.*;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,13 +13,14 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
+import static javax.ws.rs.core.MediaType.*;
+
 /**
  * Help model to deal with REST client requests. Uses Jersey library.
  */
 public class RESTUtils
 {
 	private Logger log;
-
 	private WebTarget webTarget; // URL to the domain of the REST service that is being connected to.
 
 
@@ -36,11 +38,151 @@ public class RESTUtils
 	}
 
 	/**
+	 * Perform GET request, expecting a textual answer (Can be anything non-binary such as HTML, JSON, plaintext, ...)
+	 * @param endpoint
+	 * @param expectedResponseType
+	 * @return
+	 * @throws ProcessingException
+	 */
+	public String get (String endpoint, MediaType expectedResponseType) throws ProcessingException
+	{
+		WebTarget resourceWebTarget = this.webTarget.path(endpoint);
+		Invocation.Builder invocationBuilder = resourceWebTarget.request(expectedResponseType);
+		Response response = null;
+		this.log.debug("Attempting GET request :" + invocationBuilder.toString());
+
+		try
+		{
+			response = invocationBuilder.get();
+		}
+		catch (ProcessingException pe)
+		{
+			this.log.error("Cannot connect to REST service.", pe);
+			throw pe;
+		}
+
+		this.checkForError(response, resourceWebTarget.getUri());
+		String responseString = response.readEntity(String.class);
+		this.log.debug("Text Returned from request '" + endpoint + "' is: " + responseString);
+		return responseString;
+	}
+
+	/**
+	 * Perform GET request without expecting an answer.
+	 * @param endpoint
+	 */
+	public void get (String endpoint)
+	{
+		WebTarget resourceWebTarget = this.webTarget.path(endpoint);
+		Invocation.Builder invocationBuilder = resourceWebTarget.request(MediaType.TEXT_PLAIN);
+		Response response = null;
+		this.log.debug("Attempting GET request :" + invocationBuilder.toString());
+
+		try
+		{
+			response = invocationBuilder.get();
+		}
+		catch (ProcessingException pe)
+		{
+			this.log.error("Cannot connect to REST service.", pe);
+			throw pe;
+		}
+
+		this.checkForError(response, resourceWebTarget.getUri());
+	}
+
+	/**
+	 * Perform a POST request, request contains the given payload.
+	 * The payload should be of type payloadType.
+	 * Payload should be text of some form (HTML, JSON, plain text, ...)
+	 * @param endpoint
+	 * @param payload
+	 * @param payloadType
+	 * @return
+	 */
+	public String post(String endpoint, String payload, MediaType payloadType) throws IOException
+	{
+		WebTarget resourceWebTarget = this.webTarget.path(endpoint);
+		Invocation.Builder invocationBuilder = resourceWebTarget.request("application/json");
+		this.log.info("Attempting POST request:" + resourceWebTarget.getUri());
+		Response response = null;
+
+		try
+		{
+			if (payloadType == APPLICATION_JSON_TYPE)
+			{
+				response = invocationBuilder.put(Entity.json(payload));
+			}
+			else if ((payloadType == APPLICATION_XML_TYPE) || (payloadType == TEXT_XML_TYPE))
+			{
+				response = invocationBuilder.put(Entity.xml(payload));
+			}
+			else if (payloadType == APPLICATION_XHTML_XML_TYPE)
+			{
+				response = invocationBuilder.put(Entity.xhtml(payload));
+			}
+			else if (payloadType == TEXT_HTML_TYPE)
+			{
+				response = invocationBuilder.put(Entity.html(payload));
+			}
+			else if (payloadType == TEXT_PLAIN_TYPE)
+			{
+				response = invocationBuilder.put(Entity.text(payload));
+			}
+			else
+			{
+				String errorString = "Got unsupported payload type: " + payloadType;
+				this.log.error(errorString);
+				throw new ProcessingException (errorString);
+			}
+		}
+		catch (ProcessingException e)
+		{
+			String errorString = "Cannot connect to REST service (URL: \"" + resourceWebTarget.getUri() + "\": ";
+			this.log.error(errorString, e);
+			throw new IOException(errorString);
+		}
+
+		this.checkForError(response, resourceWebTarget.getUri());
+		String responseString = response.readEntity(String.class);
+		this.log.info("JSON Returned from request '" + endpoint + "' is: " + responseString);
+		return responseString;
+	}
+
+	/**
+	 * Send a POST request without expecting an answer.
+	 * @param endpoint
+	 * @param payload
+	 * @param payloadType
+	 * @return
+	 * @throws IOException
+	 */
+	public String post(String endpoint) throws IOException
+	{
+		this.log.debug("Attempting POST request with URL: \"" + endpoint + "\"");
+
+		WebTarget resourceWebTarget = this.webTarget.path(endpoint);
+
+		Invocation.Builder invocationBuilder = resourceWebTarget.request();
+
+		Response response = invocationBuilder.post(Entity.text(""));
+
+		checkForError(response, resourceWebTarget.getUri());
+
+		String responseString = response.readEntity(String.class);
+
+		this.log.debug("POST Request got response: \"" + responseString + "\"");
+
+		return responseString;
+	}
+
+	/**
 	 * REST GET request to receive a response of the type Text Plain.
 	 *
 	 * @param URL Path of the GET request.
 	 * @return REST response of the type Text Plain.
 	 */
+	@Deprecated
 	public String getTextPlain(String URL)
 	{
 		WebTarget resourceWebTarget = this.webTarget.path(URL);
@@ -69,6 +211,7 @@ public class RESTUtils
 	 *
 	 * @param URL Path of the GET request.
 	 */
+	@Deprecated
 	public void getCall(String URL) throws ProcessingException
 	{
 		WebTarget resourceWebTarget = this.webTarget.path(URL);
@@ -95,6 +238,7 @@ public class RESTUtils
 	 * @param URL Path of the GET request.
 	 * @return REST response of the type JSON.
 	 */
+	@Deprecated
 	public String getJSON(String URL) throws ProcessingException
 	{
 		WebTarget resourceWebTarget = this.webTarget.path(URL);
@@ -125,6 +269,7 @@ public class RESTUtils
 	 * @param jsonString The JSON string to be posted.
 	 * @return REST response of the type JSON.
 	 */
+	@Deprecated
 	public String postJSONGetJSON(String URL, String jsonString) throws IOException
 	{
 		WebTarget resourceWebTarget = this.webTarget.path(URL);
@@ -155,6 +300,7 @@ public class RESTUtils
 	 * @param URL
 	 * @return
 	 */
+	@Deprecated
 	public String postEmpty(String URL)
 	{
 		this.log.debug("Attempting POST request with URL: \"" + URL + "\"");
