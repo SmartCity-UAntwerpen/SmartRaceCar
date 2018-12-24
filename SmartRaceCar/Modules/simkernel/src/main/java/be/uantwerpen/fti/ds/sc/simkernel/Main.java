@@ -12,7 +12,7 @@ public class Main
     {
         if (args.length != 3)
         {
-            System.out.println("Need 2 arguments to run. Possible arguments: tcpclientport(int) tcpserverport(int)");
+            System.out.println("Need 3 arguments to run. Required arguments: tcpclientport(int) tcpserverport(int) simulation ID (long)");
             //System.exit(0);
         }
         else
