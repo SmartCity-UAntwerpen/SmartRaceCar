@@ -47,14 +47,17 @@ public class RESTUtils
 		Invocation.Builder invocationBuilder = resourceWebTarget.request("text/plain");
 		Response response = null;
 		this.log.info("Attempting GET(text plain) request with URL:" + resourceWebTarget.getUri());
+
 		try
 		{
 			response = invocationBuilder.get();
-		} catch (ProcessingException e)
+		}
+		catch (ProcessingException e)
 		{
 			this.log.error("Cannot connect to REST service: " + e);
 			System.exit(0); //make sure the correct mode is selected (debugwithoutBackbone/debugwithoutMAAS)
 		}
+
 		checkForError(response, resourceWebTarget.getUri());
 		String responseString = response.readEntity(String.class);
 		this.log.info("Text Returned from request '" + URL + "' is: " + responseString);
@@ -66,20 +69,23 @@ public class RESTUtils
 	 *
 	 * @param URL Path of the GET request.
 	 */
-	public void getCall(String URL)
+	public void getCall(String URL) throws ProcessingException
 	{
 		WebTarget resourceWebTarget = this.webTarget.path(URL);
 		Invocation.Builder invocationBuilder = resourceWebTarget.request("text/plain");
 		Response response = null;
 		this.log.info("Attempting GET request with URL:" + resourceWebTarget.getUri());
+
 		try
 		{
 			response = invocationBuilder.get();
-		} catch (ProcessingException e)
-		{
-			this.log.error("Cannot connect to REST service: " + e);
-			System.exit(0);
 		}
+		catch (ProcessingException pe)
+		{
+			this.log.error("Cannot connect to REST service.", pe);
+			throw pe;
+		}
+
 		checkForError(response, resourceWebTarget.getUri());
 	}
 
@@ -89,20 +95,23 @@ public class RESTUtils
 	 * @param URL Path of the GET request.
 	 * @return REST response of the type JSON.
 	 */
-	public String getJSON(String URL)
+	public String getJSON(String URL) throws ProcessingException
 	{
 		WebTarget resourceWebTarget = this.webTarget.path(URL);
 		Invocation.Builder invocationBuilder = resourceWebTarget.request("application/json");
 		Response response = null;
 		this.log.info("Attempting GET(JSON) request with URL:" + resourceWebTarget.getUri());
+
 		try
 		{
 			response = invocationBuilder.get();
-		} catch (ProcessingException e)
-		{
-			this.log.error("Cannot connect to REST service: " + e);
-			System.exit(0);
 		}
+		catch (ProcessingException pe)
+		{
+			this.log.error("Cannot connect to REST service: ", pe);
+			throw pe;
+		}
+
 		checkForError(response, resourceWebTarget.getUri());
 		String responseString = response.readEntity(String.class);
 		this.log.info("JSON Returned from request '" + URL + "' is: " + responseString);
@@ -122,15 +131,18 @@ public class RESTUtils
 		Invocation.Builder invocationBuilder = resourceWebTarget.request("application/json");
 		this.log.info("Attempting POST(JSON) request with URL:" + resourceWebTarget.getUri() + " and with json:" + jsonString);
 		Response response = null;
+
 		try
 		{
 			response = invocationBuilder.put(Entity.json(jsonString));
-		} catch (ProcessingException e)
+		}
+		catch (ProcessingException e)
 		{
 			String errorString = "Cannot connect to REST service (URL: \"" + resourceWebTarget.getUri() + "\": ";
 			this.log.error(errorString, e);
 			throw new IOException(errorString);
 		}
+
 		checkForError(response, resourceWebTarget.getUri());
 		String responseString = response.readEntity(String.class);
 		this.log.info("JSON Returned from request '" + URL + "' is: " + responseString);
@@ -170,7 +182,7 @@ public class RESTUtils
 	 * @param fileName      Filename the downloaded file should get.
 	 * @param fileExtention File extention the downloaded file should get.
 	 */
-	public void getFile(String URL, String folder, String fileName, String fileExtention)
+	public void getFile(String URL, String folder, String fileName, String fileExtention) throws ProcessingException, IOException
 	{
 		java.nio.file.Path out = Paths.get(folder + "/" + fileName + "." + fileExtention);
 		WebTarget resourceWebTarget = this.webTarget.path(URL);
@@ -185,13 +197,16 @@ public class RESTUtils
 			Files.copy(in, out, StandardCopyOption.REPLACE_EXISTING);
 			in.close();
 			this.log.info("Downloaded file '" + fileName + "." + fileExtention + "'.");
-		} catch (ProcessingException e)
+		}
+		catch (ProcessingException pe)
 		{
-			this.log.error("Cannot connect to REST service: " + e);
-			System.exit(0);
-		} catch (IOException e)
+			this.log.error("Cannot connect to REST service.", pe);
+			throw pe;
+		}
+		catch (IOException ioe)
 		{
-			this.log.error("Could not store file '" + fileName + "." + fileExtention + "' after download: " + e);
+			this.log.error("Could not store file '" + fileName + "." + fileExtention + "' after download.", ioe);
+			throw ioe;
 		}
 	}
 
