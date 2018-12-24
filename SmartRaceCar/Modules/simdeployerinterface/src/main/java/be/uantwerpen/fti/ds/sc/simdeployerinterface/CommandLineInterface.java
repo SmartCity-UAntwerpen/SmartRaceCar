@@ -92,11 +92,6 @@ public class CommandLineInterface
 				return;
 			}
 
-			if (!interactiveMode)
-			{
-				System.out.println(line);
-			}
-
 			Command command = null;
 
 			try
@@ -156,7 +151,10 @@ public class CommandLineInterface
 				continue;
 			}
 
-			System.out.println(response);
+			if (this.interactiveMode)
+			{
+				System.out.println(response);
+			}
 		}
 	}
 
