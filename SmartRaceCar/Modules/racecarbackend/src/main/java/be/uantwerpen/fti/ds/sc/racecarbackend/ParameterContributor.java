@@ -23,12 +23,75 @@ public class ParameterContributor
     }
 
     @Bean
-    @Qualifier("vehicleManager")
-    Configuration vehicleManagerParameters()
+    @Qualifier("costCache")
+    Configuration costCacheConfiguration()
     {
-       Configuration configuration = new Configuration();
-       configuration.add(AspectType.MQTT);
+        Configuration configuration = new Configuration();
+        configuration.add(AspectType.ROS);
 
-       return configuration.load(DEFAULT_PROPERTIES_FILE);
+        return configuration.load(DEFAULT_PROPERTIES_FILE);
+    }
+
+    @Bean
+    @Qualifier("heartbeatChecker")
+    Configuration heartbeatCheckerConfiguration()
+    {
+        Configuration configuration = new Configuration();
+        configuration.add(AspectType.MQTT);
+        configuration.add(AspectType.RACECAR);
+
+        return configuration.load(DEFAULT_PROPERTIES_FILE);
+    }
+
+    @Bean
+    @Qualifier("jobDispatcher")
+    Configuration jobDispatcherConfiguration()
+    {
+        Configuration configuration = new Configuration();
+        configuration.add(AspectType.MQTT);
+
+        return configuration.load(DEFAULT_PROPERTIES_FILE);
+    }
+
+    @Bean
+    @Qualifier("jobTracker")
+    Configuration jobTrackerConfiguration()
+    {
+        Configuration configuration = new Configuration();
+        configuration.add(AspectType.MQTT);
+        configuration.add(AspectType.BACKBONE);
+
+        return configuration.load(DEFAULT_PROPERTIES_FILE);
+    }
+
+    @Bean
+    @Qualifier("mapManager")
+    Configuration mapManagerConfiguration()
+    {
+        Configuration configuration = new Configuration();
+        configuration.add(AspectType.MQTT);
+        configuration.add(AspectType.MAP_MANAGER);
+
+        return configuration.load(DEFAULT_PROPERTIES_FILE);
+    }
+
+    @Bean
+    @Qualifier("navigationManager")
+    Configuration navigationManagerConfiguration()
+    {
+        Configuration configuration = new Configuration();
+        configuration.add(AspectType.MQTT);
+
+        return configuration.load(DEFAULT_PROPERTIES_FILE);
+    }
+
+    @Bean
+    @Qualifier("vehicleManager")
+    Configuration vehicleManagerConfiguration()
+    {
+        Configuration configuration = new Configuration();
+        configuration.add(AspectType.MQTT);
+
+        return configuration.load(DEFAULT_PROPERTIES_FILE);
     }
 }

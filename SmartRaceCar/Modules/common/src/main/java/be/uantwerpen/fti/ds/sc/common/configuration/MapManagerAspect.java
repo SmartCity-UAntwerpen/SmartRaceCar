@@ -40,4 +40,14 @@ public class MapManagerAspect extends Aspect
 		this.mapPath = mapPath;
 		this.currentMap = currentMap;
 	}
+
+	public String getMapPath()
+	{
+		return this.mapPath;
+	}
+
+	public String getCurrentMap()
+	{
+		return this.currentMap;
+	}
 }

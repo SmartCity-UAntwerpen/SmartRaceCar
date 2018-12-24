@@ -18,7 +18,7 @@ public class MqttAspect extends Aspect
 	private static final String DEFAULT_MQTT_BROKER = "tcp://smartcity.ddns.net:1883";
 	private static final String DEFAULT_MQTT_USERNAME = "root";
 	private static final String DEFAULT_MQTT_PASSWORD = "smartcity";
-	private static final String DEFAULT_MQTT_TOPIC = "/racecar";
+	private static final String DEFAULT_MQTT_TOPIC = "/racecar/";
 
 	private String mqttBroker;
 	private String mqttUsername;

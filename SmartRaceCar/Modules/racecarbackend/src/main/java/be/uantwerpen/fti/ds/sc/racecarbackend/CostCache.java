@@ -4,10 +4,14 @@ import be.uantwerpen.fti.ds.sc.common.Cost;
 import be.uantwerpen.fti.ds.sc.common.JSONUtils;
 import be.uantwerpen.fti.ds.sc.common.Point;
 import be.uantwerpen.fti.ds.sc.common.RESTUtils;
+import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
+import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
+import be.uantwerpen.fti.ds.sc.common.configuration.RosAspect;
 import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -30,16 +34,16 @@ public class CostCache
 	private Logger log;
 	private WaypointValidator waypointValidator;
 	private WaypointRepository waypointRepository;
-	private CostCacheParameters costCacheParameters;
+	private Configuration configuration;
 	private Map<Link, Integer> costCache;
 
 	@Autowired
-	public CostCache (CostCacheParameters costCacheParameters, WaypointRepository waypointRepository, WaypointValidator waypointValidator)
+	public CostCache (@Qualifier("costCache") Configuration configuration, WaypointRepository waypointRepository, WaypointValidator waypointValidator)
 	{
 		this.log = LoggerFactory.getLogger(CostCache.class);
 
 		this.log.info("Initializing CostCache...");
-		this.costCacheParameters = costCacheParameters;
+		this.configuration = configuration;
 		this.waypointRepository = waypointRepository;
 		this.waypointValidator = waypointValidator;
 		this.costCache = new HashMap<>();
@@ -79,9 +83,10 @@ public class CostCache
 
 		int cost = 0;
 
-		if (!this.costCacheParameters.isROSServerDisabled())
+		RosAspect rosAspect = (RosAspect) this.configuration.get(AspectType.ROS);
+		if (!rosAspect.isRosDebug())
 		{
-			RESTUtils ROSAPI = new RESTUtils(this.costCacheParameters.getROSServerURL());
+			RESTUtils ROSAPI = new RESTUtils(rosAspect.getRosServerUrl());
 
 			Type costType = new TypeToken<Cost>(){}.getType();
 
