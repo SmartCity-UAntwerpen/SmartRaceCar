@@ -38,7 +38,7 @@ public class MapManagerAspect extends Aspect
 		}
 		catch (IOException ioe)
 		{
-			this.log.error("Failed to read MapManagerAspect from \"" + configFile.getAbsolutePath() + "\"", ioe);
+			this.log.error("Failed to read " + this.getClass().getName() + " from \"" + configFile.getAbsolutePath() + "\"", ioe);
 			throw ioe;
 		}
 	}

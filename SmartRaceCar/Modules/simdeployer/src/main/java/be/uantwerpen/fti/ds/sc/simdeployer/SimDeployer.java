@@ -3,6 +3,8 @@ package be.uantwerpen.fti.ds.sc.simdeployer;
 import be.uantwerpen.fti.ds.sc.common.commands.*;
 import be.uantwerpen.fti.ds.sc.common.TCPListener;
 import be.uantwerpen.fti.ds.sc.common.TCPUtils;
+import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
+import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -199,13 +201,13 @@ public class SimDeployer implements TCPListener
 		return Command.NACK;
 	}
 
-	public SimDeployer(SimDeployerParameters parameters) throws IOException
+	public SimDeployer(Configuration configuration) throws IOException
 	{
 		this.log = LoggerFactory.getLogger(SimDeployer.class);
 		this.simulationFrontend = new TCPUtils(parameters.getServerPort(), this);
 		this.simulationFrontend.start();
 		this.startPoints = new HashMap<>();
-		this.hyperVisor = new HyperVisor(parameters);
+		this.hyperVisor = new HyperVisor(configuration);
 	}
 
 	@Override
@@ -227,11 +229,12 @@ public class SimDeployer implements TCPListener
 
 	public static void main(String[] args)
 	{
-		SimDeployerParameterParser parameterParser = new SimDeployerParameterParser();
+		Configuration configuration = new Configuration();
+		configuration.add(AspectType.DOCKER);
 
 		try
 		{
-			final SimDeployer simDeployer = new SimDeployer(parameterParser.parse(DEFAULT_CONFIG_FILE));
+			final SimDeployer simDeployer = new SimDeployer(configuration.load(DEFAULT_CONFIG_FILE));
 		}
 		catch (IOException ioe)
 		{

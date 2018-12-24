@@ -4,8 +4,10 @@ public enum AspectType
 {
 
 	BACKBONE,
+	DOCKER,
 	MAP_MANAGER,
 	MQTT,
 	RACECAR,
-	ROS
+	ROS,
+	TCP_SERVER
 }

@@ -33,7 +33,7 @@ public class RacecarAspect extends Aspect
 		}
 		catch (IOException ioe)
 		{
-			this.log.error("Failed to read RacecarAspect from \"" + configFile.getAbsolutePath() + "\"", ioe);
+			this.log.error("Failed to read " + this.getClass().getName() + " from \"" + configFile.getAbsolutePath() + "\"", ioe);
 			throw ioe;
 		}
 	}

@@ -43,6 +43,10 @@ public class Configuration
 						this.aspects.put(type, new BackboneAspect(configFile));
 						break;
 
+					case DOCKER:
+						this.aspects.put(type, new DockerAspect(configFile));
+						break;
+
 					case MAP_MANAGER:
 						this.aspects.put(type, new MapManagerAspect(configFile));
 						break;
@@ -58,6 +62,9 @@ public class Configuration
 					case ROS:
 						this.aspects.put(type, new RosAspect(configFile));
 						break;
+
+					case TCP_SERVER:
+						this.aspects.put(type, new TcpServerAspect(configFile));
 
 					default:
 						this.log.warn("Ignoring unsupported aspect type: " + type);
