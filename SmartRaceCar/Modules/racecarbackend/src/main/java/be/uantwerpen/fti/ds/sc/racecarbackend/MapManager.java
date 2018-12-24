@@ -1,7 +1,7 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
 import be.uantwerpen.fti.ds.sc.common.*;
-import com.google.gson.reflect.TypeToken;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,15 +17,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import javax.annotation.PostConstruct;
 import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 @Controller
@@ -48,7 +44,14 @@ public class MapManager implements MQTTListener, WaypointValidator, WaypointRepo
 
 		this.log.info("Initializing Map Manager...");
 
-		this.mqttUtils = new MQTTUtils(params.getMqttBroker(), params.getMqttUserName(), params.getMqttPassword(), this);
+		try
+		{
+			this.mqttUtils = new MQTTUtils(params.getMqttBroker(), params.getMqttUserName(), params.getMqttPassword(), this);
+		}
+		catch (MqttException me)
+		{
+			this.log.error("Failed to create MQTTUtils for MapManager.");
+		}
 
 		this.wayPoints = new HashMap<>();
 
@@ -161,8 +164,16 @@ public class MapManager implements MQTTListener, WaypointValidator, WaypointRepo
 		{
 			this.params.setCurrentMap(mapName);
 
-			this.log.info("Publishing map change over MQTT.");
-			this.mqttUtils.publishMessage(this.params.getMqttTopic() + "changeMap/#", mapName);
+			this.log.info("Publishing map change.");
+
+			try
+			{
+				this.mqttUtils.publish(this.params.getMqttTopic() + "changeMap/#", mapName);
+			}
+			catch (MqttException me)
+			{
+				this.log.error("Failed to publish map change.", me);
+			}
 
 			this.loadWayPoints(this.params.getCurrentMap());
 
@@ -195,10 +206,10 @@ public class MapManager implements MQTTListener, WaypointValidator, WaypointRepo
 				this.wayPoints.put(49L, new WayPoint(49, -28.25f, -9.19f, -0.71f, 0.71f));
 				break;
 			case "V314":
-				this.wayPoints.put(46L, new WayPoint(46, (float) -3.0, (float) -1.5, (float) 0.07, (float) 1.00));
-				this.wayPoints.put(47L, new WayPoint(47, (float) 1.10, (float) -1.20, (float) 0.07, (float) 1.00));
-				this.wayPoints.put(48L, new WayPoint(48, (float) 4.0, (float) -0.90, (float) -0.68, (float) 0.73));
-				this.wayPoints.put(49L, new WayPoint(49, (float) 4.54, (float) -4.49, (float) -0.60, (float) 0.80));
+				this.wayPoints.put(46L, new WayPoint(46, -3.0f, -1.5f, 0.07f, 1.00f));
+				this.wayPoints.put(47L, new WayPoint(47, 1.10f, -1.20f, 0.07f, 1.00f));
+				this.wayPoints.put(48L, new WayPoint(48, 4.0f, -0.90f, -0.68f, 0.73f));
+				this.wayPoints.put(49L, new WayPoint(49, 4.54f, -4.49f, -0.60f, 0.80f));
 				break;
 			case "gangV":
 				this.wayPoints.put(46L, new WayPoint(46, -6.1f, -28.78f, 0.73f, 0.69f));

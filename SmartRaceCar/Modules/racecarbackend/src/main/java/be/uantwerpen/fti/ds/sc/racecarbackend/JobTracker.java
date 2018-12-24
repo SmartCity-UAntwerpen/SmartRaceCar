@@ -1,7 +1,7 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
 import be.uantwerpen.fti.ds.sc.common.*;
-import com.google.gson.reflect.TypeToken;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,27 +16,14 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.ws.rs.core.MediaType;
-import java.awt.*;
-import java.lang.reflect.Type;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Controller
 public class JobTracker implements MQTTListener
 {
-    private Logger log;
-    private BackendParameters backendParameters;
-    private VehicleManager vehicleManager;
-    private JobDispatcher jobDispatcher;
-    private MQTTUtils mqttUtils;
-    private Map<Long, Job> localJobs;       // Map containing local jobs mapped to their IDs
-                                            // Local jobs are jobs not present in the backbone,
-                                            // they are tracked locally to send vehicles to the startpoint of jobs etc.
-    private Map<Long, Job> globalJobs;      // Map containing jobs mapped to their job ID's
-
     private static final String ROUTE_UPDATE_DONE = "done";
     private static final String ROUTE_UPDATE_ERROR = "error";
     private static final String ROUTE_UPDATE_NOT_COMPLETE = "notcomplete";
@@ -48,6 +35,16 @@ public class JobTracker implements MQTTListener
     // We need to contact the backbone if we're "almost there"
     // No concrete definition of "almost" has been given, so
     // I'm choosing one here. It's 90%.
+
+    private Logger log;
+    private BackendParameters backendParameters;
+    private VehicleManager vehicleManager;
+    private JobDispatcher jobDispatcher;
+    private MQTTUtils mqttUtils;
+    private Map<Long, Job> localJobs;       // Map containing local jobs mapped to their IDs
+                                            // Local jobs are jobs not present in the backbone,
+                                            // they are tracked locally to send vehicles to the startpoint of jobs etc.
+    private Map<Long, Job> globalJobs;      // Map containing jobs mapped to their job ID's
 
     private boolean isProgressUpdate(String topic)
     {
@@ -121,24 +118,33 @@ public class JobTracker implements MQTTListener
         throw new NoSuchElementException("Failed to find job associated with vehicle " + vehicleID);
     }
 
-    private void completeJob(long jobId, long vehicleId)
+    private void completeJob(long jobId, long vehicleId) throws IOException
     {
         this.log.debug("Completing job, setting vehicle " + vehicleId + " to unoccupied.");
         this.vehicleManager.setOccupied(vehicleId, false);
 
         // We should only inform the backend if the job was a global job.
         if ((!this.backendParameters.isBackboneDisabled()) && (this.findJobType(jobId, vehicleId) == JobType.GLOBAL))
-    {
+        {
             this.log.debug("Informing Backbone about job completion.");
 
             RESTUtils backboneRESTUtil = new RESTUtils(this.backendParameters.getBackboneRESTURL());
-            backboneRESTUtil.postEmpty("/jobs/complete/" + jobId);
+
+            try
+            {
+                backboneRESTUtil.post("/jobs/complete/" + jobId);
+            }
+            catch (IOException ioe)
+            {
+                this.log.error("Failed to POST completion of job to backbone.", ioe);
+                throw ioe;
+            }
         }
 
         this.removeJob(jobId, vehicleId);
     }
 
-    private void updateRoute(long jobId, long vehicleId, String mqttMessage)
+    private void updateRoute(long jobId, long vehicleId, String mqttMessage) throws IOException
     {
         switch (mqttMessage)
         {
@@ -160,7 +166,7 @@ public class JobTracker implements MQTTListener
         }
     }
 
-    private void updateProgress(long jobId, long vehicleId, int progress)
+    private void updateProgress(long jobId, long vehicleId, int progress) throws IOException
     {
         JobType type = this.findJobType(jobId, vehicleId);
         Job job = null;
@@ -188,8 +194,17 @@ public class JobTracker implements MQTTListener
         if ((!this.backendParameters.isBackboneDisabled()) && (!job.isBackboneNotified()) && (progress >= ALMOST_DONE_PERCENTAGE))
         {
             RESTUtils backboneRESTUtil = new RESTUtils(this.backendParameters.getBackboneRESTURL());
-            backboneRESTUtil.postEmpty("/jobs/vehiclecloseby/" + jobId);
-            job.setBackboneNotified(true);
+
+            try
+            {
+                backboneRESTUtil.post("/jobs/vehiclecloseby/" + jobId);
+                job.setBackboneNotified(true);
+            }
+            catch (IOException ioe)
+            {
+                this.log.error("Failed to notify backbone of almost-completion of job.");
+                throw  ioe;
+            }
         }
     }
 
@@ -203,9 +218,16 @@ public class JobTracker implements MQTTListener
 
         this.log.info("Initializing JobTracker...");
 
-        mqttUtils = new MQTTUtils(backendParameters.getMqttBroker(), backendParameters.getMqttUserName(), backendParameters.getMqttPassword(), this);
-        mqttUtils.subscribeToTopic(backendParameters.getMqttTopic() + MQTT_PROGRESS_POSTFIX);
-        mqttUtils.subscribeToTopic(backendParameters.getMqttTopic() + MQTT_ROUTEUPDATE_POSTFIX);
+        try
+        {
+            this.mqttUtils = new MQTTUtils(backendParameters.getMqttBroker(), backendParameters.getMqttUserName(), backendParameters.getMqttPassword(), this);
+            this.mqttUtils.subscribe(backendParameters.getMqttTopic() + MQTT_PROGRESS_POSTFIX);
+            this.mqttUtils.subscribe(backendParameters.getMqttTopic() + MQTT_ROUTEUPDATE_POSTFIX);
+        }
+        catch (MqttException me)
+        {
+            this.log.error("Failed to create MQTTUtils for JobTracker.", me);
+        }
 
         this.globalJobs = new HashMap<>();
         this.localJobs = new HashMap<>();
@@ -299,13 +321,29 @@ public class JobTracker implements MQTTListener
                 long jobId = this.findJobByVehicleId(vehicleId);
                 int percentage = Integer.parseInt(message);
                 this.log.info("Received Percentage update for vehicle " + vehicleId + ", Job: " + jobId + ", Status: " + percentage + "%.");
-                this.updateProgress(jobId, vehicleId, percentage);
+
+                try
+                {
+                    this.updateProgress(jobId, vehicleId, percentage);
+                }
+                catch (IOException ioe)
+                {
+                    this.log.error("Failed to process job progress update for job " + jobId, ioe);
+                }
             }
             else if (this.isRouteUpdate(topic))
             {
                 long jobId = this.findJobByVehicleId(vehicleId);
                 this.log.info("Received Route Update for vehicle " + vehicleId + "");
-                this.updateRoute(jobId, vehicleId, message);
+
+                try
+                {
+                    this.updateRoute(jobId, vehicleId, message);
+                }
+                catch (IOException ioe)
+                {
+                    this.log.error("Failed to process route update for job " + jobId, ioe);
+                }
             }
         }
         catch (NoSuchElementException nsee)

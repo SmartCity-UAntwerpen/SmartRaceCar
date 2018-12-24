@@ -1,19 +1,17 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
 import be.uantwerpen.fti.ds.sc.common.*;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Helper class to check the heartbeat of all registered vehicles periodically
@@ -34,7 +32,7 @@ class HeartbeatChecker implements MQTTListener
 	private Logger log;
 	private Parameters parameters;
 	private RESTUtils restUtils;
-	private MQTTUtils mqttUtils;
+	private MessageQueueClient messageQueueClient;
 	private Map<Long, Date> heartbeats;
 
 	private boolean isHeartbeat(String topic)
@@ -85,7 +83,7 @@ class HeartbeatChecker implements MQTTListener
 
 			if (delta > MAX_DELTA) //longer than 90 seconds
 			{
-				this.restUtils.getCall("delete/" + vehicleId);
+				this.restUtils.get("delete/" + vehicleId);
 				this.log.warn("Vehicle with ID: " + vehicleId + " was removed since it hasn't responded for over 90s");
 			}
 		}
@@ -134,10 +132,18 @@ class HeartbeatChecker implements MQTTListener
 		this.log.debug("Initializing Heartbeat checker...");
 
 		this.restUtils = new RESTUtils(parameters.getRESTCarmanagerURL());
-		this.mqttUtils = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
-		this.mqttUtils.subscribeToTopic(parameters.getMqttTopic() + MQTT_HEARTBEAT_POSTFIX);
-		this.mqttUtils.subscribeToTopic(parameters.getMqttTopic() + MQTT_REGISTER_POSTFIX);
-		this.mqttUtils.subscribeToTopic(parameters.getMqttTopic() + MQTT_DELETE_POSTFIX);
+
+		try
+		{
+			this.messageQueueClient = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
+			this.messageQueueClient.subscribe(parameters.getMqttTopic() + MQTT_HEARTBEAT_POSTFIX);
+			this.messageQueueClient.subscribe(parameters.getMqttTopic() + MQTT_REGISTER_POSTFIX);
+			this.messageQueueClient.subscribe(parameters.getMqttTopic() + MQTT_DELETE_POSTFIX);
+		}
+		catch (Exception e)
+		{
+			this.log.error("Failed to start MQTTUtils for HeartbeatChecker.", e);
+		}
 
 		this.heartbeats = new ConcurrentHashMap<>();
 

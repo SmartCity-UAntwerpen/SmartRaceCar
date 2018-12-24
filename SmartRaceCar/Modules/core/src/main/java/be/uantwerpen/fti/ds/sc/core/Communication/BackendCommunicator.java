@@ -9,6 +9,8 @@ import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.core.MediaType;
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 
@@ -29,7 +31,7 @@ public class BackendCommunicator implements GeneralBackendCommunicator, MapBacke
 	@Override
 	public long register(long startPoint)
 	{
-		String id = this.restUtils.getTextPlain(Messages.BACKEND.REGISTER + "/" + Long.toString(startPoint));
+		String id = this.restUtils.get(Messages.BACKEND.REGISTER + "/" + Long.toString(startPoint), MediaType.TEXT_PLAIN_TYPE);
 		long ID = Long.parseLong(id, 10);
 		this.log.info("Vehicle received ID " + ID + ".");
 		return ID;
@@ -42,7 +44,7 @@ public class BackendCommunicator implements GeneralBackendCommunicator, MapBacke
 		Type typeOfHashMap = new TypeToken<HashMap<Long, WayPoint>>()
 		{
 		}.getType();
-		HashMap<Long, WayPoint> wayPoints = (HashMap<Long, WayPoint>) JSONUtils.getObjectWithKeyWord(restUtils.getJSON(Messages.BACKEND.GET_WAYPOINTS), typeOfHashMap);
+		HashMap<Long, WayPoint> wayPoints = (HashMap<Long, WayPoint>) JSONUtils.getObjectWithKeyWord(restUtils.get(Messages.BACKEND.GET_WAYPOINTS, MediaType.APPLICATION_JSON_TYPE), typeOfHashMap);
 
 		for (WayPoint wayPoint : wayPoints.values())
 		{
@@ -57,20 +59,36 @@ public class BackendCommunicator implements GeneralBackendCommunicator, MapBacke
 	@Override
 	public void disconnect(long ID)
 	{
-		this.restUtils.getCall(Messages.BACKEND.DELETE + "/" + ID);
+		this.restUtils.get(Messages.BACKEND.DELETE + "/" + ID);
 	}
 
 	@Override
 	public String getMapName()
 	{
-		return this.restUtils.getTextPlain(Messages.BACKEND.GET_MAP_NAME);
+		return this.restUtils.get(Messages.BACKEND.GET_MAP_NAME, MediaType.TEXT_PLAIN_TYPE);
 	}
 
 	@Override
 	public void downloadMap(String mapName)
 	{
 		this.log.info("Current used map '" + mapName + "' not found. Downloading... to " + this.params.getNavstackPath() + "/" + mapName);
-		this.restUtils.getFile( Messages.BACKEND.GET_MAP_PGM + "/" + mapName, this.params.getNavstackPath(), mapName, "pgm");
-		this.restUtils.getFile( Messages.BACKEND.GET_MAP_YAML + "/" + mapName, this.params.getNavstackPath(), mapName, "yaml");
+
+		try
+		{
+			this.restUtils.getFile(Messages.BACKEND.GET_MAP_PGM + "/" + mapName, this.params.getNavstackPath(), mapName, "pgm");
+		}
+		catch (IOException ioe)
+		{
+			this.log.error("Failed to download map PGM file.", ioe);
+		}
+
+		try
+		{
+			this.restUtils.getFile(Messages.BACKEND.GET_MAP_YAML + "/" + mapName, this.params.getNavstackPath(), mapName, "yaml");
+		}
+		catch (IOException ioe)
+		{
+			this.log.error("Failed to download map YAML file.", ioe);
+		}
 	}
 }

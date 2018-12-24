@@ -6,6 +6,7 @@ import be.uantwerpen.fti.ds.sc.common.Point;
 import be.uantwerpen.fti.ds.sc.common.RESTUtils;
 import be.uantwerpen.fti.ds.sc.simkernel.SimkernelParameters;
 
+import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
@@ -24,6 +25,6 @@ public class ROSCommunicator implements ROSCommunication
 	@Override
 	public Cost requestCost(List<Point> points, Type typeOfCost) throws IOException
 	{
-		return (Cost) JSONUtils.getObjectWithKeyWord(this.restUtils.postJSONGetJSON("calcWeight", JSONUtils.arrayToJSONString(points)), typeOfCost);
+		return (Cost) JSONUtils.getObjectWithKeyWord(this.restUtils.post("calcWeight", JSONUtils.arrayToJSONString(points), MediaType.APPLICATION_JSON_TYPE), typeOfCost);
 	}
 }

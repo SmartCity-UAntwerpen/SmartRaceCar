@@ -100,7 +100,7 @@ public class CostCache
 
 			try
 			{
-				String costString = ROSAPI.postJSONGetJSON("calcWeight", jsonString);
+				String costString = ROSAPI.post("calcWeight", jsonString, MediaType.APPLICATION_JSON_TYPE);
 				Cost costObj = (Cost) JSONUtils.getObjectWithKeyWord(costString, costType);
 				cost = costObj.getWeight();
 

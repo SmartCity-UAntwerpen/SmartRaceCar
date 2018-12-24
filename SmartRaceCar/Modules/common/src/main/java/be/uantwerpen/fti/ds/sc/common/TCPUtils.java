@@ -11,7 +11,6 @@ import java.util.Arrays;
 /**
  * Help model to deal with TCP Socket communication. Can both be a listener and be used for specific messages.
  */
-@SuppressWarnings("Duplicates")
 public class TCPUtils extends Thread
 {
 	private Logger log;
@@ -65,13 +64,10 @@ public class TCPUtils extends Thread
 	 */
 	public Integer findRandomOpenPort() throws IOException
 	{
-		try (
-				ServerSocket socket = new ServerSocket(0)
-		)
+		try (ServerSocket socket = new ServerSocket(0))
 		{
 			this.log.info("SOCKETS", "Port found:" + socket.getLocalPort());
 			return socket.getLocalPort();
-
 		}
 	}
 
@@ -172,6 +168,7 @@ public class TCPUtils extends Thread
 					this.log.error("Cannot receive data.", ioe);
 				}
 			}
+
 			this.closeTCP();
 		}
 	}
@@ -296,10 +293,12 @@ public class TCPUtils extends Thread
 		try
 		{
 			socket.close();
-		} catch (IOException e)
+		}
+		catch (IOException e)
 		{
 			this.log.error("Could not close Socket connection. IOException:  " + e);
-		} catch (Exception e)
+		}
+		catch (Exception e)
 		{
 			this.log.error("Could not close Socket connection: ");
 		}
