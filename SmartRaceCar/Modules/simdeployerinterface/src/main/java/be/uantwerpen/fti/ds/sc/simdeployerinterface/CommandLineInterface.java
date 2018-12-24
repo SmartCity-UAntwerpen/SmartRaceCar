@@ -131,7 +131,7 @@ public class CommandLineInterface
 			}
 			catch (IOException ioe)
 			{
-				System.out.println(ioe.getMessage());
+				System.err.println(ioe.getMessage());
 				ioe.printStackTrace();
 				continue;
 			}

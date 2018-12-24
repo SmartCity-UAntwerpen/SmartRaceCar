@@ -17,6 +17,7 @@ public class Container implements VirtualMachine
 	private static final String DOCKER_COMMAND = "docker";
 	private static final String DOCKER_RUN = "run";
 	private static final String DOCKER_STOP = "stop";
+	private static final String DOCKER_REMOVE = "rm";
 
 	private static final String DOCKER_NAME_OPTION = "--name";
 	private static final String DOCKER_DETACHED_OPTION = "-d";
@@ -62,7 +63,6 @@ public class Container implements VirtualMachine
 
 		ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
 
-		String processedName = this.imageName.replaceAll(File.separator, "-");
 		String logFilePath = "./" + this.containerName + ".log";
 
 		// Make sure the log file exists, otherwise, the process builder will crash
@@ -71,8 +71,19 @@ public class Container implements VirtualMachine
 		logFile.createNewFile();
 
 		processBuilder = processBuilder.redirectOutput(logFile);
+		processBuilder = processBuilder.redirectError(logFile);
 
 		this.log.info("Running Docker Container " + this.imageName + ", with Simulation ID " + this.simulationId);
+
+		StringBuilder debugBuilder = new StringBuilder();
+
+		for (String arg: commandLine)
+		{
+			debugBuilder.append(arg);
+			debugBuilder.append(' ');
+		}
+
+		this.log.info(debugBuilder.toString());
 
 		try
 		{
@@ -101,11 +112,32 @@ public class Container implements VirtualMachine
 		try
 		{
 			Process process = processBuilder.start();
-			return process.waitFor();
+			process.waitFor();
 		}
 		catch (IOException | InterruptedException ie)
 		{
 			this.log.error("Failed to stop Docker process.", ie);
+			throw ie;
+		}
+
+		commandLine.clear();
+		commandLine = new ArrayList<>();
+		commandLine.add(DOCKER_COMMAND);
+		commandLine.add(DOCKER_REMOVE);
+		commandLine.add(this.containerName);
+
+		processBuilder = new ProcessBuilder(commandLine);
+
+		this.log.info("Removing Docker Container " + this.imageName + ", with Simulation ID " + this.simulationId);
+
+		try
+		{
+			Process process = processBuilder.start();
+			return process.waitFor();
+		}
+		catch (IOException | InterruptedException ie)
+		{
+			this.log.error("Failed to remove Docker process.", ie);
 			throw ie;
 		}
 	}

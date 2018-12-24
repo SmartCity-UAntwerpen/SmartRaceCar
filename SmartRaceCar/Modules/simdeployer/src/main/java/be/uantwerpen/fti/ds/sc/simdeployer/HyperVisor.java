@@ -23,7 +23,7 @@ public class HyperVisor
 		this.virtualMachines = new HashMap<>();
 	}
 
-	public void launch(long simulationId, long startpoint) throws IOException, InterruptedException, InvalidNameException
+	public void launch(long simulationId, long startpoint) throws IOException, InterruptedException, InvalidNameException, VirtualMachineException
 	{
 		VirtualMachineFactory factory = new VirtualMachineFactory();
 		VirtualMachine vm = null;
@@ -53,7 +53,9 @@ public class HyperVisor
 
 			if (returnValue != 0)
 			{
-				this.log.error("Failed to start Virtual Machine, process returned " + returnValue);
+				String errorString = "Failed to start Virtual Machine, process returned " + returnValue;
+				this.log.error(errorString);
+				throw new VirtualMachineException(errorString);
 			}
 		}
 		catch (IOException | InterruptedException ie)
@@ -64,7 +66,7 @@ public class HyperVisor
 		}
 	}
 
-	public void stop(long simulationId) throws NoSuchElementException, IOException, InterruptedException
+	public void stop(long simulationId) throws NoSuchElementException, IOException, InterruptedException, VirtualMachineException
 	{
 		if (!this.virtualMachines.containsKey(simulationId))
 		{
@@ -79,7 +81,9 @@ public class HyperVisor
 
 			if (returnValue != 0)
 			{
-				this.log.error("Failed to start Virtual Machine, process returned " + returnValue);
+				String errorString = "Failed to stop Virtual Machine, process returned " + returnValue;
+				this.log.error(errorString);
+				throw new VirtualMachineException(errorString);
 			}
 
 			this.virtualMachines.remove(simulationId);
