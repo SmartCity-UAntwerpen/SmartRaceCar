@@ -34,25 +34,29 @@ public class Configuration
 			{
 				switch (type)
 				{
+					case BACKBONE:
+						this.aspects.put(type, new BackboneAspect(configFile));
+						break;
+
+					case MAP_MANAGER:
+						this.aspects.put(type, new MapManagerAspect(configFile));
+						break;
+
 					case MQTT:
 						this.aspects.put(type, new MqttAspect(configFile));
-						continue;
+						break;
 
 					case RACECAR:
 						this.aspects.put(type, new RacecarAspect(configFile));
-						continue;
+						break;
 
 					case ROS:
 						this.aspects.put(type, new RosAspect(configFile));
-						continue;
-
-					case BACKBONE:
-						this.aspects.put(type, new BackboneAspect(configFile));
-						continue;
+						break;
 
 					default:
 						this.log.warn("Ignoring unsupported aspect type: " + type);
-						continue;
+						break;
 				}
 			}
 			catch (IOException ioe)
