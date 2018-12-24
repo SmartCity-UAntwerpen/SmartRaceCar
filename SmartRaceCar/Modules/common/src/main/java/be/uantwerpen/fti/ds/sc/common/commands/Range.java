@@ -49,7 +49,7 @@ public class Range
 	{
 		if (rangeString.contains("..."))
 		{
-			String[] array = rangeString.split("...");
+			String[] array = rangeString.split("\\.{3}");
 
 			if (array.length > 2)
 			{
