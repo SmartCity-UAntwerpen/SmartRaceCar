@@ -3,6 +3,7 @@ package be.uantwerpen.fti.ds.sc.core;
 import be.uantwerpen.fti.ds.sc.common.*;
 import be.uantwerpen.fti.ds.sc.core.Communication.MapBackendCommunicator;
 import be.uantwerpen.fti.ds.sc.core.Communication.MapVehicleCommunicator;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -43,8 +44,15 @@ public class MapManager implements MQTTListener
 		this.backend = backend;
 		this.vehicle = vehicle;
 
-		this.mqttUtils = new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this);
-		this.mqttUtils.subscribeToTopic(this.params.getMqttTopic() + "/" + Messages.BACKEND.CHANGE_MAP +  "/" + core.getID());
+		try
+		{
+			this.mqttUtils = new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this);
+			this.mqttUtils.subscribeToTopic(this.params.getMqttTopic() + "/" + Messages.BACKEND.CHANGE_MAP + "/" + core.getID());
+		}
+		catch (MqttException me)
+		{
+			this.log.error("Failed to start MQTTUtils.", me);
+		}
 
 		this.log.info("starting to load maps");
 		this.loadedMaps = new HashMap<>();
@@ -88,7 +96,8 @@ public class MapManager implements MQTTListener
 					this.log.info("Added map: " + name + ".");
 				}
 			}
-		} catch (IOException | SAXException | ParserConfigurationException e)
+		}
+		catch (IOException | SAXException | ParserConfigurationException e)
 		{
 			this.log.error("Could not correctly load XML of maps." + e);
 		}

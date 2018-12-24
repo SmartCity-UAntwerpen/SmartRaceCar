@@ -6,6 +6,7 @@ import be.uantwerpen.fti.ds.sc.core.Communication.GeneralBackendCommunicator;
 import be.uantwerpen.fti.ds.sc.core.Communication.VehicleCommunicator;
 import be.uantwerpen.fti.ds.sc.core.Communication.GeneralVehicleCommunicator;
 import com.github.lalyos.jfiglet.FigletFont;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +18,6 @@ import java.util.HashMap;
  */
 class Core implements TCPListener, MQTTListener
 {
-
 	// Help services
 	private Logger log;
 
@@ -93,10 +93,18 @@ class Core implements TCPListener, MQTTListener
 		this.navigator = new Navigator(this.ID, this.params, vehicleCommunicator, backendCommunicator);
 		this.navigator.sendStartPoint(startPoint);
 
-		this.heartbeatPublisher = new HeartbeatPublisher(new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this), this.ID);
-		this.heartbeatPublisher.start();
-		this.log.info("Heartbeat publisher was started.");
-
+		try
+		{
+			// todo: Move MQTTUtil to HeartbeatPublisher?
+			MQTTUtils mqttUtils = new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this);
+			this.heartbeatPublisher = new HeartbeatPublisher(mqttUtils, this.ID);
+			this.heartbeatPublisher.start();
+			this.log.info("Heartbeat publisher was started.");
+		}
+		catch (MqttException me)
+		{
+			this.log.error("Failed to start HeartbeatPublisher because an error occurred while creating the MQTTUtils.", me);
+		}
 
 		this.log.info("Navigator was started.");
 	}
