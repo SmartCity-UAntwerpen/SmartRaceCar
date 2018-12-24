@@ -83,7 +83,7 @@ class HeartbeatChecker implements MQTTListener
 
 			if (delta > MAX_DELTA) //longer than 90 seconds
 			{
-				this.restUtils.getCall("delete/" + vehicleId);
+				this.restUtils.get("delete/" + vehicleId);
 				this.log.warn("Vehicle with ID: " + vehicleId + " was removed since it hasn't responded for over 90s");
 			}
 		}

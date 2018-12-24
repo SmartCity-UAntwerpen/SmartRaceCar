@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.ws.rs.core.MediaType;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -117,18 +118,27 @@ public class JobTracker implements MQTTListener
         throw new NoSuchElementException("Failed to find job associated with vehicle " + vehicleID);
     }
 
-    private void completeJob(long jobId, long vehicleId)
+    private void completeJob(long jobId, long vehicleId) throws IOException
     {
         this.log.debug("Completing job, setting vehicle " + vehicleId + " to unoccupied.");
         this.vehicleManager.setOccupied(vehicleId, false);
 
         // We should only inform the backend if the job was a global job.
         if ((!this.backendParameters.isBackboneDisabled()) && (this.findJobType(jobId, vehicleId) == JobType.GLOBAL))
-    {
+        {
             this.log.debug("Informing Backbone about job completion.");
 
             RESTUtils backboneRESTUtil = new RESTUtils(this.backendParameters.getBackboneRESTURL());
-            backboneRESTUtil.postEmpty("/jobs/complete/" + jobId);
+
+            try
+            {
+                backboneRESTUtil.post("/jobs/complete/" + jobId);
+            }
+            catch (IOException ioe)
+            {
+                this.log.error("Failed to POST completion of job to backbone.", ioe);
+                throw ioe;
+            }
         }
 
         this.removeJob(jobId, vehicleId);
@@ -156,7 +166,7 @@ public class JobTracker implements MQTTListener
         }
     }
 
-    private void updateProgress(long jobId, long vehicleId, int progress)
+    private void updateProgress(long jobId, long vehicleId, int progress) throws IOException
     {
         JobType type = this.findJobType(jobId, vehicleId);
         Job job = null;
@@ -184,8 +194,17 @@ public class JobTracker implements MQTTListener
         if ((!this.backendParameters.isBackboneDisabled()) && (!job.isBackboneNotified()) && (progress >= ALMOST_DONE_PERCENTAGE))
         {
             RESTUtils backboneRESTUtil = new RESTUtils(this.backendParameters.getBackboneRESTURL());
-            backboneRESTUtil.postEmpty("/jobs/vehiclecloseby/" + jobId);
-            job.setBackboneNotified(true);
+
+            try
+            {
+                backboneRESTUtil.post("/jobs/vehiclecloseby/" + jobId);
+                job.setBackboneNotified(true);
+            }
+            catch (IOException ioe)
+            {
+                this.log.error("Failed to notify backbone of almost-completion of job.");
+                throw  ioe;
+            }
         }
     }
 
