@@ -5,7 +5,7 @@ import java.net.Socket;
 
 public class TCPClient
 {
-	private static final int TIMEOUT = 30000;       // Socket timeout in milliseconds
+	private static final int TIMEOUT = 240000;       // Socket timeout in milliseconds
 
 	private String remoteHost;
 	private int remotePort;

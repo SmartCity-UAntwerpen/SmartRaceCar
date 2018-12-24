@@ -3,6 +3,7 @@ package be.uantwerpen.fti.ds.sc.simdeployer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.naming.InvalidNameException;
 import java.io.IOException;
 import java.util.*;
 
@@ -22,10 +23,22 @@ public class HyperVisor
 		this.virtualMachines = new HashMap<>();
 	}
 
-	public void launch(long simulationId, long startpoint) throws Exception
+	public void launch(long simulationId, long startpoint) throws IOException, InvalidNameException
 	{
-		VirtualMachineFactory factory = new VirtualMachineFactory();
-		VirtualMachine vm = factory.createDockerContainer(simulationId, this.simDeployerParameters.getDockerImage());
+		VirtualMachineFactory factory = new VirtualMachineFactory(this.simDeployerParameters);
+		VirtualMachine vm = null;
+
+		try
+		{
+			vm = factory.createDockerContainer(simulationId, this.simDeployerParameters.getDockerImage());
+		}
+		catch (InvalidNameException ine)
+		{
+			String errorString = "Failed to create Virtual Machine.";
+			this.log.error(errorString, ine);
+			throw ine;
+		}
+
 		this.virtualMachines.put(simulationId, vm);
 
 		List<String> arguments = new ArrayList<>();
@@ -38,15 +51,15 @@ public class HyperVisor
 		{
 			vm.run(arguments);
 		}
-		catch (Exception e)
+		catch (IOException ie)
 		{
 			// Catch, log and rethrow
-			this.log.error("Failed to run Virtual Machine.", e);
-			throw e;
+			this.log.error("Failed to run Virtual Machine.", ie);
+			throw ie;
 		}
 	}
 
-	public void stop(long simulationId) throws NoSuchElementException
+	public void stop(long simulationId) throws NoSuchElementException, IOException, InterruptedException, VirtualMachineException
 	{
 		if (!this.virtualMachines.containsKey(simulationId))
 		{
@@ -55,7 +68,24 @@ public class HyperVisor
 			throw new NoSuchElementException(errorString);
 		}
 
-		this.virtualMachines.get(simulationId).stop();
-		this.virtualMachines.remove(simulationId);
+		try
+		{
+			int returnValue = this.virtualMachines.get(simulationId).stop();
+
+			if (returnValue != 0)
+			{
+				String errorString = "Failed to stop Virtual Machine, process returned " + returnValue;
+				this.log.error(errorString);
+				throw new VirtualMachineException(errorString);
+			}
+
+			this.virtualMachines.remove(simulationId);
+		}
+		catch (IOException | InterruptedException ie)
+		{
+			// Catch, log and rethrow
+			this.log.error("Failed to stop Virtual Machine.", ie);
+			throw ie;
+		}
 	}
 }

@@ -3,9 +3,11 @@ package be.uantwerpen.fti.ds.sc.simdeployerinterface;
 import be.uantwerpen.fti.ds.sc.common.commands.Command;
 import be.uantwerpen.fti.ds.sc.common.commands.CommandType;
 import be.uantwerpen.fti.ds.sc.simdeployerinterface.commands.InteractiveCommand;
+import be.uantwerpen.fti.ds.sc.simdeployerinterface.commands.SimpleInteractiveCommand;
 import be.uantwerpen.fti.ds.sc.simdeployerinterface.commands.InteractiveCommandParser;
 
 import java.io.*;
+import java.text.ParseException;
 import java.util.*;
 
 public class CommandLineInterface
@@ -40,6 +42,8 @@ public class CommandLineInterface
 		helpMap.put("ping   ", "Used by Simulation front end to keep an eye on SimDeployers. Returns \"pong\".");
 		helpMap.put("help   ", "Show this help message.");
 		helpMap.put("quit   ", "Kill the interactive console session.");
+		helpMap.put("echo   ", "Print a given string.");
+		helpMap.put("wait   ", "Wait the specified number of seconds.");
 
 		StringBuilder helpBuilder = new StringBuilder();
 		for (String command: helpMap.keySet())
@@ -99,9 +103,10 @@ public class CommandLineInterface
 			{
 				command = commandParser.parseInteractiveCommand(line);
 			}
-			catch (IllegalArgumentException iae)
+			catch (IllegalArgumentException | ParseException iae)
 			{
 				System.err.println("\"" + line + "\" is not a valid command.");
+				iae.printStackTrace();
 				continue;
 			}
 
@@ -112,13 +117,28 @@ public class CommandLineInterface
 			{
 				if (command.getCommandType() == CommandType.OTHER)
 				{
-					InteractiveCommand interactiveCommand = (InteractiveCommand) command;
+					SimpleInteractiveCommand simpleInteractiveCommand = (SimpleInteractiveCommand) command;
 
-					switch (interactiveCommand.getInteractiveCommandType())
+					switch (simpleInteractiveCommand.getInteractiveCommandType())
 					{
 						case HELP:
 							response = help();
 							break;
+
+						case ECHO:
+						{
+							InteractiveCommand interactiveCommand = (InteractiveCommand) simpleInteractiveCommand;
+							response = interactiveCommand.getArgument();
+							break;
+						}
+
+						case WAIT:
+						{
+							InteractiveCommand interactiveCommand = (InteractiveCommand) simpleInteractiveCommand;
+							response = Command.ACK;
+							Thread.sleep(Long.parseLong(interactiveCommand.getArgument()) * 1000L);
+							break;
+						}
 
 						case QUIT:
 							return;
@@ -129,10 +149,10 @@ public class CommandLineInterface
 					response = this.sendCommand(command, remoteHost, remotePort);
 				}
 			}
-			catch (IOException ioe)
+			catch (IOException | InterruptedException ie)
 			{
-				System.out.println(ioe.getMessage());
-				ioe.printStackTrace();
+				System.err.println(ie.getMessage());
+				ie.printStackTrace();
 				continue;
 			}
 

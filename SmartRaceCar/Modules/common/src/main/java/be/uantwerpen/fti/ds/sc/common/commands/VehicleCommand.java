@@ -1,23 +1,24 @@
 package be.uantwerpen.fti.ds.sc.common.commands;
 
+
 public class VehicleCommand extends Command
 {
-	private long simulationId;
+	private Range simulationIds;
 
-	public VehicleCommand(CommandType commandType, long simulationId)
+	public VehicleCommand(CommandType commandType, Range simulationIds)
 	{
 		super(commandType);
-		this.simulationId = simulationId;
+		this.simulationIds = simulationIds;
 	}
 
-	public long getSimulationId()
+	public Range getSimulationId()
 	{
-		return this.simulationId;
+		return this.simulationIds;
 	}
 
 	@Override
 	public String toString()
 	{
-		return super.toString() + " " + this.simulationId;
+		return super.toString() + " " + this.simulationIds.toString();
 	}
 }

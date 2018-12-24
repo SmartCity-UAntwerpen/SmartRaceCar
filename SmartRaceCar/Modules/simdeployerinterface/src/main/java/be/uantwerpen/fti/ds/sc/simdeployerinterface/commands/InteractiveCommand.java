@@ -1,26 +1,23 @@
 package be.uantwerpen.fti.ds.sc.simdeployerinterface.commands;
 
-import be.uantwerpen.fti.ds.sc.common.commands.Command;
-import be.uantwerpen.fti.ds.sc.common.commands.CommandType;
-
-public class InteractiveCommand extends Command
+public class InteractiveCommand extends SimpleInteractiveCommand
 {
-	private InteractiveCommandType type;
+	private String argument;
 
-	public InteractiveCommand(InteractiveCommandType type)
+	public InteractiveCommand(InteractiveCommandType type, String argument)
 	{
-		super(CommandType.OTHER);
-		this.type = type;
+		super(type);
+		this.argument = argument;
 	}
 
-	public InteractiveCommandType getInteractiveCommandType()
+	public String getArgument()
 	{
-		return this.type;
+		return this.argument;
 	}
 
 	@Override
 	public String toString()
 	{
-		return this.type.toString();
+		return super.toString() + ' ' + this.argument;
 	}
 }
