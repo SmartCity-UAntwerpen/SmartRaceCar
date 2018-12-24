@@ -1,0 +1,3 @@
+create 0...10
+set startpoint 0...10 46
+run 0...10

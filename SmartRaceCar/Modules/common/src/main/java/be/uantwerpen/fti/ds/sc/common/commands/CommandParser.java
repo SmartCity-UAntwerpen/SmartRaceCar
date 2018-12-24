@@ -78,34 +78,34 @@ public class CommandParser
 		{
 			case CREATE:
 			{
-				long simulationId = Long.parseLong(split[1]);
-				return new VehicleCommand(CommandType.CREATE, simulationId);
+				Range simulationIds = Range.parseRange(split[1]);
+				return new VehicleCommand(CommandType.CREATE, simulationIds);
 			}
 			case RUN:
 			{
-				long simulationId = Long.parseLong(split[1]);
-				return new VehicleCommand(CommandType.RUN, simulationId);
+				Range simulationIds = Range.parseRange(split[1]);
+				return new VehicleCommand(CommandType.RUN, simulationIds);
 			}
 			case STOP:
 			{
-				long simulationId = Long.parseLong(split[1]);
-				return new VehicleCommand(CommandType.STOP, simulationId);
+				Range simulationIds = Range.parseRange(split[1]);
+				return new VehicleCommand(CommandType.STOP, simulationIds);
 			}
 			case KILL:
 			{
-				long simulationId = Long.parseLong(split[1]);
-				return new VehicleCommand(CommandType.KILL, simulationId);
+				Range simulationIds = Range.parseRange(split[1]);
+				return new VehicleCommand(CommandType.KILL, simulationIds);
 			}
 			case RESTART:
 			{
-				long simulationId = Long.parseLong(split[1]);
-				return new VehicleCommand(CommandType.CREATE, simulationId);
+				Range simulationIds = Range.parseRange(split[1]);
+				return new VehicleCommand(CommandType.CREATE, simulationIds);
 			}
 			case SET:
 			{
 				SetParameter setParameter = this.findSetParameter(split[1]);
-				long simulationId = Long.parseLong(split[2]);
-				return new SetCommand(simulationId, setParameter, split[3]);
+				Range simulationIds = Range.parseRange(split[2]);
+				return new SetCommand(simulationIds, setParameter, split[3]);
 			}
 			case PING:
 			{

@@ -5,9 +5,9 @@ public class SetCommand extends VehicleCommand
 	private SetParameter key;
 	private String value;
 
-	public SetCommand(long simulationId, SetParameter setParameter, String value)
+	public SetCommand(Range simulationIds, SetParameter setParameter, String value)
 	{
-		super(CommandType.SET, simulationId);
+		super(CommandType.SET, simulationIds);
 		this.key = setParameter;
 		this.value = value;
 	}
