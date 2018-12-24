@@ -29,7 +29,7 @@ public class HyperVisor
 	public void launch(long simulationId, long startpoint) throws IOException, InvalidNameException
 	{
 		DockerAspect dockerAspect = (DockerAspect) configuration.get(AspectType.DOCKER);
-		VirtualMachineFactory factory = new VirtualMachineFactory(dockerAspect);
+		VirtualMachineFactory factory = new VirtualMachineFactory(configuration);
 		VirtualMachine vm = null;
 
 		try

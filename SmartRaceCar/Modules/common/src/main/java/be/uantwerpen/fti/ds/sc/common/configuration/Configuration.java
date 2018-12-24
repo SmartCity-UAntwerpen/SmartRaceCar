@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,6 +18,14 @@ public class Configuration
 	{
 		this.log = LoggerFactory.getLogger(Configuration.class);
 		this.aspects = new HashMap<>();
+	}
+
+	public Configuration (Collection<AspectType> aspects)
+	{
+		for (AspectType type: aspects)
+		{
+			this.aspects.put(type, null);
+		}
 	}
 
 	public void add(AspectType aspectType)
@@ -65,6 +74,7 @@ public class Configuration
 
 					case TCP_SERVER:
 						this.aspects.put(type, new TcpServerAspect(configFile));
+						break;
 
 					default:
 						this.log.warn("Ignoring unsupported aspect type: " + type);

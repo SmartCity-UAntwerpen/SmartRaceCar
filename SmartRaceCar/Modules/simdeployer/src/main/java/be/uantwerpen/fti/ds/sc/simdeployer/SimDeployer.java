@@ -234,6 +234,7 @@ public class SimDeployer implements TCPListener
 		Configuration configuration = new Configuration();
 		configuration.add(AspectType.DOCKER);
 		configuration.add(AspectType.MQTT);
+		configuration.add(AspectType.TCP_SERVER);
 
 		try
 		{
