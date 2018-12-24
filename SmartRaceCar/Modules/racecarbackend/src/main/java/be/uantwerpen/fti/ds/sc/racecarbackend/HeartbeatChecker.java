@@ -32,7 +32,7 @@ class HeartbeatChecker implements MQTTListener
 	private Logger log;
 	private Parameters parameters;
 	private RESTUtils restUtils;
-	private MQTTUtils mqttUtils;
+	private MessageQueueClient messageQueueClient;
 	private Map<Long, Date> heartbeats;
 
 	private boolean isHeartbeat(String topic)
@@ -135,14 +135,14 @@ class HeartbeatChecker implements MQTTListener
 
 		try
 		{
-			this.mqttUtils = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
-			this.mqttUtils.subscribe(parameters.getMqttTopic() + MQTT_HEARTBEAT_POSTFIX);
-			this.mqttUtils.subscribe(parameters.getMqttTopic() + MQTT_REGISTER_POSTFIX);
-			this.mqttUtils.subscribe(parameters.getMqttTopic() + MQTT_DELETE_POSTFIX);
+			this.messageQueueClient = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
+			this.messageQueueClient.subscribe(parameters.getMqttTopic() + MQTT_HEARTBEAT_POSTFIX);
+			this.messageQueueClient.subscribe(parameters.getMqttTopic() + MQTT_REGISTER_POSTFIX);
+			this.messageQueueClient.subscribe(parameters.getMqttTopic() + MQTT_DELETE_POSTFIX);
 		}
-		catch (MqttException me)
+		catch (Exception e)
 		{
-			this.log.error("Failed to start MQTTUtils for HeartbeatChecker.", me);
+			this.log.error("Failed to start MQTTUtils for HeartbeatChecker.", e);
 		}
 
 		this.heartbeats = new ConcurrentHashMap<>();

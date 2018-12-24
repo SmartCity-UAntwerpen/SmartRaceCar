@@ -20,7 +20,7 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 {
 	private Logger log;
 	private Parameters parameters;
-	private MQTTUtils mqttUtils;
+	private MessageQueueClient messageQueueClient;
 	private WaypointValidator waypointValidator;
 	private Queue<Long> unusedIds;                    // This set contains all IDs of vehicles that were assigned once and then deleted
 													// its a simple way to reuse IDs.
@@ -46,7 +46,7 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 
 		try
 		{
-			this.mqttUtils = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
+			this.messageQueueClient = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
 		}
 		catch (MqttException me)
 		{
@@ -103,11 +103,11 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 
 			try
 			{
-				this.mqttUtils.publish(this.parameters.getMqttTopic() + "delete/" + vehicleId, "");
+				this.messageQueueClient.publish(this.parameters.getMqttTopic() + "delete/" + vehicleId, "");
 			}
-			catch (MqttException me)
+			catch (Exception e)
 			{
-				this.log.error("Failed to publish vehicle deletion.", me);
+				this.log.error("Failed to publish vehicle deletion.", e);
 			}
 
 			this.log.info("Removing vehicle " + vehicleId);
@@ -147,11 +147,11 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 
 		try
 		{
-			this.mqttUtils.publish(this.parameters.getMqttTopic() + "register/" + newVehicleId, Long.toString(startWaypoint));
+			this.messageQueueClient.publish(this.parameters.getMqttTopic() + "register/" + newVehicleId, Long.toString(startWaypoint));
 		}
-		catch (MqttException me)
+		catch (Exception e)
 		{
-			this.log.error("Failed to publish vehicle registration.", me);
+			this.log.error("Failed to publish vehicle registration.", e);
 		}
 
 		this.vehicles.put(newVehicleId, new Vehicle(newVehicleId));

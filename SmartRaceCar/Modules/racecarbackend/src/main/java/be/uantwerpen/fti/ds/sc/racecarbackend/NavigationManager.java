@@ -19,7 +19,7 @@ public class NavigationManager implements MQTTListener, LocationRepository
 
 	private Logger log;
 	private Parameters parameters;
-	private MQTTUtils mqttUtils;
+	private MessageQueueClient messageQueueClient;
 	private java.util.Map<Long, Long> vehicleLocations;
 	// This map keeps track of the location of every vehicle
 	// The key is the vehicleId, the value is the locationId
@@ -56,14 +56,14 @@ public class NavigationManager implements MQTTListener, LocationRepository
 
 		try
 		{
-			this.mqttUtils = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
-			this.mqttUtils.subscribe(parameters.getMqttTopic() + MQTT_LOCATION_POSTFIX);
-			this.mqttUtils.subscribe(parameters.getMqttTopic() + MQTT_REGISTER_POSTFIX);
-			this.mqttUtils.subscribe(parameters.getMqttTopic() + MQTT_DELETE_POSTFIX);
+			this.messageQueueClient = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
+			this.messageQueueClient.subscribe(parameters.getMqttTopic() + MQTT_LOCATION_POSTFIX);
+			this.messageQueueClient.subscribe(parameters.getMqttTopic() + MQTT_REGISTER_POSTFIX);
+			this.messageQueueClient.subscribe(parameters.getMqttTopic() + MQTT_DELETE_POSTFIX);
 		}
-		catch (MqttException me)
+		catch (Exception e)
 		{
-			this.log.error("Failed to set up MQTTUtils for NavigationManager.", me);
+			this.log.error("Failed to set up MQTTUtils for NavigationManager.", e);
 		}
 
 		this.vehicleLocations = new HashMap<>();
