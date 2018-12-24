@@ -5,6 +5,7 @@ import be.uantwerpen.fti.ds.sc.common.MQTTUtils;
 import be.uantwerpen.fti.ds.sc.common.Messages;
 import be.uantwerpen.fti.ds.sc.simdeployer.SimDeployerParameters;
 import be.uantwerpen.fti.ds.sc.simdeployer.VirtualMachine;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +21,7 @@ public class Container implements VirtualMachine, MQTTListener
 {
 	private static final String DOCKER_COMMAND = "docker";
 	private static final String DOCKER_RUN = "run";
+	private static final String DOCKER_STOP = "stop";
 	private static final String DOCKER_REMOVE = "rm";
 
 	private static final String DOCKER_NAME_OPTION = "--name";
@@ -39,7 +41,15 @@ public class Container implements VirtualMachine, MQTTListener
 		this.log.info("Created Docker Container " + imageName + ", with Simulation ID " + simulationId);
 		this.simulationId = simulationId;
 		this.imageName = imageName;
-		this.mqttUtils = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
+
+		try
+		{
+			this.mqttUtils = new MQTTUtils(parameters.getMqttBroker(), parameters.getMqttUserName(), parameters.getMqttPassword(), this);
+		}
+		catch (MqttException me)
+		{
+			this.log.error("Failed to set up MQTTUtils for Docker Container.", me);
+		}
 
 		Pattern containerNamePattern = Pattern.compile(DOCKER_CONTAINER_NAME_REGEX);
 		Matcher containerNameMatcher = containerNamePattern.matcher(containerName);
@@ -95,7 +105,31 @@ public class Container implements VirtualMachine, MQTTListener
 	{
 		this.log.info("Stopping Docker Container " + this.imageName + ", with Simulation ID " + this.simulationId);
 
-		this.mqttUtils.publish("/racecar/simdeployer/" + Messages.SIMDEPLOYER.KILL +  "/" + this.simulationId, Messages.SIMDEPLOYER.KILL);
+		try
+		{
+			this.mqttUtils.publish("/racecar/simdeployer/" + Messages.SIMDEPLOYER.KILL + "/" + this.simulationId, Messages.SIMDEPLOYER.KILL);
+		}
+		catch (MqttException me)
+		{
+			this.log.error("Failed to send Kill command to simulation over MQTT. Stopping container manually.", me);
+			List<String> commandLine = new ArrayList<>();
+			commandLine.add(DOCKER_COMMAND);
+			commandLine.add(DOCKER_STOP);
+			commandLine.add(this.containerName);
+
+			ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
+
+			try
+			{
+				Process process = processBuilder.start();
+				process.waitFor();
+			}
+			catch (InterruptedException ie)
+			{
+				this.log.error("Failed to stop Docker container.", ie);
+				throw ie;
+			}
+		}
 
 		int returnValue = this.simulationProcess.waitFor();
 
@@ -116,7 +150,7 @@ public class Container implements VirtualMachine, MQTTListener
 		}
 		catch (IOException | InterruptedException ie)
 		{
-			this.log.error("Failed to remove Docker process.", ie);
+			this.log.error("Failed to remove Docker container.", ie);
 			throw ie;
 		}
 	}
