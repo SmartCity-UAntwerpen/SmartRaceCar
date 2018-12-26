@@ -1,6 +1,10 @@
 package be.uantwerpen.fti.ds.sc.core;
 
 import be.uantwerpen.fti.ds.sc.common.*;
+import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
+import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
+import be.uantwerpen.fti.ds.sc.common.configuration.KernelAspect;
+import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
 import be.uantwerpen.fti.ds.sc.core.Communication.MapBackendCommunicator;
 import be.uantwerpen.fti.ds.sc.core.Communication.MapVehicleCommunicator;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -11,6 +15,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+import sun.security.krb5.Config;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -27,7 +32,7 @@ import java.util.HashMap;
 
 public class MapManager implements MQTTListener
 {
-	private CoreParameters params;
+	private Configuration configuration;
 	private MapBackendCommunicator backend;
 	private MapVehicleCommunicator vehicle;
 	private MQTTUtils mqttUtils;
@@ -36,18 +41,19 @@ public class MapManager implements MQTTListener
 
 	private Logger log;
 
-	public MapManager(Core core, CoreParameters params, MapBackendCommunicator backend, MapVehicleCommunicator vehicle)
+	public MapManager(Core core, Configuration configuration, MapBackendCommunicator backend, MapVehicleCommunicator vehicle)
 	{
 		this.log = LoggerFactory.getLogger(MapManager.class);
-		this.params = params;
+		this.configuration = configuration;
 
 		this.backend = backend;
 		this.vehicle = vehicle;
 
 		try
 		{
-			this.mqttUtils = new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this);
-			this.mqttUtils.subscribe(this.params.getMqttTopic() + "/" + Messages.BACKEND.CHANGE_MAP + "/" + core.getID());
+			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
+			this.mqttUtils = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
+			this.mqttUtils.subscribe(mqttAspect.getTopic() + "/" + Messages.BACKEND.CHANGE_MAP + "/" + core.getID());
 		}
 		catch (MqttException me)
 		{
@@ -168,7 +174,8 @@ public class MapManager implements MQTTListener
 			this.log.info("Current map '" + mapName + "' downloaded and set as current map.");
 		}
 
-		if (!this.params.isDebug())
+		KernelAspect kernelAspect = (KernelAspect) this.configuration.get(AspectType.KERNEL);
+		if (!kernelAspect.isDebug())
 		{
 			this.vehicle.setMap(this.loadedMaps.get(mapName));
 		}

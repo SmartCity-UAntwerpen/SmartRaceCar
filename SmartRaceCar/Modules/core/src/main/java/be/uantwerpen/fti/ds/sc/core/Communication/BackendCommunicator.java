@@ -4,7 +4,10 @@ import be.uantwerpen.fti.ds.sc.common.JSONUtils;
 import be.uantwerpen.fti.ds.sc.common.Messages;
 import be.uantwerpen.fti.ds.sc.common.RESTUtils;
 import be.uantwerpen.fti.ds.sc.common.WayPoint;
-import be.uantwerpen.fti.ds.sc.core.CoreParameters;
+import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
+import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
+import be.uantwerpen.fti.ds.sc.common.configuration.NavStackAspect;
+import be.uantwerpen.fti.ds.sc.common.configuration.RacecarAspect;
 import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,14 +20,16 @@ import java.util.HashMap;
 public class BackendCommunicator implements GeneralBackendCommunicator, MapBackendCommunicator, NavigationBackendCommunication
 {
 	private Logger log;
-	private CoreParameters params;
+	private Configuration configuration;
 	private RESTUtils restUtils;
 
-	public BackendCommunicator(CoreParameters params)
+	public BackendCommunicator(Configuration configuration)
 	{
 		this.log = LoggerFactory.getLogger(BackendCommunicator.class);
-		this.params = params;
-		this.restUtils = new RESTUtils(this.params.getRESTCarmanagerURL());
+		this.configuration = configuration;
+
+		RacecarAspect racecarAspect = (RacecarAspect) this.configuration.get(AspectType.RACECAR);
+		this.restUtils = new RESTUtils(racecarAspect.getRacecarServerUrl());
 	}
 
 
@@ -71,11 +76,13 @@ public class BackendCommunicator implements GeneralBackendCommunicator, MapBacke
 	@Override
 	public void downloadMap(String mapName)
 	{
-		this.log.info("Current used map '" + mapName + "' not found. Downloading... to " + this.params.getNavstackPath() + "/" + mapName);
+		NavStackAspect navStackAspect = (NavStackAspect) this.configuration.get(AspectType.NAVSTACK);
+
+		this.log.info("Current used map '" + mapName + "' not found. Downloading... to " + navStackAspect.getNavStackPath() + "/" + mapName);
 
 		try
 		{
-			this.restUtils.getFile(Messages.BACKEND.GET_MAP_PGM + "/" + mapName, this.params.getNavstackPath(), mapName, "pgm");
+			this.restUtils.getFile(Messages.BACKEND.GET_MAP_PGM + "/" + mapName, navStackAspect.getNavStackPath(), mapName, "pgm");
 		}
 		catch (IOException ioe)
 		{
@@ -84,7 +91,7 @@ public class BackendCommunicator implements GeneralBackendCommunicator, MapBacke
 
 		try
 		{
-			this.restUtils.getFile(Messages.BACKEND.GET_MAP_YAML + "/" + mapName, this.params.getNavstackPath(), mapName, "yaml");
+			this.restUtils.getFile(Messages.BACKEND.GET_MAP_YAML + "/" + mapName, navStackAspect.getNavStackPath(), mapName, "yaml");
 		}
 		catch (IOException ioe)
 		{

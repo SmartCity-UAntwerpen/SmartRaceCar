@@ -3,6 +3,8 @@ package be.uantwerpen.fti.ds.sc.core;
 import be.uantwerpen.fti.ds.sc.common.*;
 import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
 import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
+import be.uantwerpen.fti.ds.sc.common.configuration.KernelAspect;
+import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
 import be.uantwerpen.fti.ds.sc.core.Communication.BackendCommunicator;
 import be.uantwerpen.fti.ds.sc.core.Communication.GeneralBackendCommunicator;
 import be.uantwerpen.fti.ds.sc.core.Communication.VehicleCommunicator;
@@ -27,7 +29,6 @@ class Core implements TCPListener, MQTTListener
 	// Help services
 	private Logger log;
 
-	private CoreParameters params;
 	private Configuration configuration;
 
 
@@ -67,27 +68,26 @@ class Core implements TCPListener, MQTTListener
 
 		this.log.info("Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
 
-		BackendCommunicator backendCommunicator = new BackendCommunicator(this.params);
+		BackendCommunicator backendCommunicator = new BackendCommunicator(this.configuration);
 		this.backendCommunicator = backendCommunicator;
 
 		this.ID = this.backendCommunicator.register(startPoint);
 
-        this.log.info("Starting MQTT connection on " + this.params.getMqttBroker());
-
-		VehicleCommunicator vehicleCommunicator = new VehicleCommunicator(this.params, this, clientPort, serverPort);
+		VehicleCommunicator vehicleCommunicator = new VehicleCommunicator(this.configuration, this, clientPort, serverPort);
 		this.vehicleCommunicator = vehicleCommunicator;
 		this.vehicleCommunicator.start();
 
 
+		KernelAspect kernelAspect = (KernelAspect) this.configuration.get(AspectType.KERNEL);
 
-		if (!this.params.isDebug())
+		if (!kernelAspect.isDebug())
 		{
 			this.log.debug("Waiting 3 seconds before sending connect");
 			Thread.sleep(3000);
 			this.vehicleCommunicator.connect();
 		}
 
-		this.mapManager = new MapManager(this, this.params, backendCommunicator, vehicleCommunicator);
+		this.mapManager = new MapManager(this, this.configuration, backendCommunicator, vehicleCommunicator);
 		this.log.info("Map manager started");
 
 		if(!this.mapManager.configureMap())
@@ -98,13 +98,14 @@ class Core implements TCPListener, MQTTListener
 			Thread.sleep(10000); //10 seconds delay so the map can load before publishing the startpoint
 		}
 
-		this.navigator = new Navigator(this.ID, this.params, vehicleCommunicator, backendCommunicator);
+		this.navigator = new Navigator(this.ID, this.configuration, vehicleCommunicator, backendCommunicator);
 		this.navigator.sendStartPoint(startPoint);
 
 		try
 		{
 			// todo: Move MQTTUtil to HeartbeatPublisher?
-			MQTTUtils mqttUtils = new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this);
+			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
+			MQTTUtils mqttUtils = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
 			this.heartbeatPublisher = new HeartbeatPublisher(mqttUtils, this.ID);
 			this.heartbeatPublisher.start();
 			this.log.info("Heartbeat publisher was started.");
@@ -132,10 +133,8 @@ class Core implements TCPListener, MQTTListener
 		this.configuration.add(AspectType.MQTT);
 		this.configuration.add(AspectType.RACECAR);
 		this.configuration.add(AspectType.NAVSTACK);
+		this.configuration.add(AspectType.KERNEL);
 		this.configuration.load(DEFAULT_CONFIGURATION_PATH);
-
-		CoreParameterParser parser = new CoreParameterParser();
-		this.params = parser.parse("core.properties");
 	}
 
 	/**
@@ -186,7 +185,10 @@ class Core implements TCPListener, MQTTListener
 	{
 		this.log.info("Vehicle kill request. Closing connections and shutting down...");
 		this.backendCommunicator.disconnect(this.ID);
-		if (!this.params.isDebug())
+
+		KernelAspect kernelAspect = (KernelAspect) this.configuration.get(AspectType.KERNEL);
+
+		if (!kernelAspect.isDebug())
 		{
 			this.vehicleCommunicator.disconnect();
 		}
