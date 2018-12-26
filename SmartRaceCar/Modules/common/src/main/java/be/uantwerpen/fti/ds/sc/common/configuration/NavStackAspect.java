@@ -48,6 +48,7 @@ public class NavStackAspect extends Aspect
 	public NavStackAspect(String navStackPath)
 	{
 		super(AspectType.NAVSTACK);
+		this.log = LoggerFactory.getLogger(NavStackAspect.class);
 		this.navStackPath = navStackPath;
 	}
 

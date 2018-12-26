@@ -20,6 +20,10 @@ import java.util.HashMap;
  */
 class Core implements TCPListener, MQTTListener
 {
+	private static final String DEFAULT_CONFIGURATION_PATH = "./core.properties";
+	//private static final String DEFAULT_CONFIGURATION_PATH = "/home/ubuntu/Git/SmartRacecar/SmartRaceCar/release/core.properties";
+
+
 	// Help services
 	private Logger log;
 
@@ -60,7 +64,6 @@ class Core implements TCPListener, MQTTListener
 
 
 		this.loadConfig();
-		this.log.info("Current parameters: \n" + this.params.toString());
 
 		this.log.info("Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
 
@@ -74,6 +77,8 @@ class Core implements TCPListener, MQTTListener
 		VehicleCommunicator vehicleCommunicator = new VehicleCommunicator(this.params, this, clientPort, serverPort);
 		this.vehicleCommunicator = vehicleCommunicator;
 		this.vehicleCommunicator.start();
+
+
 
 		if (!this.params.isDebug())
 		{
@@ -117,12 +122,6 @@ class Core implements TCPListener, MQTTListener
 		return this.ID;
 	}
 
-	@Deprecated
-	public CoreParameters getParams()
-	{
-		return this.params;
-	}
-
 	/**
 	 * Help method to load all configuration parameters from the properties file with the same name as the class.
 	 * If it's not found then it will use the default ones.
@@ -132,10 +131,10 @@ class Core implements TCPListener, MQTTListener
 		this.configuration = new Configuration();
 		this.configuration.add(AspectType.MQTT);
 		this.configuration.add(AspectType.RACECAR);
-
+		this.configuration.add(AspectType.NAVSTACK);
+		this.configuration.load(DEFAULT_CONFIGURATION_PATH);
 
 		CoreParameterParser parser = new CoreParameterParser();
-		//this.params = parser.parse("/home/ubuntu/Git/SmartRacecar/SmartRaceCar/release/core.properties");
 		this.params = parser.parse("core.properties");
 	}
 

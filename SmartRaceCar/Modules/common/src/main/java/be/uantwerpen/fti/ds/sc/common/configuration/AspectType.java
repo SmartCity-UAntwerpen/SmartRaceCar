@@ -10,5 +10,6 @@ public enum AspectType
 	RACECAR,
 	ROS,
 	TCP_SERVER,
-	NAVSTACK
+	NAVSTACK,
+	KERNEL
 }
