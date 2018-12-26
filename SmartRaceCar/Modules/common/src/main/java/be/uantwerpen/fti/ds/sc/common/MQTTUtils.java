@@ -124,11 +124,23 @@ public class MQTTUtils implements MqttCallback, MessageQueueClient
 			logMessageBuilder.append("UNKNOWN MESSAGE");
 		}
 
-		logMessageBuilder.append("\" to ");
+		logMessageBuilder.append("\"");
 
-		for (String topic: iMqttDeliveryToken.getTopics())
+		String[] topics = iMqttDeliveryToken.getTopics();
+
+		if (topics != null)
 		{
-			logMessageBuilder.append(topic);
+			logMessageBuilder.append(" to ");
+
+			for (int i = 0; i < topics.length; ++i)
+			{
+				logMessageBuilder.append(topics[i]);
+
+				if ((i + 1) != topics.length)
+				{
+					logMessageBuilder.append(", ");
+				}
+			}
 		}
 
 		this.log.debug(logMessageBuilder.toString());
