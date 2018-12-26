@@ -82,6 +82,7 @@ public class Configuration
 
 					case KERNEL:
 						this.aspects.put(type, new KernelAspect(configFile));
+						break;
 
 					default:
 						this.log.warn("Ignoring unsupported aspect type: " + type);
