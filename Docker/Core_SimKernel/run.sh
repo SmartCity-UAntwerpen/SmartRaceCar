@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 
+echo $@
+
 START_POINT=$1
-SERVER_PORT=$2
-CLIENT_PORT=$3
+PORT_1=$2
+PORT_2=$3
 SIM_ID=$4
 
 cd /home/docker
 
-nohup java -jar SimKernel.jar ${CLIENT_PORT} ${SERVER_PORT} &
-java -jar Core.jar ${START_POINT} ${SERVER_PORT} ${CLIENT_PORT} ${SIM_ID}
+nohup java -jar SimKernel.jar ${PORT_2} ${PORT_1} ${SIM_ID} &
+java -jar Core.jar ${START_POINT} ${PORT_1} ${PORT_2}

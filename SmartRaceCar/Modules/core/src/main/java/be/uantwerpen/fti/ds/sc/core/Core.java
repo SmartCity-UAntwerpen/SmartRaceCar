@@ -20,7 +20,7 @@ import java.util.HashMap;
 /**
  * Module representing the high-level of a vehicle.
  */
-class Core implements TCPListener, MQTTListener
+class Core implements TCPListener
 {
 	private static final String DEFAULT_CONFIGURATION_PATH = "./core.properties";
 	//private static final String DEFAULT_CONFIGURATION_PATH = "/home/ubuntu/Git/SmartRacecar/SmartRaceCar/release/core.properties";
@@ -92,7 +92,6 @@ class Core implements TCPListener, MQTTListener
 
 		if(!this.mapManager.configureMap())
 		{
-			// TODO find better mechanism to wait for download
 			// map not downloaded yet -> waiting for download to finish
 			this.log.info("Giving the map 10s to load.");
 			Thread.sleep(10000); //10 seconds delay so the map can load before publishing the startpoint
@@ -101,19 +100,9 @@ class Core implements TCPListener, MQTTListener
 		this.navigator = new Navigator(this.ID, this.configuration, vehicleCommunicator, backendCommunicator);
 		this.navigator.sendStartPoint(startPoint);
 
-		try
-		{
-			// todo: Move MQTTUtil to HeartbeatPublisher?
-			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-			MQTTUtils mqttUtils = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
-			this.heartbeatPublisher = new HeartbeatPublisher(mqttUtils, this.ID);
-			this.heartbeatPublisher.start();
-			this.log.info("Heartbeat publisher was started.");
-		}
-		catch (MqttException me)
-		{
-			this.log.error("Failed to start HeartbeatPublisher because an error occurred while creating the MQTTUtils.", me);
-		}
+		this.heartbeatPublisher = new HeartbeatPublisher(this.configuration, this.ID);
+		this.heartbeatPublisher.start();
+		this.log.info("Heartbeat publisher was started.");
 
 		this.log.info("Navigator was started.");
 	}
@@ -134,6 +123,7 @@ class Core implements TCPListener, MQTTListener
 		this.configuration.add(AspectType.RACECAR);
 		this.configuration.add(AspectType.NAVSTACK);
 		this.configuration.add(AspectType.KERNEL);
+
 		this.configuration.load(DEFAULT_CONFIGURATION_PATH);
 	}
 
@@ -193,11 +183,5 @@ class Core implements TCPListener, MQTTListener
 			this.vehicleCommunicator.disconnect();
 		}
 		System.exit(0);
-	}
-
-	@Override
-	public void parseMQTT(String topic, String message)
-	{
-
 	}
 }

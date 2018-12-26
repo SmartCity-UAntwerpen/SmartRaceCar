@@ -30,6 +30,8 @@ public class Messages
 		public static final String NEXT_WAYPOINT = "nextWayPoint";
 		public static final String CURRENT_POSITION = "currentPosition";
 		public static final String DRIVE = "drive";
+
+		public static final String HEARTBEAT = "heartbeat";
 	}
 
 	/***
