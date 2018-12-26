@@ -2,7 +2,7 @@ echo "Creating 10 Simulations"
 
 create 0...9
 
-set startpoint 0...9 1
+set 0...9 startpoint 1
 
 run 0...9
 

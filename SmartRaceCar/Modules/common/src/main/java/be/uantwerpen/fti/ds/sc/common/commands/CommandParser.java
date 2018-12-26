@@ -72,39 +72,35 @@ public class CommandParser
 		String[] split = this.splitCommand(command);
 		String commandTypeString = split[0];
 
+		Range simulationIds = Range.parseRange(split[1]);
+
 		CommandType commandType = this.findCommandType(commandTypeString);
 
 		switch (commandType)
 		{
 			case CREATE:
 			{
-				Range simulationIds = Range.parseRange(split[1]);
 				return new VehicleCommand(CommandType.CREATE, simulationIds);
 			}
 			case RUN:
 			{
-				Range simulationIds = Range.parseRange(split[1]);
 				return new VehicleCommand(CommandType.RUN, simulationIds);
 			}
 			case STOP:
 			{
-				Range simulationIds = Range.parseRange(split[1]);
 				return new VehicleCommand(CommandType.STOP, simulationIds);
 			}
 			case KILL:
 			{
-				Range simulationIds = Range.parseRange(split[1]);
 				return new VehicleCommand(CommandType.KILL, simulationIds);
 			}
 			case RESTART:
 			{
-				Range simulationIds = Range.parseRange(split[1]);
 				return new VehicleCommand(CommandType.CREATE, simulationIds);
 			}
 			case SET:
 			{
-				SetParameter setParameter = this.findSetParameter(split[1]);
-				Range simulationIds = Range.parseRange(split[2]);
+				SetParameter setParameter = this.findSetParameter(split[2]);
 				return new SetCommand(simulationIds, setParameter, split[3]);
 			}
 			case PING:
