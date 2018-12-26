@@ -2,6 +2,10 @@ package be.uantwerpen.fti.ds.sc.core;
 
 
 import be.uantwerpen.fti.ds.sc.common.*;
+import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
+import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
+import be.uantwerpen.fti.ds.sc.common.configuration.KernelAspect;
+import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
 import be.uantwerpen.fti.ds.sc.core.Communication.NavigationBackendCommunication;
 import be.uantwerpen.fti.ds.sc.core.Communication.NavigationVehicleCommunication;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -13,7 +17,7 @@ import java.util.*;
 public class Navigator implements MQTTListener
 {
 	private long ID;
-	private CoreParameters params;
+	private Configuration configuration;
 	private Logger log;
 	private MQTTUtils mqttUtils;
 
@@ -29,12 +33,12 @@ public class Navigator implements MQTTListener
 	private int routeSize;                                                   // Current route's size.
 
 
-	public Navigator(long ID, CoreParameters params, NavigationVehicleCommunication vehicle, NavigationBackendCommunication backend)
+	public Navigator(long ID, Configuration configuration, NavigationVehicleCommunication vehicle, NavigationBackendCommunication backend)
 	{
 		this.log = LoggerFactory.getLogger(Navigator.class);
 
 		this.ID = ID;
-		this.params = params;
+		this.configuration = configuration;
 
 		this.wayPoints = backend.requestWayPoints();
 
@@ -42,8 +46,10 @@ public class Navigator implements MQTTListener
 
 		try
 		{
-			this.mqttUtils = new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this);
-			this.mqttUtils.subscribe(this.params.getMqttTopic() + "/" + Messages.BACKEND.JOB + "/" + this.ID);
+
+			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
+			this.mqttUtils = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
+			this.mqttUtils.subscribe(mqttAspect.getTopic() + "/" + Messages.BACKEND.JOB + "/" + this.ID);
 		}
 		catch (MqttException me)
 		{
@@ -209,7 +215,8 @@ public class Navigator implements MQTTListener
 		//this.mqttUtils.publish("racecar/" + this.core.getID() + "/percentage", Integer.toString(location.getPercentage()));
 		try
 		{
-			this.mqttUtils.publish(this.params.getMqttTopic() + "/percentage/" + this.ID, Integer.toString(location.getPercentage()));
+			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
+			this.mqttUtils.publish(mqttAspect.getTopic() + "/percentage/" + this.ID, Integer.toString(location.getPercentage()));
 		}
 		catch (MqttException me)
 		{
@@ -227,7 +234,8 @@ public class Navigator implements MQTTListener
 		//this.mqttUtils.publish("racecar/" + this.core.getID() + "/route", "notcomplete");
 		try
 		{
-			this.mqttUtils.publish(this.params.getMqttTopic() + "/route/" + this.ID, "notcomplete");
+			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
+			this.mqttUtils.publish(mqttAspect.getTopic() + "/route/" + this.ID, "notcomplete");
 		}
 		catch (MqttException me)
 		{
@@ -246,7 +254,8 @@ public class Navigator implements MQTTListener
 		//this.mqttUtils.publish("racecar/" + this.core.getID() + "/route", "error");
 		try
 		{
-			this.mqttUtils.publish(this.params.getMqttTopic() + "/route/" + this.ID, "error");
+			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
+			this.mqttUtils.publish(mqttAspect.getTopic() + "/route/" + this.ID, "error");
 		}
 		catch (MqttException me)
 		{
@@ -266,7 +275,8 @@ public class Navigator implements MQTTListener
 
 			this.log.info("Sending next waypoint with ID " + nextWayPoint.getID() + " (" + (this.routeSize - this.currentRoute.size()) + "/" + this.routeSize + ")");
 
-			if (!this.params.isDebug())
+			KernelAspect kernelAspect = (KernelAspect) this.configuration.get(AspectType.KERNEL);
+			if (!kernelAspect.isDebug())
 			{
 				this.vehicle.sendNextWayPoint(nextWayPoint);
 			}
@@ -302,8 +312,8 @@ public class Navigator implements MQTTListener
 		//this.mqttUtils.publish("racecar/" + this.core.getID() + "/route", "done");
 
 		try
-		{
-			this.mqttUtils.publish(this.params.getMqttTopic() + "/route/" + this.ID, "done");
+		{MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
+			this.mqttUtils.publish(mqttAspect.getTopic() + "/route/" + this.ID, "done");
 		}
 		catch (MqttException me)
 		{
@@ -336,7 +346,9 @@ public class Navigator implements MQTTListener
 		List<Point> points = new ArrayList<>();
 		points.add(this.wayPoints.get(wayPointIDs[0]));
 		points.add(this.wayPoints.get(wayPointIDs[1]));
-		if (!this.params.isDebug())
+
+		KernelAspect kernelAspect = (KernelAspect) this.configuration.get(AspectType.KERNEL);
+		if (!kernelAspect.isDebug())
 		{
 			this.vehicle.timeRequest(points);
 		}

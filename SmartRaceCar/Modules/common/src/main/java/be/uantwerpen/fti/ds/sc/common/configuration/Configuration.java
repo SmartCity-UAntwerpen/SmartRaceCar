@@ -76,6 +76,14 @@ public class Configuration
 						this.aspects.put(type, new TcpServerAspect(configFile));
 						break;
 
+					case NAVSTACK:
+						this.aspects.put(type, new NavStackAspect(configFile));
+						break;
+
+					case KERNEL:
+						this.aspects.put(type, new KernelAspect(configFile));
+						break;
+
 					default:
 						this.log.warn("Ignoring unsupported aspect type: " + type);
 						break;

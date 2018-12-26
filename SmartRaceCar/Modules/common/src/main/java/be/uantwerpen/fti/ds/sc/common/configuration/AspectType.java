@@ -9,5 +9,7 @@ public enum AspectType
 	MQTT,
 	RACECAR,
 	ROS,
-	TCP_SERVER
+	TCP_SERVER,
+	NAVSTACK,
+	KERNEL
 }
