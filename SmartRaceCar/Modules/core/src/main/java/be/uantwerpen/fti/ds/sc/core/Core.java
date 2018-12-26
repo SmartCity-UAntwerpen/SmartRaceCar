@@ -1,6 +1,10 @@
 package be.uantwerpen.fti.ds.sc.core;
 
 import be.uantwerpen.fti.ds.sc.common.*;
+import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
+import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
+import be.uantwerpen.fti.ds.sc.common.configuration.KernelAspect;
+import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
 import be.uantwerpen.fti.ds.sc.core.Communication.BackendCommunicator;
 import be.uantwerpen.fti.ds.sc.core.Communication.GeneralBackendCommunicator;
 import be.uantwerpen.fti.ds.sc.core.Communication.VehicleCommunicator;
@@ -18,8 +22,14 @@ import java.util.HashMap;
  */
 class Core implements TCPListener, MQTTListener
 {
+	private static final String DEFAULT_CONFIGURATION_PATH = "./core.properties";
+	//private static final String DEFAULT_CONFIGURATION_PATH = "/home/ubuntu/Git/SmartRacecar/SmartRaceCar/release/core.properties";
+
+
 	// Help services
 	private Logger log;
+
+	private Configuration configuration;
 
 
 	// Variables
@@ -29,7 +39,6 @@ class Core implements TCPListener, MQTTListener
 	private HeartbeatPublisher heartbeatPublisher;
 	private Navigator navigator;
 	//private WeightManager weightManager;
-	private CoreParameters params;
 	private MapManager mapManager;
 
 	// Communication
@@ -44,7 +53,7 @@ class Core implements TCPListener, MQTTListener
 	 * @param serverPort Port to listen for messages of SimKernel/Roskernel. Defined by input arguments of Main method.
 	 * @param clientPort Port to send messages to SimKernel/Roskernel. Defined by input arguments of Main method.
 	 */
-	public Core(long startPoint, int serverPort, int clientPort, CoreParameters params) throws InterruptedException, IOException
+	public Core(long startPoint, int serverPort, int clientPort) throws InterruptedException, IOException
 	{
 		String asciiArt1 = FigletFont.convertOneLine("SmartCity");
 		System.out.println(asciiArt1);
@@ -52,34 +61,33 @@ class Core implements TCPListener, MQTTListener
 		System.out.println("--------------------- F1 Racecar Core - v1.0 ---------------------");
 		System.out.println("------------------------------------------------------------------");
 
-		this.params = params;
 		this.log = LoggerFactory.getLogger(Core.class);
 
 
 		this.loadConfig();
-		this.log.info("Current parameters: \n" + this.params.toString());
 
 		this.log.info("Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
 
-		BackendCommunicator backendCommunicator = new BackendCommunicator(this.params);
+		BackendCommunicator backendCommunicator = new BackendCommunicator(this.configuration);
 		this.backendCommunicator = backendCommunicator;
 
 		this.ID = this.backendCommunicator.register(startPoint);
 
-        this.log.info("Starting MQTT connection on " + this.params.getMqttBroker());
-
-		VehicleCommunicator vehicleCommunicator = new VehicleCommunicator(this.params, this, clientPort, serverPort);
+		VehicleCommunicator vehicleCommunicator = new VehicleCommunicator(this.configuration, this, clientPort, serverPort);
 		this.vehicleCommunicator = vehicleCommunicator;
 		this.vehicleCommunicator.start();
 
-		if (!this.params.isDebug())
+
+		KernelAspect kernelAspect = (KernelAspect) this.configuration.get(AspectType.KERNEL);
+
+		if (!kernelAspect.isDebug())
 		{
 			this.log.debug("Waiting 3 seconds before sending connect");
 			Thread.sleep(3000);
 			this.vehicleCommunicator.connect();
 		}
 
-		this.mapManager = new MapManager(this, this.params, backendCommunicator, vehicleCommunicator);
+		this.mapManager = new MapManager(this, this.configuration, backendCommunicator, vehicleCommunicator);
 		this.log.info("Map manager started");
 
 		if(!this.mapManager.configureMap())
@@ -90,13 +98,14 @@ class Core implements TCPListener, MQTTListener
 			Thread.sleep(10000); //10 seconds delay so the map can load before publishing the startpoint
 		}
 
-		this.navigator = new Navigator(this.ID, this.params, vehicleCommunicator, backendCommunicator);
+		this.navigator = new Navigator(this.ID, this.configuration, vehicleCommunicator, backendCommunicator);
 		this.navigator.sendStartPoint(startPoint);
 
 		try
 		{
 			// todo: Move MQTTUtil to HeartbeatPublisher?
-			MQTTUtils mqttUtils = new MQTTUtils(this.params.getMqttBroker(), this.params.getMqttUserName(), this.params.getMqttPassword(), this);
+			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
+			MQTTUtils mqttUtils = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
 			this.heartbeatPublisher = new HeartbeatPublisher(mqttUtils, this.ID);
 			this.heartbeatPublisher.start();
 			this.log.info("Heartbeat publisher was started.");
@@ -114,21 +123,18 @@ class Core implements TCPListener, MQTTListener
 		return this.ID;
 	}
 
-	@Deprecated
-	public CoreParameters getParams()
-	{
-		return this.params;
-	}
-
 	/**
 	 * Help method to load all configuration parameters from the properties file with the same name as the class.
 	 * If it's not found then it will use the default ones.
 	 */
 	private void loadConfig()
 	{
-		CoreParameterParser parser = new CoreParameterParser();
-		//this.params = parser.parse("/home/ubuntu/Git/SmartRacecar/SmartRaceCar/release/core.properties");
-		this.params = parser.parse("core.properties");
+		this.configuration = new Configuration();
+		this.configuration.add(AspectType.MQTT);
+		this.configuration.add(AspectType.RACECAR);
+		this.configuration.add(AspectType.NAVSTACK);
+		this.configuration.add(AspectType.KERNEL);
+		this.configuration.load(DEFAULT_CONFIGURATION_PATH);
 	}
 
 	/**
@@ -179,7 +185,10 @@ class Core implements TCPListener, MQTTListener
 	{
 		this.log.info("Vehicle kill request. Closing connections and shutting down...");
 		this.backendCommunicator.disconnect(this.ID);
-		if (!this.params.isDebug())
+
+		KernelAspect kernelAspect = (KernelAspect) this.configuration.get(AspectType.KERNEL);
+
+		if (!kernelAspect.isDebug())
 		{
 			this.vehicleCommunicator.disconnect();
 		}

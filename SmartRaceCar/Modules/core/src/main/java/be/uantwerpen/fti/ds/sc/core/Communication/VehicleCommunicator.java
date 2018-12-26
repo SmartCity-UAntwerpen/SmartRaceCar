@@ -1,5 +1,8 @@
 package be.uantwerpen.fti.ds.sc.core.Communication;
 import be.uantwerpen.fti.ds.sc.common.*;
+import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
+import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
+import be.uantwerpen.fti.ds.sc.common.configuration.KernelAspect;
 import be.uantwerpen.fti.ds.sc.core.CoreParameters;
 import be.uantwerpen.fti.ds.sc.core.Drive;
 import org.slf4j.Logger;
@@ -9,14 +12,14 @@ import java.util.List;
 
 public class VehicleCommunicator implements GeneralVehicleCommunicator, MapVehicleCommunicator, NavigationVehicleCommunication
 {
-	private CoreParameters params;
+	private Configuration configuration;
 	private Logger log;
 	private TCPUtils tcpUtils;
 
-	public VehicleCommunicator(CoreParameters params, TCPListener listener, int clientPort, int serverPort)
+	public VehicleCommunicator(Configuration configuration, TCPListener listener, int clientPort, int serverPort)
 	{
 		this.log = LoggerFactory.getLogger(VehicleCommunicator.class);
-		this.params = params;
+		this.configuration = configuration;
 		this.tcpUtils = new TCPUtils(clientPort, serverPort, listener);
 	}
 
@@ -36,7 +39,8 @@ public class VehicleCommunicator implements GeneralVehicleCommunicator, MapVehic
 	@Override
 	public void connect()
 	{
-		if(!this.params.isDebug())
+		KernelAspect kernelAspect = (KernelAspect) this.configuration.get(AspectType.KERNEL);
+		if(!kernelAspect.isDebug())
 		{
 			this.tcpUtils.sendUpdate(JSONUtils.keywordToJSONString(Messages.CORE.CONNECT));
 		}
@@ -50,7 +54,8 @@ public class VehicleCommunicator implements GeneralVehicleCommunicator, MapVehic
 	public void sendStartpoint(WayPoint startPoint)
 	{
 		this.log.debug("Sending start point");
-		if(!this.params.isDebug())
+		KernelAspect kernelAspect = (KernelAspect) this.configuration.get(AspectType.KERNEL);
+		if(!kernelAspect.isDebug())
 		{
 			this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord(Messages.CORE.START_POINT, startPoint));
 		}
@@ -69,7 +74,8 @@ public class VehicleCommunicator implements GeneralVehicleCommunicator, MapVehic
 	@Override
 	public void disconnect()
 	{
-		if(!this.params.isDebug())
+		KernelAspect kernelAspect = (KernelAspect) this.configuration.get(AspectType.KERNEL);
+		if(!kernelAspect.isDebug())
 		{
 			this.tcpUtils.closeTCP();
 		}
@@ -91,7 +97,8 @@ public class VehicleCommunicator implements GeneralVehicleCommunicator, MapVehic
 	public void sendWheelStates(float throttle, float steer)
 	{
 		this.log.info("Sending wheel state Throttle:" + throttle + ", Steer:" + steer + ".");
-		if (!this.params.isDebug())
+		KernelAspect kernelAspect = (KernelAspect) this.configuration.get(AspectType.KERNEL);
+		if(!kernelAspect.isDebug())
 		{
 			this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord(Messages.CORE.DRIVE, new Drive(steer, throttle)));
 		}
