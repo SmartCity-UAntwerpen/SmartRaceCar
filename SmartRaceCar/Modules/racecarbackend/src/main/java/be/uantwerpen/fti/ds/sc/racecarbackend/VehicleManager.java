@@ -1,6 +1,7 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
 import be.uantwerpen.fti.ds.sc.common.*;
+import be.uantwerpen.fti.ds.sc.common.MessageQueueClient;
 import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
 import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
 import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
@@ -21,6 +22,8 @@ import java.util.Map;
 @Controller
 public class VehicleManager implements MQTTListener, VehicleRepository
 {
+	private static final String TEST_ENDPOINT = "/carmanager/test";
+
 	private Logger log;
 	private Configuration configuration;
 	private MessageQueueClient messageQueueClient;
@@ -91,6 +94,12 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 	public int getNumVehicles()
 	{
 		return this.vehicles.size();
+	}
+
+	@RequestMapping(value=TEST_ENDPOINT, method=RequestMethod.GET, produces=MediaType.APPLICATION_JSON)
+	public @ResponseBody ResponseEntity<String> test()
+	{
+		return new ResponseEntity<>("{\"test\": 1}", HttpStatus.OK);
 	}
 
 	/*

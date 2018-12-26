@@ -1,10 +1,10 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
 import be.uantwerpen.fti.ds.sc.common.*;
+import be.uantwerpen.fti.ds.sc.common.MessageQueueClient;
 import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
 import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
 import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
-import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
