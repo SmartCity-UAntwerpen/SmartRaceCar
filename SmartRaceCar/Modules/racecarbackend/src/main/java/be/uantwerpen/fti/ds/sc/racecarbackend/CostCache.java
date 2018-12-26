@@ -133,9 +133,8 @@ public class CostCache
 	 * @param endId
 	 * @return
 	 */
-	@RequestMapping(value="/{startId}/{endId}", method= RequestMethod.GET, produces= MediaType.APPLICATION_JSON)
-	public @ResponseBody
-	ResponseEntity<String> costRequest(@PathVariable long startId, @PathVariable long endId)
+	@RequestMapping(value="/{startId}/{endId}", method=RequestMethod.GET, produces=MediaType.APPLICATION_JSON)
+	public @ResponseBody ResponseEntity<String> costRequest(@PathVariable long startId, @PathVariable long endId)
 	{
 		Link link = new Link(startId, endId);
 
