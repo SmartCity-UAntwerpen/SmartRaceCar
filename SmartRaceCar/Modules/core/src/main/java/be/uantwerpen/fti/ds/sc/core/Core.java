@@ -1,6 +1,8 @@
 package be.uantwerpen.fti.ds.sc.core;
 
 import be.uantwerpen.fti.ds.sc.common.*;
+import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
+import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
 import be.uantwerpen.fti.ds.sc.core.Communication.BackendCommunicator;
 import be.uantwerpen.fti.ds.sc.core.Communication.GeneralBackendCommunicator;
 import be.uantwerpen.fti.ds.sc.core.Communication.VehicleCommunicator;
@@ -21,6 +23,9 @@ class Core implements TCPListener, MQTTListener
 	// Help services
 	private Logger log;
 
+	private CoreParameters params;
+	private Configuration configuration;
+
 
 	// Variables
 	private long ID;                                                        	// ID given by RacecarBackend to identify vehicle.
@@ -29,7 +34,6 @@ class Core implements TCPListener, MQTTListener
 	private HeartbeatPublisher heartbeatPublisher;
 	private Navigator navigator;
 	//private WeightManager weightManager;
-	private CoreParameters params;
 	private MapManager mapManager;
 
 	// Communication
@@ -44,7 +48,7 @@ class Core implements TCPListener, MQTTListener
 	 * @param serverPort Port to listen for messages of SimKernel/Roskernel. Defined by input arguments of Main method.
 	 * @param clientPort Port to send messages to SimKernel/Roskernel. Defined by input arguments of Main method.
 	 */
-	public Core(long startPoint, int serverPort, int clientPort, CoreParameters params) throws InterruptedException, IOException
+	public Core(long startPoint, int serverPort, int clientPort) throws InterruptedException, IOException
 	{
 		String asciiArt1 = FigletFont.convertOneLine("SmartCity");
 		System.out.println(asciiArt1);
@@ -52,7 +56,6 @@ class Core implements TCPListener, MQTTListener
 		System.out.println("--------------------- F1 Racecar Core - v1.0 ---------------------");
 		System.out.println("------------------------------------------------------------------");
 
-		this.params = params;
 		this.log = LoggerFactory.getLogger(Core.class);
 
 
@@ -126,6 +129,11 @@ class Core implements TCPListener, MQTTListener
 	 */
 	private void loadConfig()
 	{
+		this.configuration = new Configuration();
+		this.configuration.add(AspectType.MQTT);
+		this.configuration.add(AspectType.RACECAR);
+
+
 		CoreParameterParser parser = new CoreParameterParser();
 		//this.params = parser.parse("/home/ubuntu/Git/SmartRacecar/SmartRaceCar/release/core.properties");
 		this.params = parser.parse("core.properties");
