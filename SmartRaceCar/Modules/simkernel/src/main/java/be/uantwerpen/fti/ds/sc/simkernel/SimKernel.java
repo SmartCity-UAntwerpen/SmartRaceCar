@@ -1,6 +1,9 @@
 package be.uantwerpen.fti.ds.sc.simkernel;
 
 import be.uantwerpen.fti.ds.sc.common.*;
+import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
+import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
+import be.uantwerpen.fti.ds.sc.common.configuration.RosAspect;
 import be.uantwerpen.fti.ds.sc.simkernel.Communication.*;
 import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
@@ -19,7 +22,7 @@ class SimKernel implements MessageListener
 {
 	private static final String DEFAULT_CONFIG_PATH = "Simkernel.properties";
 
-	private SimkernelParameters parameters;
+	private Configuration configuration;
 
 	//Help services
 	private CoreCommunication core;
@@ -48,10 +51,10 @@ class SimKernel implements MessageListener
 		this.loadConfig();
 
 
-		this.ROS = new ROSCommunicator(this.parameters);
+		this.ROS = new ROSCommunicator(this.configuration);
 		this.core = new CoreCommunicator(serverPort, clientPort, this);
 		this.core.start();
-		this.simdeployer = new SimDeployerCommunicator(this.parameters, simID, this);
+		this.simdeployer = new SimDeployerCommunicator(this.configuration, simID, this);
 
 		this.calculatedCosts = new HashMap<>();
 
@@ -68,8 +71,10 @@ class SimKernel implements MessageListener
 	 */
 	private void loadConfig()
 	{
-		SimkernelParameterParser parser = new SimkernelParameterParser();
-		this.parameters = parser.parse(SimKernel.DEFAULT_CONFIG_PATH);
+		this.configuration = new Configuration();
+		configuration.add(AspectType.MQTT);
+		configuration.add(AspectType.ROS);
+		configuration.load(SimKernel.DEFAULT_CONFIG_PATH);
 	}
 
 	/**
@@ -101,8 +106,8 @@ class SimKernel implements MessageListener
 
 				case Messages.CORE.START_POINT:
 					this.startPoint = (WayPoint) JSONUtils.getObjectWithKeyWord(message, WayPoint.class);
-					this.log.info("Startpoint set to " + startPoint.getX() + "," + startPoint.getY() + "," + startPoint.getZ() + "," + startPoint.getW() + ".");
-					this.currentPosition = new Point(startPoint.getX(), startPoint.getY(), startPoint.getZ(), startPoint.getW());
+					this.log.info("Startpoint set to " + this.startPoint.getX() + "," + this.startPoint.getY() + "," + this.startPoint.getZ() + "," + this.startPoint.getW() + ".");
+					this.currentPosition = new Point(this.startPoint.getX(), this.startPoint.getY(), this.startPoint.getZ(), this.startPoint.getW());
 					break;
 
 				case Messages.CORE.CURRENT_MAP:
@@ -158,7 +163,10 @@ class SimKernel implements MessageListener
 	{
 		this.log.info("Job request to drive to " + nextPoint.getX() + "," + nextPoint.getY() + "," + nextPoint.getZ() + "," + nextPoint.getW() + ".");
 		Cost cost = new Cost(false, 5, 5, (long) 0);
-		if (!this.parameters.isROSServerDisabled())
+
+		RosAspect aspect = (RosAspect) this.configuration.get(AspectType.ROS);
+
+		if(!aspect.isRosDebug())
 		{
 			List<Point> points = new ArrayList<>();
 			points.add(this.currentPosition);
@@ -216,7 +224,9 @@ class SimKernel implements MessageListener
 		allPoints.addAll(points);
 		this.log.info("Cost request received. Requesting calculation from ROS Server.");
 		Cost cost = new Cost(false, 5, 5, (long) 0);
-		if (!this.parameters.isROSServerDisabled())
+
+		RosAspect rosAspect = (RosAspect) this.configuration.get(AspectType.ROS);
+		if (!rosAspect.isRosDebug())
 		{
 			for (ArrayList<Point> list : this.calculatedCosts.keySet())
 			{ // The containsKey method from the HashMap class doesn't correctly compare two ArrayLists
