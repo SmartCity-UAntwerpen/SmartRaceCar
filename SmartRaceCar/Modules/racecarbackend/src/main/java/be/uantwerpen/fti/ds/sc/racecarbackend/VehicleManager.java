@@ -96,12 +96,6 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 		return this.vehicles.size();
 	}
 
-	@RequestMapping(value=TEST_ENDPOINT, method=RequestMethod.GET, produces=MediaType.APPLICATION_JSON)
-	public @ResponseBody ResponseEntity<String> test()
-	{
-		return new ResponseEntity<>("{\"test\": 1}", HttpStatus.OK);
-	}
-
 	/*
 	 *
 	 *      REST Endpoints
