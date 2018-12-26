@@ -59,7 +59,7 @@ public class ResourceManager
 
 		for (long vehicleId: this.vehicleRepository.getVehicleIds())
 		{
-			if (!this.vehicleRepository.get(vehicleId).isOccupied())
+			if (!this.vehicleRepository.isOccupied(vehicleId))
 			{
 				++numAvailableCars;
 			}
@@ -89,7 +89,7 @@ public class ResourceManager
 
 		for (long vehicleId: this.vehicleRepository.getVehicleIds())
 		{
-			if (!this.vehicleRepository.get(vehicleId).isOccupied())
+			if (!this.vehicleRepository.isOccupied(vehicleId))
 			{
 				long vehiclePosition = this.locationRepository.getLocation(vehicleId);
 				int cost = this.costCache.calculateCost(vehiclePosition, waypointId);
