@@ -43,7 +43,7 @@ public class JobTracker implements MQTTListener
     private Logger log;
     private Configuration configuration;
     private VehicleManager vehicleManager;
-    private JobDispatcher jobDispatcher;
+    private JobQueue jobQueue;
     private MQTTUtils mqttUtils;
     private Map<Long, Job> localJobs;       // Map containing local jobs mapped to their IDs
                                             // Local jobs are jobs not present in the backbone,
@@ -217,12 +217,12 @@ public class JobTracker implements MQTTListener
     }
 
     @Autowired
-    public JobTracker(@Qualifier("jobTracker") Configuration configuration, VehicleManager vehicleManager, @Lazy JobDispatcher jobDispatcher)
+    public JobTracker(@Qualifier("jobTracker") Configuration configuration, VehicleManager vehicleManager, JobQueue jobQueue)
     {
         this.log = LoggerFactory.getLogger(JobTracker.class);
         this.configuration = configuration;
         this.vehicleManager = vehicleManager;
-        this.jobDispatcher = jobDispatcher;
+        this.jobQueue = jobQueue;
 
         this.log.info("Initializing JobTracker...");
 
@@ -298,7 +298,7 @@ public class JobTracker implements MQTTListener
             return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
         }
 
-        if (this.jobDispatcher.isInQueue(jobId, JobType.GLOBAL))
+        if (this.jobQueue.isEnqueued(jobId, JobType.GLOBAL))
         {
             String jsonString = JSONUtils.objectToJSONStringWithKeyWord("progress", 0);
             return new ResponseEntity<>(jsonString, HttpStatus.OK);
