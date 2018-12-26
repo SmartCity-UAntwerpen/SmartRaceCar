@@ -13,6 +13,7 @@ public class BackboneAspect extends Aspect
 
 	private static final String BACKBONE_DEBUG_MODE_KEY = PREFIX + ".debug";
 	private static final String BACKBONE_SERVER_URL_KEY = PREFIX + ".url";
+	private static final String[] KEYS = {BACKBONE_DEBUG_MODE_KEY, BACKBONE_SERVER_URL_KEY};
 
 	private static final String DEFAULT_BACKBONE_DEBUG_MODE = "true";
 	private static final String DEFAULT_BACKBONE_SERVER_URL = "http://smartcity.ddns.net:10000";
@@ -29,6 +30,8 @@ public class BackboneAspect extends Aspect
 		try
 		{
 			Properties properties = this.openPropertiesFile(configFile);
+
+			this.checkKeys(properties, KEYS);
 
 			this.backboneDebugMode = Boolean.parseBoolean(properties.getProperty(BACKBONE_DEBUG_MODE_KEY, DEFAULT_BACKBONE_DEBUG_MODE));
 			this.backboneServerUrl = properties.getProperty(BACKBONE_SERVER_URL_KEY, DEFAULT_BACKBONE_SERVER_URL);

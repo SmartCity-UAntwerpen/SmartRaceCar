@@ -12,6 +12,7 @@ public class RacecarAspect extends Aspect
 	private static final String PREFIX = "Racecar";
 
 	private static final String RACECAR_SERVER_URL_KEY = PREFIX + ".url";
+	private static final String[] KEYS = {RACECAR_SERVER_URL_KEY};
 
 	private static final String DEFAULT_RACECAR_SERVER_URL = "http://smartcity.ddns.net:8081/carmanager";
 
@@ -26,6 +27,8 @@ public class RacecarAspect extends Aspect
 		try
 		{
 			Properties properties = this.openPropertiesFile(configFile);
+
+			this.checkKeys(properties, KEYS);
 
 			this.racecarServerUrl = properties.getProperty(RACECAR_SERVER_URL_KEY, DEFAULT_RACECAR_SERVER_URL);
 

@@ -12,6 +12,7 @@ public class DockerAspect extends Aspect
 	private static final String PREFIX = "Docker";
 
 	private static final String DOCKER_IMAGE_NAME_KEY = PREFIX + ".image";
+	private static final String[] KEYS = {DOCKER_IMAGE_NAME_KEY};
 
 	private static final String DEFAULT_DOCKER_IMAGE_NAME = "astridvanneste/core_simkernel";
 
@@ -26,6 +27,8 @@ public class DockerAspect extends Aspect
 		try
 		{
 			Properties properties = this.openPropertiesFile(configFile);
+
+			this.checkKeys(properties, KEYS);
 
 			this.imageName = properties.getProperty(DOCKER_IMAGE_NAME_KEY, DEFAULT_DOCKER_IMAGE_NAME);
 

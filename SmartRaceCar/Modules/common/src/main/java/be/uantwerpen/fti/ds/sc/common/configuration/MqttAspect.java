@@ -16,6 +16,7 @@ public class MqttAspect extends Aspect
 	private static final String MQTT_USERNAME_KEY = PREFIX + ".username";
 	private static final String MQTT_PASSWORD_KEY = PREFIX + ".password";
 	private static final String MQTT_TOPIC_KEY = PREFIX + ".topic";
+	private static final String[] KEYS = {MQTT_BROKER_KEY, MQTT_USERNAME_KEY, MQTT_PASSWORD_KEY, MQTT_TOPIC_KEY};
 
 	// Set of default values for each key
 	private static final String DEFAULT_MQTT_BROKER = "tcp://smartcity.ddns.net:1883";
@@ -37,6 +38,8 @@ public class MqttAspect extends Aspect
 		try
 		{
 			Properties properties = this.openPropertiesFile(configFile);
+
+			this.checkKeys(properties, KEYS);
 
 			this.broker = properties.getProperty(MQTT_BROKER_KEY, DEFAULT_MQTT_BROKER);
 			this.username = properties.getProperty(MQTT_USERNAME_KEY, DEFAULT_MQTT_USERNAME);

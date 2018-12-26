@@ -9,11 +9,25 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.Properties;
+import java.util.Set;
 
 public class Aspect
 {
 	private AspectType type;
 	private Logger log;
+
+	protected void checkKeys (Properties properties, String[] keys)
+	{
+		Set<String> presentKeys = properties.stringPropertyNames();
+
+		for (String key: keys)
+		{
+			if (!presentKeys.contains(key))
+			{
+				this.log.warn(key + " wasn't present in properties file, using default settings.");
+			}
+		}
+	}
 
 	protected Properties openPropertiesFile(File file) throws IOException
 	{

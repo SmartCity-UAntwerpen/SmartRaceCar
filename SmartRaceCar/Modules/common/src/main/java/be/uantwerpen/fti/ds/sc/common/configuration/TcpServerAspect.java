@@ -12,6 +12,7 @@ public class TcpServerAspect extends Aspect
 	private static final String PREFIX = "TcpServer";
 
 	private static final String SERVER_PORT_KEY = PREFIX + ".port";
+	private static final String[] KEYS = {SERVER_PORT_KEY};
 
 	private static final String DEFAULT_SERVER_PORT = "9999";
 
@@ -26,6 +27,8 @@ public class TcpServerAspect extends Aspect
 		try
 		{
 			Properties properties = this.openPropertiesFile(configFile);
+
+			this.checkKeys(properties, KEYS);
 
 			this.serverPort = Integer.parseInt(properties.getProperty(SERVER_PORT_KEY, DEFAULT_SERVER_PORT));
 

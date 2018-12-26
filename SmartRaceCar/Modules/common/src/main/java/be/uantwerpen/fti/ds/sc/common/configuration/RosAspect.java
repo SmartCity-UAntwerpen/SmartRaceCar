@@ -13,6 +13,7 @@ public class RosAspect extends Aspect
 
 	private static final String ROS_DEBUG_MODE_KEY = PREFIX + ".debug";
 	private static final String ROS_SERVER_URL_KEY = PREFIX + ".url";
+	private static final String[] KEYS = {ROS_DEBUG_MODE_KEY, ROS_SERVER_URL_KEY};
 
 	private static final String DEFAULT_ROS_DEBUG_MODE = "true";
 	private static final String DEFAULT_ROS_SERVER_URL = "http://smartcity.ddns.net:8084";
@@ -29,6 +30,8 @@ public class RosAspect extends Aspect
 		try
 		{
 			Properties properties = this.openPropertiesFile(configFile);
+
+			this.checkKeys(properties, KEYS);
 
 			this.rosDebugMode = Boolean.parseBoolean(properties.getProperty(ROS_DEBUG_MODE_KEY, DEFAULT_ROS_DEBUG_MODE));
 			this.rosServerUrl = properties.getProperty(ROS_SERVER_URL_KEY, DEFAULT_ROS_SERVER_URL);

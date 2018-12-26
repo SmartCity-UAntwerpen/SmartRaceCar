@@ -13,6 +13,7 @@ public class MapManagerAspect extends Aspect
 
 	private static final String MAP_PATH_KEY = PREFIX + ".path";
 	private static final String CURRENT_MAP_KEY = PREFIX + ".current";
+	private static final String KEYS[] = {MAP_PATH_KEY, CURRENT_MAP_KEY};
 
 	private static final String DEFAULT_MAP_PATH = "maps/";
 	private static final String DEFAULT_CURRENT_MAP =  "U014Circle";
@@ -29,6 +30,8 @@ public class MapManagerAspect extends Aspect
 		try
 		{
 			Properties properties = this.openPropertiesFile(configFile);
+
+			this.checkKeys(properties, KEYS);
 
 			this.mapPath = properties.getProperty(MAP_PATH_KEY, DEFAULT_MAP_PATH);
 			this.currentMap = properties.getProperty(CURRENT_MAP_KEY, DEFAULT_CURRENT_MAP);
