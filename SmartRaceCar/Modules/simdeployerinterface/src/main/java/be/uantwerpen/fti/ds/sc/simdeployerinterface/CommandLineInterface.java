@@ -53,7 +53,7 @@ public class CommandLineInterface
 		for (String command: helpMap.keySet())
 		{
 			helpBuilder.append(command);
-			helpBuilder.append("\t\t");
+			helpBuilder.append("\t");
 			helpBuilder.append(helpMap.get(command));
 			helpBuilder.append('\n');
 		}
