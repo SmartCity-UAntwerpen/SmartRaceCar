@@ -30,9 +30,8 @@ public class JobDispatcher implements MQTTListener  //todo: Get rid of this, sti
 	private static final String MQTT_POSTFIX = "route/#";
 
 	private Logger log;
-	private List<Job> globalJobQueue;
-	private List<Job> localJobQueue;
 	private JobTracker jobTracker;
+	private JobQueue jobQueue;
 	private WaypointValidator waypointValidator;
 	private VehicleManager vehicleManager;
 	private LocationRepository locationRepository;
@@ -41,13 +40,13 @@ public class JobDispatcher implements MQTTListener  //todo: Get rid of this, sti
 
 	private void checkJobQueue() throws IOException
 	{
-		if (!this.localJobQueue.isEmpty())
+		if (!this.jobQueue.isEmpty(JobType.LOCAL))
 		{
-			this.scheduleJob(this.localJobQueue.remove(0), JobType.LOCAL);
+			this.scheduleJob(this.jobQueue.dequeue(JobType.LOCAL), JobType.LOCAL);
 		}
-		else if (!this.globalJobQueue.isEmpty())
+		else if (!this.jobQueue.isEmpty(JobType.GLOBAL))
 		{
-			this.scheduleJob(this.globalJobQueue.remove(0), JobType.GLOBAL);
+			this.scheduleJob(this.jobQueue.dequeue(JobType.GLOBAL), JobType.GLOBAL);
 		}
 	}
 
@@ -83,11 +82,10 @@ public class JobDispatcher implements MQTTListener  //todo: Get rid of this, sti
 	}
 
 	@Autowired
-	public JobDispatcher(@Qualifier("jobDispatcher") Configuration configuration, JobTracker jobTracker, WaypointValidator waypointValidator, VehicleManager vehicleManager, LocationRepository locationRepository, ResourceManager resourceManager)
+	public JobDispatcher(@Qualifier("jobDispatcher") Configuration configuration, JobTracker jobTracker, JobQueue jobQueue, WaypointValidator waypointValidator, VehicleManager vehicleManager, LocationRepository locationRepository, ResourceManager resourceManager)
 	{
 		this.log = LoggerFactory.getLogger(this.getClass());
-		this.localJobQueue = new LinkedList<>();
-		this.globalJobQueue = new LinkedList<>();
+		this.jobQueue = jobQueue;
 		this.jobTracker = jobTracker;
 		this.waypointValidator = waypointValidator;
 		this.vehicleManager = vehicleManager;
@@ -104,38 +102,6 @@ public class JobDispatcher implements MQTTListener  //todo: Get rid of this, sti
 		{
 			this.log.error("Failed to start MQTTUtils for JobDispatcher.", me);
 		}
-	}
-
-	public boolean isInQueue(long jobId, JobType type)
-	{
-		switch (type)
-		{
-			case GLOBAL:
-				for (Job globalJob: this.globalJobQueue)
-				{
-					if (globalJob.getJobId() == jobId)
-					{
-						return true;
-					}
-				}
-
-				return false;
-
-			case LOCAL:
-				for (Job localJob: this.localJobQueue)
-				{
-					if (localJob.getJobId() == jobId)
-					{
-						return true;
-					}
-				}
-
-				return false;
-		}
-
-		String errorString = "Failed to check if job " + jobId + " (Type: " + type + ") was enqueued.";
-		this.log.error(errorString);
-		throw new NoSuchElementException(errorString);
 	}
 
 	/*
@@ -158,15 +124,15 @@ public class JobDispatcher implements MQTTListener  //todo: Get rid of this, sti
 
 		if (this.resourceManager.getNumAvailableCars() == 0)
 		{
-			this.log.info("There are currently no vehicles available, adding to global queue (No. " + (this.globalJobQueue.size() + 1) + " in line.)");
-			this.globalJobQueue.add(new Job(jobId, startId, endId, -1));
+			this.log.info("There are currently no vehicles available, adding to global queue");
+			this.jobQueue.enqueue(new Job(jobId, startId, endId, -1), JobType.GLOBAL);
 			return new ResponseEntity<>("starting", HttpStatus.OK);
 		}
 
-		if (!this.globalJobQueue.isEmpty())
+		if (!this.jobQueue.isEmpty(JobType.GLOBAL))
 		{
-			this.log.info("There's already " + this.globalJobQueue.size() + " jobs in the global queue, adding to global queue.");
-			this.globalJobQueue.add(new Job(jobId, startId, endId, -1));
+			this.log.info("There are already jobs in the global queue, adding to global queue.");
+			this.jobQueue.enqueue(new Job(jobId, startId, endId, -1), JobType.GLOBAL);
 			return new ResponseEntity<>("starting", HttpStatus.OK);
 		}
 
@@ -241,8 +207,8 @@ public class JobDispatcher implements MQTTListener  //todo: Get rid of this, sti
 			// If the exception was caused because no cars are available, enqueue the job
 			if (this.resourceManager.getNumAvailableCars() == 0)
 			{
-				this.log.info("There are currently no vehicles available, adding to local queue (No. " + (this.localJobQueue.size() + 1) + " in line.)");
-				this.localJobQueue.add(new Job(this.jobTracker.generateLocalJobId(), vehicleLocation, destId, -1));
+				this.log.info("There are currently no vehicles available, adding to local queue.");
+				this.jobQueue.enqueue(new Job(this.jobTracker.generateLocalJobId(), vehicleLocation, destId, -1), JobType.LOCAL);
 				return new ResponseEntity<>("starting", HttpStatus.OK);
 			}
 
@@ -257,10 +223,10 @@ public class JobDispatcher implements MQTTListener  //todo: Get rid of this, sti
 			return new ResponseEntity<>(errorString, HttpStatus.SERVICE_UNAVAILABLE);
 		}
 
-		if (!this.globalJobQueue.isEmpty())
+		if (!this.jobQueue.isEmpty(JobType.LOCAL))
 		{
-			this.log.info("There's already " + this.localJobQueue.size() + " jobs in the local queue, adding to local queue.");
-			this.localJobQueue.add(new Job(this.jobTracker.generateLocalJobId(), vehicleLocation, destId, -1));
+			this.log.info("There already are jobs in the local queue, adding to local queue.");
+			this.jobQueue.enqueue(new Job(this.jobTracker.generateLocalJobId(), vehicleLocation, destId, -1), JobType.LOCAL);
 			return new ResponseEntity<>("starting", HttpStatus.OK);
 		}
 

@@ -22,4 +22,11 @@ public interface VehicleRepository
 	 * @return
 	 */
 	public int getNumVehicles();
+
+	/**
+	 * Check if the vehicle with the given ID is occupied.
+	 * @param vehicleId
+	 * @return
+	 */
+	public boolean isOccupied(long vehicleId);
 }

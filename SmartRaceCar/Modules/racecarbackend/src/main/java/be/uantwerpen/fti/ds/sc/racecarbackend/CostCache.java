@@ -108,11 +108,6 @@ public class CostCache
 				String costString = ROSAPI.post("calcWeight", jsonString, MediaType.APPLICATION_JSON_TYPE);
 				Cost costObj = (Cost) JSONUtils.getObjectWithKeyWord(costString, costType);
 				cost = costObj.getWeight();
-
-				// We only cache if we're using the ROS Server
-				// The whole point of caching was to take some load off the ROS Server,
-				// so caching in case we don't use the ROS server is useless
-				this.costCache.put(link, cost);
 			}
 			catch (IOException ioe)
 			{
@@ -125,6 +120,8 @@ public class CostCache
 			cost = 5;
 		}
 
+		this.costCache.put(link, cost);
+
 		return cost;
 	}
 
@@ -136,9 +133,8 @@ public class CostCache
 	 * @param endId
 	 * @return
 	 */
-	@RequestMapping(value="/{startId}/{endId}", method= RequestMethod.GET, produces= MediaType.APPLICATION_JSON)
-	public @ResponseBody
-	ResponseEntity<String> costRequest(@PathVariable long startId, @PathVariable long endId)
+	@RequestMapping(value="/{startId}/{endId}", method=RequestMethod.GET, produces=MediaType.APPLICATION_JSON)
+	public @ResponseBody ResponseEntity<String> costRequest(@PathVariable long startId, @PathVariable long endId)
 	{
 		Link link = new Link(startId, endId);
 

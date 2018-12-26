@@ -1,6 +1,7 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
 import be.uantwerpen.fti.ds.sc.common.*;
+import be.uantwerpen.fti.ds.sc.common.MessageQueueClient;
 import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
 import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
 import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
@@ -21,12 +22,14 @@ import java.util.Map;
 @Controller
 public class VehicleManager implements MQTTListener, VehicleRepository
 {
+	private static final String TEST_ENDPOINT = "/carmanager/test";
+
 	private Logger log;
 	private Configuration configuration;
 	private MessageQueueClient messageQueueClient;
 	private WaypointValidator waypointValidator;
-	private Queue<Long> unusedIds;                    // This set contains all IDs of vehicles that were assigned once and then deleted
-													// its a simple way to reuse IDs.
+	private Queue<Long> unusedIds;                      // This set contains all IDs of vehicles that were assigned once and then deleted
+														// its a simple way to reuse IDs.
 	private Map<Long, Vehicle> vehicles;
 
 	/**
@@ -91,6 +94,37 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 	public int getNumVehicles()
 	{
 		return this.vehicles.size();
+	}
+
+	/**
+	 * Set a vehicle to be occupied or not occupied.
+	 * @param vehicleId
+	 * @param occupied	true if the vehicle should become occupied, false is the vehicle should become non-occupied.
+	 * @return
+	 */
+	public void setOccupied(long vehicleId, boolean occupied)
+	{
+		if (!this.vehicles.containsKey(vehicleId))
+		{
+			String errorString = "Tried to set non-existent vehicle's occupation to " + occupied + ", vehicle ID: " + vehicleId;
+			this.log.error(errorString);
+			throw new NoSuchElementException(errorString);
+		}
+
+		this.vehicles.get(vehicleId).setOccupied(occupied);
+	}
+
+	@Override
+	public boolean isOccupied(long vehicleId) throws NoSuchElementException
+	{
+		if (!this.vehicles.containsKey(vehicleId))
+		{
+			String errorString = "Tried to check occupancy of vehicle " + vehicleId + ", but vehicle doesn't exist!";
+			this.log.error(errorString);
+			throw new NoSuchElementException(errorString);
+		}
+
+		return this.vehicles.get(vehicleId).isOccupied();
 	}
 
 	/*
@@ -173,35 +207,19 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 		return new ResponseEntity<>(JSONUtils.objectToJSONStringWithKeyWord("vehicles", this.vehicles), HttpStatus.OK);
 	}
 
-	/**
-	 * Set a vehicle to be occupied or not occupied.
-	 * @param vehicleId
-	 * @param occupied	true if the vehicle should become occupied, false is the vehicle should become non-occupied.
-	 * @return
-	 */
-	public void setOccupied(long vehicleId, boolean occupied)
+	@RequestMapping(value="/carmanager/setOccupied/{vehicleId}/occupied", method=RequestMethod.POST)
+	public @ResponseBody ResponseEntity<String> setOccupiedREST(long vehicleId, int occupied)
 	{
-		if (!this.vehicles.containsKey(vehicleId))
+		try
 		{
-			String errorString = "Tried to set non-existent vehicle's occupation to " + occupied + ", vehicle ID: " + vehicleId;
-			this.log.error(errorString);
-			throw new NoSuchElementException(errorString);
+			this.setOccupied(vehicleId, occupied != 0);
+			return new ResponseEntity<>(HttpStatus.OK);
 		}
-
-		this.vehicles.get(vehicleId).setOccupied(occupied);
-	}
-
-	@Deprecated
-	public boolean isOccupied(long vehicleId) throws NoSuchElementException
-	{
-		if (!this.vehicles.containsKey(vehicleId))
+		catch (NoSuchElementException nsee)
 		{
-			String errorString = "Tried to check occupancy of vehicle " + vehicleId + ", but vehicle doesn't exist!";
-			this.log.error(errorString);
-			throw new NoSuchElementException(errorString);
+			this.log.error("Failed to set vehicle occupation.", nsee);
+			return new ResponseEntity<>(nsee.getMessage(), HttpStatus.NOT_FOUND);
 		}
-
-		return this.vehicles.get(vehicleId).isOccupied();
 	}
 
 	/*

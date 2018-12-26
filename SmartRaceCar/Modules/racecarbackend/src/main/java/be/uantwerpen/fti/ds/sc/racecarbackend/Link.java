@@ -1,5 +1,7 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
+import java.util.Objects;
+
 public class Link
 {
 	private long id1;
@@ -39,6 +41,15 @@ public class Link
 		}
 
 		return false;
+	}
+
+	@Override
+	public int hashCode()
+	{
+		long smallestId = this.id1 < this.id2 ? this.id1 : this.id2;
+		long largestId  = this.id1 < this.id2 ? this.id2 : this.id1;
+
+		return Objects.hash(smallestId, largestId);
 	}
 
 	@Override
