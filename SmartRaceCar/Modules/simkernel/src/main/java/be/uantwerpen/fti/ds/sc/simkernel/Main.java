@@ -23,7 +23,7 @@ public class Main
 
             if(!args[0].isEmpty())
 			{
-				simID = Long.parseLong(args[2]);
+				simID = Long.parseLong(args[0]);
 			}
 			if(!args[1].isEmpty())
 			{

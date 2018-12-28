@@ -17,9 +17,7 @@ import java.io.IOException;
  */
 class Core implements TCPListener
 {
-	private static final String DEFAULT_CONFIGURATION_PATH = "./core.properties";
-	//private static final String DEFAULT_CONFIGURATION_PATH = "/home/ubuntu/Git/SmartRacecar/SmartRaceCar/release/core.properties";
-
+	private static final String CONFIG_NAME = "Core.properties";
 
 	// Help services
 	private Logger log;
@@ -122,7 +120,7 @@ class Core implements TCPListener
 		this.configuration.add(AspectType.TCP_CLIENT);
 		this.configuration.add(AspectType.TCP_SERVER);
 
-		this.configuration.load(propertyPath);
+		this.configuration.load(propertyPath + CONFIG_NAME);
 	}
 
 	/**

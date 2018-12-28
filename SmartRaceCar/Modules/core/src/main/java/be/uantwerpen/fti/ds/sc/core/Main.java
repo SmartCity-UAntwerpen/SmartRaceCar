@@ -13,7 +13,7 @@ public class Main
 	 */
 	public static void main(String[] args) throws IOException, InterruptedException
 	{
-		String propertyPath = "./core.properties";
+		String propertyPath = "./";
 		long startPoint = 0;
 
 		if (args.length != 2)
