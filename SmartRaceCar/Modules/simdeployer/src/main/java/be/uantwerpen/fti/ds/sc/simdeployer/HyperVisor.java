@@ -45,6 +45,7 @@ public class HyperVisor
 		List<String> arguments = new ArrayList<>();
 		arguments.add(Long.toString(startpoint));
 		arguments.add(Long.toString(simulationId));
+		arguments.add(dockerAspect.getContainerVolume());
 
 		try
 		{
