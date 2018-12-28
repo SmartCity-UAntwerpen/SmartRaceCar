@@ -27,9 +27,11 @@ import java.util.NoSuchElementException;
 public class JobDispatcher implements MQTTListener  //todo: Get rid of this, still needed because MQTTUtils will crash if you don't provide it with a listener
 {
 	private static final String ROUTE_UPDATE_DONE = "done";
-	private static final String MQTT_POSTFIX = "route/#";
+	private static final String MQTT_ROUTE_POSTFIX = "route/#";
+	private static final String MQTT_REGISTER_POSTFIX = "register/#";
 
 	private Logger log;
+	private Configuration config;
 	private JobTracker jobTracker;
 	private JobQueue jobQueue;
 	private WaypointValidator waypointValidator;
@@ -37,6 +39,18 @@ public class JobDispatcher implements MQTTListener  //todo: Get rid of this, sti
 	private LocationRepository locationRepository;
 	private ResourceManager resourceManager;
 	private MQTTUtils mqttUtils;
+
+	private boolean isRouteUpdate(String topic)
+	{
+		MqttAspect mqttAspect = (MqttAspect) this.config.get(AspectType.MQTT);
+		return topic.startsWith(mqttAspect.getTopic() + MQTT_ROUTE_POSTFIX.substring(0, MQTT_ROUTE_POSTFIX.length() - 2));
+	}
+
+	private boolean isRegistration(String topic)
+	{
+		MqttAspect mqttAspect = (MqttAspect) this.config.get(AspectType.MQTT);
+		return topic.startsWith(mqttAspect.getTopic() + MQTT_REGISTER_POSTFIX.substring(0, MQTT_REGISTER_POSTFIX.length() - 2));
+	}
 
 	private void checkJobQueue() throws IOException
 	{
@@ -85,6 +99,7 @@ public class JobDispatcher implements MQTTListener  //todo: Get rid of this, sti
 	public JobDispatcher(@Qualifier("jobDispatcher") Configuration configuration, JobTracker jobTracker, JobQueue jobQueue, WaypointValidator waypointValidator, VehicleManager vehicleManager, LocationRepository locationRepository, ResourceManager resourceManager)
 	{
 		this.log = LoggerFactory.getLogger(this.getClass());
+		this.config = configuration;
 		this.jobQueue = jobQueue;
 		this.jobTracker = jobTracker;
 		this.waypointValidator = waypointValidator;
@@ -96,7 +111,8 @@ public class JobDispatcher implements MQTTListener  //todo: Get rid of this, sti
 		{
 			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
 			this.mqttUtils = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
-			this.mqttUtils.subscribe(mqttAspect.getTopic() + MQTT_POSTFIX);
+			this.mqttUtils.subscribe(mqttAspect.getTopic() + MQTT_ROUTE_POSTFIX);
+			this.mqttUtils.subscribe(mqttAspect.getTopic() + MQTT_REGISTER_POSTFIX);
 		}
 		catch (MqttException me)
 		{
@@ -268,18 +284,50 @@ public class JobDispatcher implements MQTTListener  //todo: Get rid of this, sti
 	{
 		long vehicleId = TopicUtils.getCarId(topic);
 
-		if (message.equals(ROUTE_UPDATE_DONE))
+		if (this.isRouteUpdate(topic))
 		{
-			this.log.info("Vehicle " + vehicleId + " completed its job. Checking for other queued jobs.");
+			if (message.equals(ROUTE_UPDATE_DONE))
+			{
+				this.log.info("Vehicle " + vehicleId + " completed its job. Checking for other queued jobs.");
 
-			try
-			{
-				this.checkJobQueue();
+				try
+				{
+					this.checkJobQueue();
+				}
+				catch (IOException ioe)
+				{
+					String errorString = "An error occurred while checking the job queue.";
+					this.log.error(errorString);
+				}
 			}
-			catch (IOException ioe)
+		}
+		else if (this.isRegistration(topic))
+		{
+			if (!this.jobQueue.isEmpty(JobType.LOCAL))
 			{
-				String errorString = "An error occurred while checking the job queue.";
-				this.log.error(errorString);
+				try
+				{
+					this.log.info("Dispatching a local job to newly registered vehicle (" + vehicleId + ").");
+					this.scheduleJob(this.jobQueue.dequeue(JobType.LOCAL), JobType.LOCAL);
+				}
+				catch (IOException ioe)
+				{
+					String errorString = "Failed to schedule local job for newly registered vehicle (" + vehicleId + ").";
+					this.log.error(errorString, ioe);
+				}
+			}
+			else if (!this.jobQueue.isEmpty(JobType.GLOBAL))
+			{
+				try
+				{
+					this.log.info("Dispatching a global job to newly registered vehicle (" + vehicleId + ").");
+					this.scheduleJob(this.jobQueue.dequeue(JobType.GLOBAL), JobType.GLOBAL);
+				}
+				catch (IOException ioe)
+				{
+					String errorString = "Failed to schedule global job for newly registered vehicle (" + vehicleId + ").";
+					this.log.error(errorString, ioe);
+				}
 			}
 		}
 	}

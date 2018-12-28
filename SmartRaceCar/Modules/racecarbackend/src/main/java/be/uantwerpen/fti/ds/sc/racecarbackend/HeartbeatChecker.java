@@ -38,6 +38,7 @@ class HeartbeatChecker implements MQTTListener
 	private Configuration configuration;
 	private RESTUtils restUtils;
 	private MessageQueueClient messageQueueClient;
+	private MQTTUtils mqttUtils;
 	private Map<Long, Date> heartbeats;
 
 	private boolean isHeartbeat(String topic)
@@ -118,6 +119,7 @@ class HeartbeatChecker implements MQTTListener
 	{
 		if (this.heartbeats.containsKey(vehicleId))
 		{
+			this.log.info("Removing vehicle " + vehicleId + " from HeartbeatChecker.");
 			this.heartbeats.remove(vehicleId);
 		}
 		else
@@ -146,9 +148,19 @@ class HeartbeatChecker implements MQTTListener
 		{
 			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
 			this.messageQueueClient = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
-			this.messageQueueClient.subscribe(mqttAspect.getTopic() + MQTT_HEARTBEAT_POSTFIX);
 			this.messageQueueClient.subscribe(mqttAspect.getTopic() + MQTT_REGISTER_POSTFIX);
 			this.messageQueueClient.subscribe(mqttAspect.getTopic() + MQTT_DELETE_POSTFIX);
+		}
+		catch (Exception e)
+		{
+			this.log.error("Failed to start MessageQueueClient for HeartbeatChecker.", e);
+		}
+
+		try
+		{
+			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
+			this.mqttUtils = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
+			this.messageQueueClient.subscribe(mqttAspect.getTopic() + MQTT_HEARTBEAT_POSTFIX);
 		}
 		catch (Exception e)
 		{
@@ -164,6 +176,8 @@ class HeartbeatChecker implements MQTTListener
 	public void parseMQTT(String topic, String message)
 	{
 		long vehicleId = TopicUtils.getCarId(topic);
+
+		this.log.info("Received MQTT Message: \"" + topic + "\": \"" + message + "\"");
 
 		if (this.isHeartbeat(topic))
 		{

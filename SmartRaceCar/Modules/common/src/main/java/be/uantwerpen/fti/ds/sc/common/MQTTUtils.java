@@ -117,7 +117,18 @@ public class MQTTUtils implements MqttCallback, MessageQueueClient
 
 		try
 		{
-			logMessageBuilder.append(iMqttDeliveryToken.getMessage());
+			MqttMessage message = iMqttDeliveryToken.getMessage();
+
+			if(message != null)
+			{
+				logMessageBuilder.append(new String(message.getPayload()));
+				logMessageBuilder.append(", QoS: ");
+				logMessageBuilder.append(message.getQos());
+			}
+			else
+			{
+				logMessageBuilder.append("NO MESSAGE");
+			}
 		}
 		catch (MqttException me)
 		{
@@ -175,7 +186,7 @@ public class MQTTUtils implements MqttCallback, MessageQueueClient
 		MqttMessage mqttMessage = new MqttMessage(message.getBytes());
 		mqttMessage.setRetained(false);
 		mqttMessage.setQos(DEFAULT_QoS);
-		this.log.debug("Publishing. Topic:" + topic + " | Message:" + message + " | QoS: " + DEFAULT_QoS);
+		this.log.debug("Publishing. Topic:" + topic + " | Message:" + message + " | QoS: " + mqttMessage.getQos());
 		MqttTopic mqttTopic = this.client.getTopic(topic);
 
 		try
