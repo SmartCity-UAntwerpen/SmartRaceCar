@@ -12,15 +12,21 @@ public class DockerAspect extends Aspect
 	private static final String PREFIX = "Docker";
 
 	private static final String DOCKER_IMAGE_NAME_KEY = PREFIX + ".image";
-	private static final String DOCKER_HOST_VOLUME_KEY = PREFIX + ".volume.host";
-	private static final String[] KEYS = {DOCKER_IMAGE_NAME_KEY, DOCKER_HOST_VOLUME_KEY};
+	private static final String DOCKER_VOLUME_READONLY_KEY = PREFIX + ".volume.readonly";
+	private static final String DOCKER_VOLUME_HOST_KEY = PREFIX + ".volume.host";
+	private static final String DOCKER_VOLUME_CONTAINER_KEY = PREFIX + ".volume.container";
+	private static final String[] KEYS = {DOCKER_IMAGE_NAME_KEY, DOCKER_VOLUME_READONLY_KEY, DOCKER_VOLUME_HOST_KEY, DOCKER_VOLUME_CONTAINER_KEY};
 
 	private static final String DEFAULT_DOCKER_IMAGE_NAME = "astridvanneste/core_simkernel";
-	private static final String DEFAULT_DOCKER_VOLUME = "./docker/config";
+	private static final String DEFAULT_DOCKER_VOLUME_READONLY = "true";
+	private static final String DEFAULT_DOCKER_VOLUME_HOST = "./docker/config";
+	private static final String DEFAULT_DOCKER_VOLUME_CONTAINER = "/home/docker/config";
 
 	private Logger log;
+	private boolean readonly;
 	private String imageName;
-	private String volume;
+	private String hostVolume;
+	private String containerVolume;
 
 	public DockerAspect (File configFile) throws IOException
 	{
@@ -34,10 +40,14 @@ public class DockerAspect extends Aspect
 			this.checkKeys(properties, KEYS);
 
 			this.imageName = properties.getProperty(DOCKER_IMAGE_NAME_KEY, DEFAULT_DOCKER_IMAGE_NAME);
-			this.volume = properties.getProperty(DOCKER_HOST_VOLUME_KEY, DEFAULT_DOCKER_VOLUME);
+			this.hostVolume = properties.getProperty(DOCKER_VOLUME_HOST_KEY, DEFAULT_DOCKER_VOLUME_HOST);
+			this.containerVolume = properties.getProperty(DOCKER_VOLUME_CONTAINER_KEY, DEFAULT_DOCKER_VOLUME_CONTAINER);
+			this.readonly = Boolean.parseBoolean(properties.getProperty(DOCKER_VOLUME_READONLY_KEY, DEFAULT_DOCKER_VOLUME_READONLY));
 
 			this.log.debug(DOCKER_IMAGE_NAME_KEY + " = " + this.imageName);
-			this.log.debug(DOCKER_HOST_VOLUME_KEY + " = " + this.volume);
+			this.log.debug(DOCKER_VOLUME_HOST_KEY + " = " + this.hostVolume);
+			this.log.debug(DOCKER_VOLUME_CONTAINER_KEY + " = " + this.containerVolume);
+			this.log.debug(DOCKER_VOLUME_READONLY_KEY + " = " + this.readonly);
 		}
 		catch (IOException ioe)
 		{
@@ -46,19 +56,38 @@ public class DockerAspect extends Aspect
 		}
 	}
 
-	public DockerAspect (String imageName, String volume)
+	public DockerAspect (String imageName, String hostVolume, String containerVolume)
 	{
 		super(AspectType.DOCKER);
 		this.log = LoggerFactory.getLogger(RacecarAspect.class);
 
 		this.imageName = imageName;
-		this.volume = volume;
+		this.hostVolume = hostVolume;
+		this.containerVolume = containerVolume;
+
 		this.log.debug(DOCKER_IMAGE_NAME_KEY + " = " + this.imageName);
-		this.log.debug(DOCKER_HOST_VOLUME_KEY + " = " + this.volume);
+		this.log.debug(DOCKER_VOLUME_HOST_KEY + " = " + this.hostVolume);
+		this.log.debug(DOCKER_VOLUME_CONTAINER_KEY + " = " + this.containerVolume);
+		this.log.debug(DOCKER_VOLUME_READONLY_KEY + " = " + this.readonly);
 	}
 
 	public String getImageName()
 	{
 		return this.imageName;
+	}
+
+	public String getHostVolume()
+	{
+		return this.hostVolume;
+	}
+
+	public String getContainerVolume()
+	{
+		return this.containerVolume;
+	}
+
+	public boolean isReadonly()
+	{
+		return this.readonly;
 	}
 }
