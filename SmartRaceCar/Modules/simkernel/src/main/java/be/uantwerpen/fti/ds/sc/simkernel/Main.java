@@ -10,31 +10,27 @@ public class Main
      */
     public static void main(String[] args) throws Exception
     {
-        if (args.length != 3)
+        if (args.length != 2)
         {
-            System.out.println("Need 3 arguments to run. Required arguments: tcpclientport(int) tcpserverport(int) simulation ID (long)");
+            System.out.println("Need 2 arguments to run. Required arguments: simulation ID (long), property path (string)");
             //System.exit(0);
         }
         else
         {
-            int serverPort = 0;
-            int clientPort = 0;
+            String propertyPath = "./";
             long simID = 0;
 
-            if (!args[0].isEmpty())
-            {
-                serverPort = Integer.parseInt(args[0]);
-            }
-            if (!args[1].isEmpty())
-            {
-                clientPort = Integer.parseInt(args[1]);
-            }
-            if(!args[2].isEmpty())
+
+            if(!args[0].isEmpty())
 			{
-				simID = Long.parseLong(args[2]);
+				simID = Long.parseLong(args[0]);
+			}
+			if(!args[1].isEmpty())
+			{
+				propertyPath = args[1];
 			}
 
-            final SimKernel simKernel = new SimKernel(serverPort, clientPort, simID);
+            final SimKernel simKernel = new SimKernel(simID, propertyPath);
         }
     }
 }

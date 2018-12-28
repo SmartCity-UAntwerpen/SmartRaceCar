@@ -11,5 +11,6 @@ public enum AspectType
 	ROS,
 	TCP_SERVER,
 	NAVSTACK,
-	KERNEL
+	KERNEL,
+	TCP_CLIENT
 }

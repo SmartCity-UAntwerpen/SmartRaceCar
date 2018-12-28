@@ -1,30 +1,23 @@
 package be.uantwerpen.fti.ds.sc.core;
 
 import be.uantwerpen.fti.ds.sc.common.*;
-import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
-import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
-import be.uantwerpen.fti.ds.sc.common.configuration.KernelAspect;
-import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
+import be.uantwerpen.fti.ds.sc.common.configuration.*;
 import be.uantwerpen.fti.ds.sc.core.Communication.BackendCommunicator;
 import be.uantwerpen.fti.ds.sc.core.Communication.GeneralBackendCommunicator;
 import be.uantwerpen.fti.ds.sc.core.Communication.VehicleCommunicator;
 import be.uantwerpen.fti.ds.sc.core.Communication.GeneralVehicleCommunicator;
 import com.github.lalyos.jfiglet.FigletFont;
-import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.HashMap;
 
 /**
  * Module representing the high-level of a vehicle.
  */
 class Core implements TCPListener
 {
-	private static final String DEFAULT_CONFIGURATION_PATH = "./core.properties";
-	//private static final String DEFAULT_CONFIGURATION_PATH = "/home/ubuntu/Git/SmartRacecar/SmartRaceCar/release/core.properties";
-
+	private static final String CONFIG_NAME = "Core.properties";
 
 	// Help services
 	private Logger log;
@@ -50,10 +43,8 @@ class Core implements TCPListener
 	 * Module representing the high-level of a vehicle.
 	 *
 	 * @param startPoint Starting point of the vehicle. Defined by input arguments of Main method.
-	 * @param serverPort Port to listen for messages of SimKernel/Roskernel. Defined by input arguments of Main method.
-	 * @param clientPort Port to send messages to SimKernel/Roskernel. Defined by input arguments of Main method.
 	 */
-	public Core(long startPoint, int serverPort, int clientPort) throws InterruptedException, IOException
+	public Core(long startPoint, String propertyPath) throws InterruptedException, IOException
 	{
 		String asciiArt1 = FigletFont.convertOneLine("SmartCity");
 		System.out.println(asciiArt1);
@@ -64,16 +55,19 @@ class Core implements TCPListener
 		this.log = LoggerFactory.getLogger(Core.class);
 
 
-		this.loadConfig();
+		this.loadConfig(propertyPath);
 
-		this.log.info("Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
+		TcpClientAspect tcpClientAspect = (TcpClientAspect) this.configuration.get(AspectType.TCP_CLIENT);
+		TcpServerAspect tcpServerAspect = (TcpServerAspect) this.configuration.get(AspectType.TCP_SERVER);
+
+		this.log.info("Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + tcpServerAspect.getServerPort() + " | TCP Client Port:" + tcpClientAspect.getClientPort());
 
 		BackendCommunicator backendCommunicator = new BackendCommunicator(this.configuration);
 		this.backendCommunicator = backendCommunicator;
 
 		this.ID = this.backendCommunicator.register(startPoint);
 
-		VehicleCommunicator vehicleCommunicator = new VehicleCommunicator(this.configuration, this, clientPort, serverPort);
+		VehicleCommunicator vehicleCommunicator = new VehicleCommunicator(this.configuration, this, tcpClientAspect.getClientPort(), tcpServerAspect.getServerPort());
 		this.vehicleCommunicator = vehicleCommunicator;
 		this.vehicleCommunicator.start();
 
@@ -116,15 +110,17 @@ class Core implements TCPListener
 	 * Help method to load all configuration parameters from the properties file with the same name as the class.
 	 * If it's not found then it will use the default ones.
 	 */
-	private void loadConfig()
+	private void loadConfig(String propertyPath)
 	{
 		this.configuration = new Configuration();
 		this.configuration.add(AspectType.MQTT);
 		this.configuration.add(AspectType.RACECAR);
 		this.configuration.add(AspectType.NAVSTACK);
 		this.configuration.add(AspectType.KERNEL);
+		this.configuration.add(AspectType.TCP_CLIENT);
+		this.configuration.add(AspectType.TCP_SERVER);
 
-		this.configuration.load(DEFAULT_CONFIGURATION_PATH);
+		this.configuration.load(propertyPath + CONFIG_NAME);
 	}
 
 	/**

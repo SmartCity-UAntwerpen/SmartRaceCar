@@ -13,27 +13,20 @@ public class Main
 	 */
 	public static void main(String[] args) throws IOException, InterruptedException
 	{
-		int clientPort = 5005;
-		int serverPort = 5006;
+		String propertyPath = "./";
 		long startPoint = 0;
 
-		if (args.length == 0)
+		if (args.length != 2)
 		{
-			System.out.println("Need at least 1 or 3 argument to run. Possible arguments: startpoint(int)(needed!) tcpclientport(int) tcpserverport(int)");
+			System.out.println("Need 2 arguments to run. Required arguments: startpoint(int), property path (string)");
 			System.exit(0);
-		} else if (args.length == 1)
-		{
-			if (!args[0].isEmpty()) startPoint = Long.parseLong(args[0]);
-		} else if (args.length == 2)
-		{
-			System.out.println("Need at least 1 or 3 argument to run. Possible arguments: startpoint(int)(needed!) tcpclientport(int) tcpserverport(int)");
-			System.exit(0);
-		} else
-		{
-			if (!args[0].isEmpty()) startPoint = Long.parseLong(args[0]);
-			if (!args[1].isEmpty()) serverPort = Integer.parseInt(args[1]);
-			if (!args[2].isEmpty()) clientPort = Integer.parseInt(args[2]);
 		}
-		final Core core = new Core(startPoint, serverPort, clientPort);
+		else
+		{
+			if (!args[0].isEmpty()) startPoint = Long.parseLong(args[0]);
+			if (!args[1].isEmpty()) propertyPath = args[1];
+		}
+
+		final Core core = new Core(startPoint, propertyPath);
 	}
 }

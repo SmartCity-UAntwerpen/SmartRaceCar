@@ -1,9 +1,7 @@
 package be.uantwerpen.fti.ds.sc.simkernel;
 
 import be.uantwerpen.fti.ds.sc.common.*;
-import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
-import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
-import be.uantwerpen.fti.ds.sc.common.configuration.RosAspect;
+import be.uantwerpen.fti.ds.sc.common.configuration.*;
 import be.uantwerpen.fti.ds.sc.simkernel.Communication.*;
 import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
@@ -20,7 +18,7 @@ import java.util.List;
  */
 class SimKernel implements MessageListener
 {
-	private static final String DEFAULT_CONFIG_PATH = "Simkernel.properties";
+	private static final String CONFIG_NAME = "Simkernel.properties";
 
 	private Configuration configuration;
 
@@ -41,18 +39,18 @@ class SimKernel implements MessageListener
 	/**
 	 * Module that simulates the low level ROS element of the F1 car. It simulates all it's aspects.
 	 *
-	 * @param serverPort Port to listen for messages of  Core. Defined by input arguments of main method.
-	 * @param clientPort Port to send messages to Core. Defined by input arguments of main method.
 	 */
-	public SimKernel(int serverPort, int clientPort, long simID) throws InterruptedException, IOException
+	public SimKernel(long simID, String propertyPath) throws InterruptedException, IOException
 	{
 		this.log = LoggerFactory.getLogger(SimKernel.class);
 
-		this.loadConfig();
+		this.loadConfig(propertyPath);
 
+		TcpServerAspect tcpServerAspect = (TcpServerAspect) this.configuration.get(AspectType.TCP_SERVER);
+		TcpClientAspect tcpClientAspect = (TcpClientAspect) this.configuration.get(AspectType.TCP_CLIENT);
 
 		this.ROS = new ROSCommunicator(this.configuration);
-		this.core = new CoreCommunicator(serverPort, clientPort, this);
+		this.core = new CoreCommunicator(tcpServerAspect.getServerPort(), tcpClientAspect.getClientPort(), this);
 		this.core.start();
 		this.simdeployer = new SimDeployerCommunicator(this.configuration, simID, this);
 
@@ -60,7 +58,7 @@ class SimKernel implements MessageListener
 
 		while (!this.connected)
 		{
-			this.log.warn("Waiting for connection with vehicle Core on port " + serverPort);
+			this.log.warn("Waiting for connection with vehicle Core on port " + tcpServerAspect.getServerPort());
 			Thread.sleep(1000);
 		}
 	}
@@ -69,12 +67,14 @@ class SimKernel implements MessageListener
 	 * Help method to load all configuration parameters from the properties file with the same name as the class.
 	 * If it's not found then it will use the default ones.
 	 */
-	private void loadConfig()
+	private void loadConfig(String propertyPath)
 	{
 		this.configuration = new Configuration();
-		configuration.add(AspectType.MQTT);
-		configuration.add(AspectType.ROS);
-		configuration.load(SimKernel.DEFAULT_CONFIG_PATH);
+		this.configuration.add(AspectType.MQTT);
+		this.configuration.add(AspectType.ROS);
+		this.configuration.add(AspectType.TCP_SERVER);
+		this.configuration.add(AspectType.TCP_CLIENT);
+		this.configuration.load(propertyPath + SimKernel.CONFIG_NAME);
 	}
 
 	/**
