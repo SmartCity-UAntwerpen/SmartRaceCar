@@ -10,6 +10,7 @@ public class NameOption extends DockerOption
 	public NameOption(String containerName)
 	{
 		super(Option.NAME);
+		this.containerName = containerName;
 	}
 
 	@Override

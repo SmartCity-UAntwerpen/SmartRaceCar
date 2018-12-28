@@ -71,7 +71,7 @@ public class Container implements VirtualMachine, MQTTListener
 		// Build Docker command
 		DockerCommandBuilder builder = new DockerCommandBuilder(CommandType.RUN);
 		builder.setImageName(this.imageName);
-		builder.addOption(new NameOption(dockerAspect.getImageName()));                                                                 // Add name option so we can easily track/stop the container
+		builder.addOption(new NameOption(this.containerName));                                                                          // Add name option so we can easily track/stop the container
 		builder.addOption(new MountOption(dockerAspect.isReadonly(), dockerAspect.getHostVolume(), dockerAspect.getContainerVolume())); // Add Mount option to make sure the container has a config file
 
 		List<String> commandLine = new ArrayList<>();
@@ -89,6 +89,16 @@ public class Container implements VirtualMachine, MQTTListener
 
 		processBuilder = processBuilder.redirectOutput(logFile);
 		processBuilder = processBuilder.redirectError(logFile);
+
+		StringBuilder debugBuilder = new StringBuilder();
+
+		for (String arg: commandLine)
+		{
+			debugBuilder.append(arg);
+			debugBuilder.append(' ');
+		}
+
+		this.log.debug(debugBuilder.toString());
 
 		this.log.info("Running Docker Container " + this.imageName + ", with Simulation ID " + this.simulationId);
 

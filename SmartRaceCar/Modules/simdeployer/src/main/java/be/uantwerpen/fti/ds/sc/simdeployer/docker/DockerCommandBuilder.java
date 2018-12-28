@@ -6,6 +6,8 @@ import java.util.List;
 
 public class DockerCommandBuilder
 {
+	private static final String DOCKER_COMMAND = "docker";
+
 	private CommandType commandType;
 	private String imageName;
 	private List<DockerOption> options;
@@ -32,6 +34,7 @@ public class DockerCommandBuilder
 	public List<String> toStringList()
 	{
 		List<String> list = new ArrayList<>();
+		list.add(DOCKER_COMMAND);
 		list.add(this.commandType.toString());
 
 		for (DockerOption option: this.options)
