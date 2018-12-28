@@ -3,11 +3,10 @@
 echo $@
 
 START_POINT=$1
-PORT_1=$2
-PORT_2=$3
-SIM_ID=$4
+SIM_ID=$2
+PROPERTY_PATH=$3
 
 cd /home/docker
 
-nohup java -jar SimKernel.jar ${PORT_2} ${PORT_1} ${SIM_ID} &
-java -jar Core.jar ${START_POINT} ${PORT_1} ${PORT_2}
+nohup java -jar SimKernel.jar ${SIM_ID} ${PROPERTY_PATH} &
+java -jar Core.jar ${START_POINT} ${PROPERTY_PATH}

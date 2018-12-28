@@ -23,6 +23,5 @@ RUN chmod +x /home/docker/run.sh
 
 ENTRYPOINT ["/home/docker/run.sh"]
 CMD ["46"]
-CMD ["5005"]
-CMD ["5006"]
 CMD ["0"]
+CMD ["./"]
