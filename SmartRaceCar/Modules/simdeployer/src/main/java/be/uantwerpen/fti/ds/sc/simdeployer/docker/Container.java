@@ -5,6 +5,7 @@ import be.uantwerpen.fti.ds.sc.common.MQTTUtils;
 import be.uantwerpen.fti.ds.sc.common.Messages;
 import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
 import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
+import be.uantwerpen.fti.ds.sc.common.configuration.DockerAspect;
 import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
 import be.uantwerpen.fti.ds.sc.simdeployer.VirtualMachine;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -21,13 +22,6 @@ import java.util.regex.Pattern;
 
 public class Container implements VirtualMachine, MQTTListener
 {
-	private static final String DOCKER_COMMAND = "docker";
-	private static final String DOCKER_RUN = "run";
-	private static final String DOCKER_STOP = "stop";
-	private static final String DOCKER_REMOVE = "rm";
-
-	private static final String DOCKER_NAME_OPTION = "--name";
-
 	private static final String DOCKER_CONTAINER_NAME_REGEX = "[a-zA-Z0-9][a-zA-Z0-9_.-]+";
 
 	private Logger log;
@@ -42,7 +36,7 @@ public class Container implements VirtualMachine, MQTTListener
 	{
 		this.log = LoggerFactory.getLogger(Container.class);
 		this.configuration = configuration;
-		this.log.info("Created Docker Container " + imageName + ", with Simulation ID " + simulationId);
+		this.log.info("Creating Docker Container " + imageName + ", with Simulation ID " + simulationId);
 		this.simulationId = simulationId;
 		this.imageName = imageName;
 
@@ -72,13 +66,17 @@ public class Container implements VirtualMachine, MQTTListener
 	@Override
 	public void run(List<String> args) throws IOException
 	{
+		DockerAspect dockerAspect = (DockerAspect) this.configuration.get(AspectType.DOCKER);
+
+		// Build Docker command
+		DockerCommandBuilder builder = new DockerCommandBuilder(CommandType.RUN);
+		builder.setImageName(this.imageName);
+		builder.addOption(new NameOption(dockerAspect.getImageName()));                                                                 // Add name option so we can easily track/stop the container
+		builder.addOption(new MountOption(dockerAspect.isReadonly(), dockerAspect.getHostVolume(), dockerAspect.getContainerVolume())); // Add Mount option to make sure the container has a config file
+
 		List<String> commandLine = new ArrayList<>();
-		commandLine.add(DOCKER_COMMAND);
-		commandLine.add(DOCKER_RUN);
-		commandLine.add(DOCKER_NAME_OPTION);
-		commandLine.add(this.containerName);
-		commandLine.add(this.imageName);
-		commandLine.addAll(args);
+		commandLine.addAll(builder.toStringList());  // Docker command
+		commandLine.addAll(args);                    // Arguments destined for Docker container
 
 		ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
 
@@ -117,10 +115,11 @@ public class Container implements VirtualMachine, MQTTListener
 		}
 		catch (MqttException me)
 		{
+			DockerCommandBuilder builder = new DockerCommandBuilder(CommandType.STOP);
+
 			this.log.error("Failed to send Kill command to simulation over MQTT. Stopping container manually.", me);
 			List<String> commandLine = new ArrayList<>();
-			commandLine.add(DOCKER_COMMAND);
-			commandLine.add(DOCKER_STOP);
+			commandLine.addAll(builder.toStringList());
 			commandLine.add(this.containerName);
 
 			ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
@@ -139,10 +138,11 @@ public class Container implements VirtualMachine, MQTTListener
 
 		int returnValue = this.simulationProcess.waitFor();
 
+		DockerCommandBuilder builder = new DockerCommandBuilder(CommandType.REMOVE);
+		builder.addOption(new NameOption(this.containerName));
+
 		List<String> commandLine = new ArrayList<>();
-		commandLine.add(DOCKER_COMMAND);
-		commandLine.add(DOCKER_REMOVE);
-		commandLine.add(this.containerName);
+		commandLine.addAll(builder.toStringList());
 
 		this.log.info("Removing Docker Container " + this.imageName + ", with Simulation ID " + this.simulationId);
 

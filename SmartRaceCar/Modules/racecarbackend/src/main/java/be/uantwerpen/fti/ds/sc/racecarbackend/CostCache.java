@@ -86,10 +86,6 @@ public class CostCache
 		RosAspect rosAspect = (RosAspect) this.configuration.get(AspectType.ROS);
 		if (!rosAspect.isRosDebug())
 		{
-			RESTUtils ROSAPI = new RESTUtils(rosAspect.getRosServerUrl());
-
-			Type costType = new TypeToken<Cost>(){}.getType();
-
 			Point startPointTmp = this.waypointRepository.getCoordinates(startId);
 			Point endPointTmp = this.waypointRepository.getCoordinates(endId);
 
@@ -105,8 +101,12 @@ public class CostCache
 
 			try
 			{
+				RESTUtils ROSAPI = new RESTUtils(rosAspect.getRosServerUrl());
+				Type costType = new TypeToken<Cost>(){}.getType();
+
 				String costString = ROSAPI.post("calcWeight", jsonString, MediaType.APPLICATION_JSON_TYPE);
 				Cost costObj = (Cost) JSONUtils.getObjectWithKeyWord(costString, costType);
+
 				cost = costObj.getWeight();
 			}
 			catch (IOException ioe)
