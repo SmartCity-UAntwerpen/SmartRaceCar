@@ -111,50 +111,19 @@ public class MQTTUtils implements MqttCallback, MessageQueueClient
 	@Override
 	public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken)
 	{
-		StringBuilder logMessageBuilder = new StringBuilder();
+		// We iMqttDeliveryToken.getMessage() contains the message associated with this token
+		// This message will be null if the message has been delivered.
+		// This prevents us from printing more detailed debug information
+		// See: https://www.eclipse.org/paho/files/javadoc/org/eclipse/paho/client/mqttv3/IMqttDeliveryToken.html#getMessage--
 
-		logMessageBuilder.append("Published \"");
-
-		try
+		if (iMqttDeliveryToken.isComplete())
 		{
-			MqttMessage message = iMqttDeliveryToken.getMessage();
-
-			if(message != null)
-			{
-				logMessageBuilder.append(new String(message.getPayload()));
-				logMessageBuilder.append(", QoS: ");
-				logMessageBuilder.append(message.getQos());
-			}
-			else
-			{
-				logMessageBuilder.append("NO MESSAGE");
-			}
+			this.log.debug("Message delivery complete.");
 		}
-		catch (MqttException me)
+		else
 		{
-			logMessageBuilder.append("UNKNOWN MESSAGE");
+			this.log.debug("Message delivery not complete.");
 		}
-
-		logMessageBuilder.append("\"");
-
-		String[] topics = iMqttDeliveryToken.getTopics();
-
-		if (topics != null)
-		{
-			logMessageBuilder.append(" to ");
-
-			for (int i = 0; i < topics.length; ++i)
-			{
-				logMessageBuilder.append(topics[i]);
-
-				if ((i + 1) != topics.length)
-				{
-					logMessageBuilder.append(", ");
-				}
-			}
-		}
-
-		this.log.debug(logMessageBuilder.toString());
 	}
 
 	/**
