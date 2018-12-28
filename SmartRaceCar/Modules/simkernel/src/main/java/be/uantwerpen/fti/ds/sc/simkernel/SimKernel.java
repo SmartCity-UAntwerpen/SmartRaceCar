@@ -94,10 +94,11 @@ class SimKernel implements MessageListener
 			switch (JSONUtils.getFirst(message))
 			{
 				case Messages.CORE.COST_TIMING:
-					Type typeOfPointss = new TypeToken<ArrayList<Point>>()
+					Type typeOfPoints = new TypeToken<ArrayList<Point>>()
 					{
 					}.getType();
-					calculateTiming((ArrayList<Point>) JSONUtils.getObjectWithKeyWord(message, typeOfPointss));
+					this.log.debug("Cost request: " + message);
+					calculateTiming((ArrayList<Point>) JSONUtils.getObjectWithKeyWord(message, typeOfPoints));
 					break;
 
 				case Messages.CORE.CONNECT:
@@ -171,7 +172,8 @@ class SimKernel implements MessageListener
 			List<Point> points = new ArrayList<>();
 			points.add(this.currentPosition);
 			points.add(this.currentPosition);
-			points.add(nextPoint);
+			Point next = new Point(nextPoint.getX(), nextPoint.getY(), nextPoint.getZ(), nextPoint.getW());
+			points.add(next);
 			Type typeOfCost = new TypeToken<Cost>()
 			{
 			}.getType();

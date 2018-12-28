@@ -345,6 +345,7 @@ public class Navigator implements MQTTListener
 
 		List<Point> points = new ArrayList<>();
 		points.add(this.wayPoints.get(wayPointIDs[0]));
+		points.add(this.wayPoints.get(wayPointIDs[0]));
 		points.add(this.wayPoints.get(wayPointIDs[1]));
 
 		KernelAspect kernelAspect = (KernelAspect) this.configuration.get(AspectType.KERNEL);
