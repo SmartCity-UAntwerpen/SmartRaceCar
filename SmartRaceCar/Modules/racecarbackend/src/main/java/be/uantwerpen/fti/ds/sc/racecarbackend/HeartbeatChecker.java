@@ -177,6 +177,8 @@ class HeartbeatChecker implements MQTTListener
 	{
 		long vehicleId = TopicUtils.getCarId(topic);
 
+		this.log.info("Received MQTT Message: \"" + topic + "\": \"" + message + "\"");
+
 		if (this.isHeartbeat(topic))
 		{
 			this.log.info("Received Heartbeat from " + vehicleId);
