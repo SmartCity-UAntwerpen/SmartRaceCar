@@ -1,10 +1,7 @@
 package be.uantwerpen.fti.ds.sc.core;
 
 import be.uantwerpen.fti.ds.sc.common.*;
-import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
-import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
-import be.uantwerpen.fti.ds.sc.common.configuration.KernelAspect;
-import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
+import be.uantwerpen.fti.ds.sc.common.configuration.*;
 import be.uantwerpen.fti.ds.sc.core.Communication.BackendCommunicator;
 import be.uantwerpen.fti.ds.sc.core.Communication.GeneralBackendCommunicator;
 import be.uantwerpen.fti.ds.sc.core.Communication.VehicleCommunicator;
@@ -50,10 +47,8 @@ class Core implements TCPListener
 	 * Module representing the high-level of a vehicle.
 	 *
 	 * @param startPoint Starting point of the vehicle. Defined by input arguments of Main method.
-	 * @param serverPort Port to listen for messages of SimKernel/Roskernel. Defined by input arguments of Main method.
-	 * @param clientPort Port to send messages to SimKernel/Roskernel. Defined by input arguments of Main method.
 	 */
-	public Core(long startPoint, int serverPort, int clientPort) throws InterruptedException, IOException
+	public Core(long startPoint, String propertyPath) throws InterruptedException, IOException
 	{
 		String asciiArt1 = FigletFont.convertOneLine("SmartCity");
 		System.out.println(asciiArt1);
@@ -64,16 +59,18 @@ class Core implements TCPListener
 		this.log = LoggerFactory.getLogger(Core.class);
 
 
-		this.loadConfig();
+		this.loadConfig(propertyPath);
 
-		this.log.info("Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + serverPort + " | TCP Client Port:" + clientPort);
+		PortAspect portAspect = (PortAspect) this.configuration.get(AspectType.PORT);
+
+		this.log.info("Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + portAspect.getServerPort() + " | TCP Client Port:" + portAspect.getClientPort());
 
 		BackendCommunicator backendCommunicator = new BackendCommunicator(this.configuration);
 		this.backendCommunicator = backendCommunicator;
 
 		this.ID = this.backendCommunicator.register(startPoint);
 
-		VehicleCommunicator vehicleCommunicator = new VehicleCommunicator(this.configuration, this, clientPort, serverPort);
+		VehicleCommunicator vehicleCommunicator = new VehicleCommunicator(this.configuration, this, portAspect.getClientPort(), portAspect.getServerPort());
 		this.vehicleCommunicator = vehicleCommunicator;
 		this.vehicleCommunicator.start();
 
@@ -116,15 +113,16 @@ class Core implements TCPListener
 	 * Help method to load all configuration parameters from the properties file with the same name as the class.
 	 * If it's not found then it will use the default ones.
 	 */
-	private void loadConfig()
+	private void loadConfig(String propertyPath)
 	{
 		this.configuration = new Configuration();
 		this.configuration.add(AspectType.MQTT);
 		this.configuration.add(AspectType.RACECAR);
 		this.configuration.add(AspectType.NAVSTACK);
 		this.configuration.add(AspectType.KERNEL);
+		this.configuration.add(AspectType.PORT);
 
-		this.configuration.load(DEFAULT_CONFIGURATION_PATH);
+		this.configuration.load(propertyPath);
 	}
 
 	/**
