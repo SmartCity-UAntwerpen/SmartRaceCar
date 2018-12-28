@@ -3,7 +3,6 @@ import be.uantwerpen.fti.ds.sc.common.*;
 import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
 import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
 import be.uantwerpen.fti.ds.sc.common.configuration.KernelAspect;
-import be.uantwerpen.fti.ds.sc.core.CoreParameters;
 import be.uantwerpen.fti.ds.sc.core.Drive;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
