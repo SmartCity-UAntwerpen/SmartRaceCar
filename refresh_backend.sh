@@ -27,8 +27,8 @@ START_COMMAND="java -jar $JAR_FILENAME"
 rm ${JAR_FILENAME} ${PROPERTIES_FILENAME}
 
 #	Download new JAR and properties
-wget -O ${JAR_FILENAME} ${JAR_LOCATION}
-wget -O ${PROPERTIES_FILENAME} ${PROPERTIES_LOCATION}
+wget --no-cache -O ${JAR_FILENAME} ${JAR_LOCATION}
+wget --no-cache -O ${PROPERTIES_FILENAME} ${PROPERTIES_LOCATION}
 
 #	Find the Process ID of the old JAR
 OLD_PID=$( pgrep -f "${START_COMMAND}" )
