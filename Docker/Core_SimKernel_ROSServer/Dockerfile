@@ -1,5 +1,6 @@
 FROM astridvanneste/ros_indigo
 
+# Initialization
 ADD init.sh /home/docker/init.sh
 ADD init_python.sh /home/docker/init_python.sh
 
@@ -12,6 +13,23 @@ RUN svn checkout https://github.com/SmartCity-UAntwerpen/SmartRaceCar/trunk/ROS 
 RUN /home/docker/init.sh
 RUN /home/docker/init_python.sh
 
+# Variables
+ENV CORE=https://github.com/SmartCity-UAntwerpen/SmartRaceCar/raw/master/SmartRaceCar/Modules/core/release/core.jar
+ENV SIMKERNEL=https://github.com/SmartCity-UAntwerpen/SmartRaceCar/raw/master/SmartRaceCar/Modules/simkernel/release/simkernel.jar
+
+# Adding Core.jar and SimKernel.jar
+
+ADD $CORE /home/docker/Core.jar
+ADD $SIMKERNEL /home/docker/SimKernel.jar
+
+ADD Simkernel.properties /home/docker/Simkernel.properties
+ADD core.properties /home/docker/core.properties
+ADD maps.xml /home/docker/maps/maps.xml
+
 RUN chmod +x /home/docker/run.sh
 
 ENTRYPOINT ["/home/docker/run.sh"]
+CMD ["46"]
+CMD ["5005"]
+CMD ["5006"]
+CMD ["0"]
