@@ -117,11 +117,11 @@ public class MQTTUtils implements MqttCallback, MessageQueueClient
 
 		try
 		{
-			byte[] payload = iMqttDeliveryToken.getMessage().getPayload();
+			MqttMessage message = iMqttDeliveryToken.getMessage();
 
-			if(payload != null)
+			if(message != null)
 			{
-				logMessageBuilder.append(new String(payload));
+				logMessageBuilder.append(new String(message.getPayload()));
 			}
 			else
 			{
