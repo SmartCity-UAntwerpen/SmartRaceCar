@@ -132,6 +132,16 @@ public class Container implements VirtualMachine, MQTTListener
 			commandLine.addAll(builder.toStringList());
 			commandLine.add(this.containerName);
 
+			StringBuilder debugBuilder = new StringBuilder();
+
+			for (String arg: commandLine)
+			{
+				debugBuilder.append(arg);
+				debugBuilder.append(' ');
+			}
+
+			this.log.debug(debugBuilder.toString());
+
 			ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
 
 			try
@@ -153,6 +163,16 @@ public class Container implements VirtualMachine, MQTTListener
 
 		List<String> commandLine = new ArrayList<>();
 		commandLine.addAll(builder.toStringList());
+
+		StringBuilder debugBuilder = new StringBuilder();
+
+		for (String arg: commandLine)
+		{
+			debugBuilder.append(arg);
+			debugBuilder.append(' ');
+		}
+
+		this.log.debug(debugBuilder.toString());
 
 		this.log.info("Removing Docker Container " + this.imageName + ", with Simulation ID " + this.simulationId);
 
