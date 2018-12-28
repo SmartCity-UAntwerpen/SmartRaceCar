@@ -12,5 +12,5 @@ public enum AspectType
 	TCP_SERVER,
 	NAVSTACK,
 	KERNEL,
-	PORT
+	TCP_CLIENT
 }

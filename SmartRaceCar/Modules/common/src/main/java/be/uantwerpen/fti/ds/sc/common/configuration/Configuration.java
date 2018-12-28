@@ -76,16 +76,16 @@ public class Configuration
 						this.aspects.put(type, new TcpServerAspect(configFile));
 						break;
 
+					case TCP_CLIENT:
+						this.aspects.put(type, new TcpClientAspect(configFile));
+						break;
+
 					case NAVSTACK:
 						this.aspects.put(type, new NavStackAspect(configFile));
 						break;
 
 					case KERNEL:
 						this.aspects.put(type, new KernelAspect(configFile));
-						break;
-
-					case PORT:
-						this.aspects.put(type, new PortAspect(configFile));
 						break;
 
 					default:

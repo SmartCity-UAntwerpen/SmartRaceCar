@@ -179,9 +179,9 @@ public class CommandLineInterface
 
 	private static void usage()
 	{
-		System.out.println("java -jar " + JAR_NAME + " [REMOTE HOST] [REMOTE TCP PORT] [SCRIPT FILE]");
+		System.out.println("java -jar " + JAR_NAME + " [REMOTE HOST] [REMOTE TCP TCP_CLIENT] [SCRIPT FILE]");
 		System.out.println("\tREMOTE HOST\t\tThe host the SimDeployer is running on.");
-		System.out.println("\tREMOTE TCP PORT\t\tThe port the SimDeployer is running on.");
+		System.out.println("\tREMOTE TCP TCP_CLIENT\t\tThe port the SimDeployer is running on.");
 		System.out.println("\tSCRIPT FILE\t\tOptional. A script to be used instead of an interactive command line.");
 	}
 

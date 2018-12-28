@@ -72,9 +72,9 @@ class SimKernel implements MessageListener
 	private void loadConfig()
 	{
 		this.configuration = new Configuration();
-		configuration.add(AspectType.MQTT);
-		configuration.add(AspectType.ROS);
-		configuration.load(SimKernel.DEFAULT_CONFIG_PATH);
+		this.configuration.add(AspectType.MQTT);
+		this.configuration.add(AspectType.ROS);
+		this.configuration.load(SimKernel.DEFAULT_CONFIG_PATH);
 	}
 
 	/**

@@ -7,12 +7,10 @@ import be.uantwerpen.fti.ds.sc.core.Communication.GeneralBackendCommunicator;
 import be.uantwerpen.fti.ds.sc.core.Communication.VehicleCommunicator;
 import be.uantwerpen.fti.ds.sc.core.Communication.GeneralVehicleCommunicator;
 import com.github.lalyos.jfiglet.FigletFont;
-import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.HashMap;
 
 /**
  * Module representing the high-level of a vehicle.
@@ -61,16 +59,17 @@ class Core implements TCPListener
 
 		this.loadConfig(propertyPath);
 
-		PortAspect portAspect = (PortAspect) this.configuration.get(AspectType.PORT);
+		TcpClientAspect tcpClientAspect = (TcpClientAspect) this.configuration.get(AspectType.TCP_CLIENT);
+		TcpServerAspect tcpServerAspect = (TcpServerAspect) this.configuration.get(AspectType.TCP_SERVER);
 
-		this.log.info("Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + portAspect.getServerPort() + " | TCP Client Port:" + portAspect.getClientPort());
+		this.log.info("Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + tcpServerAspect.getServerPort() + " | TCP Client Port:" + tcpClientAspect.getClientPort());
 
 		BackendCommunicator backendCommunicator = new BackendCommunicator(this.configuration);
 		this.backendCommunicator = backendCommunicator;
 
 		this.ID = this.backendCommunicator.register(startPoint);
 
-		VehicleCommunicator vehicleCommunicator = new VehicleCommunicator(this.configuration, this, portAspect.getClientPort(), portAspect.getServerPort());
+		VehicleCommunicator vehicleCommunicator = new VehicleCommunicator(this.configuration, this, tcpClientAspect.getClientPort(), tcpServerAspect.getServerPort());
 		this.vehicleCommunicator = vehicleCommunicator;
 		this.vehicleCommunicator.start();
 
@@ -120,7 +119,8 @@ class Core implements TCPListener
 		this.configuration.add(AspectType.RACECAR);
 		this.configuration.add(AspectType.NAVSTACK);
 		this.configuration.add(AspectType.KERNEL);
-		this.configuration.add(AspectType.PORT);
+		this.configuration.add(AspectType.TCP_CLIENT);
+		this.configuration.add(AspectType.TCP_SERVER);
 
 		this.configuration.load(propertyPath);
 	}
