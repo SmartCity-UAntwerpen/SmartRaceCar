@@ -150,7 +150,7 @@ public class MQTTUtils implements MqttCallback, MessageQueueClient
 	 * @param topic   The topic to publish on.
 	 * @param message The message to be published.
 	 */
-	public void publish(String topic, String message) throws MqttException
+	public MQTTToken publish(String topic, String message) throws MqttException
 	{
 		MqttMessage mqttMessage = new MqttMessage(message.getBytes());
 		mqttMessage.setRetained(false);
@@ -160,7 +160,7 @@ public class MQTTUtils implements MqttCallback, MessageQueueClient
 
 		try
 		{
-			mqttTopic.publish(mqttMessage);
+			return new MQTTToken(message, mqttTopic.publish(mqttMessage));
 		}
 		catch (MqttException me)
 		{

@@ -20,9 +20,9 @@ import java.util.*;
 import java.util.Map;
 
 @Controller
-public class VehicleManager implements MQTTListener, VehicleRepository
+public class VehicleManager implements MQTTListener, VehicleRepository, OccupationRepository
 {
-	private static final String TEST_ENDPOINT = "/carmanager/test";
+	private static final long MQTT_DELIVERY_TIMEOUT = 30;
 
 	private Logger log;
 	private Configuration configuration;
@@ -30,7 +30,7 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 	private WaypointValidator waypointValidator;
 	private Queue<Long> unusedIds;                      // This set contains all IDs of vehicles that were assigned once and then deleted
 														// its a simple way to reuse IDs.
-	private Map<Long, Vehicle> vehicles;
+	private Map<Long, Boolean> occupation;
 
 	/**
 	 * Check if a vehicle with the given ID exists.
@@ -39,7 +39,7 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 	 */
 	private boolean exists(long vehicleId)
 	{
-		return this.vehicles.containsKey(vehicleId);
+		return this.occupation.containsKey(vehicleId);
 	}
 
 	@Autowired
@@ -62,38 +62,22 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 
 		this.waypointValidator = waypointValidator;
 
-		this.vehicles = new HashMap<>();
+		this.occupation = new HashMap<>();
 		this.unusedIds = new LinkedList<>();
 
 		this.log.info("Initialized Vehicle Manager.");
 	}
 
 	@Override
-	public Vehicle get(long vehicleId)
-	{
-		if (this.exists(vehicleId))
-		{
-			return this.vehicles.get(vehicleId);
-		}
-		else
-		{
-			String errorString = "Tried to access vehicle that doesn't exist! (Id: " + vehicleId + ")";
-			IndexOutOfBoundsException exception = new IndexOutOfBoundsException(errorString);
-			this.log.error(errorString, exception);
-			throw exception;
-		}
-	}
-
-	@Override
 	public List<Long> getVehicleIds()
 	{
-		return new ArrayList<>(this.vehicles.keySet());
+		return new ArrayList<>(this.occupation.keySet());
 	}
 
 	@Override
 	public int getNumVehicles()
 	{
-		return this.vehicles.size();
+		return this.occupation.size();
 	}
 
 	/**
@@ -104,27 +88,27 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 	 */
 	public void setOccupied(long vehicleId, boolean occupied)
 	{
-		if (!this.vehicles.containsKey(vehicleId))
+		if (!this.occupation.containsKey(vehicleId))
 		{
 			String errorString = "Tried to set non-existent vehicle's occupation to " + occupied + ", vehicle ID: " + vehicleId;
 			this.log.error(errorString);
 			throw new NoSuchElementException(errorString);
 		}
 
-		this.vehicles.get(vehicleId).setOccupied(occupied);
+		this.occupation.put(vehicleId, occupied);
 	}
 
 	@Override
 	public boolean isOccupied(long vehicleId) throws NoSuchElementException
 	{
-		if (!this.vehicles.containsKey(vehicleId))
+		if (!this.occupation.containsKey(vehicleId))
 		{
 			String errorString = "Tried to check occupancy of vehicle " + vehicleId + ", but vehicle doesn't exist!";
 			this.log.error(errorString);
 			throw new NoSuchElementException(errorString);
 		}
 
-		return this.vehicles.get(vehicleId).isOccupied();
+		return this.occupation.get(vehicleId);
 	}
 
 	/*
@@ -135,9 +119,9 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 	@RequestMapping(value="/carmanager/delete/{vehicleId}", method=RequestMethod.GET)
 	public @ResponseBody ResponseEntity<String> delete(@PathVariable long vehicleId)
 	{
-		if (this.vehicles.containsKey(vehicleId))
+		if (this.occupation.containsKey(vehicleId))
 		{
-			this.vehicles.remove(vehicleId);
+			this.occupation.remove(vehicleId);
 
 			try
 			{
@@ -181,33 +165,29 @@ public class VehicleManager implements MQTTListener, VehicleRepository
 		}
 		else
 		{
-			newVehicleId = this.vehicles.size();
+			newVehicleId = this.occupation.size();
 		}
 
 		try
 		{
 			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
-			this.messageQueueClient.publish(mqttAspect.getTopic() + "register/" + newVehicleId, Long.toString(startWaypoint));
+			MessageToken token = this.messageQueueClient.publish(mqttAspect.getTopic() + "register/" + newVehicleId, Long.toString(startWaypoint));
+			token.waitForDelivery(MQTT_DELIVERY_TIMEOUT);
+			this.messageQueueClient.publish(mqttAspect.getTopic() + "registered/" + newVehicleId, "done");
 		}
 		catch (Exception e)
 		{
 			this.log.error("Failed to publish vehicle registration.", e);
 		}
 
-		this.vehicles.put(newVehicleId, new Vehicle(newVehicleId));
+		this.occupation.put(newVehicleId, false);
 
 		this.log.info("Registered new vehicle (" + newVehicleId + "), Current Waypoint: " + startWaypoint);
 
 		return new ResponseEntity<>(Long.toString(newVehicleId), HttpStatus.OK);
 	}
 
-	@RequestMapping(value="/carmanager/getVehicles", method=RequestMethod.GET, produces=MediaType.APPLICATION_JSON)
-	public @ResponseBody ResponseEntity<String> getVehicles()
-	{
-		return new ResponseEntity<>(JSONUtils.objectToJSONStringWithKeyWord("vehicles", this.vehicles), HttpStatus.OK);
-	}
-
-	@RequestMapping(value="/carmanager/setOccupied/{vehicleId}/occupied", method=RequestMethod.POST)
+	@RequestMapping(value="/carmanager/setOccupied/{vehicleId}/{occupied}", method=RequestMethod.POST)
 	public @ResponseBody ResponseEntity<String> setOccupiedREST(long vehicleId, int occupied)
 	{
 		try

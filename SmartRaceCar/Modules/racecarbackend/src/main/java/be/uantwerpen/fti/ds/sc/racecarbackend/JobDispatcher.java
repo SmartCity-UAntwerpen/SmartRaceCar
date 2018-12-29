@@ -19,16 +19,15 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.NoSuchElementException;
 
 @Controller
 public class JobDispatcher implements MQTTListener  //todo: Get rid of this, still needed because MQTTUtils will crash if you don't provide it with a listener
 {
 	private static final String ROUTE_UPDATE_DONE = "done";
+
 	private static final String MQTT_ROUTE_POSTFIX = "route/#";
-	private static final String MQTT_REGISTER_POSTFIX = "register/#";
+	private static final String MQTT_REGISTERED_POSTFIX = "registered/#";
 
 	private Logger log;
 	private Configuration config;
@@ -39,6 +38,7 @@ public class JobDispatcher implements MQTTListener  //todo: Get rid of this, sti
 	private LocationRepository locationRepository;
 	private ResourceManager resourceManager;
 	private MQTTUtils mqttUtils;
+	private MessageQueueClient messageQueueClient;
 
 	private boolean isRouteUpdate(String topic)
 	{
@@ -46,10 +46,10 @@ public class JobDispatcher implements MQTTListener  //todo: Get rid of this, sti
 		return topic.startsWith(mqttAspect.getTopic() + MQTT_ROUTE_POSTFIX.substring(0, MQTT_ROUTE_POSTFIX.length() - 2));
 	}
 
-	private boolean isRegistration(String topic)
+	private boolean isRegistrationComplete(String topic)
 	{
 		MqttAspect mqttAspect = (MqttAspect) this.config.get(AspectType.MQTT);
-		return topic.startsWith(mqttAspect.getTopic() + MQTT_REGISTER_POSTFIX.substring(0, MQTT_REGISTER_POSTFIX.length() - 2));
+		return topic.startsWith(mqttAspect.getTopic() + MQTT_REGISTERED_POSTFIX.substring(0, MQTT_REGISTERED_POSTFIX.length() - 2));
 	}
 
 	private void checkJobQueue() throws IOException
@@ -112,11 +112,21 @@ public class JobDispatcher implements MQTTListener  //todo: Get rid of this, sti
 			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
 			this.mqttUtils = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
 			this.mqttUtils.subscribe(mqttAspect.getTopic() + MQTT_ROUTE_POSTFIX);
-			this.mqttUtils.subscribe(mqttAspect.getTopic() + MQTT_REGISTER_POSTFIX);
 		}
 		catch (MqttException me)
 		{
 			this.log.error("Failed to start MQTTUtils for JobDispatcher.", me);
+		}
+
+		try
+		{
+			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
+			this.messageQueueClient = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
+			this.messageQueueClient.subscribe(mqttAspect.getTopic() + MQTT_REGISTERED_POSTFIX);
+		}
+		catch (Exception e)
+		{
+			this.log.error("Failed to start MessageQueueClient for JobDispatcher.", e);
 		}
 	}
 
@@ -301,14 +311,16 @@ public class JobDispatcher implements MQTTListener  //todo: Get rid of this, sti
 				}
 			}
 		}
-		else if (this.isRegistration(topic))
+		else if (this.isRegistrationComplete(topic))
 		{
 			if (!this.jobQueue.isEmpty(JobType.LOCAL))
 			{
 				try
 				{
 					this.log.info("Dispatching a local job to newly registered vehicle (" + vehicleId + ").");
-					this.scheduleJob(this.jobQueue.dequeue(JobType.LOCAL), JobType.LOCAL);
+					Job job = this.jobQueue.dequeue(JobType.LOCAL);
+					job.setVehicleId(this.resourceManager.getOptimalCar(job.getStartId()));
+					this.scheduleJob(job, JobType.LOCAL);
 				}
 				catch (IOException ioe)
 				{
@@ -321,7 +333,9 @@ public class JobDispatcher implements MQTTListener  //todo: Get rid of this, sti
 				try
 				{
 					this.log.info("Dispatching a global job to newly registered vehicle (" + vehicleId + ").");
-					this.scheduleJob(this.jobQueue.dequeue(JobType.GLOBAL), JobType.GLOBAL);
+					Job job = this.jobQueue.dequeue(JobType.GLOBAL);
+					job.setVehicleId(this.resourceManager.getOptimalCar(job.getStartId()));
+					this.scheduleJob(job, JobType.GLOBAL);
 				}
 				catch (IOException ioe)
 				{

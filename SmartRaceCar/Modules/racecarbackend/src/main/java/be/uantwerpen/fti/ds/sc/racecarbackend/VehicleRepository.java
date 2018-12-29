@@ -5,13 +5,6 @@ import java.util.List;
 public interface VehicleRepository
 {
 	/**
-	 * @param vehicleId
-	 * @return
-	 * @throws IndexOutOfBoundsException When a non-existent vehicle is queried, an exception is thrown
-	 */
-	public Vehicle get(long vehicleId);
-
-	/**
 	 * Returns a list of with the ID of every vehicle.
 	 * @return
 	 */
@@ -22,11 +15,4 @@ public interface VehicleRepository
 	 * @return
 	 */
 	public int getNumVehicles();
-
-	/**
-	 * Check if the vehicle with the given ID is occupied.
-	 * @param vehicleId
-	 * @return
-	 */
-	public boolean isOccupied(long vehicleId);
 }
