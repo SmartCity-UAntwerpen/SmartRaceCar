@@ -22,6 +22,8 @@ import java.util.Map;
 @Controller
 public class VehicleManager implements MQTTListener, VehicleRepository, OccupationRepository
 {
+	private static final long MQTT_DELIVERY_TIMEOUT = 30;
+
 	private Logger log;
 	private Configuration configuration;
 	private MessageQueueClient messageQueueClient;
@@ -169,7 +171,9 @@ public class VehicleManager implements MQTTListener, VehicleRepository, Occupati
 		try
 		{
 			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
-			this.messageQueueClient.publish(mqttAspect.getTopic() + "register/" + newVehicleId, Long.toString(startWaypoint));
+			MessageToken token = this.messageQueueClient.publish(mqttAspect.getTopic() + "register/" + newVehicleId, Long.toString(startWaypoint));
+			token.waitForDelivery(MQTT_DELIVERY_TIMEOUT);
+			this.messageQueueClient.publish(mqttAspect.getTopic() + "registered/" + newVehicleId, "done");
 		}
 		catch (Exception e)
 		{

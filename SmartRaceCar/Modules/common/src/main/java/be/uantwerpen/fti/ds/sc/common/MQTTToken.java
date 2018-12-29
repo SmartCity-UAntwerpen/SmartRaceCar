@@ -2,6 +2,8 @@ package be.uantwerpen.fti.ds.sc.common;
 
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -27,7 +29,7 @@ public class MQTTToken implements MessageToken
 	{
 		try
 		{
-			this.token.waitForCompletion(timeout);
+			this.token.waitForCompletion(timeout * 1000);   // Timeout is given in seconds, but Paho takes milliseconds
 		}
 		catch (MqttException me)
 		{
