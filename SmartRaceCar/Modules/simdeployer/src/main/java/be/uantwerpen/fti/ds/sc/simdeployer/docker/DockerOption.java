@@ -4,12 +4,17 @@ import java.util.List;
 
 public abstract class DockerOption
 {
-	protected Option option;
+	protected OptionType optionType;
 
 
-	protected DockerOption (Option option)
+	protected DockerOption (OptionType optionType)
 	{
-		this.option = option;
+		this.optionType = optionType;
+	}
+
+	public OptionType getOptionType()
+	{
+		return this.optionType;
 	}
 
 	public abstract List<String> toStringList();

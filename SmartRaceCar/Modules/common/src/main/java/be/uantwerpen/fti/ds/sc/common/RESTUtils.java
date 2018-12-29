@@ -57,7 +57,7 @@ public class RESTUtils
 		}
 		catch (ProcessingException pe)
 		{
-			this.log.error("Cannot connect to REST service.", pe);
+			this.log.error("Cannot connect to REST service (URI: " + resourceWebTarget.getUri() + ")", pe);
 			throw pe;
 		}
 
@@ -84,7 +84,7 @@ public class RESTUtils
 		}
 		catch (ProcessingException pe)
 		{
-			this.log.error("Cannot connect to REST service.", pe);
+			this.log.error("Cannot connect to REST service (URI: " + resourceWebTarget.getUri() + ")", pe);
 			throw pe;
 		}
 

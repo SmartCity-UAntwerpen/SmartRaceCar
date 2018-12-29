@@ -40,10 +40,10 @@ public class Container implements VirtualMachine, MQTTListener
 	private void forcedStop() throws InterruptedException, IOException
 	{
 		DockerCommandBuilder builder = new DockerCommandBuilder(CommandType.STOP);
+		builder.addOption(new NameOption(this.containerName));
 
 		List<String> commandLine = new ArrayList<>();
 		commandLine.addAll(builder.toStringList());
-		commandLine.add(this.containerName);
 
 		this.log.debug(Arrays.toString(commandLine.toArray())); // We print the command we're about to execute for debugging
 		ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
@@ -99,8 +99,8 @@ public class Container implements VirtualMachine, MQTTListener
 		// Build Docker command
 		DockerCommandBuilder builder = new DockerCommandBuilder(CommandType.RUN);
 		builder.setImageName(this.imageName);
-		builder.addOption(new NameOption(this.containerName));                                                                          // Add name option so we can easily track/stop the container
-		builder.addOption(new MountOption(dockerAspect.isReadonly(), dockerAspect.getHostVolume(), dockerAspect.getContainerVolume())); // Add Mount option to make sure the container has a config file
+		builder.addOption(new NameOption(this.containerName));                                                                          // Add name optionType so we can easily track/stop the container
+		builder.addOption(new MountOption(dockerAspect.isReadonly(), dockerAspect.getHostVolume(), dockerAspect.getContainerVolume())); // Add Mount optionType to make sure the container has a config file
 
 		List<String> commandLine = new ArrayList<>();
 		commandLine.addAll(builder.toStringList());  // Docker command
@@ -155,7 +155,7 @@ public class Container implements VirtualMachine, MQTTListener
 
 		if (!normalExit)
 		{
-			this.log.warn("Docker container failed to close down within the allotted time-out period (" + TIMEOUT_LEN + TIMEOUT_UNIT + ").");
+			this.log.warn("Docker container failed to close down within the allotted time-out period (" + TIMEOUT_LEN + ' ' + TIMEOUT_UNIT + ").");
 
 			this.forcedStop();
 		}
