@@ -26,7 +26,7 @@ public class SimDeployerCommunicator implements MQTTListener, SimDeployerCommuni
 		try
 		{
 			this.mqttUtils = new MQTTUtils(aspect.getBroker(), aspect.getUsername(), aspect.getPassword(), this);
-			this.mqttUtils.subscribe(aspect.getTopic() + "/simdeployer");
+			this.mqttUtils.subscribe(aspect.getTopic() + "/simdeployer/#");
 		}
 		catch (MqttException me)
 		{
