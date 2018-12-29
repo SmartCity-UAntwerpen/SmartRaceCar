@@ -40,7 +40,7 @@ public class MountOption extends DockerOption
 
 	public MountOption(boolean readonly, String hostVolume, String containerVolume)
 	{
-		super(Option.MOUNT);
+		super(OptionType.MOUNT);
 		this.readonly = readonly;
 		this.hostVolume = new File(hostVolume);
 		this.containerVolume = containerVolume;
@@ -50,7 +50,7 @@ public class MountOption extends DockerOption
 	public List<String> toStringList()
 	{
 		List<String> list = new ArrayList<>();
-		list.add(this.option.toString());
+		list.add(this.optionType.toString());
 		list.add(this.generateMountString());
 		return list;
 	}

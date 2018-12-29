@@ -1,6 +1,6 @@
 package be.uantwerpen.fti.ds.sc.simdeployer.docker;
 
-public enum Option
+public enum OptionType
 {
 	NAME,
 	MOUNT;

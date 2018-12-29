@@ -1,8 +1,6 @@
 package be.uantwerpen.fti.ds.sc.simdeployer.docker;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class DockerCommandBuilder
 {
@@ -10,18 +8,18 @@ public class DockerCommandBuilder
 
 	private CommandType commandType;
 	private String imageName;
-	private List<DockerOption> options;
+	private Map<OptionType, DockerOption> options;
 
 	public DockerCommandBuilder(CommandType commandType)
 	{
 		this.commandType = commandType;
 		this.imageName = null;
-		this.options = new LinkedList<>();
+		this.options = new HashMap<>();
 	}
 
 	public DockerCommandBuilder addOption(DockerOption option)
 	{
-		this.options.add(option);
+		this.options.put(option.getOptionType(), option);
 		return this;
 	}
 
@@ -31,31 +29,65 @@ public class DockerCommandBuilder
 		return this;
 	}
 
+	/**
+	 * Converts the current settings to a list of strings.
+	 * Resets the builder.
+	 * @return
+	 */
 	public List<String> toStringList()
 	{
 		List<String> list = new ArrayList<>();
 		list.add(DOCKER_COMMAND);
 		list.add(this.commandType.toString());
 
-		for (DockerOption option: this.options)
-		{
-			list.addAll(option.toStringList());
-		}
-
 		switch (this.commandType)
 		{
 			case RUN:
 				if (this.imageName == null)
 				{
-					throw new IllegalArgumentException("Image name wasn't set.");
+					throw new IllegalArgumentException("Image name wasn't set. This is required for a run command.");
 				}
 				else
 				{
+					for (OptionType optionType: this.options.keySet())
+					{
+						list.addAll(this.options.get(optionType).toStringList());
+					}
+
 					list.add(this.imageName);
 				}
 				break;
 
+			case STOP:
+				if (!this.options.containsKey(OptionType.NAME))
+				{
+					throw new IllegalArgumentException("Container name option wasn't given. This is required for a stop command.");
+				}
+				else
+				{
+					NameOption nameOption = (NameOption) this.options.get(OptionType.NAME);
+					list.add(nameOption.getContainerName());
+				}
+				break;
+
+			case REMOVE:
+				if (!this.options.containsKey(OptionType.NAME))
+				{
+					throw new IllegalArgumentException("Container name option wasn't given. This is required for a stop command.");
+				}
+				else
+				{
+					NameOption nameOption = (NameOption) this.options.get(OptionType.NAME);
+					list.add(nameOption.getContainerName());
+				}
+				break;
+
 			default:
+				for (OptionType optionType: this.options.keySet())
+				{
+					list.addAll(this.options.get(optionType).toStringList());
+				}
+
 				break;
 		}
 

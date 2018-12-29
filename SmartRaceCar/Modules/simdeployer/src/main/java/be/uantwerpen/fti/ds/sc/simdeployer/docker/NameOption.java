@@ -9,15 +9,20 @@ public class NameOption extends DockerOption
 
 	public NameOption(String containerName)
 	{
-		super(Option.NAME);
+		super(OptionType.NAME);
 		this.containerName = containerName;
+	}
+
+	public String getContainerName()
+	{
+		return this.containerName;
 	}
 
 	@Override
 	public List<String> toStringList()
 	{
 		List<String> list = new ArrayList<>();
-		list.add(this.option.toString());
+		list.add(this.optionType.toString());
 		list.add(this.containerName);
 		return list;
 	}
