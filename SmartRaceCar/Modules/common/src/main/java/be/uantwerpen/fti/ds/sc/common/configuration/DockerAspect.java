@@ -17,7 +17,7 @@ public class DockerAspect extends Aspect
 	private static final String DOCKER_VOLUME_CONTAINER_KEY = PREFIX + ".volume.container";
 	private static final String[] KEYS = {DOCKER_IMAGE_NAME_KEY, DOCKER_VOLUME_READONLY_KEY, DOCKER_VOLUME_HOST_KEY, DOCKER_VOLUME_CONTAINER_KEY};
 
-	private static final String DEFAULT_DOCKER_IMAGE_NAME = "astridvanneste/core_simkernel";
+	private static final String DEFAULT_DOCKER_IMAGE_NAME = "astridvanneste/core_simkernel_rosserver";
 	private static final String DEFAULT_DOCKER_VOLUME_READONLY = "true";
 	private static final String DEFAULT_DOCKER_VOLUME_HOST = "./docker/config";
 	private static final String DEFAULT_DOCKER_VOLUME_CONTAINER = "/home/docker/config";
