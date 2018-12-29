@@ -1,5 +1,6 @@
 package be.uantwerpen.fti.ds.sc.simkernel.Communication;
 
+import be.uantwerpen.fti.ds.sc.common.JSONUtils;
 import be.uantwerpen.fti.ds.sc.common.MQTTListener;
 import be.uantwerpen.fti.ds.sc.common.MQTTUtils;
 import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
@@ -48,7 +49,9 @@ public class SimDeployerCommunicator implements MQTTListener, SimDeployerCommuni
 
 			String last = split[split.length-2];
 
-			this.listener.notify(last);
+			String m = JSONUtils.objectToJSONStringWithKeyWord(last, last);
+
+			this.listener.notify(m);
 		}
 	}
 }
