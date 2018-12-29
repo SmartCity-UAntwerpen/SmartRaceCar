@@ -308,7 +308,9 @@ public class JobDispatcher implements MQTTListener  //todo: Get rid of this, sti
 				try
 				{
 					this.log.info("Dispatching a local job to newly registered vehicle (" + vehicleId + ").");
-					this.scheduleJob(this.jobQueue.dequeue(JobType.LOCAL), JobType.LOCAL);
+					Job job = this.jobQueue.dequeue(JobType.LOCAL);
+					job.setVehicleId(this.resourceManager.getOptimalCar(job.getStartId()));
+					this.scheduleJob(job, JobType.LOCAL);
 				}
 				catch (IOException ioe)
 				{
@@ -321,7 +323,9 @@ public class JobDispatcher implements MQTTListener  //todo: Get rid of this, sti
 				try
 				{
 					this.log.info("Dispatching a global job to newly registered vehicle (" + vehicleId + ").");
-					this.scheduleJob(this.jobQueue.dequeue(JobType.GLOBAL), JobType.GLOBAL);
+					Job job = this.jobQueue.dequeue(JobType.GLOBAL);
+					job.setVehicleId(this.resourceManager.getOptimalCar(job.getStartId()));
+					this.scheduleJob(job, JobType.GLOBAL);
 				}
 				catch (IOException ioe)
 				{

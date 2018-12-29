@@ -15,6 +15,7 @@ public class ResourceManager
 	private Logger log;
 	private LocationRepository locationRepository;
 	private VehicleRepository vehicleRepository;
+	private OccupationRepository occupationRepository;
 	private CostCache costCache;
 
 	// Cost object used to sort according to cost, but keep association with ID
@@ -42,13 +43,14 @@ public class ResourceManager
 	}
 
 	@Autowired
-	public ResourceManager (CostCache costCache, LocationRepository locationRepository, VehicleRepository vehicleRepository)
+	public ResourceManager (CostCache costCache, LocationRepository locationRepository, VehicleRepository vehicleRepository, OccupationRepository occupationRepository)
 	{
 		this.log = LoggerFactory.getLogger(ResourceManager.class);
 
 		this.log.info("Initializing ResourceManager...");
 		this.locationRepository = locationRepository;
 		this.vehicleRepository = vehicleRepository;
+		this.occupationRepository = occupationRepository;
 		this.costCache = costCache;
 		this.log.info("Initialized ResourceManager.");
 	}
@@ -59,7 +61,7 @@ public class ResourceManager
 
 		for (long vehicleId: this.vehicleRepository.getVehicleIds())
 		{
-			if (!this.vehicleRepository.isOccupied(vehicleId))
+			if (!this.occupationRepository.isOccupied(vehicleId))
 			{
 				++numAvailableCars;
 			}
@@ -89,7 +91,7 @@ public class ResourceManager
 
 		for (long vehicleId: this.vehicleRepository.getVehicleIds())
 		{
-			if (!this.vehicleRepository.isOccupied(vehicleId))
+			if (!this.occupationRepository.isOccupied(vehicleId))
 			{
 				long vehiclePosition = this.locationRepository.getLocation(vehicleId);
 				int cost = this.costCache.calculateCost(vehiclePosition, waypointId);

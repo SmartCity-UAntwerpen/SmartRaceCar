@@ -112,7 +112,7 @@ public class JobQueue
 		{
 			case GLOBAL:
 			{
-				this.log.info("Dequeueing job " + this.localJobs.get(0).getJobId() + " from local queue.");
+				this.log.info("Dequeueing job " + this.globalJobs.get(0).getJobId() + " from local queue.");
 				return this.globalJobs.remove(0);
 			}
 

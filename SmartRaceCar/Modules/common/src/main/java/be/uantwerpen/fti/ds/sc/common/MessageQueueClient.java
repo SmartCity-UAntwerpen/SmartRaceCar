@@ -4,5 +4,5 @@ public interface MessageQueueClient
 {
 	public void subscribe(String topic) throws Exception;
 
-	public void publish(String topic, String message) throws Exception;
+	public MessageToken publish(String topic, String message) throws Exception;
 }
