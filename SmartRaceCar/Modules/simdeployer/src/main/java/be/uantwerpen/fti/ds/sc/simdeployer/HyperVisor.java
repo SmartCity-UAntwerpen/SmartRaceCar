@@ -12,9 +12,6 @@ import java.util.*;
 
 public class HyperVisor
 {
-	private static final int SIMULATION_PORT_1 = 1024;
-	private static final int SIMULATION_PORT_2 = 1025;
-
 	private Logger log;
 	private Configuration configuration;
 	private Map<Long, VirtualMachine> virtualMachines;
@@ -47,9 +44,8 @@ public class HyperVisor
 
 		List<String> arguments = new ArrayList<>();
 		arguments.add(Long.toString(startpoint));
-		arguments.add(Integer.toString(SIMULATION_PORT_1));
-		arguments.add(Integer.toString(SIMULATION_PORT_2));
 		arguments.add(Long.toString(simulationId));
+		arguments.add(dockerAspect.getContainerVolume());
 
 		try
 		{

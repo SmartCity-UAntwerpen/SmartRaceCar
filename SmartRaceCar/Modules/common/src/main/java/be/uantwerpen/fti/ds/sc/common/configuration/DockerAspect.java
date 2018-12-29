@@ -19,7 +19,7 @@ public class DockerAspect extends Aspect
 
 	private static final String DEFAULT_DOCKER_IMAGE_NAME = "astridvanneste/core_simkernel_rosserver";
 	private static final String DEFAULT_DOCKER_VOLUME_READONLY = "true";
-	private static final String DEFAULT_DOCKER_VOLUME_HOST = "./docker/config";
+	private static final String DEFAULT_DOCKER_VOLUME_HOST = "docker/config";
 	private static final String DEFAULT_DOCKER_VOLUME_CONTAINER = "/home/docker/config";
 
 	private Logger log;
