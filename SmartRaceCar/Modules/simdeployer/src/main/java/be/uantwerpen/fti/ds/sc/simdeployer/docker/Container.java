@@ -16,12 +16,17 @@ import javax.naming.InvalidNameException;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Container implements VirtualMachine, MQTTListener
 {
+	private static final long TIMEOUT_LEN = 30;
+	private static final TimeUnit TIMEOUT_UNIT = TimeUnit.SECONDS;
+
 	private static final String DOCKER_CONTAINER_NAME_REGEX = "[a-zA-Z0-9][a-zA-Z0-9_.-]+";
 
 	private Logger log;
@@ -31,6 +36,29 @@ public class Container implements VirtualMachine, MQTTListener
 	private String containerName;
 	private Process simulationProcess;
 	private MQTTUtils mqttUtils;
+
+	private void forcedStop() throws InterruptedException, IOException
+	{
+		DockerCommandBuilder builder = new DockerCommandBuilder(CommandType.STOP);
+
+		List<String> commandLine = new ArrayList<>();
+		commandLine.addAll(builder.toStringList());
+		commandLine.add(this.containerName);
+
+		this.log.debug(Arrays.toString(commandLine.toArray())); // We print the command we're about to execute for debugging
+		ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
+
+		try
+		{
+			Process process = processBuilder.start();
+			process.waitFor();
+		}
+		catch (InterruptedException | IOException ie)
+		{
+			this.log.error("Failed to stop Docker container.", ie);
+			throw ie;
+		}
+	}
 
 	public Container (Configuration configuration, long simulationId, String imageName, String containerName) throws InvalidNameException
 	{
@@ -90,16 +118,8 @@ public class Container implements VirtualMachine, MQTTListener
 		processBuilder = processBuilder.redirectOutput(logFile);
 		processBuilder = processBuilder.redirectError(logFile);
 
-		StringBuilder debugBuilder = new StringBuilder();
 
-		for (String arg: commandLine)
-		{
-			debugBuilder.append(arg);
-			debugBuilder.append(' ');
-		}
-
-		this.log.debug(debugBuilder.toString());
-
+		this.log.debug(Arrays.toString(commandLine.toArray())); // We print the command we're about to execute for debugging
 		this.log.info("Running Docker Container " + this.imageName + ", with Simulation ID " + this.simulationId);
 
 		try
@@ -125,38 +145,20 @@ public class Container implements VirtualMachine, MQTTListener
 		}
 		catch (MqttException me)
 		{
-			DockerCommandBuilder builder = new DockerCommandBuilder(CommandType.STOP);
-
 			this.log.error("Failed to send Kill command to simulation over MQTT. Stopping container manually.", me);
-			List<String> commandLine = new ArrayList<>();
-			commandLine.addAll(builder.toStringList());
-			commandLine.add(this.containerName);
 
-			StringBuilder debugBuilder = new StringBuilder();
-
-			for (String arg: commandLine)
-			{
-				debugBuilder.append(arg);
-				debugBuilder.append(' ');
-			}
-
-			this.log.debug(debugBuilder.toString());
-
-			ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
-
-			try
-			{
-				Process process = processBuilder.start();
-				process.waitFor();
-			}
-			catch (InterruptedException ie)
-			{
-				this.log.error("Failed to stop Docker container.", ie);
-				throw ie;
-			}
+			this.forcedStop();
 		}
 
-		int returnValue = this.simulationProcess.waitFor();
+		// We wait for 30s before we assume the container is unresponsive
+		boolean timeout = this.simulationProcess.waitFor(TIMEOUT_LEN, TIMEOUT_UNIT);
+
+		if (timeout)
+		{
+			this.log.warn("Docker container failed to close down within the allotted time-out period (" + TIMEOUT_LEN + TIMEOUT_UNIT + ").");
+
+			this.forcedStop();
+		}
 
 		DockerCommandBuilder builder = new DockerCommandBuilder(CommandType.REMOVE);
 		builder.addOption(new NameOption(this.containerName));
@@ -164,16 +166,7 @@ public class Container implements VirtualMachine, MQTTListener
 		List<String> commandLine = new ArrayList<>();
 		commandLine.addAll(builder.toStringList());
 
-		StringBuilder debugBuilder = new StringBuilder();
-
-		for (String arg: commandLine)
-		{
-			debugBuilder.append(arg);
-			debugBuilder.append(' ');
-		}
-
-		this.log.debug(debugBuilder.toString());
-
+		this.log.debug(Arrays.toString(commandLine.toArray())); // We print the command we're about to execute for debugging
 		this.log.info("Removing Docker Container " + this.imageName + ", with Simulation ID " + this.simulationId);
 
 		ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
@@ -182,7 +175,7 @@ public class Container implements VirtualMachine, MQTTListener
 		{
 			Process process = processBuilder.start();
 			process.waitFor();
-			return returnValue;
+			return timeout ? -1 : this.simulationProcess.exitValue();   // If we timed out, return -1, otherwise, return the process' return value
 		}
 		catch (IOException | InterruptedException ie)
 		{
