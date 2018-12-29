@@ -22,14 +22,12 @@ ENV SIMKERNEL=https://github.com/SmartCity-UAntwerpen/SmartRaceCar/raw/master/Sm
 ADD $CORE /home/docker/Core.jar
 ADD $SIMKERNEL /home/docker/SimKernel.jar
 
-ADD Simkernel.properties /home/docker/Simkernel.properties
-ADD core.properties /home/docker/core.properties
 ADD maps.xml /home/docker/maps/maps.xml
 
 RUN chmod +x /home/docker/run.sh
+RUN mkdir /home/docker/config
 
 ENTRYPOINT ["/home/docker/run.sh"]
 CMD ["46"]
-CMD ["5005"]
-CMD ["5006"]
 CMD ["0"]
+CMD ["./"]
