@@ -151,9 +151,9 @@ public class Container implements VirtualMachine, MQTTListener
 		}
 
 		// We wait for 30s before we assume the container is unresponsive
-		boolean timeout = this.simulationProcess.waitFor(TIMEOUT_LEN, TIMEOUT_UNIT);
+		boolean normalExit = this.simulationProcess.waitFor(TIMEOUT_LEN, TIMEOUT_UNIT);
 
-		if (timeout)
+		if (!normalExit)
 		{
 			this.log.warn("Docker container failed to close down within the allotted time-out period (" + TIMEOUT_LEN + TIMEOUT_UNIT + ").");
 
@@ -175,7 +175,7 @@ public class Container implements VirtualMachine, MQTTListener
 		{
 			Process process = processBuilder.start();
 			process.waitFor();
-			return timeout ? -1 : this.simulationProcess.exitValue();   // If we timed out, return -1, otherwise, return the process' return value
+			return normalExit ? this.simulationProcess.exitValue() : -1;   // If we timed out, return -1, otherwise, return the process' return value
 		}
 		catch (IOException | InterruptedException ie)
 		{
