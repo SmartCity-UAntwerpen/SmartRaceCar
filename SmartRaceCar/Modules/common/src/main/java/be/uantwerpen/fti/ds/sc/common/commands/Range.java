@@ -35,7 +35,7 @@ public class Range
 	@Override
 	public String toString()
 	{
-		if (1 < (this.high - this.low))
+		if (1 <= (this.high - this.low))
 		{
 			return this.low + "..." + this.high;
 		}
