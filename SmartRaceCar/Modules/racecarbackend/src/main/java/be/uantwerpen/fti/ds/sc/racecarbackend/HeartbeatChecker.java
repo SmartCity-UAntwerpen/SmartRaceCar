@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.Map;
@@ -21,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Helper class to check the heartbeat of all registered vehicles periodically
  */
-@Component
+@Service
 class HeartbeatChecker implements MQTTListener
 {
 	private static final String MQTT_HEARTBEAT_POSTFIX = "heartbeat/#";
@@ -131,7 +132,7 @@ class HeartbeatChecker implements MQTTListener
 	/**
 	 * constructor for the HeartbeatChecker class
 	 *
-	 * @param parameters parameters used to start backend
+	 * @param configuration Configuration used to start HeartbeatChecker
 	 */
 	@Autowired
 	public HeartbeatChecker(@Qualifier("heartbeatChecker") Configuration configuration)
@@ -144,6 +145,7 @@ class HeartbeatChecker implements MQTTListener
 		RacecarAspect racecarAspect = (RacecarAspect) configuration.get(AspectType.RACECAR);
 		this.restUtils = new RESTUtils(racecarAspect.getRacecarServerUrl());
 
+		// Set up protocol-agnostic message queue client
 		try
 		{
 			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
@@ -156,11 +158,12 @@ class HeartbeatChecker implements MQTTListener
 			this.log.error("Failed to start MessageQueueClient for HeartbeatChecker.", e);
 		}
 
+		// Set up MQTT-based backend <-> vehicle communication
 		try
 		{
 			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
 			this.mqttUtils = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
-			this.messageQueueClient.subscribe(mqttAspect.getTopic() + MQTT_HEARTBEAT_POSTFIX);
+			this.mqttUtils.subscribe(mqttAspect.getTopic() + MQTT_HEARTBEAT_POSTFIX);
 		}
 		catch (Exception e)
 		{
