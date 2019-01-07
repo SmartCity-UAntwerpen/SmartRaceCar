@@ -77,7 +77,7 @@ public class CostCache
 
 		if (!this.waypointValidator.exists(endId))
 		{
-			String errorString = "Requested cost for end waypoint " + startId + ", but waypoint doesn't exist.";
+			String errorString = "Requested cost for end waypoint " + endId + ", but waypoint doesn't exist.";
 			this.log.error(errorString);
 			throw new IndexOutOfBoundsException(errorString);
 		}

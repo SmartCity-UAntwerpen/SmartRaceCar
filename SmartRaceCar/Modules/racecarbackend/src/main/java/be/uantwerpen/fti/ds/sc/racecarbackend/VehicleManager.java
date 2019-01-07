@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.ws.rs.core.MediaType;
 import java.util.*;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Controller
 public class VehicleManager implements MQTTListener, VehicleRepository, OccupationRepository
@@ -30,6 +31,9 @@ public class VehicleManager implements MQTTListener, VehicleRepository, Occupati
 	private WaypointValidator waypointValidator;
 	private Queue<Long> unusedIds;                      // This set contains all IDs of vehicles that were assigned once and then deleted
 														// its a simple way to reuse IDs.
+
+	AtomicLong currentId;
+
 	private Map<Long, Boolean> occupation;
 
 	/**
@@ -47,6 +51,8 @@ public class VehicleManager implements MQTTListener, VehicleRepository, Occupati
 	{
 		this.configuration = configuration;
 		this.log = LoggerFactory.getLogger(this.getClass());
+
+		this.currentId = new AtomicLong(0);
 
 		this.log.info("Initializing Vehicle Manager...");
 
@@ -134,7 +140,15 @@ public class VehicleManager implements MQTTListener, VehicleRepository, Occupati
 			}
 
 			this.log.info("Removing vehicle " + vehicleId);
-			this.unusedIds.add(vehicleId);
+
+			if (!this.unusedIds.contains(vehicleId))
+			{
+				this.unusedIds.add(vehicleId);
+			}
+			else
+			{
+				this.log.warn("Attempted to remove " + vehicleId + " but queue of unused IDs already contains the ID.");
+			}
 
 			return new ResponseEntity<>(HttpStatus.OK);
 		}
@@ -165,7 +179,7 @@ public class VehicleManager implements MQTTListener, VehicleRepository, Occupati
 		}
 		else
 		{
-			newVehicleId = this.occupation.size();
+			newVehicleId = this.currentId.getAndIncrement();
 		}
 
 		try
