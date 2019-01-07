@@ -55,6 +55,10 @@ public class ResourceManager
 		this.log.info("Initialized ResourceManager.");
 	}
 
+	/**
+	 * Determine how many cars are available to receive new jobs.
+	 * @return
+	 */
 	public int getNumAvailableCars()
 	{
 		int numAvailableCars = 0;
@@ -71,7 +75,7 @@ public class ResourceManager
 	}
 
 	/**
-	 *
+	 *  Determine which car is closest to (has the lowest cost) to get to a certain point.
 	 * @param waypointId
 	 * @return
 	 */

@@ -38,6 +38,7 @@ public class TCPUtils extends Thread
 		this.serverSocket = new ServerSocket(port);
 		this.listener = listener;
 		this.ackNack = true;
+		super.setName("TCPUtils - Port: " + port);  // Give the thread a sensible name
 	}
 
 	/**
@@ -54,6 +55,7 @@ public class TCPUtils extends Thread
 		this.serverPort = serverPort;
 		this.listener = listener;
 		this.ackNack = false;
+		super.setName("TCPUtils - Client Port: " + clientPort + ", Server Port: " + serverPort);  // Give the thread a sensible name
 	}
 
 	/**

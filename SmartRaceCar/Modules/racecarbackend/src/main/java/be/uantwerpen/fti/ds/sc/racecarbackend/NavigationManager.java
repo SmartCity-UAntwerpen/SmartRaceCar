@@ -8,13 +8,13 @@ import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Controller;
+import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 
 // Route Update
 // Cost Answers
-@Controller
+@Service
 public class NavigationManager implements MQTTListener, LocationRepository
 {
 	private static final String MQTT_LOCATION_POSTFIX = "locationupdate/#";

@@ -49,7 +49,7 @@ public class RESTUtils
 		WebTarget resourceWebTarget = this.webTarget.path(endpoint);
 		Invocation.Builder invocationBuilder = resourceWebTarget.request(expectedResponseType);
 		Response response = null;
-		this.log.debug("Attempting GET request :" + invocationBuilder.toString());
+		this.log.debug("Attempting GET request: " + resourceWebTarget.toString());
 
 		try
 		{
@@ -57,7 +57,7 @@ public class RESTUtils
 		}
 		catch (ProcessingException pe)
 		{
-			this.log.error("Cannot connect to REST service (URI: " + resourceWebTarget.getUri() + ")", pe);
+			this.log.error("Cannot process request to REST service (URI: " + resourceWebTarget.getUri() + ")", pe);
 			throw pe;
 		}
 

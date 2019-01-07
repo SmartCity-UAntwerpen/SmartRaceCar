@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Controller
 public class CostCache
@@ -117,7 +118,9 @@ public class CostCache
 		}
 		else
 		{
-			cost = 5;
+			// Generate Random number in [0,100]
+			// See: https://stackoverflow.com/a/363692
+			cost = ThreadLocalRandom.current().nextInt(0, 101);
 		}
 
 		this.costCache.put(link, cost);
