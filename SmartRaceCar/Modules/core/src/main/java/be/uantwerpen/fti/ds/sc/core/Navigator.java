@@ -227,7 +227,8 @@ public class Navigator implements MQTTListener
 	{
 		try
 		{
-			this.mqttUtils.publish("/locationupdate/" + this.ID, Long.toString(this.currentRoute.poll()));
+			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
+			this.mqttUtils.publish(mqttAspect.getTopic() + "/locationupdate/" + this.ID, Long.toString(this.currentRoute.poll()));
 		}
 		catch(MqttException mqttE)
 		{
