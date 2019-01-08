@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+
+<launch>
+  
+  <param name="/use_sim_time" value="false"/>
+
+  <!-- LiDAR -->
+  <node pkg="urg_node" type="urg_node" name="urg_node" args="_ip_address:=192.168.1.11"/>
+  
+  <!-- IMU -->
+  <include file="$(find razor_imu_9dof)/launch/razor-pub.launch"/>
+
+  <!-- Teensy -->
+  <node pkg="rosserial_python" type="serial_node.py" name="serial_node" args="/dev/ttyACM0"/>
+
+  <!-- Transformations -->
+  <!-- Uncomment to use tf_nav as standard tf-tree
+  <include file="$(find launchcar)/launch/tf_nav.launch"/>
+  -->
+  
+</launch>
