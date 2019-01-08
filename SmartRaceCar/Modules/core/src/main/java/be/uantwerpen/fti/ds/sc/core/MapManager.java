@@ -53,7 +53,7 @@ public class MapManager implements MQTTListener
 		{
 			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
 			this.mqttUtils = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
-			this.mqttUtils.subscribe(mqttAspect.getTopic() + "/" + Messages.BACKEND.CHANGE_MAP + "/" + core.getID());
+			this.mqttUtils.subscribe(mqttAspect.getTopic() + "/" + Messages.BACKEND.CHANGE_MAP);
 		}
 		catch (MqttException me)
 		{
@@ -147,10 +147,14 @@ public class MapManager implements MQTTListener
 	 */
 	public boolean configureMap()
 	{
-		boolean contains;
-
-
 		String mapName = this.backend.getMapName();
+
+		return this.configureMap(mapName);
+	}
+
+	public boolean configureMap(String mapName)
+	{
+		boolean contains;
 		if (this.loadedMaps.containsKey(mapName))
 		{
 			contains = true;
@@ -228,6 +232,6 @@ public class MapManager implements MQTTListener
 	@Override
 	public void parseMQTT(String topic, String message)
 	{
-		this.configureMap();
+		this.configureMap(message);
 	}
 }
