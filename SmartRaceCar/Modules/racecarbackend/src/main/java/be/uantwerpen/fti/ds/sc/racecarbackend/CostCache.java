@@ -77,7 +77,7 @@ public class CostCache
 
 		if (!this.waypointValidator.exists(endId))
 		{
-			String errorString = "Requested cost for end waypoint " + startId + ", but waypoint doesn't exist.";
+			String errorString = "Requested cost for end waypoint " + endId + ", but waypoint doesn't exist.";
 			this.log.error(errorString);
 			throw new IndexOutOfBoundsException(errorString);
 		}
@@ -120,7 +120,8 @@ public class CostCache
 		{
 			// Generate Random number in [0,100]
 			// See: https://stackoverflow.com/a/363692
-			cost = ThreadLocalRandom.current().nextInt(0, 101);
+			//cost = ThreadLocalRandom.current().nextInt(0, 101);
+			cost = 5;
 		}
 
 		this.costCache.put(link, cost);

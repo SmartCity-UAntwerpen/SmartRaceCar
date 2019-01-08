@@ -45,6 +45,19 @@ public class Range
 		}
 	}
 
+	@Override
+	public boolean equals(Object obj)
+	{
+		if (!(obj instanceof Range))
+		{
+			return false;
+		}
+
+		Range range = (Range) obj;
+
+		return (this.low == range.low) && (this.high == range.high);
+	}
+
 	public static Range parseRange(String rangeString)
 	{
 		if (rangeString.contains("..."))
