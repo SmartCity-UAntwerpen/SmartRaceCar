@@ -234,16 +234,11 @@ public class MapManager implements MQTTListener, WaypointValidator, WaypointRepo
 				this.wayPoints.put(49L, new WayPoint(49, 6.09f, 0.21f, -0.04f, 1.00f));
 				break;
 			case "U014":
-				this.wayPoints.put(46L, new WayPoint(46, 0.07f, 0.15f, 0.99f, 0.05f));
-				this.wayPoints.put(47L, new WayPoint(47,  4.61f, 1.82f,0.72f, 0.69f));
-				this.wayPoints.put(48L, new WayPoint(48, 0.3f, 3.85f, -0.99f, 0.18f));
-				this.wayPoints.put(49L, new WayPoint(49, 4.35f, 1.86f, -0.70f, 0.711f));
-				break;
-			case "U014Circle":
-				this.wayPoints.put(0L, new WayPoint(0, 0.0f, -0.0f, 0.0f, 0.99f));
-				this.wayPoints.put(1L, new WayPoint(1, 6.54f, 3.33f, 0.71f, 0.7f));
-				this.wayPoints.put(2L, new WayPoint(2, 3.84f, 2.73f, -0.63f, 0.77f));
-				this.wayPoints.put(3L, new WayPoint(3, 0.5f, 2.74f, -0.99f, 0.04f));
+				this.wayPoints.put(0L, new WayPoint(0, 0.01f, -0.01f, 0.01f, 0.99f));
+				this.wayPoints.put(1L, new WayPoint(1,  4.57f, 2.92f,0.75f, 0.67f));
+				this.wayPoints.put(2L, new WayPoint(2, 4.47f, 6.02f, 0.74f, 0.67f));
+				this.wayPoints.put(3L, new WayPoint(3, 4.20f, 10.01f, 0.74f, 0.67f));
+				this.wayPoints.put(4L, new WayPoint(4, 3.97f, 13.04f, 0.75f, 0.66f));
 				break;
 			default:
 				log.warn("There are no default wayPoints for \"" + mapName + "\".");
