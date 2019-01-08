@@ -188,6 +188,7 @@ public class Navigator implements MQTTListener
 	public void wayPointReached()
 	{
 		this.log.info("Waypoint reached.");
+		this.locationUpdate();
 		this.updateRoute();
 	}
 
@@ -197,22 +198,20 @@ public class Navigator implements MQTTListener
 	 *
 	 * @param location Location object containing the current percentage value.
 	 */
-	public void locationUpdate(Location location)
+	public void percentageUpdate(Location location)
 	{
 		if (this.currentRoute.size() == 0)
 		{
+			this.log.info("route size = 0");
 			float weight = (float) this.costStartToEndTiming / (float) (this.costCurrentToStartTiming + this.costStartToEndTiming);
 			location.setPercentage(Math.round((1 - weight) * 100 + location.getPercentage() * weight));
 		}
-		else if (this.currentRoute.size() == 1)
-		{
-			float weight = (float) this.costCurrentToStartTiming / (float) (this.costCurrentToStartTiming + this.costStartToEndTiming);
-			location.setPercentage(Math.round(location.getPercentage() * weight));
-		}
+
+		int percentage = location.getPercentage()/this.routeSize + (this.routeSize - this.currentRoute.size())*(100/this.routeSize);	// change percentage from percentage to next waypoint to percentage of route
+
+		location.setPercentage(percentage);
 
 		this.log.info("Location Updated. Vehicle has " + location.getPercentage() + "% of route completed");
-		//this.mqttUtils.publish("racecar/" + this.core.getID() + "/percentage", JSONUtils.objectToJSONString(location));
-		//this.mqttUtils.publish("racecar/" + this.core.getID() + "/percentage", Integer.toString(location.getPercentage()));
 		try
 		{
 			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
@@ -221,6 +220,19 @@ public class Navigator implements MQTTListener
 		catch (MqttException me)
 		{
 			this.log.error("Failed to publish progress update.", me);
+		}
+	}
+
+	private void locationUpdate()
+	{
+		try
+		{
+			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
+			this.mqttUtils.publish(mqttAspect.getTopic() + "/locationupdate/" + this.ID, Long.toString(this.currentRoute.poll()));
+		}
+		catch(MqttException mqttE)
+		{
+			this.log.warn("Location update failed: " + mqttE);
 		}
 	}
 
@@ -271,7 +283,7 @@ public class Navigator implements MQTTListener
 	{
 		if (!this.currentRoute.isEmpty())
 		{
-			WayPoint nextWayPoint = this.wayPoints.get(this.currentRoute.poll());
+			WayPoint nextWayPoint = this.wayPoints.get(this.currentRoute.peek());
 
 			this.log.info("Sending next waypoint with ID " + nextWayPoint.getID() + " (" + (this.routeSize - this.currentRoute.size()) + "/" + this.routeSize + ")");
 
@@ -322,8 +334,8 @@ public class Navigator implements MQTTListener
 	}
 
 	/**
-	 * When vehicle has completed cost calculation for the locationUpdate() function it sets the variables
-	 * costCurrentToStartTiming and costStartToEndTiming of the Core to be used by locationUpdate().
+	 * When vehicle has completed cost calculation for the percentageUpdate() function it sets the variables
+	 * costCurrentToStartTiming and costStartToEndTiming of the Core to be used by percentageUpdate().
 	 *
 	 * @param cost Cost object containing the weights of the sub-routes.
 	 */
