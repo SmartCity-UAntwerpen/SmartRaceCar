@@ -1,13 +1,12 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
-import be.uantwerpen.fti.ds.sc.common.Cost;
-import be.uantwerpen.fti.ds.sc.common.JSONUtils;
-import be.uantwerpen.fti.ds.sc.common.Point;
-import be.uantwerpen.fti.ds.sc.common.RESTUtils;
+import be.uantwerpen.fti.ds.sc.common.*;
 import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
 import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
+import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
 import be.uantwerpen.fti.ds.sc.common.configuration.RosAspect;
 import com.google.gson.reflect.TypeToken;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,16 +26,25 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
 
 @Controller
-public class CostCache
+public class CostCache implements MQTTListener
 {
+	private static final String MQTT_MAP_CHANGE_POSTFIX = Messages.BACKEND.CHANGE_MAP;
+
 	private Logger log;
 	private WaypointValidator waypointValidator;
 	private WaypointRepository waypointRepository;
 	private Configuration configuration;
+	private MQTTUtils mqttUtils;
 	private Map<Link, Integer> costCache;
+
+	private boolean isMapChange(String topic)
+	{
+		MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
+
+		return topic.startsWith(mqttAspect.getTopic() + MQTT_MAP_CHANGE_POSTFIX);
+	}
 
 	@Autowired
 	public CostCache (@Qualifier("costCache") Configuration configuration, WaypointRepository waypointRepository, WaypointValidator waypointValidator)
@@ -44,10 +52,23 @@ public class CostCache
 		this.log = LoggerFactory.getLogger(CostCache.class);
 
 		this.log.info("Initializing CostCache...");
+
+		try
+		{
+			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
+			this.mqttUtils = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
+			this.mqttUtils.subscribe(mqttAspect.getTopic() + Messages.BACKEND.CHANGE_MAP);
+		}
+		catch (MqttException me)
+		{
+			this.log.error("Failed to set up MQTTUtils: ", me);
+		}
+
 		this.configuration = configuration;
 		this.waypointRepository = waypointRepository;
 		this.waypointValidator = waypointValidator;
 		this.costCache = new HashMap<>();
+
 		this.log.info("Initialized CostCache.");
 	}
 
@@ -101,7 +122,6 @@ public class CostCache
 			String jsonString = JSONUtils.arrayToJSONString(points);
 			String costString = "";
 
-
 			try
 			{
 				RESTUtils ROSAPI = new RESTUtils(rosAspect.getRosServerUrl());
@@ -127,7 +147,7 @@ public class CostCache
 			// Generate Random number in [0,100]
 			// See: https://stackoverflow.com/a/363692
 			//cost = ThreadLocalRandom.current().nextInt(0, 101);
-			cost = 5;
+			cost = 5;   // Temporary, for easy testing
 		}
 
 		this.costCache.put(link, cost);
@@ -167,6 +187,16 @@ public class CostCache
 			String errorString = "Cost calculation caused an IOException: " + ioe.getCause();
 			this.log.error(errorString, ioe);
 			return new ResponseEntity<>(errorString, HttpStatus.SERVICE_UNAVAILABLE);
+		}
+	}
+
+	@Override
+	public void parseMQTT(String topic, String message)
+	{
+		if (this.isMapChange(topic))
+		{
+			this.log.info("Invalidating CostCache due to map name change. New map is \"" + message + "\".");
+			this.costCache.clear();
 		}
 	}
 }
