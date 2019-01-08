@@ -139,7 +139,8 @@ class Core implements TCPListener
 			switch (JSONUtils.getFirst(message))
 			{
 				case Messages.SIMKERNEL.PERCENTAGE:
-					this.navigator.locationUpdate((Location) JSONUtils.getObjectWithKeyWord(message, Location.class));
+					Location location = (Location) JSONUtils.getObjectWithKeyWord(message, Location.class);
+					this.navigator.percentageUpdate(location);
 					break;
 				case Messages.SIMKERNEL.ARRIVED_WAYPOINT:
 					this.navigator.wayPointReached();
