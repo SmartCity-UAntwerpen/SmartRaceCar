@@ -108,7 +108,6 @@ public class NavigationManager implements MQTTListener, LocationRepository
 	@Override
 	public void parseMQTT(String topic, String message)
 	{
-
 		long vehicleId = TopicUtils.getCarId(topic);
 
 		if (this.isDeletion(topic))
