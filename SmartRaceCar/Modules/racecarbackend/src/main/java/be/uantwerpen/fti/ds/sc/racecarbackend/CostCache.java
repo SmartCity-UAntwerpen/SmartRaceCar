@@ -120,7 +120,8 @@ public class CostCache
 		{
 			// Generate Random number in [0,100]
 			// See: https://stackoverflow.com/a/363692
-			cost = ThreadLocalRandom.current().nextInt(0, 101);
+			//cost = ThreadLocalRandom.current().nextInt(0, 101);
+			cost = 5;
 		}
 
 		this.costCache.put(link, cost);
