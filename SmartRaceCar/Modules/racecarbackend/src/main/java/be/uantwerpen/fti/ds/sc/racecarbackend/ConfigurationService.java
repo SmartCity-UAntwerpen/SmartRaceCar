@@ -28,6 +28,7 @@ public class ConfigurationService
     {
         Configuration configuration = new Configuration();
         configuration.add(AspectType.ROS);
+        configuration.add(AspectType.MQTT);
 
         return configuration.load(DEFAULT_PROPERTIES_FILE);
     }

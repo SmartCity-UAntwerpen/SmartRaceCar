@@ -94,7 +94,7 @@ class HeartbeatChecker implements MQTTListener
 			if (delta > MAX_DELTA) //longer than 90 seconds
 			{
 				this.restUtils.get("delete/" + vehicleId);
-				this.log.warn("Vehicle with ID: " + vehicleId + " was removed since it hasn't responded for over 90s");
+				this.log.warn("Vehicle " + vehicleId + " was removed since it hasn't responded for over 90s");
 			}
 		}
 
@@ -179,8 +179,6 @@ class HeartbeatChecker implements MQTTListener
 	public void parseMQTT(String topic, String message)
 	{
 		long vehicleId = TopicUtils.getCarId(topic);
-
-		this.log.info("Received MQTT Message: \"" + topic + "\": \"" + message + "\"");
 
 		if (this.isHeartbeat(topic))
 		{

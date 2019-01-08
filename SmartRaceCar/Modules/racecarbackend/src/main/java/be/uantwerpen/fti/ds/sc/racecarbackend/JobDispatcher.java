@@ -280,12 +280,7 @@ public class JobDispatcher implements MQTTListener  //todo: Get rid of this, sti
 	}
 
 	/**
-	 * Dummy MQTT Parsing method.
-	 * We only need MQTT Utils to publish, we don't sub to anything.
-	 * The MQTTUtils still need a listener because...
-	 * Honestly, I don't know why, I just know that it will crash if you don't give it one.
-	 * I know, I know ...
-	 *
+	 * MQTT Parsing method.
 	 * @param topic   received MQTT topic
 	 * @param message received MQTT message string
 	 */
