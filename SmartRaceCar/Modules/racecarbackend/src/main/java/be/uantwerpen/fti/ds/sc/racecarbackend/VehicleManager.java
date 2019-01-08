@@ -202,7 +202,7 @@ public class VehicleManager implements MQTTListener, VehicleRepository, Occupati
 	}
 
 	@RequestMapping(value="/carmanager/setOccupied/{vehicleId}/{occupied}", method=RequestMethod.POST)
-	public @ResponseBody ResponseEntity<String> setOccupiedREST(long vehicleId, int occupied)
+	public @ResponseBody ResponseEntity<String> setOccupiedREST(@PathVariable long vehicleId, @PathVariable int occupied)
 	{
 		try
 		{
