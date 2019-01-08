@@ -7,7 +7,7 @@ public class Messages
 	 */
 	public class BACKEND
 	{
-		public static final String CHANGE_MAP = "changeMap";
+		public static final String CHANGE_MAP = "changemap";
 		public static final String JOB = "job";
 
 		public static final String REGISTER = "register";
