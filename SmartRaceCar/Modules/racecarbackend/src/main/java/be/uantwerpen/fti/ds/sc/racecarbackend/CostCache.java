@@ -99,13 +99,15 @@ public class CostCache
 			points.add(endPoint);
 
 			String jsonString = JSONUtils.arrayToJSONString(points);
+			String costString = "";
+
 
 			try
 			{
 				RESTUtils ROSAPI = new RESTUtils(rosAspect.getRosServerUrl());
 				Type costType = new TypeToken<Cost>(){}.getType();
 
-				String costString = ROSAPI.post("calcWeight", jsonString, MediaType.APPLICATION_JSON_TYPE);
+				costString = ROSAPI.post("calcWeight", jsonString, MediaType.APPLICATION_JSON_TYPE);
 				Cost costObj = (Cost) JSONUtils.getObjectWithKeyWord(costString, costType);
 
 				cost = costObj.getWeight();
@@ -114,6 +116,10 @@ public class CostCache
 			{
 				this.log.error("An exception was thrown while trying to calculate the cost for " + startId + " -> " + endId, ioe);
 				throw ioe;
+			}
+			catch (NullPointerException npe)
+			{
+				this.log.error("Failed to extract Cost object from cost JSON (\"" + costString + "\")");
 			}
 		}
 		else
