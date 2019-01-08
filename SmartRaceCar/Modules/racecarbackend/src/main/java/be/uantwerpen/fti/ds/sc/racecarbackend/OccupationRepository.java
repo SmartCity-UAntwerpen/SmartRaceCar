@@ -8,4 +8,6 @@ public interface OccupationRepository
 	 * @return
 	 */
 	public boolean isOccupied(long vehicleId);
+
+	public void setOccupied(long vehicleId, boolean occupied);
 }

@@ -34,7 +34,7 @@ public class JobDispatcher implements MQTTListener  //todo: Get rid of this, sti
 	private JobTracker jobTracker;
 	private JobQueue jobQueue;
 	private WaypointValidator waypointValidator;
-	private VehicleManager vehicleManager;
+	private OccupationRepository occupationRepository;
 	private LocationRepository locationRepository;
 	private ResourceManager resourceManager;
 	private MQTTUtils mqttUtils;
@@ -66,7 +66,7 @@ public class JobDispatcher implements MQTTListener  //todo: Get rid of this, sti
 
 	private void scheduleJob(Job job, JobType type) throws IOException
 	{
-		this.vehicleManager.setOccupied(job.getVehicleId(), true);
+		this.occupationRepository.setOccupied(job.getVehicleId(), true);
 
 		if (job.getVehicleId() == -1)
 		{
@@ -96,14 +96,14 @@ public class JobDispatcher implements MQTTListener  //todo: Get rid of this, sti
 	}
 
 	@Autowired
-	public JobDispatcher(@Qualifier("jobDispatcher") Configuration configuration, JobTracker jobTracker, JobQueue jobQueue, WaypointValidator waypointValidator, VehicleManager vehicleManager, LocationRepository locationRepository, ResourceManager resourceManager)
+	public JobDispatcher(@Qualifier("jobDispatcher") Configuration configuration, JobTracker jobTracker, JobQueue jobQueue, WaypointValidator waypointValidator, OccupationRepository occupationRepository, LocationRepository locationRepository, ResourceManager resourceManager)
 	{
 		this.log = LoggerFactory.getLogger(this.getClass());
 		this.config = configuration;
 		this.jobQueue = jobQueue;
 		this.jobTracker = jobTracker;
 		this.waypointValidator = waypointValidator;
-		this.vehicleManager = vehicleManager;
+		this.occupationRepository = occupationRepository;
 		this.locationRepository = locationRepository;
 		this.resourceManager = resourceManager;
 
@@ -299,6 +299,8 @@ public class JobDispatcher implements MQTTListener  //todo: Get rid of this, sti
 			if (message.equals(ROUTE_UPDATE_DONE))
 			{
 				this.log.info("Vehicle " + vehicleId + " completed its job. Checking for other queued jobs.");
+
+				this.occupationRepository.setOccupied(vehicleId, false);
 
 				try
 				{
