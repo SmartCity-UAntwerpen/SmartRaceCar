@@ -55,7 +55,7 @@ public class JobTracker implements MQTTListener
     private boolean isRouteUpdate(String topic)
     {
         MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-        return topic.startsWith(mqttAspect.getTopic() + Messages.BACKEND.ROUTE);
+        return topic.startsWith(mqttAspect.getTopic() + Messages.CORE.ROUTE);
     }
 
     private JobType findJobType(long jobId, long vehicleId)
@@ -226,7 +226,7 @@ public class JobTracker implements MQTTListener
         {
             MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
             this.mqttUtils = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
-            this.mqttUtils.subscribe(mqttAspect.getTopic() + Messages.BACKEND.ROUTE + "/#");
+            this.mqttUtils.subscribe(mqttAspect.getTopic() + Messages.CORE.ROUTE + "/#");
             this.mqttUtils.subscribe(mqttAspect.getTopic() + Messages.SIMKERNEL.PERCENTAGE + "/#");
         }
         catch (MqttException me)

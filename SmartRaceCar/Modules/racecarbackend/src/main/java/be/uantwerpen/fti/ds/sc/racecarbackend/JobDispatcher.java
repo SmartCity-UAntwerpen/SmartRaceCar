@@ -4,6 +4,7 @@ import be.uantwerpen.fti.ds.sc.common.*;
 import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
 import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
 import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,12 +23,9 @@ import java.io.IOException;
 import java.util.NoSuchElementException;
 
 @Controller
-public class JobDispatcher implements MQTTListener  //todo: Get rid of this, still needed because MQTTUtils will crash if you don't provide it with a listener
+public class JobDispatcher implements MQTTListener
 {
 	private static final String ROUTE_UPDATE_DONE = "done";
-
-	private static final String MQTT_ROUTE_POSTFIX = "route/#";
-	private static final String MQTT_REGISTERED_POSTFIX = "registered/#";
 
 	private Logger log;
 	private Configuration config;
@@ -43,13 +41,13 @@ public class JobDispatcher implements MQTTListener  //todo: Get rid of this, sti
 	private boolean isRouteUpdate(String topic)
 	{
 		MqttAspect mqttAspect = (MqttAspect) this.config.get(AspectType.MQTT);
-		return topic.startsWith(mqttAspect.getTopic() + MQTT_ROUTE_POSTFIX.substring(0, MQTT_ROUTE_POSTFIX.length() - 2));
+		return topic.startsWith(mqttAspect.getTopic() + Messages.CORE.ROUTE);
 	}
 
 	private boolean isRegistrationComplete(String topic)
 	{
 		MqttAspect mqttAspect = (MqttAspect) this.config.get(AspectType.MQTT);
-		return topic.startsWith(mqttAspect.getTopic() + MQTT_REGISTERED_POSTFIX.substring(0, MQTT_REGISTERED_POSTFIX.length() - 2));
+		return topic.startsWith(mqttAspect.getTopic() + Messages.BACKEND.REGISTRATION_DONE);
 	}
 
 	private void checkJobQueue() throws IOException
@@ -87,7 +85,8 @@ public class JobDispatcher implements MQTTListener  //todo: Get rid of this, sti
 
 		try
 		{
-			this.mqttUtils.publish("racecar/job/" + job.getVehicleId(), job.getStartId() + " " + job.getEndId());
+			MqttAspect mqttAspect = (MqttAspect) this.config.get(AspectType.MQTT);
+			this.mqttUtils.publish(mqttAspect.getTopic() + Messages.BACKEND.JOB + "/" + job.getVehicleId(), job.getStartId() + " " + job.getEndId());
 		}
 		catch (MqttException me)
 		{
@@ -111,7 +110,7 @@ public class JobDispatcher implements MQTTListener  //todo: Get rid of this, sti
 		{
 			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
 			this.mqttUtils = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
-			this.mqttUtils.subscribe(mqttAspect.getTopic() + MQTT_ROUTE_POSTFIX);
+			this.mqttUtils.subscribe(mqttAspect.getTopic() + Messages.CORE.ROUTE + "/#");
 		}
 		catch (MqttException me)
 		{
@@ -122,7 +121,7 @@ public class JobDispatcher implements MQTTListener  //todo: Get rid of this, sti
 		{
 			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
 			this.messageQueueClient = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
-			this.messageQueueClient.subscribe(mqttAspect.getTopic() + MQTT_REGISTERED_POSTFIX);
+			this.messageQueueClient.subscribe(mqttAspect.getTopic() + Messages.BACKEND.REGISTRATION_DONE + "/#");
 		}
 		catch (Exception e)
 		{

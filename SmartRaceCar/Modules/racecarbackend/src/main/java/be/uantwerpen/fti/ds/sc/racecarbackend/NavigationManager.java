@@ -17,10 +17,6 @@ import java.util.HashMap;
 @Service
 public class NavigationManager implements MQTTListener, LocationRepository
 {
-	private static final String MQTT_LOCATION_POSTFIX = "locationupdate/#";
-	private static final String MQTT_REGISTER_POSTFIX = "register/#";
-	private static final String MQTT_DELETE_POSTFIX = "delete/#";
-
 	private Logger log;
 	private Configuration configuration;
 	private MessageQueueClient messageQueueClient;
@@ -32,8 +28,7 @@ public class NavigationManager implements MQTTListener, LocationRepository
 	{
 		MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
 		// Remove the trailing '#' and check the topic
-		String deleteTopic = MQTT_DELETE_POSTFIX.substring(0, MQTT_DELETE_POSTFIX.length() - 2);
-		return topic.startsWith(mqttAspect.getTopic() + deleteTopic);
+		return topic.startsWith(mqttAspect.getTopic() + Messages.BACKEND.DELETE);
 	}
 
 	private void removeVehicle(long vehicleId)
@@ -63,9 +58,9 @@ public class NavigationManager implements MQTTListener, LocationRepository
 		{
 			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
 			this.messageQueueClient = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
-			this.messageQueueClient.subscribe(mqttAspect.getTopic() + MQTT_LOCATION_POSTFIX);
-			this.messageQueueClient.subscribe(mqttAspect.getTopic() + MQTT_REGISTER_POSTFIX);
-			this.messageQueueClient.subscribe(mqttAspect.getTopic() + MQTT_DELETE_POSTFIX);
+			this.messageQueueClient.subscribe(mqttAspect.getTopic() + Messages.CORE.LOCATION_UPDATE + "/#");
+			this.messageQueueClient.subscribe(mqttAspect.getTopic() + Messages.BACKEND.REGISTER + "/#");
+			this.messageQueueClient.subscribe(mqttAspect.getTopic() + Messages.BACKEND.DELETE + "/#");
 		}
 		catch (Exception e)
 		{

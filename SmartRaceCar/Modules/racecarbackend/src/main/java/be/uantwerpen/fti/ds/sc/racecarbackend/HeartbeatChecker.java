@@ -25,9 +25,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 class HeartbeatChecker implements MQTTListener
 {
-	private static final String MQTT_HEARTBEAT_POSTFIX = "heartbeat/#";
-	private static final String MQTT_REGISTER_POSTFIX = "register/#";
-	private static final String MQTT_DELETE_POSTFIX = "delete/#";
+	//private static final String MQTT_HEARTBEAT_POSTFIX = "heartbeat/#";
+	//private static final String MQTT_REGISTER_POSTFIX = "register/#";
+	//private static final String MQTT_DELETE_POSTFIX = "delete/#";
 
 	@Value("${Racecar.Heartbeat.interval}")
 	private long CHECK_INTERVAL;		// Interval between heartbeat checks (in s)
@@ -45,25 +45,19 @@ class HeartbeatChecker implements MQTTListener
 	private boolean isHeartbeat(String topic)
 	{
 		MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-		// Remove the trailing '#' and compare the topic
-		String heartbeatTopic = MQTT_HEARTBEAT_POSTFIX.substring(0, MQTT_HEARTBEAT_POSTFIX.length() - 2);
-		return topic.startsWith(mqttAspect.getTopic() +  heartbeatTopic);
+		return topic.startsWith(mqttAspect.getTopic() +  Messages.CORE.HEARTBEAT);
 	}
 
 	private boolean isRegistration(String topic)
 	{
 		MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-		// Remove the trailing '#' and compare the topic
-		String heartbeatTopic = MQTT_REGISTER_POSTFIX.substring(0, MQTT_REGISTER_POSTFIX.length() - 2);
-		return topic.startsWith(mqttAspect.getTopic() +  heartbeatTopic);
+		return topic.startsWith(mqttAspect.getTopic() +  Messages.BACKEND.REGISTER);
 	}
 
 	private boolean isDeletion(String topic)
 	{
 		MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-		// Remove the trailing '#' and check the topic
-		String deleteTopic = MQTT_DELETE_POSTFIX.substring(0, MQTT_DELETE_POSTFIX.length() - 2);
-		return topic.startsWith(mqttAspect.getTopic() +  deleteTopic);
+		return topic.startsWith(mqttAspect.getTopic() +  Messages.BACKEND.DELETE);
 	}
 
 	private void updateHeartbeat(long vehicleId)
@@ -91,7 +85,7 @@ class HeartbeatChecker implements MQTTListener
 
 			this.log.debug("Vehicle " + vehicleId + "'s last heartbeat came " + (delta / 1000) + "s ago.");
 
-			if (delta > MAX_DELTA) //longer than 90 seconds
+			if (delta > this.MAX_DELTA) //longer than 90 seconds
 			{
 				this.restUtils.get("delete/" + vehicleId);
 				this.log.warn("Vehicle " + vehicleId + " was removed since it hasn't responded for over 90s");
@@ -150,8 +144,8 @@ class HeartbeatChecker implements MQTTListener
 		{
 			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
 			this.messageQueueClient = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
-			this.messageQueueClient.subscribe(mqttAspect.getTopic() + MQTT_REGISTER_POSTFIX);
-			this.messageQueueClient.subscribe(mqttAspect.getTopic() + MQTT_DELETE_POSTFIX);
+			this.messageQueueClient.subscribe(mqttAspect.getTopic() + Messages.BACKEND.REGISTER + "/#");
+			this.messageQueueClient.subscribe(mqttAspect.getTopic() + Messages.BACKEND.DELETE + "/#");
 		}
 		catch (Exception e)
 		{
@@ -163,7 +157,7 @@ class HeartbeatChecker implements MQTTListener
 		{
 			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
 			this.mqttUtils = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
-			this.mqttUtils.subscribe(mqttAspect.getTopic() + MQTT_HEARTBEAT_POSTFIX);
+			this.mqttUtils.subscribe(mqttAspect.getTopic() + Messages.CORE.HEARTBEAT+ "/#");
 		}
 		catch (Exception e)
 		{
