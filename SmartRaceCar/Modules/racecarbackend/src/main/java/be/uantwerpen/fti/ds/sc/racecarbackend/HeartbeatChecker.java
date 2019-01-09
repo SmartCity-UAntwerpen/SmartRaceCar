@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -172,7 +171,7 @@ class HeartbeatChecker implements MQTTListener
 	@Override
 	public void parseMQTT(String topic, String message)
 	{
-		long vehicleId = TopicUtils.getCarId(topic);
+		long vehicleId = TopicUtils.getVehicleId(topic);
 
 		if (this.isHeartbeat(topic))
 		{

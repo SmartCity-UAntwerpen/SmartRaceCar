@@ -4,7 +4,6 @@ import be.uantwerpen.fti.ds.sc.common.*;
 import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
 import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
 import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -286,7 +285,7 @@ public class JobDispatcher implements MQTTListener
 	@Override
 	public void parseMQTT(String topic, String message)
 	{
-		long vehicleId = TopicUtils.getCarId(topic);
+		long vehicleId = TopicUtils.getVehicleId(topic);
 
 		if (this.isRouteUpdate(topic))
 		{

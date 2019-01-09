@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -41,6 +42,7 @@ public class JobTracker implements MQTTListener
     private VehicleManager vehicleManager;
     private JobQueue jobQueue;
     private MQTTUtils mqttUtils;
+    private MessageQueueClient messageQueueClient;
     private Map<Long, Job> localJobs;       // Map containing local jobs mapped to their IDs
                                             // Local jobs are jobs not present in the backbone,
                                             // they are tracked locally to send vehicles to the startpoint of jobs etc.
@@ -56,6 +58,47 @@ public class JobTracker implements MQTTListener
     {
         MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
         return topic.startsWith(mqttAspect.getTopic() + Messages.CORE.ROUTE);
+    }
+
+    private boolean isDeletion(String topic)
+    {
+	    MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
+	    return topic.startsWith(mqttAspect.getTopic() + Messages.BACKEND.DELETE);
+    }
+
+    private void vehicleDeleted(long vehicleId)
+    {
+	    Iterator<Long> localJobIterator = this.localJobs.keySet().iterator();
+
+	    while(localJobIterator.hasNext())
+	    {
+		    long jobId = localJobIterator.next();
+		    Job job = this.localJobs.get(jobId);
+
+		    if (job.getVehicleId() == vehicleId)
+		    {
+			    this.log.warn("Re-queueing local job " + jobId);
+			    this.localJobs.remove(jobId);
+			    job.setVehicleId(-1);
+			    this.jobQueue.enqueue(job, JobType.LOCAL);
+		    }
+	    }
+
+	    Iterator<Long> globalJobIterator = this.globalJobs.keySet().iterator();
+
+	    while(globalJobIterator.hasNext())
+	    {
+		    long jobId = globalJobIterator.next();
+		    Job job = this.globalJobs.get(jobId);
+
+		    if (job.getVehicleId() == vehicleId)
+		    {
+			    this.log.warn("Re-queueing global job " + jobId);
+			    this.globalJobs.remove(jobId);
+			    job.setVehicleId(-1);
+			    this.jobQueue.enqueue(job, JobType.GLOBAL);
+		    }
+	    }
     }
 
     private JobType findJobType(long jobId, long vehicleId)
@@ -234,6 +277,21 @@ public class JobTracker implements MQTTListener
             this.log.error("Failed to create MQTTUtils for JobTracker.", me);
         }
 
+        try
+        {
+	        MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
+	        this.messageQueueClient = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
+	        this.messageQueueClient.subscribe(mqttAspect.getTopic() + Messages.BACKEND.DELETE + "/#");
+        }
+        catch (MqttException me)
+        {
+        	this.log.error("Failed to create MessageQueueClient for JobTracker.", me);
+        }
+        catch (Exception e)
+        {
+	        this.log.error("Failed to subscribe to deletion topic for JobTracker.", e);
+        }
+
         this.globalJobs = new HashMap<>();
         this.localJobs = new HashMap<>();
 
@@ -317,7 +375,7 @@ public class JobTracker implements MQTTListener
     @Override
     public void parseMQTT(String topic, String message)
     {
-        long vehicleId = TopicUtils.getCarId(topic);
+        long vehicleId = TopicUtils.getVehicleId(topic);
 
         try
         {
@@ -349,6 +407,13 @@ public class JobTracker implements MQTTListener
                 {
                     this.log.error("Failed to process route update for job " + jobId, ioe);
                 }
+            }
+            // If a vehicle gets deleted, requeue all jobs associated with that vehicle
+            else if (this.isDeletion(topic))
+            {
+            	this.log.warn("Vehicle " + vehicleId + " got deleted, re-queuing all associated jobs");
+
+	            this.vehicleDeleted(vehicleId);
             }
             else
             {

@@ -20,7 +20,7 @@ public class TopicUtils
 	 * @param topic
 	 * @return
 	 */
-	public static long getCarId(String topic)
+	public static long getVehicleId(String topic)
 	{
 		Logger log = LoggerFactory.getLogger(TopicUtils.class);
 		Matcher matcher = MQTTConstants.CAR_ID_REGEX.matcher(topic);
