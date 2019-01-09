@@ -49,7 +49,7 @@ public class RESTUtils
 		WebTarget resourceWebTarget = this.webTarget.path(endpoint);
 		Invocation.Builder invocationBuilder = resourceWebTarget.request(expectedResponseType);
 		Response response = null;
-		this.log.debug("Attempting GET request: " + resourceWebTarget.toString());
+		this.log.debug("Attempting GET request: " + resourceWebTarget.getUri());
 
 		try
 		{
@@ -76,7 +76,7 @@ public class RESTUtils
 		WebTarget resourceWebTarget = this.webTarget.path(endpoint);
 		Invocation.Builder invocationBuilder = resourceWebTarget.request(MediaType.TEXT_PLAIN);
 		Response response = null;
-		this.log.debug("Attempting GET request :" + invocationBuilder.toString());
+		this.log.debug("Attempting GET request :" + resourceWebTarget.getUri());
 
 		try
 		{

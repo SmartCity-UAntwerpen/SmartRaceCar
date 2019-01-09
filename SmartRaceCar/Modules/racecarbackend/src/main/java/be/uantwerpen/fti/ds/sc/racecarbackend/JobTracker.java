@@ -31,9 +31,6 @@ public class JobTracker implements MQTTListener
     private static final String ROUTE_UPDATE_ERROR = "error";
     private static final String ROUTE_UPDATE_NOT_COMPLETE = "notcomplete";
 
-    private static final String MQTT_PROGRESS_POSTFIX = "percentage/#";
-    private static final String MQTT_ROUTEUPDATE_POSTFIX = "route/#";
-
     private static final int ALMOST_DONE_PERCENTAGE = 90;
     // We need to contact the backbone if we're "almost there"
     // No concrete definition of "almost" has been given, so
@@ -52,13 +49,13 @@ public class JobTracker implements MQTTListener
     private boolean isProgressUpdate(String topic)
     {
         MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-        return topic.startsWith(mqttAspect.getTopic() + MQTT_PROGRESS_POSTFIX);
+        return topic.startsWith(mqttAspect.getTopic() + Messages.SIMKERNEL.PERCENTAGE);
     }
 
     private boolean isRouteUpdate(String topic)
     {
         MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-        return topic.startsWith(mqttAspect.getTopic() + MQTT_ROUTEUPDATE_POSTFIX);
+        return topic.startsWith(mqttAspect.getTopic() + Messages.BACKEND.ROUTE);
     }
 
     private JobType findJobType(long jobId, long vehicleId)
@@ -229,8 +226,8 @@ public class JobTracker implements MQTTListener
         {
             MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
             this.mqttUtils = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
-            this.mqttUtils.subscribe(mqttAspect.getTopic() + MQTT_PROGRESS_POSTFIX);
-            this.mqttUtils.subscribe(mqttAspect.getTopic() + MQTT_ROUTEUPDATE_POSTFIX);
+            this.mqttUtils.subscribe(mqttAspect.getTopic() + Messages.BACKEND.ROUTE + "/#");
+            this.mqttUtils.subscribe(mqttAspect.getTopic() + Messages.SIMKERNEL.PERCENTAGE + "/#");
         }
         catch (MqttException me)
         {
@@ -352,6 +349,10 @@ public class JobTracker implements MQTTListener
                 {
                     this.log.error("Failed to process route update for job " + jobId, ioe);
                 }
+            }
+            else
+            {
+                this.log.warn("Received unsupported MQTT Message: \"" +  message + "\" on topic \"" + topic + "\".");
             }
         }
         catch (NoSuchElementException nsee)

@@ -9,6 +9,7 @@ public class Messages
 	{
 		public static final String CHANGE_MAP = "changemap";
 		public static final String JOB = "job";
+		public static final String ROUTE = "route";
 
 		public static final String REGISTER = "register";
 		public static final String GET_WAYPOINTS = "getwaypoints";
