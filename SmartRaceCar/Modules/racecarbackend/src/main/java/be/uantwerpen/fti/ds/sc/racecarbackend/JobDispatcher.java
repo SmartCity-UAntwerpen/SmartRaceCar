@@ -310,6 +310,14 @@ public class JobDispatcher implements MQTTListener  //todo: Get rid of this, sti
 		}
 		else if (this.isRegistrationComplete(topic))
 		{
+			try
+			{
+				Thread.sleep(500);
+			}
+			catch (InterruptedException ie)
+			{
+				ie.printStackTrace();
+			}
 			if (!this.jobQueue.isEmpty(JobType.LOCAL))
 			{
 				try
