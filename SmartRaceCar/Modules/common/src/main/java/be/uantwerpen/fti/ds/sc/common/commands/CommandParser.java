@@ -99,7 +99,7 @@ public class CommandParser
 			case RESTART:
 			{
 				Range simulationIds = Range.parseRange(split[1]);
-				return new VehicleCommand(CommandType.CREATE, simulationIds);
+				return new VehicleCommand(CommandType.RESTART, simulationIds);
 			}
 			case SET:
 			{
