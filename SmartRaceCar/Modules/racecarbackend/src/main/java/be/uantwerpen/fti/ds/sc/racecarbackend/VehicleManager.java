@@ -187,6 +187,11 @@ public class VehicleManager implements MQTTListener, VehicleRepository, Occupati
 			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
 			MessageToken token = this.messageQueueClient.publish(mqttAspect.getTopic() + "register/" + newVehicleId, Long.toString(startWaypoint));
 			token.waitForDelivery(MQTT_DELIVERY_TIMEOUT);
+
+			// We sleep the current thread for 500ms to allow the vehicle to subscribe to the /job topic
+			// Otherwise, we might send a job before the car is subscribed to the job topic (and the job never gets done)
+			Thread.sleep(500);
+
 			this.messageQueueClient.publish(mqttAspect.getTopic() + "registered/" + newVehicleId, "done");
 		}
 		catch (Exception e)
