@@ -49,8 +49,10 @@ public class CommandParserTest
 	public void createInvalid() throws Exception
 	{
 		final String CREATE_COMMAND_INVALID_SIM_ID = "create f";
-		final String CREATE_COMMAND_INVALID_COMMAND = "";
+		final String CREATE_COMMAND_INVALID_COMMAND = "crwate 1";
 		final String CREATE_COMMAND_MISSING_DOT = "create 0..1";
+
+
 	}
 
 	@After
