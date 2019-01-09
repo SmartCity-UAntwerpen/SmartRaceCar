@@ -3,7 +3,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import java.util.HashSet;
+import java.util.Set;
+
+import static org.junit.Assert.*;
 
 public class CommandParserTest
 {
@@ -16,10 +19,8 @@ public class CommandParserTest
 	}
 
 	@Test
-	public void createValidSingle()
+	public void createValid()
 	{
-		final Range EXPECTED_SIM_ID = new Range(0);
-
 		final String VALID_CREATE_COMMAND = "create 0";
 
 		Command command = this.parser.parseCommand(VALID_CREATE_COMMAND);
@@ -28,34 +29,13 @@ public class CommandParserTest
 
 		VehicleCommand vehicleCommand = (VehicleCommand) command;
 
-		assertEquals(vehicleCommand.getSimulationId(), EXPECTED_SIM_ID);
 		assertEquals(vehicleCommand.toString(), VALID_CREATE_COMMAND);
 		assertEquals(command.toString(), VALID_CREATE_COMMAND);
 	}
 
 	@Test
-	public void createValidMultiple()
+	public void setValidStartpoint()
 	{
-		final Range EXPECTED_SIM_ID = new Range(0,1);
-
-		final String VALID_CREATE_COMMAND = "create 0...1";
-
-		Command command = this.parser.parseCommand(VALID_CREATE_COMMAND);
-
-		assertEquals(command.getCommandType(), CommandType.CREATE);
-
-		VehicleCommand vehicleCommand = (VehicleCommand) command;
-
-		assertEquals(vehicleCommand.getSimulationId(), EXPECTED_SIM_ID);
-		assertEquals(vehicleCommand.toString(), VALID_CREATE_COMMAND);
-		assertEquals(command.toString(), VALID_CREATE_COMMAND);
-	}
-
-	@Test
-	public void setValidSingleStartpoint()
-	{
-		final Range EXPECTED_SIM_ID = new Range(0);
-
 		final String VALID_SET_COMMAND = "set 0 startpoint 2";
 
 		Command command = this.parser.parseCommand(VALID_SET_COMMAND);
@@ -64,18 +44,16 @@ public class CommandParserTest
 
 		SetCommand setCommand = (SetCommand) command;
 
-		assertEquals(setCommand.getSimulationId(), EXPECTED_SIM_ID);
 		assertEquals(setCommand.getKey(), SetParameter.STARTPOINT);
+		assertEquals(setCommand.getValue(), "2");
 		assertEquals(setCommand.toString(), VALID_SET_COMMAND);
 		assertEquals(command.toString(), VALID_SET_COMMAND);
 	}
 
 	@Test
-	public void setValidSingleSpeed()
+	public void setValidSpeed()
 	{
-		final Range EXPECTED_SIM_ID = new Range(0);
-
-		final String VALID_SET_COMMAND = "set 0 speed 2";
+		final String VALID_SET_COMMAND = "set 0 speed 3";
 
 		Command command = this.parser.parseCommand(VALID_SET_COMMAND);
 
@@ -83,17 +61,15 @@ public class CommandParserTest
 
 		SetCommand setCommand = (SetCommand) command;
 
-		assertEquals(setCommand.getSimulationId(), EXPECTED_SIM_ID);
 		assertEquals(setCommand.getKey(), SetParameter.SPEED);
+		assertEquals(setCommand.getValue(), "3");
 		assertEquals(setCommand.toString(), VALID_SET_COMMAND);
 		assertEquals(command.toString(), VALID_SET_COMMAND);
 	}
 
 	@Test
-	public void setValidSingleName()
+	public void setValidName()
 	{
-		final Range EXPECTED_SIM_ID = new Range(0);
-
 		final String VALID_SET_COMMAND = "set 0 name simulation-1";
 
 		Command command = this.parser.parseCommand(VALID_SET_COMMAND);
@@ -102,67 +78,18 @@ public class CommandParserTest
 
 		SetCommand setCommand = (SetCommand) command;
 
-		assertEquals(setCommand.getSimulationId(), EXPECTED_SIM_ID);
 		assertEquals(setCommand.getKey(), SetParameter.NAME);
+		assertEquals(setCommand.getValue(), "simulation-1");
 		assertEquals(setCommand.toString(), VALID_SET_COMMAND);
 		assertEquals(command.toString(), VALID_SET_COMMAND);
 	}
 
-	@Test
-	public void setValidMultipleStartpoint()
+	@Test (expected = IllegalArgumentException.class)
+	public void setInvalidParameter()
 	{
-		final Range EXPECTED_SIM_ID = new Range(0, 2);
+		final String INVALID_SET_COMMAND = "set 0 cookies 10";
 
-		final String VALID_SET_COMMAND = "set 0...2 startpoint 2";
-
-		Command command = this.parser.parseCommand(VALID_SET_COMMAND);
-
-		assertEquals(command.getCommandType(), CommandType.SET);
-
-		SetCommand setCommand = (SetCommand) command;
-
-		assertEquals(setCommand.getSimulationId(), EXPECTED_SIM_ID);
-		assertEquals(setCommand.getKey(), SetParameter.STARTPOINT);
-		assertEquals(setCommand.toString(), VALID_SET_COMMAND);
-		assertEquals(command.toString(), VALID_SET_COMMAND);
-	}
-
-	@Test
-	public void setValidMultipleSpeed()
-	{
-		final Range EXPECTED_SIM_ID = new Range(0,2);
-
-		final String VALID_SET_COMMAND = "set 0...2 speed 2";
-
-		Command command = this.parser.parseCommand(VALID_SET_COMMAND);
-
-		assertEquals(command.getCommandType(), CommandType.SET);
-
-		SetCommand setCommand = (SetCommand) command;
-
-		assertEquals(setCommand.getSimulationId(), EXPECTED_SIM_ID);
-		assertEquals(setCommand.getKey(), SetParameter.SPEED);
-		assertEquals(setCommand.toString(), VALID_SET_COMMAND);
-		assertEquals(command.toString(), VALID_SET_COMMAND);
-	}
-
-	@Test
-	public void setValidMultipleName()
-	{
-		final Range EXPECTED_SIM_ID = new Range(0, 2);
-
-		final String VALID_SET_COMMAND = "set 0...2 name simulation-1";
-
-		Command command = this.parser.parseCommand(VALID_SET_COMMAND);
-
-		assertEquals(command.getCommandType(), CommandType.SET);
-
-		SetCommand setCommand = (SetCommand) command;
-
-		assertEquals(setCommand.getSimulationId(), EXPECTED_SIM_ID);
-		assertEquals(setCommand.getKey(), SetParameter.NAME);
-		assertEquals(setCommand.toString(), VALID_SET_COMMAND);
-		assertEquals(command.toString(), VALID_SET_COMMAND);
+		Command command = this.parser.parseCommand(INVALID_SET_COMMAND);
 	}
 
 	@Test
@@ -180,12 +107,72 @@ public class CommandParserTest
 		assertEquals(command.toString(), VALID_PING_COMMAND);
 	}
 
-	@Test(expected = IllegalArgumentException.class)
-	public void createInvalidCommand() throws IllegalArgumentException
+	@Test
+	public void run()
 	{
-		final String CREATE_COMMAND_INVALID_COMMAND = "crwate 1";
+		final String VALID_RUN_COMMAND = "run 0";
 
-		Command command = this.parser.parseCommand(CREATE_COMMAND_INVALID_COMMAND);
+		Command command = this.parser.parseCommand(VALID_RUN_COMMAND);
+
+		assertEquals(command.getCommandType(), CommandType.RUN);
+
+		VehicleCommand vehicleCommand = (VehicleCommand) command;
+
+		assertEquals(vehicleCommand.toString(), VALID_RUN_COMMAND);
+		assertEquals(command.toString(), VALID_RUN_COMMAND);
+	}
+
+	@Test
+	public void stop()
+	{
+		final String VALID_STOP_COMMAND = "stop 0";
+
+		Command command = this.parser.parseCommand(VALID_STOP_COMMAND);
+
+		assertEquals(command.getCommandType(), CommandType.STOP);
+
+		VehicleCommand vehicleCommand = (VehicleCommand) command;
+
+		assertEquals(vehicleCommand.toString(), VALID_STOP_COMMAND);
+		assertEquals(command.toString(), VALID_STOP_COMMAND);
+	}
+
+	@Test
+	public void kill()
+	{
+		final String VALID_KILL_COMMAND = "kill 0";
+
+		Command command = this.parser.parseCommand(VALID_KILL_COMMAND);
+
+		assertEquals(command.getCommandType(), CommandType.KILL);
+
+		VehicleCommand vehicleCommand = (VehicleCommand) command;
+
+		assertEquals(vehicleCommand.toString(), VALID_KILL_COMMAND);
+		assertEquals(command.toString(), VALID_KILL_COMMAND);
+	}
+
+	@Test
+	public void restart()
+	{
+		final String VALID_RESTART_COMMAND = "restart 0";
+
+		Command command = this.parser.parseCommand(VALID_RESTART_COMMAND);
+
+		assertEquals(command.getCommandType(), CommandType.RESTART);
+
+		VehicleCommand vehicleCommand = (VehicleCommand) command;
+
+		assertEquals(vehicleCommand.toString(), VALID_RESTART_COMMAND);
+		assertEquals(command.toString(), VALID_RESTART_COMMAND);
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void invalidCommand() throws IllegalArgumentException
+	{
+		final String INVALID_COMMAND = "crwate 1";
+
+		Command command = this.parser.parseCommand(INVALID_COMMAND);
 	}
 
 	@Test(expected = NumberFormatException.class)
@@ -202,6 +189,57 @@ public class CommandParserTest
 		final String CREATE_COMMAND_MISSING_DOT = "create 0..1";
 
 		Command command = this.parser.parseCommand(CREATE_COMMAND_MISSING_DOT);
+	}
+
+	@Test
+	public void rangeEqualsObject()
+	{
+		final Object OBJECT = new Object();
+		final Range RANGE = new Range(5);
+
+		assertFalse(RANGE.equals(OBJECT));
+	}
+
+	@Test
+	public void rangeEqualsRange()
+	{
+		final Range RANGE1 = new Range(1, 10);
+		final Range RANGE2 = new Range(1, 10);
+
+		assertTrue(RANGE1.equals(RANGE2));
+	}
+
+	@Test
+	public void rangeToString()
+	{
+		final String RANGE_STRING = "0...3";
+
+		Range range = new Range(0,3);
+
+		assertEquals(RANGE_STRING, range.toString());
+	}
+
+	@Test (expected = NumberFormatException.class)
+	public void invalidMultiRange()
+	{
+		final String INVALID_MULTI_RANGE = "0...3...5";
+
+		Range range = Range.parseRange(INVALID_MULTI_RANGE);
+	}
+
+	@Test
+	public void generateRange()
+	{
+		final String RANGE_STRING = "0...2";
+
+		Set<Long> EXPECTED_NUMBERS = new HashSet<Long>();
+		EXPECTED_NUMBERS.add(0L);
+		EXPECTED_NUMBERS.add(1L);
+		EXPECTED_NUMBERS.add(2L);
+
+		Range range = Range.parseRange(RANGE_STRING);
+
+		assertTrue(range.generate().equals(EXPECTED_NUMBERS));
 	}
 
 	@After
