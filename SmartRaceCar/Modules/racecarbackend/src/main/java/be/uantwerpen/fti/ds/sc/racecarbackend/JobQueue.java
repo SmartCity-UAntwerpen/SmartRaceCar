@@ -1,7 +1,15 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
+import be.uantwerpen.fti.ds.sc.common.MQTTListener;
+import be.uantwerpen.fti.ds.sc.common.MQTTUtils;
+import be.uantwerpen.fti.ds.sc.common.MessageQueueClient;
+import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
+import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
+import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedList;
@@ -9,17 +17,32 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 @Service
-public class JobQueue
+public class JobQueue implements MQTTListener
 {
 	private Logger log;
+	private MessageQueueClient messageQueueClient;
 	private List<Job> localJobs;
 	private List<Job> globalJobs;
 
-	public JobQueue()
+	public JobQueue(@Qualifier("jobQueue") Configuration configuration)
 	{
 		this.localJobs = new LinkedList<>();
 		this.globalJobs = new LinkedList<>();
 		this.log = LoggerFactory.getLogger(JobQueue.class);
+
+		this.log.info("Initializing JobQueue...");
+
+		try
+		{
+			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
+			this.messageQueueClient = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
+		}
+		catch (MqttException me)
+		{
+			this.log.error("Failed to set up MessageQueueClient for JobQueue.", me);
+		}
+
+		this.log.info("Initialized JobQueue.");
 	}
 
 	public boolean isEnqueued(long jobId, JobType type) throws NoSuchElementException
@@ -126,6 +149,32 @@ public class JobQueue
 				String errorString = "Failed to dequeue job from " + type + " queue.";
 				this.log.error(errorString);
 				throw new NoSuchElementException(errorString);
+		}
+	}
+
+	@Override
+	public void parseMQTT(String topic, String message)
+	{
+		// If a vehicle was deleted, we need to re-assign all jobs with that vehicle
+		// We assign -1, this will cause the JobDispatcher to find a new vehicle for this job.
+		long vehicleId = TopicUtils.getVehicleId(message);
+
+		// Check Local jobs
+		for (Job job: this.localJobs)
+		{
+			if (job.getVehicleId() == vehicleId)
+			{
+				job.setVehicleId(-1L);
+			}
+		}
+
+		// Check global jobs
+		for (Job job: this.globalJobs)
+		{
+			if (job.getVehicleId() == vehicleId)
+			{
+				job.setVehicleId(-1L);
+			}
 		}
 	}
 }

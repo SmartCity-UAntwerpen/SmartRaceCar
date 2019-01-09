@@ -32,19 +32,9 @@ public class VehicleManager implements MQTTListener, VehicleRepository, Occupati
 	private Queue<Long> unusedIds;                      // This set contains all IDs of vehicles that were assigned once and then deleted
 														// its a simple way to reuse IDs.
 
-	AtomicLong currentId;
+	private AtomicLong currentId;
 
 	private Map<Long, Boolean> occupation;
-
-	/**
-	 * Check if a vehicle with the given ID exists.
-	 * @param vehicleId
-	 * @return
-	 */
-	private boolean exists(long vehicleId)
-	{
-		return this.occupation.containsKey(vehicleId);
-	}
 
 	@Autowired
 	public VehicleManager(@Qualifier("vehicleManager") Configuration configuration, WaypointValidator waypointValidator)

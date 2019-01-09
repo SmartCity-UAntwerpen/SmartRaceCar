@@ -30,8 +30,6 @@ import java.util.Map;
 @Controller
 public class CostCache implements MQTTListener
 {
-	private static final String MQTT_MAP_CHANGE_POSTFIX = Messages.BACKEND.CHANGE_MAP;
-
 	private Logger log;
 	private WaypointValidator waypointValidator;
 	private WaypointRepository waypointRepository;
@@ -43,7 +41,7 @@ public class CostCache implements MQTTListener
 	{
 		MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
 
-		return topic.startsWith(mqttAspect.getTopic() + MQTT_MAP_CHANGE_POSTFIX);
+		return topic.startsWith(mqttAspect.getTopic() + Messages.BACKEND.CHANGE_MAP);
 	}
 
 	@Autowired
