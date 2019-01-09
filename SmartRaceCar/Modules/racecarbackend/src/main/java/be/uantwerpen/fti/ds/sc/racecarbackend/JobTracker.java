@@ -141,7 +141,6 @@ public class JobTracker implements MQTTListener
         this.log.warn("Requeueing " + jobType.toString() + " job " + jobId);
         this.requeue(jobId, jobType);
         this.removeJob(jobId, vehicleId);
-        this.vehicleManager.setOccupied(vehicleId, false);
     }
 
     private JobType findJobType(long jobId, long vehicleId)
