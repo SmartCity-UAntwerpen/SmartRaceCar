@@ -54,7 +54,7 @@ class Core implements TCPListener
 
 		this.log = LoggerFactory.getLogger(Core.class);
 
-
+		// LOAD SETTINGS
 		this.loadConfig(propertyPath);
 
 		TcpClientAspect tcpClientAspect = (TcpClientAspect) this.configuration.get(AspectType.TCP_CLIENT);
@@ -62,18 +62,15 @@ class Core implements TCPListener
 
 		this.log.info("Startup parameters: Starting Waypoint:" + startPoint + " | TCP Server Port:" + tcpServerAspect.getServerPort() + " | TCP Client Port:" + tcpClientAspect.getClientPort());
 
+		// INIT COMMUNICATION
 		BackendCommunicator backendCommunicator = new BackendCommunicator(this.configuration);
 		this.backendCommunicator = backendCommunicator;
-
-		this.ID = this.backendCommunicator.register(startPoint);
 
 		VehicleCommunicator vehicleCommunicator = new VehicleCommunicator(this.configuration, this, tcpClientAspect.getClientPort(), tcpServerAspect.getServerPort());
 		this.vehicleCommunicator = vehicleCommunicator;
 		this.vehicleCommunicator.start();
 
-
 		KernelAspect kernelAspect = (KernelAspect) this.configuration.get(AspectType.KERNEL);
-
 		if (!kernelAspect.isDebug())
 		{
 			this.log.debug("Waiting 3 seconds before sending connect");
@@ -81,6 +78,7 @@ class Core implements TCPListener
 			this.vehicleCommunicator.connect();
 		}
 
+		// SETUP MAP
 		this.mapManager = new MapManager(this, this.configuration, backendCommunicator, vehicleCommunicator);
 		this.log.info("Map manager started");
 
@@ -91,7 +89,12 @@ class Core implements TCPListener
 			Thread.sleep(10000); //10 seconds delay so the map can load before publishing the startpoint
 		}
 
-		this.navigator = new Navigator(this.ID, this.configuration, vehicleCommunicator, backendCommunicator);
+		// SETUP NAVIGATION
+		this.navigator = new Navigator(this.configuration, vehicleCommunicator, backendCommunicator);
+
+		this.ID = this.backendCommunicator.register(startPoint);
+
+		this.navigator.start(this.ID);
 		this.navigator.sendStartPoint(startPoint);
 
 		this.heartbeatPublisher = new HeartbeatPublisher(this.configuration, this.ID);
