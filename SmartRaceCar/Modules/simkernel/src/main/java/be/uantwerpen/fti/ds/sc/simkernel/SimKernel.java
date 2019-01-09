@@ -43,6 +43,7 @@ class SimKernel implements MessageListener
 	public SimKernel(long simID, String propertyPath) throws InterruptedException, IOException
 	{
 		this.log = LoggerFactory.getLogger(SimKernel.class);
+		this.calculatedCosts = new HashMap<>();
 
 		this.loadConfig(propertyPath);
 
@@ -53,8 +54,6 @@ class SimKernel implements MessageListener
 		this.core = new CoreCommunicator(tcpServerAspect.getServerPort(), tcpClientAspect.getClientPort(), this);
 		this.core.start();
 		this.simdeployer = new SimDeployerCommunicator(this.configuration, simID, this);
-
-		this.calculatedCosts = new HashMap<>();
 
 		while (!this.connected)
 		{

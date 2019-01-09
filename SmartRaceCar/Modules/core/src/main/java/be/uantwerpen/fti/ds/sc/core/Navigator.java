@@ -33,17 +33,27 @@ public class Navigator implements MQTTListener
 	private int routeSize;                                                   // Current route's size.
 
 
-	public Navigator(long ID, Configuration configuration, NavigationVehicleCommunication vehicle, NavigationBackendCommunication backend)
+	public Navigator(Configuration configuration, NavigationVehicleCommunication vehicle, NavigationBackendCommunication backend)
 	{
 		this.log = LoggerFactory.getLogger(Navigator.class);
 
-		this.ID = ID;
 		this.configuration = configuration;
 
 		this.wayPoints = backend.requestWayPoints();
 
 		this.vehicle = vehicle;
 
+		this.costCurrentToStartTiming = -1;
+		this.costStartToEndTiming = -1;
+		this.routeSize = -1;
+		this.occupied = false;
+
+		this.currentRoute = new LinkedList<>();
+	}
+
+	public void start(long ID)
+	{
+		this.ID = ID;
 		try
 		{
 
@@ -55,13 +65,6 @@ public class Navigator implements MQTTListener
 		{
 			this.log.error("Failed to start MQTTUtils.", me);
 		}
-
-		this.costCurrentToStartTiming = -1;
-		this.costStartToEndTiming = -1;
-		this.routeSize = -1;
-		this.occupied = false;
-
-		this.currentRoute = new LinkedList<>();
 	}
 
 	public void setCostCurrentToStartTiming(int costCurrentToStartTiming)
@@ -215,7 +218,7 @@ public class Navigator implements MQTTListener
 		try
 		{
 			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-			this.mqttUtils.publish(mqttAspect.getTopic() + "/percentage/" + this.ID, Integer.toString(location.getPercentage()));
+			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + Messages.CORE.PERCENTAGE + "/" + this.ID, Integer.toString(location.getPercentage()));
 		}
 		catch (MqttException me)
 		{
@@ -228,7 +231,7 @@ public class Navigator implements MQTTListener
 		try
 		{
 			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-			this.mqttUtils.publish(mqttAspect.getTopic() + "/locationupdate/" + this.ID, Long.toString(this.currentRoute.poll()));
+			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + Messages.CORE.LOCATION_UPDATE + "/" + this.ID, Long.toString(this.currentRoute.poll()));
 		}
 		catch(MqttException mqttE)
 		{
@@ -247,7 +250,7 @@ public class Navigator implements MQTTListener
 		try
 		{
 			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-			this.mqttUtils.publish(mqttAspect.getTopic() + "/route/" + this.ID, "notcomplete");
+			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + Messages.CORE.ROUTE + "/" + this.ID, Messages.CORE.NOT_COMPLETE);
 		}
 		catch (MqttException me)
 		{
@@ -263,11 +266,10 @@ public class Navigator implements MQTTListener
 	{
 		this.log.warn("Route error. Route Cancelled");
 		this.occupied = false;
-		//this.mqttUtils.publish("racecar/" + this.core.getID() + "/route", "error");
 		try
 		{
 			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-			this.mqttUtils.publish(mqttAspect.getTopic() + "/route/" + this.ID, "error");
+			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + Messages.CORE.ROUTE + "/" + this.ID, Messages.CORE.ERROR);
 		}
 		catch (MqttException me)
 		{
@@ -325,7 +327,7 @@ public class Navigator implements MQTTListener
 
 		try
 		{MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-			this.mqttUtils.publish(mqttAspect.getTopic() + "/route/" + this.ID, "done");
+			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + Messages.CORE.ROUTE + "/" + this.ID, Messages.CORE.DONE);
 		}
 		catch (MqttException me)
 		{

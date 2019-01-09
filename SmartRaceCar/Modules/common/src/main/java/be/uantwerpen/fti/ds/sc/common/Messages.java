@@ -33,6 +33,12 @@ public class Messages
 		public static final String DRIVE = "drive";
 
 		public static final String HEARTBEAT = "heartbeat";
+		public static final String PERCENTAGE = "percentage";
+		public static final String LOCATION_UPDATE = "locationupdate";
+		public static final String ROUTE = "route";
+		public static final String NOT_COMPLETE = "notcomplete";
+		public static final String ERROR = "error";
+		public static final String DONE = "done";
 	}
 
 	/***
