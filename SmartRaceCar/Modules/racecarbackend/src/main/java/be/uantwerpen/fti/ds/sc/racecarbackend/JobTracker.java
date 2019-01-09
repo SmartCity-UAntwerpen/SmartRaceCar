@@ -66,6 +66,20 @@ public class JobTracker implements MQTTListener
 	    return topic.startsWith(mqttAspect.getTopic() + Messages.BACKEND.DELETE);
     }
 
+    private Job getJob(long jobId, JobType type) throws IndexOutOfBoundsException
+    {
+        switch (type)
+        {
+            case LOCAL:
+                return this.localJobs.get(jobId);
+
+            case GLOBAL:
+                return this.globalJobs.get(jobId);
+        }
+
+        throw new IndexOutOfBoundsException(type.toString() + " job with ID " + jobId + " doesn't exist.");
+    }
+
     private void vehicleDeleted(long vehicleId)
     {
 	    Iterator<Long> localJobIterator = this.localJobs.keySet().iterator();
@@ -99,6 +113,34 @@ public class JobTracker implements MQTTListener
 			    this.jobQueue.enqueue(job, JobType.GLOBAL);
 		    }
 	    }
+    }
+
+    private void requeue(long jobId, JobType type)
+    {
+        Job job = this.getJob(jobId, type);
+        job.setVehicleId(-1L);  // Reset vehicle Id so the JobDispatcher chooses a new vehicle.
+
+        this.log.warn("Requeueing " + type.toString() + " job " + jobId);
+        this.jobQueue.enqueue(job, type);
+    }
+
+    private void routeUpdateError(long jobId, long vehicleId)
+    {
+        JobType jobType = this.findJobType(jobId, vehicleId);
+
+        this.log.warn("Requeueing " + jobType.toString() + " job " + jobId);
+        this.requeue(jobId, jobType);
+        this.removeJob(jobId, vehicleId);
+        this.vehicleManager.setOccupied(vehicleId, false);
+    }
+
+    private void routeUpdateNotComplete(long jobId, long vehicleId)
+    {
+        JobType jobType = this.findJobType(jobId, vehicleId);
+
+        this.log.warn("Requeueing " + jobType.toString() + " job " + jobId);
+        this.requeue(jobId, jobType);
+        this.removeJob(jobId, vehicleId);
     }
 
     private JobType findJobType(long jobId, long vehicleId)
@@ -200,14 +242,13 @@ public class JobTracker implements MQTTListener
                 break;
 
             case ROUTE_UPDATE_ERROR:
-                this.log.info("Vehicle " + vehicleId + " completed its route with errors.");
-                this.vehicleManager.setOccupied(vehicleId, false);
-                this.removeJob(jobId, vehicleId);
+                this.log.warn("Vehicle " + vehicleId + " completed its route with errors.");
+                this.routeUpdateError(jobId, vehicleId);
                 break;
 
             case ROUTE_UPDATE_NOT_COMPLETE:
-                this.log.info("Vehicle " + vehicleId + " hasn't completed its route yet.");
-                this.vehicleManager.setOccupied(vehicleId, true);
+                this.log.info("Vehicle " + vehicleId + " hasn't completed its previous route yet.");
+                this.routeUpdateNotComplete(jobId, vehicleId);
                 break;
         }
     }
