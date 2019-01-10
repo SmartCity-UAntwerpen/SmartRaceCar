@@ -1,13 +1,10 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
-import be.uantwerpen.fti.ds.sc.common.Point;
+import org.springframework.data.repository.CrudRepository;
 
-public interface WaypointRepository
+public interface WaypointRepository extends CrudRepository<Waypoint, Long>
 {
-	/**
-	 * Get the coordinates (x,y,z,w) of a point with a certain ID.
-	 * @param waypointId
-	 * @return
-	 */
-	public Point getCoordinates(long waypointId);
+	public Waypoint findByIdAndMapName(long id, String mapName);
+
+	public Iterable<Waypoint> findAllByMapName(String mapName);
 }
