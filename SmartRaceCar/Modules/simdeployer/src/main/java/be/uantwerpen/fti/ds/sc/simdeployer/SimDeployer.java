@@ -116,7 +116,7 @@ public class SimDeployer implements TCPListener
 			{
 				this.hyperVisor.stop(simulationId);
 			}
-			catch (NoSuchElementException | IOException | InterruptedException | VirtualMachineException e)
+			catch (NoSuchElementException | IOException | InterruptedException | SimulationException e)
 			{
 				String errorString = "An exception was thrown while trying to stop virtual machine " + simulationId + ".";
 				this.log.error(errorString, e);

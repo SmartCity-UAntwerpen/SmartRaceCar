@@ -1,13 +1,13 @@
 package be.uantwerpen.fti.ds.sc.simdeployer;
 
-public class VirtualMachineException extends Exception
+public class SimulationException extends Exception
 {
-	public VirtualMachineException(String s)
+	public SimulationException(String s)
 	{
 		super(s);
 	}
 
-	public VirtualMachineException(String s, Throwable throwable)
+	public SimulationException(String s, Throwable throwable)
 	{
 		super(s, throwable);
 	}
