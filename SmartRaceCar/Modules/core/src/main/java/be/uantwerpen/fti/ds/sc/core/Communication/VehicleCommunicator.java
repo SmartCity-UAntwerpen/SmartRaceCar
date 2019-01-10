@@ -32,7 +32,7 @@ public class VehicleCommunicator implements GeneralVehicleCommunicator, MapVehic
 	public void timeRequest(List<Point> points)
 	{
 		this.log.debug("Performing timing request");
-		this.tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord(Messages.CORE.COST_TIMING, points));
+		this.tcpUtils.sendUpdate(JSONUtils.arrayToJSONStringWithKeyWord(TcpMessages.Core.COST_TIMING, points));
 	}
 
 	@Override
@@ -41,7 +41,7 @@ public class VehicleCommunicator implements GeneralVehicleCommunicator, MapVehic
 		KernelAspect kernelAspect = (KernelAspect) this.configuration.get(AspectType.KERNEL);
 		if(!kernelAspect.isDebug())
 		{
-			this.tcpUtils.sendUpdate(JSONUtils.keywordToJSONString(Messages.CORE.CONNECT));
+			this.tcpUtils.sendUpdate(JSONUtils.keywordToJSONString(TcpMessages.Core.CONNECT));
 		}
 		else
 		{
@@ -56,7 +56,7 @@ public class VehicleCommunicator implements GeneralVehicleCommunicator, MapVehic
 		KernelAspect kernelAspect = (KernelAspect) this.configuration.get(AspectType.KERNEL);
 		if(!kernelAspect.isDebug())
 		{
-			this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord(Messages.CORE.START_POINT, startPoint));
+			this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord(TcpMessages.Core.START_POINT, startPoint));
 		}
 		else
 		{
@@ -67,7 +67,7 @@ public class VehicleCommunicator implements GeneralVehicleCommunicator, MapVehic
 	@Override
 	public void sendCurrentPosition(WayPoint wayPoint)
 	{
-		this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord(Messages.CORE.CURRENT_POSITION, wayPoint));
+		this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord(TcpMessages.Core.CURRENT_POSITION, wayPoint));
 	}
 
 	@Override
@@ -87,7 +87,7 @@ public class VehicleCommunicator implements GeneralVehicleCommunicator, MapVehic
 	@Override
 	public void setMap(Map map)
 	{
-		String json = JSONUtils.objectToJSONStringWithKeyWord(Messages.CORE.CURRENT_MAP, map);
+		String json = JSONUtils.objectToJSONStringWithKeyWord(TcpMessages.Core.CURRENT_MAP, map);
 		this.log.info("Setting current map on NAVSTACK to " + json);
 		this.tcpUtils.sendUpdate(json);
 	}
@@ -99,7 +99,7 @@ public class VehicleCommunicator implements GeneralVehicleCommunicator, MapVehic
 		KernelAspect kernelAspect = (KernelAspect) this.configuration.get(AspectType.KERNEL);
 		if(!kernelAspect.isDebug())
 		{
-			this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord(Messages.CORE.DRIVE, new Drive(steer, throttle)));
+			this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord(TcpMessages.Core.DRIVE, new Drive(steer, throttle)));
 		}
 		else
 		{
@@ -110,6 +110,6 @@ public class VehicleCommunicator implements GeneralVehicleCommunicator, MapVehic
 	@Override
 	public void sendNextWayPoint(WayPoint wayPoint)
 	{
-		this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord(Messages.CORE.NEXT_WAYPOINT, wayPoint));
+		this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord(TcpMessages.Core.NEXT_WAYPOINT, wayPoint));
 	}
 }

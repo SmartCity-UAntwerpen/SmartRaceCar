@@ -141,23 +141,23 @@ class Core implements TCPListener
 			//parses keyword to do the correct function call.
 			switch (JSONUtils.getFirst(message))
 			{
-				case Messages.SIMKERNEL.PERCENTAGE:
+				case TcpMessages.Simkernel.PERCENTAGE:
 					Location location = (Location) JSONUtils.getObjectWithKeyWord(message, Location.class);
 					this.navigator.percentageUpdate(location);
 					break;
-				case Messages.SIMKERNEL.ARRIVED_WAYPOINT:
+				case TcpMessages.Simkernel.ARRIVED_WAYPOINT:
 					this.navigator.wayPointReached();
 					break;
-				case Messages.SIMKERNEL.CONNECT:
+				case TcpMessages.Simkernel.CONNECT:
 					this.log.info("Connected to car.");
 					break;
-				case Messages.SIMKERNEL.EXIT:
+				case TcpMessages.Simkernel.EXIT:
 					this.exit();
 					break;
-				case Messages.SIMKERNEL.COST:
+				case TcpMessages.Simkernel.COST:
 					//this.weightManager.costCalculationComplete((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
 					break;
-				case Messages.SIMKERNEL.COST_TIMING:
+				case TcpMessages.Simkernel.COST_TIMING:
 					this.navigator.timingCalculationComplete((Cost) JSONUtils.getObjectWithKeyWord(message, Cost.class));
 					break;
 				default:
