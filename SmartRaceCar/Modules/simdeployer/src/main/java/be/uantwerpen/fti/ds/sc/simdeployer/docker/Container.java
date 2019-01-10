@@ -141,7 +141,7 @@ public class Container implements VirtualMachine, MQTTListener
 		try
 		{
 			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-			this.mqttUtils.publish(mqttAspect.getTopic() + "simdeployer/" + MqttMessages.Topics.SimDeployer.KILL + "/" + this.simulationId, MqttMessages.Messages.SimDeployer.KILL);
+			this.mqttUtils.publish(mqttAspect.getTopic() + "/simdeployer/" + MqttMessages.Topics.SimDeployer.KILL + "/" + this.simulationId, MqttMessages.Messages.SimDeployer.KILL);
 		}
 		catch (MqttException me)
 		{
