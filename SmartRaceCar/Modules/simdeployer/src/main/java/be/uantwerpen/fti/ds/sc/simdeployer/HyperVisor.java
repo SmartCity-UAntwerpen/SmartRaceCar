@@ -14,7 +14,7 @@ public class HyperVisor
 {
 	private Logger log;
 	private Configuration configuration;
-	private Map<Long, VirtualMachine> virtualMachines;
+	private Map<Long, Simulation> virtualMachines;
 
 	public HyperVisor (Configuration configuration)
 	{
@@ -27,7 +27,7 @@ public class HyperVisor
 	{
 		DockerAspect dockerAspect = (DockerAspect) configuration.get(AspectType.DOCKER);
 		VirtualMachineFactory factory = new VirtualMachineFactory(configuration);
-		VirtualMachine vm = null;
+		Simulation vm = null;
 
 		try
 		{
