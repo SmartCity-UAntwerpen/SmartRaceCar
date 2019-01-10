@@ -152,8 +152,6 @@ public class RESTUtils
 	/**
 	 * Send a POST request without expecting an answer.
 	 * @param endpoint
-	 * @param payload
-	 * @param payloadType
 	 * @return
 	 * @throws IOException
 	 */
@@ -177,145 +175,26 @@ public class RESTUtils
 	}
 
 	/**
-	 * REST GET request to receive a response of the type Text Plain.
-	 *
-	 * @param URL Path of the GET request.
-	 * @return REST response of the type Text Plain.
-	 */
-	@Deprecated
-	public String getTextPlain(String URL) throws ProcessingException
-	{
-		WebTarget resourceWebTarget = this.webTarget.path(URL);
-		Invocation.Builder invocationBuilder = resourceWebTarget.request("text/plain");
-		Response response = null;
-		this.log.info("Attempting GET(text plain) request with URL:" + resourceWebTarget.getUri());
-
-		try
-		{
-			response = invocationBuilder.get();
-		}
-		catch (ProcessingException pe)
-		{
-			this.log.error("Cannot connect to REST service: ", pe);
-			throw pe;
-		}
-
-		checkForError(response, resourceWebTarget.getUri());
-		String responseString = response.readEntity(String.class);
-		this.log.info("Text Returned from request '" + URL + "' is: " + responseString);
-		return responseString;
-	}
-
-	/**
-	 * REST GET request. Doesn't expect any return.
-	 *
-	 * @param URL Path of the GET request.
-	 */
-	@Deprecated
-	public void getCall(String URL) throws ProcessingException
-	{
-		WebTarget resourceWebTarget = this.webTarget.path(URL);
-		Invocation.Builder invocationBuilder = resourceWebTarget.request("text/plain");
-		Response response = null;
-		this.log.info("Attempting GET request with URL:" + resourceWebTarget.getUri());
-
-		try
-		{
-			response = invocationBuilder.get();
-		}
-		catch (ProcessingException pe)
-		{
-			this.log.error("Cannot connect to REST service.", pe);
-			throw pe;
-		}
-
-		checkForError(response, resourceWebTarget.getUri());
-	}
-
-	/**
-	 * REST GET request to receive a response of the type JSON.
-	 *
-	 * @param URL Path of the GET request.
-	 * @return REST response of the type JSON.
-	 */
-	@Deprecated
-	public String getJSON(String URL) throws ProcessingException
-	{
-		WebTarget resourceWebTarget = this.webTarget.path(URL);
-		Invocation.Builder invocationBuilder = resourceWebTarget.request("application/json");
-		Response response = null;
-		this.log.info("Attempting GET(JSON) request with URL:" + resourceWebTarget.getUri());
-
-		try
-		{
-			response = invocationBuilder.get();
-		}
-		catch (ProcessingException pe)
-		{
-			this.log.error("Cannot connect to REST service: ", pe);
-			throw pe;
-		}
-
-		checkForError(response, resourceWebTarget.getUri());
-		String responseString = response.readEntity(String.class);
-		this.log.info("JSON Returned from request '" + URL + "' is: " + responseString);
-		return responseString;
-	}
-
-	/**
-	 * REST POST request of the type JSON to receive a response of the type JSON.
-	 *
-	 * @param URL        Path of the GET request.
-	 * @param jsonString The JSON string to be posted.
-	 * @return REST response of the type JSON.
-	 */
-	@Deprecated
-	public String postJSONGetJSON(String URL, String jsonString) throws IOException
-	{
-		WebTarget resourceWebTarget = this.webTarget.path(URL);
-		Invocation.Builder invocationBuilder = resourceWebTarget.request("application/json");
-		this.log.info("Attempting POST(JSON) request with URL:" + resourceWebTarget.getUri() + " and with json:" + jsonString);
-		Response response = null;
-
-		try
-		{
-			response = invocationBuilder.put(Entity.json(jsonString));
-		}
-		catch (ProcessingException e)
-		{
-			String errorString = "Cannot connect to REST service (URL: \"" + resourceWebTarget.getUri() + "\": ";
-			this.log.error(errorString, e);
-			throw new IOException(errorString);
-		}
-
-		checkForError(response, resourceWebTarget.getUri());
-		String responseString = response.readEntity(String.class);
-		this.log.info("JSON Returned from request '" + URL + "' is: " + responseString);
-		return responseString;
-	}
-
-	/**
-	 * Send a HTTP POST request to the specified URL.
-	 * The request's body is empty.
-	 * @param URL
+	 * Send a DELETE request without expecting an answer.
+	 * @param endpoint
 	 * @return
+	 * @throws IOException
 	 */
-	@Deprecated
-	public String postEmpty(String URL)
+	public String delete(String endpoint)
 	{
-		this.log.debug("Attempting POST request with URL: \"" + URL + "\"");
+		this.log.debug("Attempting DELETE request with URL: \"" + endpoint + "\"");
 
-		WebTarget resourceWebTarget = this.webTarget.path(URL);
+		WebTarget resourceWebTarget = this.webTarget.path(endpoint);
 
 		Invocation.Builder invocationBuilder = resourceWebTarget.request();
 
-		Response response = invocationBuilder.post(Entity.text(""));
+		Response response = invocationBuilder.delete();
 
 		checkForError(response, resourceWebTarget.getUri());
 
 		String responseString = response.readEntity(String.class);
 
-		this.log.debug("POST Request got response: \"" + responseString + "\"");
+		this.log.debug("DELETE Request got response \"" + responseString + "\"");
 
 		return responseString;
 	}

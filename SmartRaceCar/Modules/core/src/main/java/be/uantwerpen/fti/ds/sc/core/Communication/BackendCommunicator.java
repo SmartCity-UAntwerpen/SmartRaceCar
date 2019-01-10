@@ -64,7 +64,7 @@ public class BackendCommunicator implements GeneralBackendCommunicator, MapBacke
 	@Override
 	public void disconnect(long ID)
 	{
-		this.restUtils.get(RESTMessages.Backend.DELETE + "/" + ID);
+		this.restUtils.delete(RESTMessages.Backend.DELETE + "/" + ID);
 	}
 
 	@Override
