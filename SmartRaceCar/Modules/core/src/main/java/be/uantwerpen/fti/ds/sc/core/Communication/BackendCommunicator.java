@@ -1,7 +1,6 @@
 package be.uantwerpen.fti.ds.sc.core.Communication;
 
 import be.uantwerpen.fti.ds.sc.common.JSONUtils;
-import be.uantwerpen.fti.ds.sc.common.Messages;
 import be.uantwerpen.fti.ds.sc.common.RESTUtils;
 import be.uantwerpen.fti.ds.sc.common.WayPoint;
 import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
