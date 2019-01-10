@@ -2,6 +2,9 @@ package be.uantwerpen.fti.ds.sc.common;
 
 public class TcpMessages
 {
+	/**
+	 * TCP messages send by the Core
+	 */
 	public class Core
 	{
 		public static final String COST_TIMING = "costtiming";
@@ -13,6 +16,9 @@ public class TcpMessages
 		public static final String DRIVE = "drive";
 	}
 
+	/**
+	 * TCP messages send by the Simkernel
+	 */
 	public class Simkernel
 	{
 		public static final String CONNECT = "connect";
