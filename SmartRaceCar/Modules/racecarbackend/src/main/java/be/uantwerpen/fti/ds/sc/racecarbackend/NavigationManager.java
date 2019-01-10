@@ -33,7 +33,7 @@ public class NavigationManager implements MQTTListener, LocationRepository
 		return topic.startsWith(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.DELETE);
 	}
 
-	private void removeVehicle(long vehicleId)
+	private void removeVehicle(long vehicleId) throws IndexOutOfBoundsException
 	{
 		this.log.info("Removing vehicle " + vehicleId + " from NavigationManager.");
 
@@ -92,7 +92,7 @@ public class NavigationManager implements MQTTListener, LocationRepository
 	}
 
 	@Override
-	public long getLocation(long vehicleId)
+	public long getLocation(long vehicleId) throws IndexOutOfBoundsException
 	{
 		this.log.info("Fetching location for vehicle " + vehicleId + ".");
 
@@ -119,7 +119,14 @@ public class NavigationManager implements MQTTListener, LocationRepository
 
 		if (this.isDeletion(topic))
 		{
-			this.removeVehicle(vehicleId);
+			try
+			{
+				this.removeVehicle(vehicleId);
+			}
+			catch (IndexOutOfBoundsException ioobe)
+			{
+				this.log.error("Tried to remove non-existent vehicle " + vehicleId, ioobe);
+			}
 		}
 		else
 		{

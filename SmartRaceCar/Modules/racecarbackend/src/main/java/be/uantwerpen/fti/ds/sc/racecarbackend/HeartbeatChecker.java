@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import javax.ws.rs.WebApplicationException;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -82,8 +83,15 @@ class HeartbeatChecker implements MQTTListener
 
 			if (delta > this.MAX_DELTA) //longer than 90 seconds
 			{
-				this.restUtils.delete("delete/" + vehicleId);
-				this.log.warn("Vehicle " + vehicleId + " was removed since it hasn't responded for over 90s");
+				try
+				{
+					this.restUtils.delete("delete/" + vehicleId);
+					this.log.warn("Vehicle " + vehicleId + " was removed since it hasn't responded for over 90s");
+				}
+				catch (WebApplicationException wae)
+				{
+					this.log.error("Failed to remove vehicle from backend.");
+				}
 			}
 		}
 
@@ -109,8 +117,8 @@ class HeartbeatChecker implements MQTTListener
 	{
 		if (this.heartbeats.containsKey(vehicleId))
 		{
-			this.log.info("Removing vehicle " + vehicleId + " from HeartbeatChecker.");
 			this.heartbeats.remove(vehicleId);
+			this.log.info("Removed vehicle " + vehicleId + " from HeartbeatChecker.");
 		}
 		else
 		{

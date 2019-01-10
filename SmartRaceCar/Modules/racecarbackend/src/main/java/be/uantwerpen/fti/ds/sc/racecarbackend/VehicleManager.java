@@ -82,7 +82,7 @@ public class VehicleManager implements MQTTListener, VehicleRepository, Occupati
 	 * @param occupied	true if the vehicle should become occupied, false is the vehicle should become non-occupied.
 	 * @return
 	 */
-	public void setOccupied(long vehicleId, boolean occupied)
+	public void setOccupied(long vehicleId, boolean occupied) throws NoSuchElementException
 	{
 		if (!this.occupation.containsKey(vehicleId))
 		{
