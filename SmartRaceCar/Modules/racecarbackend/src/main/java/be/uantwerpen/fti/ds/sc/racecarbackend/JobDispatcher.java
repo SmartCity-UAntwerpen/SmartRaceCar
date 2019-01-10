@@ -63,8 +63,6 @@ public class JobDispatcher implements MQTTListener
 
 	private void scheduleJob(Job job, JobType type) throws IOException
 	{
-		this.occupationRepository.setOccupied(job.getVehicleId(), true);
-
 		if (job.getVehicleId() == -1)
 		{
 			try
@@ -77,6 +75,8 @@ public class JobDispatcher implements MQTTListener
 				this.log.error("Failed to find optimal car for job " + job.getJobId(), nsee);
 			}
 		}
+
+		this.occupationRepository.setOccupied(job.getVehicleId(), true);
 
 		switch (type)
 		{
@@ -321,15 +321,15 @@ public class JobDispatcher implements MQTTListener
 			}
 			catch (InterruptedException ie)
 			{
-				ie.printStackTrace();
+				this.log.error("Failed to wait 500ms before sending job.", ie);
 			}
+
 			if (!this.jobQueue.isEmpty(JobType.LOCAL))
 			{
 				try
 				{
 					this.log.info("Dispatching a local job to newly registered vehicle (" + vehicleId + ").");
 					Job job = this.jobQueue.dequeue(JobType.LOCAL);
-					job.setVehicleId(this.resourceManager.getOptimalCar(job.getStartId()));
 					this.scheduleJob(job, JobType.LOCAL);
 				}
 				catch (IOException ioe)
@@ -344,18 +344,12 @@ public class JobDispatcher implements MQTTListener
 				{
 					this.log.info("Dispatching a global job to newly registered vehicle (" + vehicleId + ").");
 					Job job = this.jobQueue.dequeue(JobType.GLOBAL);
-					job.setVehicleId(this.resourceManager.getOptimalCar(job.getStartId()));
 					this.scheduleJob(job, JobType.GLOBAL);
 				}
 				catch (IOException ioe)
 				{
 					String errorString = "Failed to schedule global job for newly registered vehicle (" + vehicleId + ").";
 					this.log.error(errorString, ioe);
-				}
-				catch (NoSuchElementException nsee)
-				{
-					String errorString = "Failed to find optimal vehicle for job.";
-					this.log.error(errorString, nsee);
 				}
 			}
 		}
