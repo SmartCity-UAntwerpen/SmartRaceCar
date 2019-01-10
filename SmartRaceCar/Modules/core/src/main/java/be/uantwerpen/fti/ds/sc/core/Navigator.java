@@ -28,9 +28,7 @@ public class Navigator implements MQTTListener
 	private float costStartToEndTiming;                                        // Time in seconds from start position to end position of route.
 	private boolean occupied;
 
-
-	private Queue<Long> currentRoute;                                        // All waypoint IDs to be handled in the current route.
-	private int routeSize;                                                   // Current route's size.
+	private Job currentJob;
 
 
 	public Navigator(Configuration configuration, NavigationVehicleCommunication vehicle, NavigationBackendCommunication backend)
@@ -45,10 +43,10 @@ public class Navigator implements MQTTListener
 
 		this.costCurrentToStartTiming = -1;
 		this.costStartToEndTiming = -1;
-		this.routeSize = -1;
+
 		this.occupied = false;
 
-		this.currentRoute = new LinkedList<>();
+		this.currentJob = new Job();
 	}
 
 	public void start(long ID)
@@ -59,7 +57,7 @@ public class Navigator implements MQTTListener
 
 			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
 			this.mqttUtils = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
-			this.mqttUtils.subscribe(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.JOB + "/" + this.ID);
+			this.mqttUtils.subscribe(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.JOB + "/" + this.ID + "/#");
 		}
 		catch (MqttException me)
 		{
@@ -82,7 +80,7 @@ public class Navigator implements MQTTListener
 	 *
 	 * @param message
 	 */
-	public void handleJobRequest(String message)
+	public void handleJobRequest(String message, long jobID)
 	{
 		if (message.equals("stop"))
 		{
@@ -102,7 +100,7 @@ public class Navigator implements MQTTListener
 						wayPointValues[index] = Integer.parseInt(wayPointStringValues[index]);
 					}
 
-					this.jobRequest(wayPointValues);
+					this.jobRequest(wayPointValues, jobID);
 				}
 				catch (NumberFormatException e)
 				{
@@ -112,7 +110,7 @@ public class Navigator implements MQTTListener
 			else
 			{
 				this.log.warn("Current Route not completed. Not adding waypoints.");
-				this.routeNotComplete();
+				this.routeNotComplete(jobID);
 			}
 		}
 	}
@@ -125,7 +123,7 @@ public class Navigator implements MQTTListener
 	 *
 	 * @param wayPointIDs Array of waypoint ID's that are on the route to be completed.
 	 */
-	public void jobRequest(long[] wayPointIDs)
+	public void jobRequest(long[] wayPointIDs, long jobID)
 	{
 		this.log.info("Route request received.");
 
@@ -155,33 +153,33 @@ public class Navigator implements MQTTListener
 			{
 				if (this.wayPoints.containsKey(wayPointID))
 				{
-					this.currentRoute.add(wayPointID);
+					this.currentJob.add(wayPointID);
 					this.log.info("Added waypoint with ID " + wayPointID + " to route.");
 				}
 				else
 				{
 					this.log.warn("Waypoint with ID '" + wayPointID + "' not found.");
-					this.currentRoute.clear();
+					this.currentJob.clear();
 					error = true;
 				}
 			}
 
 			if (!error)
 			{
-				this.routeSize = this.currentRoute.size();
-				this.log.info("All waypoints(" + this.routeSize + ") of route added. Starting route.");
+				this.currentJob.setJobID(jobID);
+				this.log.info("All waypoints(" + this.currentJob.getRouteSize() + ") of route added. Starting route.");
 				this.updateRoute();
 			}
 			else
 			{
 				this.log.warn("Certain waypoints not found. Route cancelled.");
-				this.routeError();
+				this.routeError(jobID);
 			}
 		}
 		else
 		{
 			this.log.warn("Current Route not completed. Not adding waypoints.");
-			this.routeNotComplete();
+			this.routeNotComplete(jobID);
 		}
 	}
 
@@ -203,14 +201,14 @@ public class Navigator implements MQTTListener
 	 */
 	public void percentageUpdate(Location location)
 	{
-		if (this.currentRoute.size() == 0)
+		if (this.currentJob.getRouteSize()== 0)
 		{
 			this.log.info("route size = 0");
 			float weight = (float) this.costStartToEndTiming / (float) (this.costCurrentToStartTiming + this.costStartToEndTiming);
 			location.setPercentage(Math.round((1 - weight) * 100 + location.getPercentage() * weight));
 		}
 
-		int percentage = location.getPercentage()/this.routeSize + (this.routeSize - this.currentRoute.size())*(100/this.routeSize);	// change percentage from percentage to next waypoint to percentage of route
+		int percentage = location.getPercentage()/this.currentJob.getRouteSize() + (this.currentJob.getRouteSize() - this.currentJob.getRemainingRouteSize())*(100/this.currentJob.getRouteSize());	// change percentage from percentage to next waypoint to percentage of route
 
 		location.setPercentage(percentage);
 
@@ -218,7 +216,7 @@ public class Navigator implements MQTTListener
 		try
 		{
 			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Core.PERCENTAGE + "/" + this.ID, Integer.toString(location.getPercentage()));
+			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Core.PERCENTAGE + "/" + this.ID + "/" + this.currentJob.getJobID(), Integer.toString(location.getPercentage()));
 		}
 		catch (MqttException me)
 		{
@@ -231,7 +229,7 @@ public class Navigator implements MQTTListener
 		try
 		{
 			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Core.LOCATION_UPDATE + "/" + this.ID, Long.toString(this.currentRoute.poll()));
+			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Core.LOCATION_UPDATE + "/" + this.ID, Long.toString(this.currentJob.poll()));
 		}
 		catch(MqttException mqttE)
 		{
@@ -243,14 +241,14 @@ public class Navigator implements MQTTListener
 	 * When all a requested route job can't be done by the vehicle as it's still completing a route.
 	 * Sends MQTT message to RacecarBackend to update the route status.
 	 */
-	private void routeNotComplete()
+	private void routeNotComplete(long jobID)
 	{
 		this.occupied = false;
 		//this.mqttUtils.publish("racecar/" + this.core.getID() + "/route", "notcomplete");
 		try
 		{
 			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Core.ROUTE + "/" + this.ID, MqttMessages.Messages.Core.NOT_COMPLETE);
+			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Core.ROUTE + "/" + this.ID + "/" + jobID, MqttMessages.Messages.Core.NOT_COMPLETE);
 		}
 		catch (MqttException me)
 		{
@@ -262,14 +260,14 @@ public class Navigator implements MQTTListener
 	 * When all a requested route job can't be done by the vehicle.
 	 * Sends MQTT message to RacecarBackend to update the route status.
 	 */
-	private void routeError()
+	private void routeError(long jobID)
 	{
 		this.log.warn("Route error. Route Cancelled");
 		this.occupied = false;
 		try
 		{
 			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Core.ROUTE + "/" + this.ID, MqttMessages.Messages.Core.ERROR);
+			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Core.ROUTE + "/" + this.ID + "/" + jobID, MqttMessages.Messages.Core.ERROR);
 		}
 		catch (MqttException me)
 		{
@@ -283,11 +281,11 @@ public class Navigator implements MQTTListener
 	 */
 	private void updateRoute()
 	{
-		if (!this.currentRoute.isEmpty())
+		if (!this.currentJob.isEmpty())
 		{
-			WayPoint nextWayPoint = this.wayPoints.get(this.currentRoute.peek());
+			WayPoint nextWayPoint = this.wayPoints.get(this.currentJob.peek());
 
-			this.log.info("Sending next waypoint with ID " + nextWayPoint.getID() + " (" + (this.routeSize - this.currentRoute.size()) + "/" + this.routeSize + ")");
+			this.log.info("Sending next waypoint with ID " + nextWayPoint.getID() + " (" + (this.currentJob.getRouteSize() - this.currentJob.getRemainingRouteSize()) + "/" + this.currentJob.getRouteSize() + ")");
 
 			KernelAspect kernelAspect = (KernelAspect) this.configuration.get(AspectType.KERNEL);
 			if (!kernelAspect.isDebug())
@@ -327,7 +325,7 @@ public class Navigator implements MQTTListener
 
 		try
 		{MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Core.ROUTE + "/" + this.ID, MqttMessages.Messages.Core.DONE);
+			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Core.ROUTE + "/" + this.ID + "/" + this.currentJob.getJobID(), MqttMessages.Messages.Core.DONE);
 		}
 		catch (MqttException me)
 		{
@@ -374,20 +372,17 @@ public class Navigator implements MQTTListener
 		}
 	}
 
-	public void sendCurrentPosition(long wayPoint)
-	{
-		this.vehicle.sendCurrentPosition(this.wayPoints.get(wayPoint));
-	}
-
 	public void sendStartPoint(long wayPoint)
 	{
 		this.vehicle.sendStartpoint(this.wayPoints.get(wayPoint));
 	}
 
-
 	@Override
 	public void parseMQTT(String topic, String message)
 	{
-		this.handleJobRequest(message);
+		String[] split = topic.split("/");
+		long jobID = Long.parseLong(split[split.length - 1]);
+
+		this.handleJobRequest(message, jobID);
 	}
 }
