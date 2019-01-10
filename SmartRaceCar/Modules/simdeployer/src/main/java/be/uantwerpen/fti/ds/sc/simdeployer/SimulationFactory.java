@@ -5,11 +5,11 @@ import be.uantwerpen.fti.ds.sc.simdeployer.docker.Container;
 
 import javax.naming.InvalidNameException;
 
-public class VirtualMachineFactory
+public class SimulationFactory
 {
 	private Configuration configuration;
 
-	public VirtualMachineFactory(Configuration configuration)
+	public SimulationFactory(Configuration configuration)
 	{
 		this.configuration = configuration;
 	}
