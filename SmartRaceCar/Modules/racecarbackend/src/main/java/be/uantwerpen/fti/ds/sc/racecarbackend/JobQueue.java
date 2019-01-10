@@ -163,7 +163,7 @@ public class JobQueue implements MQTTListener
 	{
 		// If a vehicle was deleted, we need to re-assign all jobs with that vehicle
 		// We assign -1, this will cause the JobDispatcher to find a new vehicle for this job.
-		long vehicleId = TopicUtils.getVehicleId(message);
+		long vehicleId = TopicUtils.getVehicleId(topic);
 
 		// Check Local jobs
 		for (Job job: this.localJobs)
