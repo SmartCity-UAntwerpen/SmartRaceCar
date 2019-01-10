@@ -105,4 +105,15 @@ public class ConfigurationService
 
         return configuration.load(DEFAULT_PROPERTIES_FILE);
     }
+
+    @Bean
+    @Qualifier("waypointValidator")
+    Configuration waypointValidatorConfiguration()
+    {
+        Configuration configuration = new Configuration();
+        configuration.add(AspectType.MQTT);
+        configuration.add(AspectType.MAP_MANAGER);
+
+        return configuration.load(DEFAULT_PROPERTIES_FILE);
+    }
 }
