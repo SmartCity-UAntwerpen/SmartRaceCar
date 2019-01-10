@@ -15,6 +15,9 @@ public class RESTMessages
 		public static final String GET_MAP_YAML = "getmapyaml";
 	}
 
+	/**
+	 * REST endpoints provided by the ROS Server
+	 */
 	public class RosServer
 	{
 		public static final String CALC_WEIGHT = "calcWeight";
