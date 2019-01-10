@@ -28,10 +28,10 @@ import java.util.NoSuchElementException;
 @Controller
 public class JobTracker implements MQTTListener
 {
-    private static final int ALMOST_DONE_PERCENTAGE = 90;
+    private static final int ALMOST_DONE_PERCENTAGE = 80;
     // We need to contact the backbone if we're "almost there"
     // No concrete definition of "almost" has been given, so
-    // I'm choosing one here. It's 90%.
+    // I'm choosing one here. It's 80%.
 
     private Logger log;
     private Configuration configuration;
@@ -210,9 +210,19 @@ public class JobTracker implements MQTTListener
         // We should only inform the backend if the job was a global job.
         if ((!backboneAspect.isBackboneDebug()) && (this.findJobType(jobId, vehicleId) == JobType.GLOBAL))
         {
-            this.log.debug("Informing Backbone about job completion.");
+
+
+            Job job = this.getJob(jobId, JobType.GLOBAL);
 
             RESTUtils backboneRESTUtil = new RESTUtils(backboneAspect.getBackboneServerUrl());
+
+            if (!job.isBackboneNotified())
+            {
+	            this.log.info("Sending last minute \"close-by\" message to backbone.");
+	            backboneRESTUtil.post("/jobs/vehiclecloseby/" + jobId);
+            }
+
+	        this.log.debug("Informing Backbone about job completion.");
 
             try
             {
