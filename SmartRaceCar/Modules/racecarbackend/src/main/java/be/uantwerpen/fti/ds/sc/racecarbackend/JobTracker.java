@@ -399,12 +399,21 @@ public class JobTracker implements MQTTListener
     @Override
     public void parseMQTT(String topic, String message)
     {
-        String[] topicParts = topic.split("/");
-        long vehicleId = Long.parseLong(topicParts[topicParts.length - 2]);
-        long jobId = Long.parseLong(topicParts[topicParts.length - 1]);
-
-        try
+        // If a vehicle gets deleted, requeue all jobs associated with that vehicle
+        if (this.isDeletion(topic))
         {
+            long vehicleId = TopicUtils.getVehicleId(topic);
+
+            this.log.warn("Vehicle " + vehicleId + " got deleted, re-queuing all associated jobs");
+
+            this.vehicleDeleted(vehicleId);
+        }
+        else
+        {
+            String[] topicParts = topic.split("/");
+            long vehicleId = Long.parseLong(topicParts[topicParts.length - 2]);
+            long jobId = Long.parseLong(topicParts[topicParts.length - 1]);
+
             if (this.isProgressUpdate(topic))
             {
                 int percentage = Integer.parseInt(message);
@@ -426,27 +435,15 @@ public class JobTracker implements MQTTListener
                 try
                 {
                     this.updateRoute(jobId, vehicleId, message);
-                }
-                catch (WebApplicationException wae)
+                } catch (WebApplicationException wae)
                 {
                     this.log.error("Failed to process route update for job " + jobId, wae);
                 }
-            }
-            // If a vehicle gets deleted, requeue all jobs associated with that vehicle
-            else if (this.isDeletion(topic))
-            {
-            	this.log.warn("Vehicle " + vehicleId + " got deleted, re-queuing all associated jobs");
-
-	            this.vehicleDeleted(vehicleId);
             }
             else
             {
                 this.log.warn("Received unsupported MQTT Message: \"" +  message + "\" on topic \"" + topic + "\".");
             }
-        }
-        catch (NoSuchElementException nsee)
-        {
-            this.log.error("Failed to find job for vehicle " + vehicleId, nsee);
         }
     }
 }
