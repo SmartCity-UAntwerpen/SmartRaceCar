@@ -2,6 +2,7 @@ package be.uantwerpen.fti.ds.sc.simdeployer.docker;
 
 import be.uantwerpen.fti.ds.sc.common.MQTTListener;
 import be.uantwerpen.fti.ds.sc.common.MQTTUtils;
+import be.uantwerpen.fti.ds.sc.common.MqttMessages;
 import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
 import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
 import be.uantwerpen.fti.ds.sc.common.configuration.DockerAspect;
@@ -140,7 +141,7 @@ public class Container implements VirtualMachine, MQTTListener
 		try
 		{
 			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-			this.mqttUtils.publish(mqttAspect.getTopic() + "simdeployer/" + Messages.SIMDEPLOYER.KILL + "/" + this.simulationId, Messages.SIMDEPLOYER.KILL);
+			this.mqttUtils.publish(mqttAspect.getTopic() + "simdeployer/" + MqttMessages.Topics.SimDeployer.KILL + "/" + this.simulationId, MqttMessages.Messages.SimDeployer.KILL);
 		}
 		catch (MqttException me)
 		{

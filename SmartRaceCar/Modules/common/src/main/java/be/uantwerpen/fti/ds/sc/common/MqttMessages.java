@@ -5,7 +5,7 @@ public class MqttMessages
 	public class Topics
 	{
 		/**
-		 * Messages originating from Backend
+		 * Topics of messages originating from Backend
 		 */
 		public class Backend
 		{
@@ -17,6 +17,9 @@ public class MqttMessages
 			public static final String DELETE = "delete";
 		}
 
+		/**
+		 * Topics of messages originating from Core
+		 */
 		public class Core
 		{
 			public static final String HEARTBEAT = "heartbeat";
@@ -25,6 +28,9 @@ public class MqttMessages
 			public static final String ROUTE = "route";
 		}
 
+		/**
+		 * Topics of messages originating from SimDeployer
+		 */
 		public class SimDeployer
 		{
 			public static final String KILL = "kill";
@@ -33,12 +39,23 @@ public class MqttMessages
 
 	public class Messages
 	{
+		/**
+		 * Messages originating from Core
+		 */
 		public class Core
 		{
 			public static final String NOT_COMPLETE = "notcomplete";
 			public static final String ERROR = "error";
 			public static final String DONE = "done";
 			public static final String HEARTBEAT = "heartbeat";
+		}
+
+		/**
+		 * Messages originating from SimDeployer
+		 */
+		public class SimDeployer
+		{
+			public static final String KILL = "kill";
 		}
 	}
 
