@@ -55,6 +55,16 @@ public class ConfigurationService
     }
 
     @Bean
+    @Qualifier("jobQueue")
+    Configuration jobQueueConfiguration()
+    {
+        Configuration configuration = new Configuration();
+        configuration.add(AspectType.MQTT);
+
+        return configuration.load(DEFAULT_PROPERTIES_FILE);
+    }
+
+    @Bean
     @Qualifier("jobTracker")
     Configuration jobTrackerConfiguration()
     {
