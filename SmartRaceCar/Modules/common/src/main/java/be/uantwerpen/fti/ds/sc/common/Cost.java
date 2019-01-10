@@ -7,8 +7,8 @@ public class Cost
 {
 
 	private boolean status; // Status describing the availabity of the vehicle.
-	private int weightToStart; // Weight from current position to start position of route. In Seconds.
-	private int weight; // Weight from start position to end position of route. In Seconds.
+	private float weightToStart; // Weight from current position to start position of route. In Seconds.
+	private float weight; // Weight from start position to end position of route. In Seconds.
 	private Long idVehicle; // ID of the vehicle being requested.
 
 	/**
@@ -19,7 +19,7 @@ public class Cost
 	 * @param weight        Weight from start position to end position of route. In Seconds.
 	 * @param idVehicle     ID of the vehicle being requested.f
 	 */
-	public Cost(boolean status, int weightToStart, int weight, Long idVehicle)
+	public Cost(boolean status, float weightToStart, float weight, Long idVehicle)
 	{
 		this.status = status;
 		this.weightToStart = weightToStart;
@@ -52,7 +52,7 @@ public class Cost
 	 *
 	 * @return The weight between the current position and the start position of the route. In seconds.
 	 */
-	public int getWeightToStart()
+	public float getWeightToStart()
 	{
 		return weightToStart;
 	}
@@ -62,7 +62,7 @@ public class Cost
 	 *
 	 * @return The weight between the start position and the end position of the route. In seconds.
 	 */
-	public int getWeight()
+	public float getWeight()
 	{
 		return weight;
 	}

@@ -24,8 +24,8 @@ public class Navigator implements MQTTListener
 	private NavigationVehicleCommunication vehicle;
 
 	private HashMap<Long, WayPoint> wayPoints;
-	private int costCurrentToStartTiming;                                    // Time in seconds from current position to start position of route.
-	private int costStartToEndTiming;                                        // Time in seconds from start position to end position of route.
+	private float costCurrentToStartTiming;                                    // Time in seconds from current position to start position of route.
+	private float costStartToEndTiming;                                        // Time in seconds from start position to end position of route.
 	private boolean occupied;
 
 
@@ -67,12 +67,12 @@ public class Navigator implements MQTTListener
 		}
 	}
 
-	public void setCostCurrentToStartTiming(int costCurrentToStartTiming)
+	public void setCostCurrentToStartTiming(float costCurrentToStartTiming)
 	{
 		this.costCurrentToStartTiming = costCurrentToStartTiming;
 	}
 
-	public void setCostStartToEndTiming(int costStartToEndTiming)
+	public void setCostStartToEndTiming(float costStartToEndTiming)
 	{
 		this.costStartToEndTiming = costStartToEndTiming;
 	}

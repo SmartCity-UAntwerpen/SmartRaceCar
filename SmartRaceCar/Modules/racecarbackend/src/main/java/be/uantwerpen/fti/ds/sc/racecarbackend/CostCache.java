@@ -35,7 +35,7 @@ public class CostCache implements MQTTListener
 	private WaypointRepository waypointRepository;
 	private Configuration configuration;
 	private MQTTUtils mqttUtils;
-	private Map<Link, Integer> costCache;
+	private Map<Link, Float> costCache;
 
 	private boolean isMapChange(String topic)
 	{
@@ -70,7 +70,7 @@ public class CostCache implements MQTTListener
 		this.log.info("Initialized CostCache.");
 	}
 
-	public int calculateCost (long startId, long endId) throws IndexOutOfBoundsException, IOException
+	public float calculateCost (long startId, long endId) throws IndexOutOfBoundsException, IOException
 	{
 		Link link = new Link(startId, endId);
 
@@ -101,7 +101,7 @@ public class CostCache implements MQTTListener
 			throw new IndexOutOfBoundsException(errorString);
 		}
 
-		int cost = 0;
+		float cost = 0;
 
 		RosAspect rosAspect = (RosAspect) this.configuration.get(AspectType.ROS);
 		if (!rosAspect.isRosDebug())
@@ -170,7 +170,7 @@ public class CostCache implements MQTTListener
 
 		try
 		{
-			int cost = this.calculateCost(startId, endId);
+			float cost = this.calculateCost(startId, endId);
 			String responseJson = JSONUtils.objectToJSONStringWithKeyWord("cost", cost);
 			return new ResponseEntity<>(responseJson, HttpStatus.OK);
 		}
