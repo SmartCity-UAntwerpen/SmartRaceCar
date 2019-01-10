@@ -1,6 +1,7 @@
 package be.uantwerpen.fti.ds.sc.core.Communication;
 
 import be.uantwerpen.fti.ds.sc.common.JSONUtils;
+import be.uantwerpen.fti.ds.sc.common.RESTMessages;
 import be.uantwerpen.fti.ds.sc.common.RESTUtils;
 import be.uantwerpen.fti.ds.sc.common.WayPoint;
 import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
@@ -35,7 +36,7 @@ public class BackendCommunicator implements GeneralBackendCommunicator, MapBacke
 	@Override
 	public long register(long startPoint)
 	{
-		String id = this.restUtils.get(Messages.BACKEND.REGISTER + "/" + Long.toString(startPoint), MediaType.TEXT_PLAIN_TYPE);
+		String id = this.restUtils.get(RESTMessages.Backend.REGISTER + "/" + Long.toString(startPoint), MediaType.TEXT_PLAIN_TYPE);
 		long ID = Long.parseLong(id, 10);
 		this.log.info("Vehicle received ID " + ID + ".");
 		return ID;
@@ -48,7 +49,7 @@ public class BackendCommunicator implements GeneralBackendCommunicator, MapBacke
 		Type typeOfHashMap = new TypeToken<HashMap<Long, WayPoint>>()
 		{
 		}.getType();
-		HashMap<Long, WayPoint> wayPoints = (HashMap<Long, WayPoint>) JSONUtils.getObjectWithKeyWord(restUtils.get(Messages.BACKEND.GET_WAYPOINTS, MediaType.APPLICATION_JSON_TYPE), typeOfHashMap);
+		HashMap<Long, WayPoint> wayPoints = (HashMap<Long, WayPoint>) JSONUtils.getObjectWithKeyWord(restUtils.get(RESTMessages.Backend.GET_WAYPOINTS, MediaType.APPLICATION_JSON_TYPE), typeOfHashMap);
 
 		for (WayPoint wayPoint : wayPoints.values())
 		{
@@ -63,13 +64,13 @@ public class BackendCommunicator implements GeneralBackendCommunicator, MapBacke
 	@Override
 	public void disconnect(long ID)
 	{
-		this.restUtils.get(Messages.BACKEND.DELETE + "/" + ID);
+		this.restUtils.get(RESTMessages.Backend.DELETE + "/" + ID);
 	}
 
 	@Override
 	public String getMapName()
 	{
-		return this.restUtils.get(Messages.BACKEND.GET_MAP_NAME, MediaType.TEXT_PLAIN_TYPE);
+		return this.restUtils.get(RESTMessages.Backend.GET_MAP_NAME, MediaType.TEXT_PLAIN_TYPE);
 	}
 
 	@Override
@@ -81,7 +82,7 @@ public class BackendCommunicator implements GeneralBackendCommunicator, MapBacke
 
 		try
 		{
-			this.restUtils.getFile(Messages.BACKEND.GET_MAP_PGM + "/" + mapName, navStackAspect.getNavStackPath(), mapName, "pgm");
+			this.restUtils.getFile(RESTMessages.Backend.GET_MAP_PGM + "/" + mapName, navStackAspect.getNavStackPath(), mapName, "pgm");
 		}
 		catch (IOException ioe)
 		{
@@ -90,7 +91,7 @@ public class BackendCommunicator implements GeneralBackendCommunicator, MapBacke
 
 		try
 		{
-			this.restUtils.getFile(Messages.BACKEND.GET_MAP_YAML + "/" + mapName, navStackAspect.getNavStackPath(), mapName, "yaml");
+			this.restUtils.getFile(RESTMessages.Backend.GET_MAP_YAML + "/" + mapName, navStackAspect.getNavStackPath(), mapName, "yaml");
 		}
 		catch (IOException ioe)
 		{

@@ -14,4 +14,9 @@ public class RESTMessages
 		public static final String GET_MAP_PGM = "getmappgm";
 		public static final String GET_MAP_YAML = "getmapyaml";
 	}
+
+	public class RosServer
+	{
+		public static final String CALC_WEIGHT = "calcWeight";
+	}
 }

@@ -59,7 +59,7 @@ public class Navigator implements MQTTListener
 
 			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
 			this.mqttUtils = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
-			this.mqttUtils.subscribe(mqttAspect.getTopic() + "/" + Messages.BACKEND.JOB + "/" + this.ID);
+			this.mqttUtils.subscribe(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.JOB + "/" + this.ID);
 		}
 		catch (MqttException me)
 		{
@@ -218,7 +218,7 @@ public class Navigator implements MQTTListener
 		try
 		{
 			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + Messages.CORE.PERCENTAGE + "/" + this.ID, Integer.toString(location.getPercentage()));
+			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Core.PERCENTAGE + "/" + this.ID, Integer.toString(location.getPercentage()));
 		}
 		catch (MqttException me)
 		{
@@ -231,7 +231,7 @@ public class Navigator implements MQTTListener
 		try
 		{
 			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + Messages.CORE.LOCATION_UPDATE + "/" + this.ID, Long.toString(this.currentRoute.poll()));
+			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Core.LOCATION_UPDATE + "/" + this.ID, Long.toString(this.currentRoute.poll()));
 		}
 		catch(MqttException mqttE)
 		{
@@ -250,7 +250,7 @@ public class Navigator implements MQTTListener
 		try
 		{
 			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + Messages.CORE.ROUTE + "/" + this.ID, Messages.CORE.NOT_COMPLETE);
+			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Core.ROUTE + "/" + this.ID, MqttMessages.Messages.Core.NOT_COMPLETE);
 		}
 		catch (MqttException me)
 		{
@@ -269,7 +269,7 @@ public class Navigator implements MQTTListener
 		try
 		{
 			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + Messages.CORE.ROUTE + "/" + this.ID, Messages.CORE.ERROR);
+			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Core.ROUTE + "/" + this.ID, MqttMessages.Messages.Core.ERROR);
 		}
 		catch (MqttException me)
 		{
@@ -327,7 +327,7 @@ public class Navigator implements MQTTListener
 
 		try
 		{MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + Messages.CORE.ROUTE + "/" + this.ID, Messages.CORE.DONE);
+			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Core.ROUTE + "/" + this.ID, MqttMessages.Messages.Core.DONE);
 		}
 		catch (MqttException me)
 		{

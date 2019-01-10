@@ -37,13 +37,13 @@ public class CoreCommunicator implements TCPListener, CoreCommunication
 	@Override
 	public void connect()
 	{
-		this.tcpUtils.sendUpdate(JSONUtils.keywordToJSONString(Messages.SIMKERNEL.CONNECT));
+		this.tcpUtils.sendUpdate(JSONUtils.keywordToJSONString(TcpMessages.Simkernel.CONNECT));
 	}
 
 	@Override
 	public void wayPointReached()
 	{
-		this.tcpUtils.sendUpdate(JSONUtils.keywordToJSONString(Messages.SIMKERNEL.ARRIVED_WAYPOINT));
+		this.tcpUtils.sendUpdate(JSONUtils.keywordToJSONString(TcpMessages.Simkernel.ARRIVED_WAYPOINT));
 		this.log.info("Arrived at waypoint. Waiting for next order.");
 	}
 
@@ -56,7 +56,7 @@ public class CoreCommunicator implements TCPListener, CoreCommunication
 			{
 				Thread.sleep((cost.getWeight() * 1000) / 20);
 				Location location = new Location(0, 0, 0, i * 5);
-				this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord(Messages.SIMKERNEL.PERCENTAGE, location));
+				this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord(TcpMessages.Simkernel.PERCENTAGE, location));
 				this.log.info("travelled " + i * 5 + "% of total route.");
 			}
 			catch (InterruptedException e)
@@ -69,7 +69,7 @@ public class CoreCommunicator implements TCPListener, CoreCommunication
 	@Override
 	public void sendTiming(Cost cost)
 	{
-		this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord(Messages.SIMKERNEL.COST_TIMING, cost));
+		this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord(TcpMessages.Simkernel.COST_TIMING, cost));
 	}
 
 	@Override
@@ -81,6 +81,6 @@ public class CoreCommunicator implements TCPListener, CoreCommunication
 	@Override
 	public void exit()
 	{
-		this.tcpUtils.sendUpdate(JSONUtils.keywordToJSONString(Messages.SIMKERNEL.EXIT));
+		this.tcpUtils.sendUpdate(JSONUtils.keywordToJSONString(TcpMessages.Simkernel.EXIT));
 	}
 }

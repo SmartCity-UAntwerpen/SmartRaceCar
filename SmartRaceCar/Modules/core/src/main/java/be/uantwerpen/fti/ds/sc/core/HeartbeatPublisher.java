@@ -3,6 +3,7 @@ package be.uantwerpen.fti.ds.sc.core;
 
 import be.uantwerpen.fti.ds.sc.common.MQTTListener;
 import be.uantwerpen.fti.ds.sc.common.MQTTUtils;
+import be.uantwerpen.fti.ds.sc.common.MqttMessages;
 import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
 import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
 import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
@@ -54,7 +55,7 @@ public class HeartbeatPublisher extends Thread implements MQTTListener
 			{
 				Thread.sleep(WAITING_PERIOD); //Sleep for 10s
 				this.log.info("Publishing Heartbeat...");
-				this.mqttUtils.publish("racecar/" + Messages.CORE.HEARTBEAT +  "/" + this.ID , Messages.CORE.HEARTBEAT); //status can also be send in this message
+				this.mqttUtils.publish("racecar/" + MqttMessages.Topics.Core.HEARTBEAT +  "/" + this.ID , MqttMessages.Messages.Core.HEARTBEAT); //status can also be send in this message
 			}
 			catch (InterruptedException ie)
 			{

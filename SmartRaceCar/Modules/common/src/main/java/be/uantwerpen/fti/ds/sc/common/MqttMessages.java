@@ -38,6 +38,7 @@ public class MqttMessages
 			public static final String NOT_COMPLETE = "notcomplete";
 			public static final String ERROR = "error";
 			public static final String DONE = "done";
+			public static final String HEARTBEAT = "heartbeat";
 		}
 	}
 

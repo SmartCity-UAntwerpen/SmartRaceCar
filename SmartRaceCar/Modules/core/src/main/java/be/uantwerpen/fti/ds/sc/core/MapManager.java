@@ -53,7 +53,7 @@ public class MapManager implements MQTTListener
 		{
 			MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
 			this.mqttUtils = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
-			this.mqttUtils.subscribe(mqttAspect.getTopic() + "/" + Messages.BACKEND.CHANGE_MAP);
+			this.mqttUtils.subscribe(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.CHANGE_MAP);
 		}
 		catch (MqttException me)
 		{
