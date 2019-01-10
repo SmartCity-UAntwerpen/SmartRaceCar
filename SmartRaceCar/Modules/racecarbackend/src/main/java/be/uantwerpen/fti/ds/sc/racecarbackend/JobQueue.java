@@ -3,6 +3,7 @@ package be.uantwerpen.fti.ds.sc.racecarbackend;
 import be.uantwerpen.fti.ds.sc.common.MQTTListener;
 import be.uantwerpen.fti.ds.sc.common.MQTTUtils;
 import be.uantwerpen.fti.ds.sc.common.MessageQueueClient;
+import be.uantwerpen.fti.ds.sc.common.MqttMessages;
 import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
 import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
 import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
@@ -36,10 +37,15 @@ public class JobQueue implements MQTTListener
 		{
 			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
 			this.messageQueueClient = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
+			this.messageQueueClient.subscribe(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.DELETE + "/#");
 		}
 		catch (MqttException me)
 		{
 			this.log.error("Failed to set up MessageQueueClient for JobQueue.", me);
+		}
+		catch (Exception e)
+		{
+			this.log.error("Failed to subscribe to delete topic for JobQueue.", e);
 		}
 
 		this.log.info("Initialized JobQueue.");

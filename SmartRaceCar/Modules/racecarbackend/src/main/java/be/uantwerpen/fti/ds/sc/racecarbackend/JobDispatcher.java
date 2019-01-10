@@ -40,13 +40,13 @@ public class JobDispatcher implements MQTTListener
 	private boolean isRouteUpdate(String topic)
 	{
 		MqttAspect mqttAspect = (MqttAspect) this.config.get(AspectType.MQTT);
-		return topic.startsWith(mqttAspect.getTopic() + Messages.CORE.ROUTE);
+		return topic.startsWith(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Core.ROUTE);
 	}
 
 	private boolean isRegistrationComplete(String topic)
 	{
 		MqttAspect mqttAspect = (MqttAspect) this.config.get(AspectType.MQTT);
-		return topic.startsWith(mqttAspect.getTopic() + Messages.BACKEND.REGISTRATION_DONE);
+		return topic.startsWith(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.REGISTRATION_DONE);
 	}
 
 	private void checkJobQueue() throws IOException
@@ -85,7 +85,7 @@ public class JobDispatcher implements MQTTListener
 		try
 		{
 			MqttAspect mqttAspect = (MqttAspect) this.config.get(AspectType.MQTT);
-			this.mqttUtils.publish(mqttAspect.getTopic() + Messages.BACKEND.JOB + "/" + job.getVehicleId(), job.getStartId() + " " + job.getEndId());
+			this.mqttUtils.publish(mqttAspect.getTopic() + MqttMessages.Topics.Backend.JOB + "/" + job.getVehicleId(), job.getStartId() + " " + job.getEndId());
 		}
 		catch (MqttException me)
 		{
@@ -109,7 +109,7 @@ public class JobDispatcher implements MQTTListener
 		{
 			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
 			this.mqttUtils = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
-			this.mqttUtils.subscribe(mqttAspect.getTopic() + Messages.CORE.ROUTE + "/#");
+			this.mqttUtils.subscribe(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Core.ROUTE + "/#");
 		}
 		catch (MqttException me)
 		{
@@ -120,7 +120,7 @@ public class JobDispatcher implements MQTTListener
 		{
 			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
 			this.messageQueueClient = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
-			this.messageQueueClient.subscribe(mqttAspect.getTopic() + Messages.BACKEND.REGISTRATION_DONE + "/#");
+			this.messageQueueClient.subscribe(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.REGISTRATION_DONE + "/#");
 		}
 		catch (Exception e)
 		{
