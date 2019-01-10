@@ -92,7 +92,7 @@ class SimKernel implements MessageListener
 			//parses keyword to do the correct function call.
 			switch (JSONUtils.getFirst(message))
 			{
-				case Messages.CORE.COST_TIMING:
+				case TcpMessages.Core.COST_TIMING:
 					Type typeOfPoints = new TypeToken<ArrayList<Point>>()
 					{
 					}.getType();
@@ -100,30 +100,30 @@ class SimKernel implements MessageListener
 					calculateTiming((ArrayList<Point>) JSONUtils.getObjectWithKeyWord(message, typeOfPoints));
 					break;
 
-				case Messages.CORE.CONNECT:
+				case TcpMessages.Core.CONNECT:
 					this.connectReceive();
 					break;
 
-				case Messages.CORE.START_POINT:
+				case TcpMessages.Core.START_POINT:
 					this.startPoint = (WayPoint) JSONUtils.getObjectWithKeyWord(message, WayPoint.class);
 					this.log.info("Startpoint set to " + this.startPoint.getX() + "," + this.startPoint.getY() + "," + this.startPoint.getZ() + "," + this.startPoint.getW() + ".");
 					this.currentPosition = new Point(this.startPoint.getX(), this.startPoint.getY(), this.startPoint.getZ(), this.startPoint.getW());
 					break;
 
-				case Messages.CORE.CURRENT_MAP:
+				case TcpMessages.Core.CURRENT_MAP:
 					this.map = (Map) JSONUtils.getObjectWithKeyWord(message, Map.class);
 					this.calculatedCosts.clear();
 					this.log.info("Map set to '" + this.map.getName() + "'.");
 					break;
 
-				case Messages.CORE.NEXT_WAYPOINT:
+				case TcpMessages.Core.NEXT_WAYPOINT:
 					Type typeOfWayPoint = new TypeToken<WayPoint>()
 					{
 					}.getType();
 					jobRequest((WayPoint) JSONUtils.getObjectWithKeyWord(message, typeOfWayPoint));
 					break;
 
-				case Messages.CORE.CURRENT_POSITION:
+				case TcpMessages.Core.CURRENT_POSITION:
 					Type typeOfWayPoint2 = new TypeToken<WayPoint>()
 					{
 					}.getType();
@@ -131,7 +131,7 @@ class SimKernel implements MessageListener
 					this.log.info("Current position set to " + currentPosition.getX() + "," + currentPosition.getY() + "," + currentPosition.getZ() + "," + currentPosition.getW() + ".");
 					break;
 
-				case Messages.SIMDEPLOYER.KILL:
+				case MqttMessages.Topics.SimDeployer.KILL:
 					this.exit();
 
 				default:

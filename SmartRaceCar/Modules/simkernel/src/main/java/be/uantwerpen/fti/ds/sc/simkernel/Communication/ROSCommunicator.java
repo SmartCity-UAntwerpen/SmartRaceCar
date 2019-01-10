@@ -1,9 +1,6 @@
 package be.uantwerpen.fti.ds.sc.simkernel.Communication;
 
-import be.uantwerpen.fti.ds.sc.common.Cost;
-import be.uantwerpen.fti.ds.sc.common.JSONUtils;
-import be.uantwerpen.fti.ds.sc.common.Point;
-import be.uantwerpen.fti.ds.sc.common.RESTUtils;
+import be.uantwerpen.fti.ds.sc.common.*;
 import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
 import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
 import be.uantwerpen.fti.ds.sc.common.configuration.RosAspect;
@@ -35,6 +32,6 @@ public class ROSCommunicator implements ROSCommunication
 
 		this.log.debug("JSON of weight request = " + json);
 
-		return (Cost) JSONUtils.getObjectWithKeyWord(this.restUtils.post("calcWeight", json, MediaType.APPLICATION_JSON_TYPE), typeOfCost);
+		return (Cost) JSONUtils.getObjectWithKeyWord(this.restUtils.post(RESTMessages.RosServer.CALC_WEIGHT, json, MediaType.APPLICATION_JSON_TYPE), typeOfCost);
 	}
 }
