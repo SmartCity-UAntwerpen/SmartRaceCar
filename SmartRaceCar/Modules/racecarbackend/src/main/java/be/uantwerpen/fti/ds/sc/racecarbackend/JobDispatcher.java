@@ -24,8 +24,6 @@ import java.util.NoSuchElementException;
 @Controller
 public class JobDispatcher implements MQTTListener
 {
-	private static final String ROUTE_UPDATE_DONE = "done";
-
 	private Logger log;
 	private Configuration config;
 	private JobTracker jobTracker;
@@ -92,7 +90,7 @@ public class JobDispatcher implements MQTTListener
 		try
 		{
 			MqttAspect mqttAspect = (MqttAspect) this.config.get(AspectType.MQTT);
-			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.JOB + "/" + job.getVehicleId(), job.getStartId() + " " + job.getEndId());
+			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.JOB + "/" + job.getVehicleId(), job.getStartId() + " " + job.getEndId() + " " + job.getJobId());
 		}
 		catch (MqttException me)
 		{
@@ -292,12 +290,13 @@ public class JobDispatcher implements MQTTListener
 	@Override
 	public void parseMQTT(String topic, String message)
 	{
-		long vehicleId = TopicUtils.getVehicleId(topic);
-
 		if (this.isRouteUpdate(topic))
 		{
-			if (message.equals(ROUTE_UPDATE_DONE))
+			if (message.equals(MqttMessages.Messages.Core.DONE))
 			{
+				String[] topicParts = topic.split("/");
+				long vehicleId = Long.parseLong(topicParts[topicParts.length - 2]);
+
 				this.log.info("Vehicle " + vehicleId + " completed its job. Checking for other queued jobs.");
 
 				this.occupationRepository.setOccupied(vehicleId, false);
@@ -315,6 +314,8 @@ public class JobDispatcher implements MQTTListener
 		}
 		else if (this.isRegistrationComplete(topic))
 		{
+			long vehicleId = TopicUtils.getVehicleId(topic);
+
 			try
 			{
 				Thread.sleep(500);
