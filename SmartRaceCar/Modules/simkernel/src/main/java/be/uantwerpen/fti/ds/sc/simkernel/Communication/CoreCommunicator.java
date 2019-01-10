@@ -54,7 +54,7 @@ public class CoreCommunicator implements TCPListener, CoreCommunication
 		{
 			try
 			{
-				Thread.sleep((cost.getWeight() * 1000) / 20);
+				Thread.sleep((long)((cost.getWeight() * 1000.0f) / 20.0f));
 				Location location = new Location(0, 0, 0, i * 5);
 				this.tcpUtils.sendUpdate(JSONUtils.objectToJSONStringWithKeyWord(TcpMessages.Simkernel.PERCENTAGE, location));
 				this.log.info("travelled " + i * 5 + "% of total route.");

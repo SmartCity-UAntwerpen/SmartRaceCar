@@ -22,9 +22,9 @@ public class ResourceManager
 	private class Cost implements Comparable<Cost>
 	{
 		private long vehicleId;
-		private int cost;
+		private float cost;
 
-		public Cost (long vehicleId, int cost)
+		public Cost (long vehicleId, float cost)
 		{
 			this.vehicleId = vehicleId;
 			this.cost = cost;
@@ -38,7 +38,7 @@ public class ResourceManager
 		@Override
 		public int compareTo(Cost cost)
 		{
-			return this.cost - cost.cost;
+			return (int)(this.cost - cost.cost);
 		}
 	}
 
@@ -98,7 +98,7 @@ public class ResourceManager
 			if (!this.occupationRepository.isOccupied(vehicleId))
 			{
 				long vehiclePosition = this.locationRepository.getLocation(vehicleId);
-				int cost = this.costCache.calculateCost(vehiclePosition, waypointId);
+				float cost = this.costCache.calculateCost(vehiclePosition, waypointId);
 				costSet.add(new Cost(vehicleId, cost));
 			}
 		}
