@@ -44,7 +44,7 @@ public class RESTUtils
 	 * @return
 	 * @throws ProcessingException
 	 */
-	public String get (String endpoint, MediaType expectedResponseType) throws ProcessingException
+	public String get (String endpoint, MediaType expectedResponseType) throws ProcessingException, WebApplicationException
 	{
 		WebTarget resourceWebTarget = this.webTarget.path(endpoint);
 		Invocation.Builder invocationBuilder = resourceWebTarget.request(expectedResponseType);
@@ -71,7 +71,7 @@ public class RESTUtils
 	 * Perform GET request without expecting an answer.
 	 * @param endpoint
 	 */
-	public void get (String endpoint)
+	public void get (String endpoint) throws WebApplicationException
 	{
 		WebTarget resourceWebTarget = this.webTarget.path(endpoint);
 		Invocation.Builder invocationBuilder = resourceWebTarget.request(MediaType.TEXT_PLAIN);
@@ -100,7 +100,7 @@ public class RESTUtils
 	 * @param payloadType
 	 * @return
 	 */
-	public String post(String endpoint, String payload, MediaType payloadType) throws IOException
+	public String post(String endpoint, String payload, MediaType payloadType) throws IOException, WebApplicationException
 	{
 		WebTarget resourceWebTarget = this.webTarget.path(endpoint);
 		Invocation.Builder invocationBuilder = resourceWebTarget.request("application/json");
@@ -155,7 +155,7 @@ public class RESTUtils
 	 * @return
 	 * @throws IOException
 	 */
-	public String post(String endpoint) throws IOException
+	public String post(String endpoint) throws WebApplicationException
 	{
 		this.log.debug("Attempting POST request with URL: \"" + endpoint + "\"");
 
@@ -180,7 +180,7 @@ public class RESTUtils
 	 * @return
 	 * @throws IOException
 	 */
-	public String delete(String endpoint)
+	public String delete(String endpoint) throws WebApplicationException
 	{
 		this.log.debug("Attempting DELETE request with URL: \"" + endpoint + "\"");
 
@@ -242,7 +242,7 @@ public class RESTUtils
 	 * @param response The REST response.
 	 * @param url      The URL that was being reached.
 	 */
-	private void checkForError(Response response, java.net.URI url)
+	private void checkForError(Response response, java.net.URI url) throws WebApplicationException
 	{
 		if (response.getStatus() != Response.Status.OK.getStatusCode())
 		{

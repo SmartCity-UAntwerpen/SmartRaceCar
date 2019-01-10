@@ -18,8 +18,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -139,7 +139,7 @@ public class JobTracker implements MQTTListener
         this.removeJob(jobId, vehicleId);
     }
 
-    private JobType findJobType(long jobId, long vehicleId)
+    private JobType findJobType(long jobId, long vehicleId) throws NoSuchElementException
     {
         if (this.localJobs.containsKey(jobId))
         {
@@ -201,7 +201,7 @@ public class JobTracker implements MQTTListener
         throw new NoSuchElementException("Failed to find job associated with vehicle " + vehicleID);
     }
 
-    private void completeJob(long jobId, long vehicleId) throws IOException
+    private void completeJob(long jobId, long vehicleId) throws WebApplicationException
     {
         this.log.debug("Completing job, setting vehicle " + vehicleId + " to unoccupied.");
         this.vehicleManager.setOccupied(vehicleId, false);
@@ -210,16 +210,21 @@ public class JobTracker implements MQTTListener
         // We should only inform the backend if the job was a global job.
         if ((!backboneAspect.isBackboneDebug()) && (this.findJobType(jobId, vehicleId) == JobType.GLOBAL))
         {
-
-
             Job job = this.getJob(jobId, JobType.GLOBAL);
 
             RESTUtils backboneRESTUtil = new RESTUtils(backboneAspect.getBackboneServerUrl());
 
-            if (!job.isBackboneNotified())
+            try
             {
-	            this.log.info("Sending last minute \"close-by\" message to backbone.");
-	            backboneRESTUtil.post("/jobs/vehiclecloseby/" + jobId);
+                if (!job.isBackboneNotified())
+                {
+                    this.log.info("Sending last minute \"close-by\" message to backbone.");
+                    backboneRESTUtil.post("/jobs/vehiclecloseby/" + jobId);
+                }
+            }
+            catch (WebApplicationException wae)
+            {
+                this.log.error("Failed to notify backbone with  \"close-by\" message.");
             }
 
 	        this.log.debug("Informing Backbone about job completion.");
@@ -228,17 +233,17 @@ public class JobTracker implements MQTTListener
             {
                 backboneRESTUtil.post("/jobs/complete/" + jobId);
             }
-            catch (IOException ioe)
+            catch (WebApplicationException wae)
             {
-                this.log.error("Failed to POST completion of job to backbone.", ioe);
-                throw ioe;
+                this.log.error("Failed to POST completion of job to backbone.", wae);
+                throw wae;
             }
         }
 
         this.removeJob(jobId, vehicleId);
     }
 
-    private void updateRoute(long jobId, long vehicleId, String mqttMessage) throws IOException
+    private void updateRoute(long jobId, long vehicleId, String mqttMessage) throws WebApplicationException
     {
         switch (mqttMessage)
         {
@@ -259,7 +264,7 @@ public class JobTracker implements MQTTListener
         }
     }
 
-    private void updateProgress(long jobId, long vehicleId, int progress) throws IOException
+    private void updateProgress(long jobId, long vehicleId, int progress) throws WebApplicationException
     {
         JobType type = this.findJobType(jobId, vehicleId);
         Job job = null;
@@ -294,10 +299,10 @@ public class JobTracker implements MQTTListener
                 backboneRESTUtil.post("/jobs/vehiclecloseby/" + jobId);
                 job.setBackboneNotified(true);
             }
-            catch (IOException ioe)
+            catch (WebApplicationException wae)
             {
                 this.log.error("Failed to notify backbone of almost-completion of job.");
-                throw  ioe;
+                throw  wae;
             }
         }
     }
@@ -436,9 +441,9 @@ public class JobTracker implements MQTTListener
                 {
                     this.updateProgress(jobId, vehicleId, percentage);
                 }
-                catch (IOException ioe)
+                catch (WebApplicationException wae)
                 {
-                    this.log.error("Failed to process job progress update for job " + jobId, ioe);
+                    this.log.error("Failed to process job progress update for job " + jobId, wae);
                 }
             }
             else if (this.isRouteUpdate(topic))
@@ -450,9 +455,9 @@ public class JobTracker implements MQTTListener
                 {
                     this.updateRoute(jobId, vehicleId, message);
                 }
-                catch (IOException ioe)
+                catch (WebApplicationException wae)
                 {
-                    this.log.error("Failed to process route update for job " + jobId, ioe);
+                    this.log.error("Failed to process route update for job " + jobId, wae);
                 }
             }
             // If a vehicle gets deleted, requeue all jobs associated with that vehicle

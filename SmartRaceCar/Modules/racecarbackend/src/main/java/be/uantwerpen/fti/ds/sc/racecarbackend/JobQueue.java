@@ -84,7 +84,7 @@ public class JobQueue implements MQTTListener
 		}
 	}
 
-	public boolean isEmpty(JobType type)
+	public boolean isEmpty(JobType type) throws NoSuchElementException
 	{
 		switch (type)
 		{
@@ -101,7 +101,7 @@ public class JobQueue implements MQTTListener
 		}
 	}
 
-	public long enqueue(Job job, JobType type)
+	public long enqueue(Job job, JobType type) throws NoSuchElementException
 	{
 		switch (type)
 		{
@@ -128,7 +128,7 @@ public class JobQueue implements MQTTListener
 		}
 	}
 
-	public Job dequeue(JobType type)
+	public Job dequeue(JobType type) throws NoSuchElementException
 	{
 		if (this.isEmpty(type))
 		{

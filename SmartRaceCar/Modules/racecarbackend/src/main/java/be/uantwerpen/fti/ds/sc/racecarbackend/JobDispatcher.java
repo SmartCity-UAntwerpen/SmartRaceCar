@@ -67,8 +67,15 @@ public class JobDispatcher implements MQTTListener
 
 		if (job.getVehicleId() == -1)
 		{
-			long vehicleId = this.resourceManager.getOptimalCar(job.getStartId());
-			job.setVehicleId(vehicleId);
+			try
+			{
+				long vehicleId = this.resourceManager.getOptimalCar(job.getStartId());
+				job.setVehicleId(vehicleId);
+			}
+			catch (NoSuchElementException nsee)
+			{
+				this.log.error("Failed to find optimal car for job " + job.getJobId(), nsee);
+			}
 		}
 
 		switch (type)
@@ -344,6 +351,11 @@ public class JobDispatcher implements MQTTListener
 				{
 					String errorString = "Failed to schedule global job for newly registered vehicle (" + vehicleId + ").";
 					this.log.error(errorString, ioe);
+				}
+				catch (NoSuchElementException nsee)
+				{
+					String errorString = "Failed to find optimal vehicle for job.";
+					this.log.error(errorString, nsee);
 				}
 			}
 		}
