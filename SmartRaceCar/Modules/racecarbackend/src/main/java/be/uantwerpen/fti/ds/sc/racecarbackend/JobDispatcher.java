@@ -90,7 +90,7 @@ public class JobDispatcher implements MQTTListener
 		try
 		{
 			MqttAspect mqttAspect = (MqttAspect) this.config.get(AspectType.MQTT);
-			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.JOB + "/" + job.getVehicleId(), job.getStartId() + " " + job.getEndId() + " " + job.getJobId());
+			this.mqttUtils.publish(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.JOB + "/" + job.getVehicleId() + "/" + job.getJobId(), job.getStartId() + " " + job.getEndId());
 		}
 		catch (MqttException me)
 		{
