@@ -76,7 +76,7 @@ public class RESTUtils
 		WebTarget resourceWebTarget = this.webTarget.path(endpoint);
 		Invocation.Builder invocationBuilder = resourceWebTarget.request(MediaType.TEXT_PLAIN);
 		Response response = null;
-		this.log.debug("Attempting GET request :" + resourceWebTarget.getUri());
+		this.log.debug("Attempting GET request: " + resourceWebTarget.getUri());
 
 		try
 		{
@@ -104,7 +104,7 @@ public class RESTUtils
 	{
 		WebTarget resourceWebTarget = this.webTarget.path(endpoint);
 		Invocation.Builder invocationBuilder = resourceWebTarget.request("application/json");
-		this.log.info("Attempting POST request:" + resourceWebTarget.getUri());
+		this.log.info("Attempting POST request: " + resourceWebTarget.getUri());
 		Response response = null;
 
 		try
@@ -213,7 +213,7 @@ public class RESTUtils
 		WebTarget resourceWebTarget = this.webTarget.path(URL);
 		Invocation.Builder invocationBuilder = resourceWebTarget.request("application/octet-stream");
 		Response response;
-		this.log.info("Attempting GET(file) request with URL:" + resourceWebTarget.getUri());
+		this.log.info("Attempting GET(file) request with URL: " + resourceWebTarget.getUri());
 		try
 		{
 			response = invocationBuilder.get();
