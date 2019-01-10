@@ -112,7 +112,7 @@ public class VehicleManager implements MQTTListener, VehicleRepository, Occupati
 	 *      REST Endpoints
 	 *
 	 */
-	@RequestMapping(value="/carmanager/delete/{vehicleId}", method=RequestMethod.GET)
+	@RequestMapping(value="/carmanager/delete/{vehicleId}", method=RequestMethod.DELETE)
 	public @ResponseBody ResponseEntity<String> delete(@PathVariable long vehicleId)
 	{
 		if (this.occupation.containsKey(vehicleId))
