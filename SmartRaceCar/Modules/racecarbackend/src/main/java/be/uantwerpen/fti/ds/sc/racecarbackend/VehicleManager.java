@@ -122,7 +122,7 @@ public class VehicleManager implements MQTTListener, VehicleRepository, Occupati
 			try
 			{
 				MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
-				this.messageQueueClient.publish(mqttAspect.getTopic() + "delete/" + vehicleId, "");
+				this.messageQueueClient.publish(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.DELETE + "/" + vehicleId, "");
 			}
 			catch (Exception e)
 			{
@@ -175,10 +175,10 @@ public class VehicleManager implements MQTTListener, VehicleRepository, Occupati
 		try
 		{
 			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
-			MessageToken token = this.messageQueueClient.publish(mqttAspect.getTopic() + "register/" + newVehicleId, Long.toString(startWaypoint));
+			MessageToken token = this.messageQueueClient.publish(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.REGISTER + "/" + newVehicleId, Long.toString(startWaypoint));
 			token.waitForDelivery(MQTT_DELIVERY_TIMEOUT);
 
-			this.messageQueueClient.publish(mqttAspect.getTopic() + "registered/" + newVehicleId, "done");
+			this.messageQueueClient.publish(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.REGISTRATION_DONE + "/" + newVehicleId, "done");
 		}
 		catch (Exception e)
 		{

@@ -24,10 +24,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 class HeartbeatChecker implements MQTTListener
 {
-	//private static final String MQTT_HEARTBEAT_POSTFIX = "heartbeat/#";
-	//private static final String MQTT_REGISTER_POSTFIX = "register/#";
-	//private static final String MQTT_DELETE_POSTFIX = "delete/#";
-
 	@Value("${Racecar.Heartbeat.interval}")
 	private long CHECK_INTERVAL;		// Interval between heartbeat checks (in s)
 
@@ -44,19 +40,19 @@ class HeartbeatChecker implements MQTTListener
 	private boolean isHeartbeat(String topic)
 	{
 		MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-		return topic.startsWith(mqttAspect.getTopic() +  Messages.CORE.HEARTBEAT);
+		return topic.startsWith(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Core.HEARTBEAT);
 	}
 
 	private boolean isRegistration(String topic)
 	{
 		MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-		return topic.startsWith(mqttAspect.getTopic() +  Messages.BACKEND.REGISTER);
+		return topic.startsWith(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.REGISTER);
 	}
 
 	private boolean isDeletion(String topic)
 	{
 		MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-		return topic.startsWith(mqttAspect.getTopic() +  Messages.BACKEND.DELETE);
+		return topic.startsWith(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.DELETE);
 	}
 
 	private void updateHeartbeat(long vehicleId)
@@ -143,8 +139,8 @@ class HeartbeatChecker implements MQTTListener
 		{
 			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
 			this.messageQueueClient = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
-			this.messageQueueClient.subscribe(mqttAspect.getTopic() + Messages.BACKEND.REGISTER + "/#");
-			this.messageQueueClient.subscribe(mqttAspect.getTopic() + Messages.BACKEND.DELETE + "/#");
+			this.messageQueueClient.subscribe(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.REGISTER + "/#");
+			this.messageQueueClient.subscribe(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.DELETE + "/#");
 		}
 		catch (Exception e)
 		{
@@ -156,7 +152,7 @@ class HeartbeatChecker implements MQTTListener
 		{
 			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
 			this.mqttUtils = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
-			this.mqttUtils.subscribe(mqttAspect.getTopic() + Messages.CORE.HEARTBEAT+ "/#");
+			this.mqttUtils.subscribe(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Core.HEARTBEAT + "/#");
 		}
 		catch (Exception e)
 		{

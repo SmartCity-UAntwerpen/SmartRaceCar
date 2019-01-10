@@ -41,7 +41,7 @@ public class CostCache implements MQTTListener
 	{
 		MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
 
-		return topic.startsWith(mqttAspect.getTopic() + Messages.BACKEND.CHANGE_MAP);
+		return topic.startsWith(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.CHANGE_MAP);
 	}
 
 	@Autowired
@@ -55,7 +55,7 @@ public class CostCache implements MQTTListener
 		{
 			MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
 			this.mqttUtils = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
-			this.mqttUtils.subscribe(mqttAspect.getTopic() + Messages.BACKEND.CHANGE_MAP);
+			this.mqttUtils.subscribe(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.CHANGE_MAP);
 		}
 		catch (MqttException me)
 		{
@@ -125,7 +125,7 @@ public class CostCache implements MQTTListener
 				RESTUtils ROSAPI = new RESTUtils(rosAspect.getRosServerUrl());
 				Type costType = new TypeToken<Cost>(){}.getType();
 
-				costString = ROSAPI.post("calcWeight", jsonString, MediaType.APPLICATION_JSON_TYPE);
+				costString = ROSAPI.post(RESTMessages.RosServer.CALC_WEIGHT, jsonString, MediaType.APPLICATION_JSON_TYPE);
 				Cost costObj = (Cost) JSONUtils.getObjectWithKeyWord(costString, costType);
 
 				cost = costObj.getWeight();

@@ -28,10 +28,6 @@ import java.util.NoSuchElementException;
 @Controller
 public class JobTracker implements MQTTListener
 {
-    private static final String ROUTE_UPDATE_DONE = "done";
-    private static final String ROUTE_UPDATE_ERROR = "error";
-    private static final String ROUTE_UPDATE_NOT_COMPLETE = "notcomplete";
-
     private static final int ALMOST_DONE_PERCENTAGE = 90;
     // We need to contact the backbone if we're "almost there"
     // No concrete definition of "almost" has been given, so
@@ -51,19 +47,19 @@ public class JobTracker implements MQTTListener
     private boolean isProgressUpdate(String topic)
     {
         MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-        return topic.startsWith(mqttAspect.getTopic() + Messages.SIMKERNEL.PERCENTAGE);
+        return topic.startsWith(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Core.PERCENTAGE);
     }
 
     private boolean isRouteUpdate(String topic)
     {
         MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-        return topic.startsWith(mqttAspect.getTopic() + Messages.CORE.ROUTE);
+        return topic.startsWith(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Core.ROUTE);
     }
 
     private boolean isDeletion(String topic)
     {
 	    MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-	    return topic.startsWith(mqttAspect.getTopic() + Messages.BACKEND.DELETE);
+	    return topic.startsWith(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.DELETE);
     }
 
     private Job getJob(long jobId, JobType type) throws IndexOutOfBoundsException
@@ -236,17 +232,17 @@ public class JobTracker implements MQTTListener
     {
         switch (mqttMessage)
         {
-            case ROUTE_UPDATE_DONE:
+            case MqttMessages.Messages.Core.DONE:
                 this.log.info("Vehicle " + vehicleId + " completed job " + jobId + ".");
                 this.completeJob(jobId, vehicleId);
                 break;
 
-            case ROUTE_UPDATE_ERROR:
+            case MqttMessages.Messages.Core.ERROR:
                 this.log.warn("Vehicle " + vehicleId + " completed its route with errors.");
                 this.routeUpdateError(jobId, vehicleId);
                 break;
 
-            case ROUTE_UPDATE_NOT_COMPLETE:
+            case MqttMessages.Messages.Core.NOT_COMPLETE:
                 this.log.info("Vehicle " + vehicleId + " hasn't completed its previous route yet.");
                 this.routeUpdateNotComplete(jobId, vehicleId);
                 break;
@@ -310,8 +306,8 @@ public class JobTracker implements MQTTListener
         {
             MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
             this.mqttUtils = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
-            this.mqttUtils.subscribe(mqttAspect.getTopic() + Messages.CORE.ROUTE + "/#");
-            this.mqttUtils.subscribe(mqttAspect.getTopic() + Messages.SIMKERNEL.PERCENTAGE + "/#");
+            this.mqttUtils.subscribe(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Core.ROUTE + "/#");
+            this.mqttUtils.subscribe(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Core.PERCENTAGE + "/#");
         }
         catch (MqttException me)
         {
@@ -322,7 +318,7 @@ public class JobTracker implements MQTTListener
         {
 	        MqttAspect mqttAspect = (MqttAspect) configuration.get(AspectType.MQTT);
 	        this.messageQueueClient = new MQTTUtils(mqttAspect.getBroker(), mqttAspect.getUsername(), mqttAspect.getPassword(), this);
-	        this.messageQueueClient.subscribe(mqttAspect.getTopic() + Messages.BACKEND.DELETE + "/#");
+	        this.messageQueueClient.subscribe(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.DELETE + "/#");
         }
         catch (MqttException me)
         {

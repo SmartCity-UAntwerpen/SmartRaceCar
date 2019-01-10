@@ -184,7 +184,7 @@ public class MapManager implements MQTTListener, WaypointValidator, WaypointRepo
 			try
 			{
 				MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-				this.mqttUtils.publish(mqttAspect.getTopic() + Messages.BACKEND.CHANGE_MAP, mapName);
+				this.mqttUtils.publish(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.CHANGE_MAP, mapName);
 			}
 			catch (MqttException me)
 			{
