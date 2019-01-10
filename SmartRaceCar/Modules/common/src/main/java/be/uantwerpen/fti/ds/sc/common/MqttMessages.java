@@ -40,6 +40,11 @@ public class MqttMessages
 			public static final String DONE = "done";
 			public static final String HEARTBEAT = "heartbeat";
 		}
+
+		public class SimDeployer
+		{
+			public static final String KILL = "kill";
+		}
 	}
 
 
