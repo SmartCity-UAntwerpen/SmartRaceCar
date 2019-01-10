@@ -14,7 +14,7 @@ public class HyperVisor
 {
 	private Logger log;
 	private Configuration configuration;
-	private Map<Long, VirtualMachine> virtualMachines;
+	private Map<Long, Simulation> virtualMachines;
 
 	public HyperVisor (Configuration configuration)
 	{
@@ -26,8 +26,8 @@ public class HyperVisor
 	public void launch(long simulationId, long startpoint) throws IOException, InvalidNameException
 	{
 		DockerAspect dockerAspect = (DockerAspect) configuration.get(AspectType.DOCKER);
-		VirtualMachineFactory factory = new VirtualMachineFactory(configuration);
-		VirtualMachine vm = null;
+		SimulationFactory factory = new SimulationFactory(configuration);
+		Simulation vm = null;
 
 		try
 		{
@@ -59,7 +59,7 @@ public class HyperVisor
 		}
 	}
 
-	public void stop(long simulationId) throws NoSuchElementException, IOException, InterruptedException, VirtualMachineException
+	public void stop(long simulationId) throws NoSuchElementException, IOException, InterruptedException, SimulationException
 	{
 		if (!this.virtualMachines.containsKey(simulationId))
 		{
@@ -76,7 +76,7 @@ public class HyperVisor
 			{
 				String errorString = "Failed to stop Virtual Machine, process returned " + returnValue;
 				this.log.error(errorString);
-				throw new VirtualMachineException(errorString);
+				throw new SimulationException(errorString);
 			}
 
 			this.virtualMachines.remove(simulationId);

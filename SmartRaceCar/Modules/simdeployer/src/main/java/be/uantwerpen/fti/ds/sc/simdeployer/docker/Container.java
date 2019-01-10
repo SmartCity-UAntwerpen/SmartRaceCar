@@ -7,7 +7,7 @@ import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
 import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
 import be.uantwerpen.fti.ds.sc.common.configuration.DockerAspect;
 import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
-import be.uantwerpen.fti.ds.sc.simdeployer.VirtualMachine;
+import be.uantwerpen.fti.ds.sc.simdeployer.Simulation;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Container implements VirtualMachine, MQTTListener
+public class Container implements Simulation, MQTTListener
 {
 	private static final long TIMEOUT_LEN = 30;
 	private static final TimeUnit TIMEOUT_UNIT = TimeUnit.SECONDS;
