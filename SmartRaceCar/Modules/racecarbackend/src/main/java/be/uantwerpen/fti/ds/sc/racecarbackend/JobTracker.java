@@ -173,34 +173,6 @@ public class JobTracker implements MQTTListener
         }
     }
 
-    /**
-     * Return the job being executed by the vehicle with id vehicleID.
-     * Returns -1 if no job was found for the given vehicle.
-     * @param vehicleID
-     * @return
-     */
-    @Deprecated
-    private long findJobByVehicleId(long vehicleID) throws NoSuchElementException
-    {
-        for (long jobId: this.globalJobs.keySet())
-        {
-            if (this.globalJobs.get(jobId).getVehicleId() == vehicleID)
-            {
-                return jobId;
-            }
-        }
-
-        for (long jobId: this.localJobs.keySet())
-        {
-            if (this.localJobs.get(jobId).getVehicleId() == vehicleID)
-            {
-                return jobId;
-            }
-        }
-
-        throw new NoSuchElementException("Failed to find job associated with vehicle " + vehicleID);
-    }
-
     private void completeJob(long jobId, long vehicleId) throws WebApplicationException
     {
         this.log.debug("Completing job, setting vehicle " + vehicleId + " to unoccupied.");
@@ -427,13 +399,14 @@ public class JobTracker implements MQTTListener
     @Override
     public void parseMQTT(String topic, String message)
     {
-        long vehicleId = TopicUtils.getVehicleId(topic);
+        String[] topicParts = topic.split("/");
+        long vehicleId = Long.parseLong(topicParts[topicParts.length - 2]);
+        long jobId = Long.parseLong(topicParts[topicParts.length - 1]);
 
         try
         {
             if (this.isProgressUpdate(topic))
             {
-                long jobId = this.findJobByVehicleId(vehicleId);
                 int percentage = Integer.parseInt(message);
                 this.log.info("Received Percentage update for vehicle " + vehicleId + ", Job: " + jobId + ", Status: " + percentage + "%.");
 
@@ -448,7 +421,6 @@ public class JobTracker implements MQTTListener
             }
             else if (this.isRouteUpdate(topic))
             {
-                long jobId = this.findJobByVehicleId(vehicleId);
                 this.log.info("Received Route Update for vehicle " + vehicleId + "");
 
                 try
