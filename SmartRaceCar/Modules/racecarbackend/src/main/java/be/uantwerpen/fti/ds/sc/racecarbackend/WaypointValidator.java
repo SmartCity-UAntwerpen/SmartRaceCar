@@ -1,12 +1,20 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
-public interface WaypointValidator
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
+public class WaypointValidator
 {
-	/**
-	 * Checks if a waypoint exists or not.
-	 *
-	 * @param waypointId    The ID of the waypoint to be checked.
-	 * @return              True if the waypoint exists, false if it does not.
-	 */
-	public boolean exists(long waypointId);
+	private WaypointRepository waypointRepository;
+
+	public WaypointValidator(@Autowired WaypointRepository waypointRepository)
+	{
+		this.waypointRepository = waypointRepository;
+	}
+
+	public boolean exists(long id)
+	{
+		return this.waypointRepository.findById(id).isPresent();
+	}
 }

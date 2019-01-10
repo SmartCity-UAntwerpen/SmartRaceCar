@@ -13,12 +13,15 @@ public class MapManagerAspect extends Aspect
 
 	private static final String MAP_PATH_KEY = PREFIX + ".path";
 	private static final String CURRENT_MAP_KEY = PREFIX + ".current";
-	private static final String KEYS[] = {MAP_PATH_KEY, CURRENT_MAP_KEY};
+	private static final String DATABASE_DEBUG_KEY = PREFIX + ".database.debug";
+	private static final String KEYS[] = {DATABASE_DEBUG_KEY, MAP_PATH_KEY, CURRENT_MAP_KEY};
 
+	private static final String DEFAULT_DATABASE_DEBUG = "true";
 	private static final String DEFAULT_MAP_PATH = "maps/";
 	private static final String DEFAULT_CURRENT_MAP =  "U014Circle";
 
 	private Logger log;
+	private boolean databaseDebug;
 	private String mapPath;
 	private String currentMap;
 
@@ -33,9 +36,11 @@ public class MapManagerAspect extends Aspect
 
 			this.checkKeys(properties, KEYS);
 
+			this.databaseDebug = Boolean.parseBoolean(properties.getProperty(DATABASE_DEBUG_KEY, DEFAULT_DATABASE_DEBUG));
 			this.mapPath = properties.getProperty(MAP_PATH_KEY, DEFAULT_MAP_PATH);
 			this.currentMap = properties.getProperty(CURRENT_MAP_KEY, DEFAULT_CURRENT_MAP);
 
+			this.log.debug(DATABASE_DEBUG_KEY + " = " + this.databaseDebug);
 			this.log.debug(MAP_PATH_KEY + " = " + this.mapPath);
 			this.log.debug(CURRENT_MAP_KEY + " = " + this.currentMap);
 		}
@@ -46,16 +51,23 @@ public class MapManagerAspect extends Aspect
 		}
 	}
 
-	public MapManagerAspect (String mapPath, String currentMap)
+	public MapManagerAspect (boolean databaseDebug, String mapPath, String currentMap)
 	{
 		super(AspectType.MAP_MANAGER);
 		this.log = LoggerFactory.getLogger(MapManagerAspect.class);
 
+		this.databaseDebug = databaseDebug;
 		this.mapPath = mapPath;
 		this.currentMap = currentMap;
 
+		this.log.debug(DATABASE_DEBUG_KEY + " = " + this.databaseDebug);
 		this.log.debug(MAP_PATH_KEY + " = " + this.mapPath);
 		this.log.debug(CURRENT_MAP_KEY + " = " + this.currentMap);
+	}
+
+	public boolean isDatabaseDebug()
+	{
+		return this.databaseDebug;
 	}
 
 	public String getMapPath()

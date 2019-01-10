@@ -32,7 +32,7 @@ public class CostCache implements MQTTListener
 {
 	private Logger log;
 	private WaypointValidator waypointValidator;
-	private WaypointRepository waypointRepository;
+	private CoordinateRepository coordinateRepository;
 	private Configuration configuration;
 	private MQTTUtils mqttUtils;
 	private Map<Link, Float> costCache;
@@ -45,7 +45,7 @@ public class CostCache implements MQTTListener
 	}
 
 	@Autowired
-	public CostCache (@Qualifier("costCache") Configuration configuration, WaypointRepository waypointRepository, WaypointValidator waypointValidator)
+	public CostCache (@Qualifier("costCache") Configuration configuration, CoordinateRepository coordinateRepository, WaypointValidator waypointValidator)
 	{
 		this.log = LoggerFactory.getLogger(CostCache.class);
 
@@ -63,7 +63,7 @@ public class CostCache implements MQTTListener
 		}
 
 		this.configuration = configuration;
-		this.waypointRepository = waypointRepository;
+		this.coordinateRepository = coordinateRepository;
 		this.waypointValidator = waypointValidator;
 		this.costCache = new HashMap<>();
 
@@ -106,8 +106,8 @@ public class CostCache implements MQTTListener
 		RosAspect rosAspect = (RosAspect) this.configuration.get(AspectType.ROS);
 		if (!rosAspect.isRosDebug())
 		{
-			Point startPointTmp = this.waypointRepository.getCoordinates(startId);
-			Point endPointTmp = this.waypointRepository.getCoordinates(endId);
+			Point startPointTmp = this.coordinateRepository.getCoordinates(startId);
+			Point endPointTmp = this.coordinateRepository.getCoordinates(endId);
 
 			Point startPoint = new Point(startPointTmp.getX(), startPointTmp.getY(), startPointTmp.getZ(), startPointTmp.getW());
 			Point endPoint = new Point(endPointTmp.getX(), endPointTmp.getY(), endPointTmp.getZ(), endPointTmp.getW());
