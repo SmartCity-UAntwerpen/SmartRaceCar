@@ -25,9 +25,7 @@ import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @Controller
 public class MapManager implements MQTTListener, CoordinateRepository
@@ -39,12 +37,10 @@ public class MapManager implements MQTTListener, CoordinateRepository
 
 	private MQTTUtils mqttUtils;
 
-	private WaypointRepository waypointRepository;
-
-	private Map<Long, WayPoint> wayPoints;  // This map is only used when we are not using the waypoint database
+	private WaypointProvider waypointProvider;
 
 	@Autowired
-	public MapManager(@Qualifier("mapManager") Configuration configuration, @Autowired WaypointRepository waypointRepository)
+	public MapManager(@Qualifier("mapManager") Configuration configuration, @Autowired WaypointProvider waypointProvider)
 	{
 		this.log = LoggerFactory.getLogger(this.getClass());
 		this.configuration = configuration;
@@ -64,14 +60,7 @@ public class MapManager implements MQTTListener, CoordinateRepository
 			this.log.error("Failed to create MQTTUtils for MapManager.");
 		}
 
-		this.wayPoints = new HashMap<>();
-
-		this.waypointRepository = waypointRepository;
-
-		if (mapManagerAspect.isDatabaseDebug())
-		{
-			this.wayPoints = this.loadWayPoints(this.currentMap);
-		}
+		this.waypointProvider = waypointProvider;
 
 		this.log.info("Initialized Map Manager.");
 	}
@@ -155,25 +144,8 @@ public class MapManager implements MQTTListener, CoordinateRepository
 	@RequestMapping(value="/carmanager/getwaypoints", method=RequestMethod.GET, produces=MediaType.APPLICATION_JSON)
 	public @ResponseBody ResponseEntity<String> getWayPoints()
 	{
-		MapManagerAspect mapManagerAspect = (MapManagerAspect) this.configuration.get(AspectType.MAP_MANAGER);
-
-		if (mapManagerAspect.isDatabaseDebug())
-		{
-			this.log.info("Received request for all waypoint on map. Returning " + this.wayPoints.size() + " waypoints.");
-			return new ResponseEntity<>(JSONUtils.objectToJSONStringWithKeyWord("wayPoints", this.wayPoints), HttpStatus.OK);
-		}
-		else
-		{
-			Map<Long, WayPoint> waypoints = new HashMap<>();
-
-			for (Waypoint waypoint: this.waypointRepository.findAllByMapName(this.currentMap))
-			{
-				waypoints.put(waypoint.getId(), new WayPoint(waypoint.getId(), waypoint.getX(), waypoint.getY(), waypoint.getZ(), waypoint.getW()));
-			}
-
-			this.log.info("Received request for all waypoint on map. Returning " + waypoints.size() + " waypoints.");
-			return new ResponseEntity<>(JSONUtils.objectToJSONStringWithKeyWord("wayPoints", waypoints), HttpStatus.OK);
-		}
+		Map<Long, WayPoint> waypoints = this.waypointProvider.getAll();
+		return new ResponseEntity<>(JSONUtils.objectToJSONStringWithKeyWord("wayPoints", waypoints), HttpStatus.OK);
 	}
 
 	/**
@@ -204,8 +176,6 @@ public class MapManager implements MQTTListener, CoordinateRepository
 				this.log.error("Failed to publish map change.", me);
 			}
 
-			this.loadWayPoints(this.currentMap);
-
 			this.log.info("Changed current map to " + mapName);
 
 			return new ResponseEntity<>(mapName, HttpStatus.OK);
@@ -218,57 +188,6 @@ public class MapManager implements MQTTListener, CoordinateRepository
 		}
 	}
 
-	/**
-	 * Request all possible wayPoints from the BackBone through a REST Get request.
-	 */
-	private Map<Long, WayPoint> loadWayPoints(String mapName)
-	{
-		this.log.info("Loading wayPoints for " + mapName);
-
-		Map<Long, WayPoint> waypoints = new HashMap<>();
-
-
-		// Temp wayPoints for when they can't be requested from back-end services.
-		switch (mapName)
-		{
-			case "zbuilding":
-				waypoints.put(46L, new WayPoint(46, 0.5f, 0.0f, -1.0f, 0.02f));
-				waypoints.put(47L, new WayPoint(47, -13.4f, -0.53f, 0.71f, 0.71f));
-				waypoints.put(48L, new WayPoint(48, -27.14f, -1.11f, -0.3f, 0.95f));
-				waypoints.put(49L, new WayPoint(49, -28.25f, -9.19f, -0.71f, 0.71f));
-				break;
-			case "V314":
-				waypoints.put(46L, new WayPoint(46, -3.0f, -1.5f, 0.07f, 1.00f));
-				waypoints.put(47L, new WayPoint(47, 1.10f, -1.20f, 0.07f, 1.00f));
-				waypoints.put(48L, new WayPoint(48, 4.0f, -0.90f, -0.68f, 0.73f));
-				waypoints.put(49L, new WayPoint(49, 4.54f, -4.49f, -0.60f, 0.80f));
-				break;
-			case "gangV":
-				waypoints.put(46L, new WayPoint(46, -6.1f, -28.78f, 0.73f, 0.69f));
-				waypoints.put(47L, new WayPoint(47, -6.47f, -21.69f, 0.66f, 0.75f));
-				waypoints.put(48L, new WayPoint(48, -5.91f, -1.03f, 0.52f, 0.85f));
-				waypoints.put(49L, new WayPoint(49, 6.09f, 0.21f, -0.04f, 1.00f));
-				break;
-			case "U014":
-				waypoints.put(0L, new WayPoint(0, 0.01f, -0.01f, 0.01f, 0.99f));
-				waypoints.put(1L, new WayPoint(1,  4.57f, 2.92f,0.75f, 0.67f));
-				waypoints.put(2L, new WayPoint(2, 4.47f, 6.02f, 0.74f, 0.67f));
-				waypoints.put(3L, new WayPoint(3, 4.20f, 10.01f, 0.74f, 0.67f));
-				waypoints.put(4L, new WayPoint(4, 3.97f, 13.04f, 0.75f, 0.66f));
-				break;
-			default:
-				log.warn("There are no default wayPoints for \"" + mapName + "\".");
-				waypoints.put(46L, new WayPoint(46, 0.5f, 0.0f, -1.0f, 0.02f));
-				waypoints.put(47L, new WayPoint(47, -13.4f, -0.53f, 0.71f, 0.71f));
-				waypoints.put(48L, new WayPoint(48, -27.14f, -1.11f, -0.3f, 0.95f));
-				waypoints.put(49L, new WayPoint(49, -28.25f, -9.19f, -0.71f, 0.71f));
-		}
-
-		this.log.info("All possible wayPoints(" + wayPoints.size() + ") received.");
-
-		return waypoints;
-	}
-
 	@Override
 	public Point getCoordinates(long waypointId)
 	{
@@ -276,30 +195,11 @@ public class MapManager implements MQTTListener, CoordinateRepository
 
 		this.log.info("Fetching coordinates for waypoint " + waypointId + ".");
 
-		if (mapManagerAspect.isDatabaseDebug())
+		if(this.waypointProvider.exists(waypointId))
 		{
-			if (!this.wayPoints.containsKey(waypointId))
-			{
-				this.log.error("Tried to fetch coordinates for non-existent waypoint " + waypointId + ".");
-				return new Point(0.0f, 0.0f, 0.0f, 0.0f);
-			}
-
-			return this.wayPoints.get(waypointId);
+			return this.waypointProvider.get(waypointId);
 		}
-		else
-		{
-			Waypoint waypoint = this.waypointRepository.findByIdAndMapName(waypointId, this.currentMap);
-
-			if (waypoint != null)
-			{
-				return new Point(waypoint.getX(), waypoint.getY(), waypoint.getZ(), waypoint.getW());
-			}
-			else
-			{
-				this.log.error("Tried to fetch coordinates for non-existent waypoint " + waypointId + ".");
-				return new Point(0.0f, 0.0f, 0.0f, 0.0f);
-			}
-		}
+		return new Point(0, 0, 0, 0);
 	}
 
 	@Override

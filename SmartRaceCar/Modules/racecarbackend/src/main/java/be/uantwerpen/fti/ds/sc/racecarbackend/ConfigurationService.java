@@ -117,4 +117,15 @@ public class ConfigurationService
 
         return configuration.load(DEFAULT_PROPERTIES_FILE);
     }
+
+    @Bean
+    @Qualifier("waypointProvider")
+    Configuration waypointProvidorConfiguration()
+    {
+        Configuration configuration = new Configuration();
+        configuration.add(AspectType.MAP_MANAGER);
+        configuration.add(AspectType.MQTT);
+
+        return configuration.load(DEFAULT_PROPERTIES_FILE);
+    }
 }

@@ -27,7 +27,7 @@ public class CostCache implements MQTTListener
 {
 	private Logger log;
 	private Random random;
-	private WaypointValidator waypointValidator;
+	private WaypointProvider waypointProvider;
 	private CoordinateRepository coordinateRepository;
 	private Configuration configuration;
 	private MQTTUtils mqttUtils;
@@ -41,7 +41,7 @@ public class CostCache implements MQTTListener
 	}
 
 	@Autowired
-	public CostCache (@Qualifier("costCache") Configuration configuration, CoordinateRepository coordinateRepository, WaypointValidator waypointValidator)
+	public CostCache (@Qualifier("costCache") Configuration configuration, CoordinateRepository coordinateRepository, @Autowired WaypointProvider waypointProvider)
 	{
 		this.log = LoggerFactory.getLogger(CostCache.class);
 		this.random = new Random(System.currentTimeMillis());
@@ -61,7 +61,7 @@ public class CostCache implements MQTTListener
 
 		this.configuration = configuration;
 		this.coordinateRepository = coordinateRepository;
-		this.waypointValidator = waypointValidator;
+		this.waypointProvider = waypointProvider;
 		this.costCache = new HashMap<>();
 
 		this.log.info("Initialized CostCache.");
@@ -84,14 +84,14 @@ public class CostCache implements MQTTListener
 
 		this.log.info("Got cache miss for link " + link);
 
-		if (!this.waypointValidator.exists(startId))
+		if (!this.waypointProvider.exists(startId))
 		{
 			String errorString = "Requested cost for start waypoint " + startId + ", but waypoint doesn't exist.";
 			this.log.error(errorString);
 			throw new IndexOutOfBoundsException(errorString);
 		}
 
-		if (!this.waypointValidator.exists(endId))
+		if (!this.waypointProvider.exists(endId))
 		{
 			String errorString = "Requested cost for end waypoint " + endId + ", but waypoint doesn't exist.";
 			this.log.error(errorString);
