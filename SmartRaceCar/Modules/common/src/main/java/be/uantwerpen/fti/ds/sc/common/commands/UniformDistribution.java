@@ -1,5 +1,8 @@
 package be.uantwerpen.fti.ds.sc.common.commands;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.concurrent.ThreadLocalRandom;
 
 public class UniformDistribution implements Distribution
@@ -17,9 +20,12 @@ public class UniformDistribution implements Distribution
 
 	public static UniformDistribution parseDistribution(String distString) throws Exception
 	{
+		Logger log = LoggerFactory.getLogger(UniformDistribution.class);
+
 		if (distString.startsWith(UniformDistribution.DISTRIBUTION_NAME))
 		{
-			String commaSeparatedValues = distString.substring(UniformDistribution.DISTRIBUTION_NAME.length(), distString.length() - 2);
+			String commaSeparatedValues = distString.substring(UniformDistribution.DISTRIBUTION_NAME.length() + 1, distString.length() - 1);
+
 			String[] nums = commaSeparatedValues.split(",");
 
 			try
