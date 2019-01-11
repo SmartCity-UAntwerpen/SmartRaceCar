@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.util.Map;
 
 @Controller
-public class MapManager implements MQTTListener, CoordinateRepository
+public class MapManager implements MQTTListener
 {
 	private Logger log;
 	private Configuration configuration;
@@ -186,20 +186,6 @@ public class MapManager implements MQTTListener, CoordinateRepository
 			this.log.warn(errorString);
 			return new ResponseEntity<>(errorString, HttpStatus.BAD_REQUEST);
 		}
-	}
-
-	@Override
-	public Point getCoordinates(long waypointId)
-	{
-		MapManagerAspect mapManagerAspect = (MapManagerAspect) this.configuration.get(AspectType.MAP_MANAGER);
-
-		this.log.info("Fetching coordinates for waypoint " + waypointId + ".");
-
-		if(this.waypointProvider.exists(waypointId))
-		{
-			return this.waypointProvider.get(waypointId);
-		}
-		return new Point(0, 0, 0, 0);
 	}
 
 	@Override
