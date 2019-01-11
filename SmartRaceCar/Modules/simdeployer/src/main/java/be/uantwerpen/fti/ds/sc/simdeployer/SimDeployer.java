@@ -80,7 +80,11 @@ public class SimDeployer implements TCPListener
 			for (long simulationId: setCommand.getSimulationId().generate())
 			{
 				Distribution dist = Distribution.parse(setCommand.getValue());
-				this.startPoints.put(simulationId, dist.sample());
+				long startpoint = dist.sample();
+
+				this.log.info("Sampled startpoint " + startpoint);
+
+				this.startPoints.put(simulationId, startpoint);
 			}
 
 			return Command.ACK;
