@@ -28,7 +28,7 @@ public class JobDispatcher implements MQTTListener
 	private Configuration config;
 	private JobTracker jobTracker;
 	private JobQueue jobQueue;
-	private WaypointValidator waypointValidator;
+	private WaypointProvider waypointProvider;
 	private OccupationRepository occupationRepository;
 	private LocationRepository locationRepository;
 	private ResourceManager resourceManager;
@@ -99,13 +99,13 @@ public class JobDispatcher implements MQTTListener
 	}
 
 	@Autowired
-	public JobDispatcher(@Qualifier("jobDispatcher") Configuration configuration, JobTracker jobTracker, JobQueue jobQueue, WaypointValidator waypointValidator, OccupationRepository occupationRepository, LocationRepository locationRepository, ResourceManager resourceManager)
+	public JobDispatcher(@Qualifier("jobDispatcher") Configuration configuration, JobTracker jobTracker, JobQueue jobQueue, @Autowired WaypointProvider waypointProvider, OccupationRepository occupationRepository, LocationRepository locationRepository, ResourceManager resourceManager)
 	{
 		this.log = LoggerFactory.getLogger(this.getClass());
 		this.config = configuration;
 		this.jobQueue = jobQueue;
 		this.jobTracker = jobTracker;
-		this.waypointValidator = waypointValidator;
+		this.waypointProvider = waypointProvider;
 		this.occupationRepository = occupationRepository;
 		this.locationRepository = locationRepository;
 		this.resourceManager = resourceManager;
@@ -185,7 +185,7 @@ public class JobDispatcher implements MQTTListener
 		}
 
 		// Check if starting waypoint exists
-		if (!this.waypointValidator.exists(startId))
+		if (!this.waypointProvider.exists(startId))
 		{
 			String errorString = "Request job with non-existent start waypoint " + startId + ".";
 			this.log.error(errorString);
@@ -194,7 +194,7 @@ public class JobDispatcher implements MQTTListener
 		}
 
 		// Check if end waypoint exists
-		if (!this.waypointValidator.exists(endId))
+		if (!this.waypointProvider.exists(endId))
 		{
 			String errorString = "Request job with non-existent end waypoint " + endId + ".";
 			this.log.error(errorString);
@@ -259,7 +259,7 @@ public class JobDispatcher implements MQTTListener
 			return new ResponseEntity<>("starting", HttpStatus.OK);
 		}
 
-		if (!this.waypointValidator.exists(destId))
+		if (!this.waypointProvider.exists(destId))
 		{
 			String errorString = "Tried to send vehicle to non-existent waypoint " + destId + ".";
 			this.log.error(errorString);

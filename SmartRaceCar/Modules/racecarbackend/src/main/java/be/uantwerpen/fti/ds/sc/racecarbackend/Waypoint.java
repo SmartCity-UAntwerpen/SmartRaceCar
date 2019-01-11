@@ -1,5 +1,7 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
+import be.uantwerpen.fti.ds.sc.common.WayPoint;
+
 import javax.persistence.*;
 
 @Entity

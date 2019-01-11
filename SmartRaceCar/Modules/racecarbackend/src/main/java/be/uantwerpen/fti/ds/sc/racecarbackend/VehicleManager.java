@@ -28,7 +28,7 @@ public class VehicleManager implements MQTTListener, VehicleRepository, Occupati
 	private Logger log;
 	private Configuration configuration;
 	private MessageQueueClient messageQueueClient;
-	private WaypointValidator waypointValidator;
+	private WaypointProvider waypointProvider;
 	private Queue<Long> unusedIds;                      // This set contains all IDs of vehicles that were assigned once and then deleted
 														// its a simple way to reuse IDs.
 
@@ -37,7 +37,7 @@ public class VehicleManager implements MQTTListener, VehicleRepository, Occupati
 	private Map<Long, Boolean> occupation;
 
 	@Autowired
-	public VehicleManager(@Qualifier("vehicleManager") Configuration configuration, WaypointValidator waypointValidator)
+	public VehicleManager(@Qualifier("vehicleManager") Configuration configuration, @Autowired WaypointProvider waypointProvider)
 	{
 		this.configuration = configuration;
 		this.log = LoggerFactory.getLogger(this.getClass());
@@ -56,7 +56,7 @@ public class VehicleManager implements MQTTListener, VehicleRepository, Occupati
 			this.log.error("Failed to set up MQTTUtils for VehicleManager.", me);
 		}
 
-		this.waypointValidator = waypointValidator;
+		this.waypointProvider = waypointProvider;
 
 		this.occupation = new HashMap<>();
 		this.unusedIds = new LinkedList<>();
@@ -153,7 +153,7 @@ public class VehicleManager implements MQTTListener, VehicleRepository, Occupati
 	@RequestMapping(value="/carmanager/register/{startWaypoint}", method=RequestMethod.GET, produces=MediaType.TEXT_PLAIN)
 	public @ResponseBody ResponseEntity<String> register(@PathVariable long startWaypoint)
 	{
-		if (!this.waypointValidator.exists(startWaypoint))
+		if (!this.waypointProvider.exists(startWaypoint))
 		{
 			String errorString = "Tried to register vehicle with non-existent start id. (Start Waypoint: " + startWaypoint + ")";
 			this.log.error(errorString);
