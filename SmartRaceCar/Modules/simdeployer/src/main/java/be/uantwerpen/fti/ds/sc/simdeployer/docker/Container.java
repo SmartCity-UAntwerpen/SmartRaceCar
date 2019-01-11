@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 
 public class Container implements Simulation, MQTTListener
 {
-	private static final long TIMEOUT_LEN = 30;
+	private static final long TIMEOUT_LEN = 10;
 	private static final TimeUnit TIMEOUT_UNIT = TimeUnit.SECONDS;
 
 	private static final String DOCKER_CONTAINER_NAME_REGEX = "[a-zA-Z0-9][a-zA-Z0-9_.-]+";
