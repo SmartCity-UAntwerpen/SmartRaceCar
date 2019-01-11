@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.ws.rs.ProcessingException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import java.util.Iterator;
@@ -290,10 +291,10 @@ public class JobTracker implements MQTTListener
 				backboneRESTUtil.post("/jobs/vehiclecloseby/" + jobId);
 				job.setBackboneNotified(true);
 			}
-			catch (WebApplicationException wae)
+			catch (WebApplicationException | ProcessingException e)
 			{
-				this.log.error("Failed to notify backbone of almost-completion of job.");
-				throw  wae;
+				this.log.error("Failed to notify backbone of almost-completion of job.", e);
+				throw  e;
 			}
 		}
 	}
@@ -442,9 +443,9 @@ public class JobTracker implements MQTTListener
 				{
 					this.updateProgress(jobId, vehicleId, percentage);
 				}
-				catch (WebApplicationException wae)
+				catch (WebApplicationException | ProcessingException e)
 				{
-					this.log.error("Failed to process job progress update for job " + jobId, wae);
+					this.log.error("Failed to process job progress update for job " + jobId, e);
 				}
 				catch (CheckedIndexOutOfBoundsException cioobe)
 				{
