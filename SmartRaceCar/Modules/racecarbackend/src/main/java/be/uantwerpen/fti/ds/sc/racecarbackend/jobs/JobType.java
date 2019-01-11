@@ -1,4 +1,4 @@
-package be.uantwerpen.fti.ds.sc.racecarbackend;
+package be.uantwerpen.fti.ds.sc.racecarbackend.jobs;
 
 public enum JobType
 {

@@ -1,12 +1,14 @@
-package be.uantwerpen.fti.ds.sc.racecarbackend;
+package be.uantwerpen.fti.ds.sc.racecarbackend.jobs;
 
 import be.uantwerpen.fti.ds.sc.common.*;
 import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
 import be.uantwerpen.fti.ds.sc.common.configuration.BackboneAspect;
 import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
 import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
+import be.uantwerpen.fti.ds.sc.racecarbackend.CheckedIndexOutOfBoundsException;
+import be.uantwerpen.fti.ds.sc.racecarbackend.TopicParser;
+import be.uantwerpen.fti.ds.sc.racecarbackend.VehicleManager;
 import org.eclipse.paho.client.mqttv3.MqttException;
-import org.hibernate.annotations.Check;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +24,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 

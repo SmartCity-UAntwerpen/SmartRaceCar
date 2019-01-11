@@ -1,4 +1,4 @@
-package be.uantwerpen.fti.ds.sc.racecarbackend;
+package be.uantwerpen.fti.ds.sc.racecarbackend.maps;
 
 import be.uantwerpen.fti.ds.sc.common.MQTTListener;
 import be.uantwerpen.fti.ds.sc.common.MQTTUtils;
@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -30,7 +29,7 @@ public class WaypointProvider implements MQTTListener
 
 	private MQTTUtils mqttUtils;
 
-	private WaypointRepository SQLRepository;
+	private SqlWaypointRepository SQLRepository;
 	private DebugWaypointRepository debugWaypointRepository;
 
 	private boolean isMapChange(String topic)
@@ -46,7 +45,7 @@ public class WaypointProvider implements MQTTListener
 		return mapManagerAspect.isDatabaseDebug();
 	}
 
-	public WaypointProvider(@Qualifier("waypointProvider") Configuration configuration, @Autowired WaypointRepository SQLRepository, @Autowired DebugWaypointRepository debugWaypointRepository)
+	public WaypointProvider(@Qualifier("waypointProvider") Configuration configuration, @Autowired SqlWaypointRepository SQLRepository, @Autowired DebugWaypointRepository debugWaypointRepository)
 	{
 		this.log = LoggerFactory.getLogger(WaypointProvider.class);
 		this.configuration = configuration;

@@ -2,6 +2,7 @@ package be.uantwerpen.fti.ds.sc.racecarbackend;
 
 import be.uantwerpen.fti.ds.sc.common.*;
 import be.uantwerpen.fti.ds.sc.common.configuration.*;
+import be.uantwerpen.fti.ds.sc.racecarbackend.maps.WaypointProvider;
 import com.google.gson.reflect.TypeToken;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;

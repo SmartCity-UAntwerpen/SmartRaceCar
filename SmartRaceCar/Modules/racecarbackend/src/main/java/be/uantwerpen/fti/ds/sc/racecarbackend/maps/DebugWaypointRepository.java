@@ -1,4 +1,4 @@
-package be.uantwerpen.fti.ds.sc.racecarbackend;
+package be.uantwerpen.fti.ds.sc.racecarbackend.maps;
 
 import be.uantwerpen.fti.ds.sc.common.WayPoint;
 import org.slf4j.Logger;

@@ -5,6 +5,7 @@ import be.uantwerpen.fti.ds.sc.common.MessageQueueClient;
 import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
 import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
 import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
+import be.uantwerpen.fti.ds.sc.racecarbackend.maps.WaypointProvider;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
