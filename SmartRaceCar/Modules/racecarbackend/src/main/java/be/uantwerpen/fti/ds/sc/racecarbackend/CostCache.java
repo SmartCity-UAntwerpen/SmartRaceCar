@@ -1,10 +1,7 @@
 package be.uantwerpen.fti.ds.sc.racecarbackend;
 
 import be.uantwerpen.fti.ds.sc.common.*;
-import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
-import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
-import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
-import be.uantwerpen.fti.ds.sc.common.configuration.RosAspect;
+import be.uantwerpen.fti.ds.sc.common.configuration.*;
 import com.google.gson.reflect.TypeToken;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
@@ -28,9 +25,6 @@ import java.util.Map;
 @Controller
 public class CostCache implements MQTTListener
 {
-	private static final float RANDOM_COST_MINIMUM = 0.0f;
-	private static final float RANDOM_COST_MAXIMUM = 100.0f;
-
 	private Logger log;
 	private Random random;
 	private WaypointValidator waypointValidator;
@@ -107,9 +101,10 @@ public class CostCache implements MQTTListener
 		float cost = 0;
 
 		RosAspect rosAspect = (RosAspect) this.configuration.get(AspectType.ROS);
+		CostAspect costAspect = (CostAspect) this.configuration.get(AspectType.COST);
 		if (!rosAspect.isRosDebug())
 		{
-			if ((rosAspect.isIncreasingIds()) && (endId < startId))
+			if ((costAspect.isIncreasingIds()) && (endId < startId))
 			{
 				cost = Float.MAX_VALUE;
 			}
@@ -154,7 +149,8 @@ public class CostCache implements MQTTListener
 		{
 			// Generate Random number in [0,100]
 			// See: https://stackoverflow.com/a/363692
-			cost = (this.random.nextFloat() * (RANDOM_COST_MAXIMUM - RANDOM_COST_MINIMUM)) + RANDOM_COST_MINIMUM;
+
+			cost = (this.random.nextFloat() * (costAspect.getUpperRange() - costAspect.getLowerRange())) + costAspect.getLowerRange();
 		}
 
 		this.costCache.put(link, cost);
