@@ -30,18 +30,12 @@ public class CostCache implements MQTTListener
 	private WaypointProvider waypointProvider;
 	private CoordinateRepository coordinateRepository;
 	private Configuration configuration;
+	private TopicParser topicParser;
 	private MQTTUtils mqttUtils;
 	private Map<Link, Float> costCache;
 
-	private boolean isMapChange(String topic)
-	{
-		MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-
-		return topic.startsWith(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.CHANGE_MAP);
-	}
-
 	@Autowired
-	public CostCache (@Qualifier("costCache") Configuration configuration, CoordinateRepository coordinateRepository, @Autowired WaypointProvider waypointProvider)
+	public CostCache (@Qualifier("costCache") Configuration configuration, CoordinateRepository coordinateRepository,  WaypointProvider waypointProvider, TopicParser topicParser)
 	{
 		this.log = LoggerFactory.getLogger(CostCache.class);
 		this.random = new Random(System.currentTimeMillis());
@@ -60,6 +54,7 @@ public class CostCache implements MQTTListener
 		}
 
 		this.configuration = configuration;
+		this.topicParser = topicParser;
 		this.coordinateRepository = coordinateRepository;
 		this.waypointProvider = waypointProvider;
 		this.costCache = new HashMap<>();
@@ -196,7 +191,7 @@ public class CostCache implements MQTTListener
 	@Override
 	public void parseMQTT(String topic, String message)
 	{
-		if (this.isMapChange(topic))
+		if (this.topicParser.isMapChange(topic))
 		{
 			this.log.info("Invalidating CostCache due to map name change. New map is \"" + message + "\".");
 			this.costCache.clear();

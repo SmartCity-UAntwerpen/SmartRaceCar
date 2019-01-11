@@ -6,6 +6,7 @@ import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
 import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
 import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
 import be.uantwerpen.fti.ds.sc.common.configuration.RacecarAspect;
+import org.glassfish.hk2.api.messaging.Topic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,25 +37,8 @@ class HeartbeatChecker implements MQTTListener
 	private RESTUtils restUtils;
 	private MessageQueueClient messageQueueClient;
 	private MQTTUtils mqttUtils;
+	private TopicParser topicParser;
 	private Map<Long, Date> heartbeats;
-
-	private boolean isHeartbeat(String topic)
-	{
-		MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-		return topic.startsWith(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Core.HEARTBEAT);
-	}
-
-	private boolean isRegistration(String topic)
-	{
-		MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-		return topic.startsWith(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.REGISTER);
-	}
-
-	private boolean isDeletion(String topic)
-	{
-		MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-		return topic.startsWith(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.DELETE);
-	}
 
 	private void updateHeartbeat(long vehicleId)
 	{
@@ -132,10 +116,11 @@ class HeartbeatChecker implements MQTTListener
 	 * @param configuration Configuration used to start HeartbeatChecker
 	 */
 	@Autowired
-	public HeartbeatChecker(@Qualifier("heartbeatChecker") Configuration configuration)
+	public HeartbeatChecker(@Qualifier("heartbeatChecker") Configuration configuration, @Autowired TopicParser topicParser)
 	{
 		this.log = LoggerFactory.getLogger(HeartbeatChecker.class);
 		this.configuration = configuration;
+		this.topicParser = topicParser;
 
 		this.log.debug("Initializing Heartbeat checker...");
 
@@ -175,19 +160,19 @@ class HeartbeatChecker implements MQTTListener
 	@Override
 	public void parseMQTT(String topic, String message)
 	{
-		long vehicleId = TopicUtils.getVehicleId(topic);
+		long vehicleId = this.topicParser.getVehicleId(topic);
 
-		if (this.isHeartbeat(topic))
+		if (this.topicParser.isHeartbeat(topic))
 		{
 			this.log.info("Received Heartbeat from " + vehicleId);
 			this.updateHeartbeat(vehicleId);
 		}
-		else if (this.isRegistration(topic))
+		else if (this.topicParser.isRegistration(topic))
 		{
 			this.log.info("Registered vehicle " + vehicleId + " with HeartbeatChecker.");
 			this.addVehicle(vehicleId);
 		}
-		else if (this.isDeletion(topic))
+		else if (this.topicParser.isDeletion(topic))
 		{
 			this.log.info("Removing vehicle " + vehicleId + " from HeartbeatChecker.");
 			this.removeVehicle(vehicleId);

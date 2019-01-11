@@ -20,18 +20,12 @@ public class NavigationManager implements MQTTListener, LocationRepository
 {
 	private Logger log;
 	private Configuration configuration;
+	private TopicParser topicParser;
 	private MQTTUtils mqttUtils;
 	private MessageQueueClient messageQueueClient;
 	private java.util.Map<Long, Long> vehicleLocations;
 	// This map keeps track of the location of every vehicle
 	// The key is the vehicleId, the value is the locationId
-
-	private boolean isDeletion(String topic)
-	{
-		MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-		// Remove the trailing '#' and check the topic
-		return topic.startsWith(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.DELETE);
-	}
 
 	private void removeVehicle(long vehicleId) throws IndexOutOfBoundsException
 	{
@@ -49,10 +43,11 @@ public class NavigationManager implements MQTTListener, LocationRepository
 		}
 	}
 
-	public NavigationManager(@Qualifier("navigationManager") Configuration configuration)
+	public NavigationManager(@Qualifier("navigationManager") Configuration configuration, TopicParser topicParser)
 	{
 		this.log = LoggerFactory.getLogger(NavigationManager.class);
 		this.configuration = configuration;
+		this.topicParser = topicParser;
 
 		this.log.info("Initializing Navigation Manager...");
 
@@ -115,9 +110,9 @@ public class NavigationManager implements MQTTListener, LocationRepository
 	@Override
 	public void parseMQTT(String topic, String message)
 	{
-		long vehicleId = TopicUtils.getVehicleId(topic);
+		long vehicleId = this.topicParser.getVehicleId(topic);
 
-		if (this.isDeletion(topic))
+		if (this.topicParser.isDeletion(topic))
 		{
 			try
 			{
@@ -128,11 +123,19 @@ public class NavigationManager implements MQTTListener, LocationRepository
 				this.log.error("Tried to remove non-existent vehicle " + vehicleId, ioobe);
 			}
 		}
-		else
+		// If the message isn't a deletion its a registration or a location update.
+		// Parsing is the same either way.
+		else if (this.topicParser.isRegistration(topic))
 		{
-			// If the message isn't a deletion its a registration or a location update.
-			// Parsing is the same either way.
+			// The content of the location update and register messages is the same (The vehicle's location)
+			// So we don't need any special parsing
+			long locationId = Long.parseLong(message);
 
+			this.vehicleLocations.put(vehicleId, locationId);
+			this.log.info("Received location update from vehicle " + vehicleId + ", new location is " + locationId);
+		}
+		else if (this.topicParser.isLocationUpdate(topic))
+		{
 			// The content of the location update and register messages is the same (The vehicle's location)
 			// So we don't need any special parsing
 			long locationId = Long.parseLong(message);

@@ -98,6 +98,16 @@ public class ConfigurationService
     }
 
     @Bean
+    @Qualifier("topicParser")
+    Configuration topicParserConfiguration()
+    {
+        Configuration configuration = new Configuration();
+        configuration.add(AspectType.MQTT);
+
+        return configuration.load(DEFAULT_PROPERTIES_FILE);
+    }
+
+    @Bean
     @Qualifier("vehicleManager")
     Configuration vehicleManagerConfiguration()
     {
