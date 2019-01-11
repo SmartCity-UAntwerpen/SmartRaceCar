@@ -2,6 +2,7 @@ package be.uantwerpen.fti.ds.sc.racecarbackend;
 
 import be.uantwerpen.fti.ds.sc.common.*;
 import be.uantwerpen.fti.ds.sc.common.configuration.*;
+import be.uantwerpen.fti.ds.sc.racecarbackend.maps.WaypointProvider;
 import com.google.gson.reflect.TypeToken;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
@@ -28,14 +29,13 @@ public class CostCache implements MQTTListener
 	private Logger log;
 	private Random random;
 	private WaypointProvider waypointProvider;
-	private CoordinateRepository coordinateRepository;
 	private Configuration configuration;
 	private TopicParser topicParser;
 	private MQTTUtils mqttUtils;
 	private Map<Link, Float> costCache;
 
 	@Autowired
-	public CostCache (@Qualifier("costCache") Configuration configuration, CoordinateRepository coordinateRepository,  WaypointProvider waypointProvider, TopicParser topicParser)
+	public CostCache (@Qualifier("costCache") Configuration configuration, WaypointProvider waypointProvider, TopicParser topicParser)
 	{
 		this.log = LoggerFactory.getLogger(CostCache.class);
 		this.random = new Random(System.currentTimeMillis());
@@ -55,7 +55,6 @@ public class CostCache implements MQTTListener
 
 		this.configuration = configuration;
 		this.topicParser = topicParser;
-		this.coordinateRepository = coordinateRepository;
 		this.waypointProvider = waypointProvider;
 		this.costCache = new HashMap<>();
 
@@ -105,8 +104,8 @@ public class CostCache implements MQTTListener
 			}
 			else
 			{
-				Point startPointTmp = this.coordinateRepository.getCoordinates(startId);
-				Point endPointTmp = this.coordinateRepository.getCoordinates(endId);
+				Point startPointTmp = this.waypointProvider.get(startId);
+				Point endPointTmp = this.waypointProvider.get(endId);
 
 				Point startPoint = new Point(startPointTmp.getX(), startPointTmp.getY(), startPointTmp.getZ(), startPointTmp.getW());
 				Point endPoint = new Point(endPointTmp.getX(), endPointTmp.getY(), endPointTmp.getZ(), endPointTmp.getW());

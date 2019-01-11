@@ -1,10 +1,11 @@
-package be.uantwerpen.fti.ds.sc.racecarbackend;
+package be.uantwerpen.fti.ds.sc.racecarbackend.maps;
 
 import be.uantwerpen.fti.ds.sc.common.*;
 import be.uantwerpen.fti.ds.sc.common.configuration.AspectType;
 import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
 import be.uantwerpen.fti.ds.sc.common.configuration.MapManagerAspect;
 import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
+import be.uantwerpen.fti.ds.sc.racecarbackend.maps.WaypointProvider;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +29,7 @@ import java.io.IOException;
 import java.util.Map;
 
 @Controller
-public class MapManager implements MQTTListener, CoordinateRepository
+public class MapManager implements MQTTListener
 {
 	private Logger log;
 	private Configuration configuration;
@@ -186,20 +187,6 @@ public class MapManager implements MQTTListener, CoordinateRepository
 			this.log.warn(errorString);
 			return new ResponseEntity<>(errorString, HttpStatus.BAD_REQUEST);
 		}
-	}
-
-	@Override
-	public Point getCoordinates(long waypointId)
-	{
-		MapManagerAspect mapManagerAspect = (MapManagerAspect) this.configuration.get(AspectType.MAP_MANAGER);
-
-		this.log.info("Fetching coordinates for waypoint " + waypointId + ".");
-
-		if(this.waypointProvider.exists(waypointId))
-		{
-			return this.waypointProvider.get(waypointId);
-		}
-		return new Point(0, 0, 0, 0);
 	}
 
 	@Override

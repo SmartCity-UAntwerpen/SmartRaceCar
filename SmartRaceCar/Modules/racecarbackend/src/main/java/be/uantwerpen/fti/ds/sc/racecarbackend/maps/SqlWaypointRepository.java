@@ -1,8 +1,8 @@
-package be.uantwerpen.fti.ds.sc.racecarbackend;
+package be.uantwerpen.fti.ds.sc.racecarbackend.maps;
 
 import org.springframework.data.repository.CrudRepository;
 
-public interface WaypointRepository extends CrudRepository<Waypoint, Long>
+public interface SqlWaypointRepository extends CrudRepository<Waypoint, Long>
 {
 	public Waypoint findByIdAndMapName(long id, String mapName);
 
