@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 @Controller
 public class JobTracker implements MQTTListener
@@ -39,10 +41,10 @@ public class JobTracker implements MQTTListener
     private JobQueue jobQueue;
     private MQTTUtils mqttUtils;
     private MessageQueueClient messageQueueClient;
-    private Map<Long, Job> localJobs;       // Map containing local jobs mapped to their IDs
-                                            // Local jobs are jobs not present in the backbone,
-                                            // they are tracked locally to send vehicles to the startpoint of jobs etc.
-    private Map<Long, Job> globalJobs;      // Map containing jobs mapped to their job ID's
+    private ConcurrentMap<Long, Job> localJobs;         // Map containing local jobs mapped to their IDs
+                                                        // Local jobs are jobs not present in the backbone,
+                                                        // they are tracked locally to send vehicles to the startpoint of jobs etc.
+    private ConcurrentMap<Long, Job> globalJobs;        // Map containing jobs mapped to their job ID's
 
     private boolean isProgressUpdate(String topic)
     {
@@ -316,8 +318,8 @@ public class JobTracker implements MQTTListener
 	        this.log.error("Failed to subscribe to deletion topic for JobTracker.", e);
         }
 
-        this.globalJobs = new HashMap<>();
-        this.localJobs = new HashMap<>();
+        this.globalJobs = new ConcurrentHashMap<>();
+        this.localJobs = new ConcurrentHashMap<>();
 
         this.log.info("Initialized JobTracker.");
     }

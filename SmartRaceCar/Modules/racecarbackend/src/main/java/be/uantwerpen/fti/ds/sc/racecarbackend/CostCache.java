@@ -22,15 +22,17 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.Map;
 
 @Controller
 public class CostCache implements MQTTListener
 {
+	private static final float RANDOM_COST_MINIMUM = 0.0f;
+	private static final float RANDOM_COST_MAXIMUM = 100.0f;
+
 	private Logger log;
+	private Random random;
 	private WaypointValidator waypointValidator;
 	private CoordinateRepository coordinateRepository;
 	private Configuration configuration;
@@ -48,6 +50,7 @@ public class CostCache implements MQTTListener
 	public CostCache (@Qualifier("costCache") Configuration configuration, CoordinateRepository coordinateRepository, WaypointValidator waypointValidator)
 	{
 		this.log = LoggerFactory.getLogger(CostCache.class);
+		this.random = new Random(System.currentTimeMillis());
 
 		this.log.info("Initializing CostCache...");
 
@@ -106,46 +109,52 @@ public class CostCache implements MQTTListener
 		RosAspect rosAspect = (RosAspect) this.configuration.get(AspectType.ROS);
 		if (!rosAspect.isRosDebug())
 		{
-			Point startPointTmp = this.coordinateRepository.getCoordinates(startId);
-			Point endPointTmp = this.coordinateRepository.getCoordinates(endId);
-
-			Point startPoint = new Point(startPointTmp.getX(), startPointTmp.getY(), startPointTmp.getZ(), startPointTmp.getW());
-			Point endPoint = new Point(endPointTmp.getX(), endPointTmp.getY(), endPointTmp.getZ(), endPointTmp.getW());
-
-			List<Point> points = new ArrayList<>();
-			points.add(startPoint);	// We need to add a Dummy point to the request, otherwise, the cost calculation server will return an error.
-			points.add(startPoint);
-			points.add(endPoint);
-
-			String jsonString = JSONUtils.arrayToJSONString(points);
-			String costString = "";
-
-			try
+			if ((rosAspect.isIncreasingIds()) && (endId < startId))
 			{
-				RESTUtils ROSAPI = new RESTUtils(rosAspect.getRosServerUrl());
-				Type costType = new TypeToken<Cost>(){}.getType();
-
-				costString = ROSAPI.post(RESTMessages.RosServer.CALC_WEIGHT, jsonString, MediaType.APPLICATION_JSON_TYPE);
-				Cost costObj = (Cost) JSONUtils.getObjectWithKeyWord(costString, costType);
-
-				cost = costObj.getWeight();
+				cost = Float.MAX_VALUE;
 			}
-			catch (IOException ioe)
+			else
 			{
-				this.log.error("An exception was thrown while trying to calculate the cost for " + startId + " -> " + endId, ioe);
-				throw ioe;
-			}
-			catch (NullPointerException npe)
-			{
-				this.log.error("Failed to extract Cost object from cost JSON (\"" + costString + "\")");
+				Point startPointTmp = this.coordinateRepository.getCoordinates(startId);
+				Point endPointTmp = this.coordinateRepository.getCoordinates(endId);
+
+				Point startPoint = new Point(startPointTmp.getX(), startPointTmp.getY(), startPointTmp.getZ(), startPointTmp.getW());
+				Point endPoint = new Point(endPointTmp.getX(), endPointTmp.getY(), endPointTmp.getZ(), endPointTmp.getW());
+
+				List<Point> points = new ArrayList<>();
+				points.add(startPoint);    // We need to add a Dummy point to the request, otherwise, the cost calculation server will return an error.
+				points.add(startPoint);
+				points.add(endPoint);
+
+				String jsonString = JSONUtils.arrayToJSONString(points);
+				String costString = "";
+
+				try
+				{
+					RESTUtils ROSAPI = new RESTUtils(rosAspect.getRosServerUrl());
+					Type costType = new TypeToken<Cost>(){}.getType();
+
+					costString = ROSAPI.post(RESTMessages.RosServer.CALC_WEIGHT, jsonString, MediaType.APPLICATION_JSON_TYPE);
+					Cost costObj = (Cost) JSONUtils.getObjectWithKeyWord(costString, costType);
+
+					cost = costObj.getWeight();
+				}
+				catch (IOException ioe)
+				{
+					this.log.error("An exception was thrown while trying to calculate the cost for " + startId + " -> " + endId, ioe);
+					throw ioe;
+				}
+				catch (NullPointerException npe)
+				{
+					this.log.error("Failed to extract Cost object from cost JSON (\"" + costString + "\")");
+				}
 			}
 		}
 		else
 		{
 			// Generate Random number in [0,100]
 			// See: https://stackoverflow.com/a/363692
-			//cost = ThreadLocalRandom.current().nextInt(0, 101);
-			cost = 5;   // Temporary, for easy testing
+			cost = (this.random.nextFloat() * (RANDOM_COST_MAXIMUM - RANDOM_COST_MINIMUM)) + RANDOM_COST_MINIMUM;
 		}
 
 		this.costCache.put(link, cost);

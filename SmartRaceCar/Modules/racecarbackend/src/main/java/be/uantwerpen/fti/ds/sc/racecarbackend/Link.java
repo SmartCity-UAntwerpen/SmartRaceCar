@@ -14,7 +14,7 @@ public class Link
 	}
 
 	/**
-	 * We need to override comparison because the order of the ID's doesn't matter, as long as the values are the same, we're talking about the same link.
+	 * We need to override comparison to use this as a key.
 	 * @param other
 	 * @return
 	 */
@@ -30,12 +30,6 @@ public class Link
 
 		// Case where same IDs in the same fields
 		if ((this.id1 == otherLink.id1) && (this.id2 == otherLink.id2))
-		{
-			return true;
-		}
-
-		// Case where same IDs in opposite fields
-		if ((this.id1 == otherLink.id2) && (this.id2 == otherLink.id1))
 		{
 			return true;
 		}
