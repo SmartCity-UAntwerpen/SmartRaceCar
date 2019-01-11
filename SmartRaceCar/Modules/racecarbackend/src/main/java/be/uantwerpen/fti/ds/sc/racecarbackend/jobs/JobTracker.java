@@ -390,17 +390,17 @@ public class JobTracker implements MQTTListener
 	@RequestMapping(value="/job/getprogress/{jobId}", method=RequestMethod.GET, produces=MediaType.APPLICATION_JSON)
 	public @ResponseBody ResponseEntity<String> getProgress(@PathVariable long jobId)
 	{
+		if (this.jobQueue.isEnqueued(jobId, JobType.GLOBAL))
+		{
+			String jsonString = JSONUtils.objectToJSONStringWithKeyWord("progress", 0);
+			return new ResponseEntity<>(jsonString, HttpStatus.OK);
+		}
+
 		if (!this.globalJobs.containsKey(jobId))
 		{
 			String errorString = "Tried to query progress of job " + jobId + ", but job doesn't exist.";
 			this.log.error(errorString);
 			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
-		}
-
-		if (this.jobQueue.isEnqueued(jobId, JobType.GLOBAL))
-		{
-			String jsonString = JSONUtils.objectToJSONStringWithKeyWord("progress", 0);
-			return new ResponseEntity<>(jsonString, HttpStatus.OK);
 		}
 
 		String jsonString = JSONUtils.objectToJSONStringWithKeyWord("progress", this.globalJobs.get(jobId).getProgress());
