@@ -6,6 +6,7 @@ import be.uantwerpen.fti.ds.sc.common.configuration.BackboneAspect;
 import be.uantwerpen.fti.ds.sc.common.configuration.Configuration;
 import be.uantwerpen.fti.ds.sc.common.configuration.MqttAspect;
 import org.eclipse.paho.client.mqttv3.MqttException;
+import org.hibernate.annotations.Check;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,9 +21,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -64,7 +63,7 @@ public class JobTracker implements MQTTListener
 	    return topic.startsWith(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.DELETE);
     }
 
-    private Job getJob(long jobId, JobType type) throws IndexOutOfBoundsException
+    private Job getJob(long jobId, JobType type) throws CheckedIndexOutOfBoundsException
     {
         switch (type)
         {
@@ -75,7 +74,7 @@ public class JobTracker implements MQTTListener
                 return this.globalJobs.get(jobId);
         }
 
-        throw new IndexOutOfBoundsException(type.toString() + " job with ID " + jobId + " doesn't exist.");
+        throw new CheckedIndexOutOfBoundsException(type.toString() + " job with ID " + jobId + " doesn't exist.");
     }
 
     private void vehicleDeleted(long vehicleId)
@@ -115,33 +114,54 @@ public class JobTracker implements MQTTListener
 
     private void requeue(long jobId, JobType type)
     {
-        Job job = this.getJob(jobId, type);
-        job.setVehicleId(-1L);  // Reset vehicle Id so the JobDispatcher chooses a new vehicle.
+        try
+        {
+            Job job = this.getJob(jobId, type);
+            job.setVehicleId(-1L);  // Reset vehicle Id so the JobDispatcher chooses a new vehicle.
 
-        this.log.warn("Requeueing " + type.toString() + " job " + jobId);
-        this.jobQueue.enqueue(job, type);
+            this.log.warn("Requeueing " + type.toString() + " job " + jobId);
+            this.jobQueue.enqueue(job, type);
+        }
+        catch (CheckedIndexOutOfBoundsException cioobe)
+        {
+            this.log.error("Failed to requeue job " + jobId + ", because the job doesn't exist.", cioobe);
+        }
     }
 
     private void routeUpdateError(long jobId, long vehicleId)
     {
-        JobType jobType = this.findJobType(jobId, vehicleId);
+        try
+        {
+            JobType jobType = this.findJobType(jobId, vehicleId);
 
-        this.log.warn("Requeueing " + jobType.toString() + " job " + jobId);
-        this.requeue(jobId, jobType);
-        this.removeJob(jobId, vehicleId);
-        this.vehicleManager.setOccupied(vehicleId, false);
+            this.log.warn("Requeueing " + jobType.toString() + " job " + jobId);
+            this.requeue(jobId, jobType);
+            this.removeJob(jobId, vehicleId);
+            this.vehicleManager.setOccupied(vehicleId, false);
+        }
+        catch (CheckedIndexOutOfBoundsException cioobe)
+        {
+            this.log.error("An exception occurred while trying to process an error route update.", cioobe);
+        }
     }
 
     private void routeUpdateNotComplete(long jobId, long vehicleId)
     {
-        JobType jobType = this.findJobType(jobId, vehicleId);
+        try
+        {
+            JobType jobType = this.findJobType(jobId, vehicleId);
 
-        this.log.warn("Requeueing " + jobType.toString() + " job " + jobId);
-        this.requeue(jobId, jobType);
-        this.removeJob(jobId, vehicleId);
+            this.log.warn("Requeueing " + jobType.toString() + " job " + jobId);
+            this.requeue(jobId, jobType);
+            this.removeJob(jobId, vehicleId);
+        }
+        catch (CheckedIndexOutOfBoundsException cioobe)
+        {
+            this.log.error("An exception occurred while trying to process a notcomplete route update.", cioobe);
+        }
     }
 
-    private JobType findJobType(long jobId, long vehicleId) throws NoSuchElementException
+    private JobType findJobType(long jobId, long vehicleId) throws CheckedIndexOutOfBoundsException
     {
         if (this.localJobs.containsKey(jobId))
         {
@@ -158,10 +178,10 @@ public class JobTracker implements MQTTListener
             }
         }
 
-        throw new NoSuchElementException("Tried to find type for job " + jobId + " (Vehicle: " + vehicleId + "), but no job matched the IDs.");
+        throw new CheckedIndexOutOfBoundsException("Tried to find type for job " + jobId + " (Vehicle: " + vehicleId + "), but no job matched the IDs.");
     }
 
-    private void removeJob(long jobId, long vehicleId)
+    private void removeJob(long jobId, long vehicleId) throws CheckedIndexOutOfBoundsException
     {
         switch (this.findJobType(jobId, vehicleId))
         {
@@ -181,40 +201,53 @@ public class JobTracker implements MQTTListener
         this.vehicleManager.setOccupied(vehicleId, false);
 
         BackboneAspect backboneAspect = (BackboneAspect) this.configuration.get(AspectType.BACKBONE);
-        // We should only inform the backend if the job was a global job.
-        if ((!backboneAspect.isBackboneDebug()) && (this.findJobType(jobId, vehicleId) == JobType.GLOBAL))
+
+        try
         {
-            Job job = this.getJob(jobId, JobType.GLOBAL);
+	        // We should only inform the backend if the job was a global job.
+	        if ((!backboneAspect.isBackboneDebug()) && (this.findJobType(jobId, vehicleId) == JobType.GLOBAL))
+	        {
+		        Job job = this.getJob(jobId, JobType.GLOBAL);
 
-            RESTUtils backboneRESTUtil = new RESTUtils(backboneAspect.getBackboneServerUrl());
+		        RESTUtils backboneRESTUtil = new RESTUtils(backboneAspect.getBackboneServerUrl());
 
-            try
-            {
-                if (!job.isBackboneNotified())
-                {
-                    this.log.info("Sending last minute \"close-by\" message to backbone.");
-                    backboneRESTUtil.post("/jobs/vehiclecloseby/" + jobId);
-                }
-            }
-            catch (WebApplicationException wae)
-            {
-                this.log.error("Failed to notify backbone with  \"close-by\" message.");
-            }
+		        try
+		        {
+			        if (!job.isBackboneNotified())
+			        {
+				        this.log.info("Sending last minute \"close-by\" message to backbone.");
+				        backboneRESTUtil.post("/jobs/vehiclecloseby/" + jobId);
+			        }
+		        } catch (WebApplicationException wae)
+		        {
+			        this.log.error("Failed to notify backbone with  \"close-by\" message.");
+		        }
 
-	        this.log.debug("Informing Backbone about job completion.");
+		        this.log.debug("Informing Backbone about job completion.");
 
-            try
-            {
-                backboneRESTUtil.post("/jobs/complete/" + jobId);
-            }
-            catch (WebApplicationException wae)
-            {
-                this.log.error("Failed to POST completion of job to backbone.", wae);
-                throw wae;
-            }
+		        try
+		        {
+			        backboneRESTUtil.post("/jobs/complete/" + jobId);
+		        } catch (WebApplicationException wae)
+		        {
+			        this.log.error("Failed to POST completion of job to backbone.", wae);
+			        throw wae;
+		        }
+	        }
+        }
+        catch (CheckedIndexOutOfBoundsException cioobe)
+        {
+        	this.log.error("Couldn't find job " + jobId + ", Failed to complete job.");
         }
 
-        this.removeJob(jobId, vehicleId);
+        try
+        {
+	        this.removeJob(jobId, vehicleId);
+        }
+        catch (CheckedIndexOutOfBoundsException cioobe)
+        {
+        	this.log.error("Failed to remove completed job.");
+        }
     }
 
     private void updateRoute(long jobId, long vehicleId, String mqttMessage) throws WebApplicationException
@@ -238,7 +271,7 @@ public class JobTracker implements MQTTListener
         }
     }
 
-    private void updateProgress(long jobId, long vehicleId, int progress) throws WebApplicationException
+    private void updateProgress(long jobId, long vehicleId, int progress) throws WebApplicationException, CheckedIndexOutOfBoundsException
     {
         JobType type = this.findJobType(jobId, vehicleId);
         Job job = null;
@@ -429,6 +462,10 @@ public class JobTracker implements MQTTListener
                 {
                     this.log.error("Failed to process job progress update for job " + jobId, wae);
                 }
+                catch (CheckedIndexOutOfBoundsException cioobe)
+                {
+                	this.log.error("An exception was thrown while trying to update a jobs progress.", cioobe);
+                }
             }
             else if (this.isRouteUpdate(topic))
             {
@@ -437,7 +474,8 @@ public class JobTracker implements MQTTListener
                 try
                 {
                     this.updateRoute(jobId, vehicleId, message);
-                } catch (WebApplicationException wae)
+                }
+                catch (WebApplicationException wae)
                 {
                     this.log.error("Failed to process route update for job " + jobId, wae);
                 }
