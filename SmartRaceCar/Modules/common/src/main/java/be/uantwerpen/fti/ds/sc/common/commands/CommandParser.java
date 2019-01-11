@@ -105,7 +105,20 @@ public class CommandParser
 			{
 				Range simulationIds = Range.parseRange(split[1]);
 				SetParameter setParameter = this.findSetParameter(split[2]);
-				return new SetCommand(simulationIds, setParameter, split[3]);
+
+				StringBuilder valueBuilder = new StringBuilder();
+
+				for (int i = 3; i < split.length; ++i)
+				{
+					valueBuilder.append(split[i]);
+
+					if ((i + 1) != split.length)
+					{
+						valueBuilder.append(' ');
+					}
+				}
+
+				return new SetCommand(simulationIds, setParameter, valueBuilder.toString());
 			}
 			case PING:
 			{
