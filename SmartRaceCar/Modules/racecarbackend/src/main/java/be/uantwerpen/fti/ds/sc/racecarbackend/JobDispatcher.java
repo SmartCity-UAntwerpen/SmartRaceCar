@@ -33,19 +33,8 @@ public class JobDispatcher implements MQTTListener
 	private LocationRepository locationRepository;
 	private ResourceManager resourceManager;
 	private MQTTUtils mqttUtils;
+	private TopicParser topicParser;
 	private MessageQueueClient messageQueueClient;
-
-	private boolean isRouteUpdate(String topic)
-	{
-		MqttAspect mqttAspect = (MqttAspect) this.config.get(AspectType.MQTT);
-		return topic.startsWith(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Core.ROUTE);
-	}
-
-	private boolean isRegistrationComplete(String topic)
-	{
-		MqttAspect mqttAspect = (MqttAspect) this.config.get(AspectType.MQTT);
-		return topic.startsWith(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.REGISTRATION_DONE);
-	}
 
 	private void checkJobQueue() throws IOException
 	{
@@ -99,10 +88,11 @@ public class JobDispatcher implements MQTTListener
 	}
 
 	@Autowired
-	public JobDispatcher(@Qualifier("jobDispatcher") Configuration configuration, JobTracker jobTracker, JobQueue jobQueue, @Autowired WaypointProvider waypointProvider, OccupationRepository occupationRepository, LocationRepository locationRepository, ResourceManager resourceManager)
+	public JobDispatcher(@Qualifier("jobDispatcher") Configuration configuration, JobTracker jobTracker, JobQueue jobQueue, WaypointProvider waypointProvider, OccupationRepository occupationRepository, LocationRepository locationRepository, ResourceManager resourceManager, TopicParser topicParser)
 	{
 		this.log = LoggerFactory.getLogger(this.getClass());
 		this.config = configuration;
+		this.topicParser = topicParser;
 		this.jobQueue = jobQueue;
 		this.jobTracker = jobTracker;
 		this.waypointProvider = waypointProvider;
@@ -290,13 +280,12 @@ public class JobDispatcher implements MQTTListener
 	@Override
 	public void parseMQTT(String topic, String message)
 	{
-		if (this.isRouteUpdate(topic))
+		long vehicleId = this.topicParser.getVehicleId(topic);
+
+		if (this.topicParser.isRouteUpdate(topic))
 		{
 			if (message.equals(MqttMessages.Messages.Core.DONE))
 			{
-				String[] topicParts = topic.split("/");
-				long vehicleId = Long.parseLong(topicParts[topicParts.length - 2]);
-
 				this.log.info("Vehicle " + vehicleId + " completed its job. Checking for other queued jobs.");
 
 				this.occupationRepository.setOccupied(vehicleId, false);
@@ -312,10 +301,8 @@ public class JobDispatcher implements MQTTListener
 				}
 			}
 		}
-		else if (this.isRegistrationComplete(topic))
+		else if (this.topicParser.isRegistrationComplete(topic))
 		{
-			long vehicleId = TopicUtils.getVehicleId(topic);
-
 			try
 			{
 				Thread.sleep(500);

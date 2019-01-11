@@ -21,15 +21,17 @@ import java.util.NoSuchElementException;
 public class JobQueue implements MQTTListener
 {
 	private Logger log;
+	private TopicParser topicParser;
 	private MessageQueueClient messageQueueClient;
 	private List<Job> localJobs;
 	private List<Job> globalJobs;
 
-	public JobQueue(@Qualifier("jobQueue") Configuration configuration)
+	public JobQueue(@Qualifier("jobQueue") Configuration configuration, TopicParser topicParser)
 	{
+		this.log = LoggerFactory.getLogger(JobQueue.class);
+		this.topicParser = topicParser;
 		this.localJobs = new LinkedList<>();
 		this.globalJobs = new LinkedList<>();
-		this.log = LoggerFactory.getLogger(JobQueue.class);
 
 		this.log.info("Initializing JobQueue...");
 
@@ -161,25 +163,30 @@ public class JobQueue implements MQTTListener
 	@Override
 	public void parseMQTT(String topic, String message)
 	{
-		// If a vehicle was deleted, we need to re-assign all jobs with that vehicle
-		// We assign -1, this will cause the JobDispatcher to find a new vehicle for this job.
-		long vehicleId = TopicUtils.getVehicleId(topic);
+		long vehicleId = this.topicParser.getVehicleId(topic);
 
-		// Check Local jobs
-		for (Job job: this.localJobs)
+		if (this.topicParser.isDeletion(topic))
 		{
-			if (job.getVehicleId() == vehicleId)
+			// If a vehicle was deleted, we need to re-assign all jobs with that vehicle
+			// We assign -1, this will cause the JobDispatcher to find a new vehicle for this job.
+
+
+			// Check Local jobs
+			for (Job job : this.localJobs)
 			{
-				job.setVehicleId(-1L);
+				if (job.getVehicleId() == vehicleId)
+				{
+					job.setVehicleId(-1L);
+				}
 			}
-		}
 
-		// Check global jobs
-		for (Job job: this.globalJobs)
-		{
-			if (job.getVehicleId() == vehicleId)
+			// Check global jobs
+			for (Job job : this.globalJobs)
 			{
-				job.setVehicleId(-1L);
+				if (job.getVehicleId() == vehicleId)
+				{
+					job.setVehicleId(-1L);
+				}
 			}
 		}
 	}

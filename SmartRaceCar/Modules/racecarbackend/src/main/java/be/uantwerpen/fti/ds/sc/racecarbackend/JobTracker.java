@@ -36,6 +36,7 @@ public class JobTracker implements MQTTListener
 
 	private Logger log;
 	private Configuration configuration;
+	private TopicParser topicParser;
 	private VehicleManager vehicleManager;
 	private JobQueue jobQueue;
 	private MQTTUtils mqttUtils;
@@ -44,24 +45,6 @@ public class JobTracker implements MQTTListener
 	// Local jobs are jobs not present in the backbone,
 	// they are tracked locally to send vehicles to the startpoint of jobs etc.
 	private ConcurrentMap<Long, Job> globalJobs;        // Map containing jobs mapped to their job ID's
-
-	private boolean isProgressUpdate(String topic)
-	{
-		MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-		return topic.startsWith(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Core.PERCENTAGE);
-	}
-
-	private boolean isRouteUpdate(String topic)
-	{
-		MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-		return topic.startsWith(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Core.ROUTE);
-	}
-
-	private boolean isDeletion(String topic)
-	{
-		MqttAspect mqttAspect = (MqttAspect) this.configuration.get(AspectType.MQTT);
-		return topic.startsWith(mqttAspect.getTopic() + "/" + MqttMessages.Topics.Backend.DELETE);
-	}
 
 	private Job getJob(long jobId, JobType type) throws CheckedIndexOutOfBoundsException
 	{
@@ -315,10 +298,11 @@ public class JobTracker implements MQTTListener
 	}
 
 	@Autowired
-	public JobTracker(@Qualifier("jobTracker") Configuration configuration, VehicleManager vehicleManager, JobQueue jobQueue)
+	public JobTracker(@Qualifier("jobTracker") Configuration configuration, TopicParser topicParser, VehicleManager vehicleManager, JobQueue jobQueue)
 	{
 		this.log = LoggerFactory.getLogger(JobTracker.class);
 		this.configuration = configuration;
+		this.topicParser = topicParser;
 		this.vehicleManager = vehicleManager;
 		this.jobQueue = jobQueue;
 
@@ -434,11 +418,11 @@ public class JobTracker implements MQTTListener
 	@Override
 	public void parseMQTT(String topic, String message)
 	{
-		// If a vehicle gets deleted, requeue all jobs associated with that vehicle
-		if (this.isDeletion(topic))
-		{
-			long vehicleId = TopicUtils.getVehicleId(topic);
+		long vehicleId = this.topicParser.getVehicleId(topic);
 
+		// If a vehicle gets deleted, requeue all jobs associated with that vehicle
+		if (this.topicParser.isDeletion(topic))
+		{
 			this.log.warn("Vehicle " + vehicleId + " got deleted, re-queuing all associated jobs");
 
 			this.vehicleDeleted(vehicleId);
@@ -446,10 +430,9 @@ public class JobTracker implements MQTTListener
 		else
 		{
 			String[] topicParts = topic.split("/");
-			long vehicleId = Long.parseLong(topicParts[topicParts.length - 2]);
 			long jobId = Long.parseLong(topicParts[topicParts.length - 1]);
 
-			if (this.isProgressUpdate(topic))
+			if (this.topicParser.isProgressUpdate(topic))
 			{
 				int percentage = Integer.parseInt(message);
 				this.log.info("Received Percentage update for vehicle " + vehicleId + ", Job: " + jobId + ", Status: " + percentage + "%.");
@@ -467,7 +450,7 @@ public class JobTracker implements MQTTListener
 					this.log.error("An exception was thrown while trying to update a jobs progress.", cioobe);
 				}
 			}
-			else if (this.isRouteUpdate(topic))
+			else if (this.topicParser.isRouteUpdate(topic))
 			{
 				this.log.info("Received Route Update for vehicle " + vehicleId + "");
 
