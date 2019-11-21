@@ -129,10 +129,25 @@
             <version>8.0.13</version>
         </dependency>
 
+<!--        <dependency>-->
+<!--            <groupId>be.uantwerpen.fti.ds.sc</groupId>-->
+<!--            <artifactId>common</artifactId>-->
+<!--            <version>1.0</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>be.uantwerpen.fti.ds.sc</groupId>
             <artifactId>common</artifactId>
             <version>1.0</version>
         </dependency>
     </dependencies>
+<!--    <repositories>-->
+<!--        <repository>-->
+<!--            <id>SmartCityCommon-mvn-repo</id>-->
+<!--            <url>https://raw.github.com/SmartCity-UAntwerpen/SmartCityCommon/mvn-repo/</url>-->
+<!--            <snapshots>-->
+<!--                <enabled>true</enabled>-->
+<!--                <updatePolicy>always</updatePolicy>-->
+<!--            </snapshots>-->
+<!--        </repository>-->
+<!--    </repositories>-->
 </project>
