@@ -207,8 +207,6 @@ public class JobDispatcher implements MQTTListener
 		{
 			Job existingJob = this.jobTracker.getJob(jobId,this.jobTracker.findJobType(jobId));
 			if (existingJob.getPreparation() ){
-			String debugString = "A job with ID " + jobId + " already exists as an alert";
-			this.log.debug(debugString);
 			// Check if end waypoint exists
 			if (!this.waypointProvider.exists(endId)) {
 				String errorString = "Request job with non-existent end waypoint " + endId + ".";
