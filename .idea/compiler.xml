@@ -6,12 +6,12 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="simkernel" />
         <module name="common" />
+        <module name="simdeployerinterface" />
         <module name="core" />
         <module name="racecarBackend" />
         <module name="simdeployer" />
-        <module name="simdeployerinterface" />
-        <module name="simkernel" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
@@ -23,6 +23,7 @@
       <module name="simdeployer" target="1.8" />
       <module name="simdeployerinterface" target="1.8" />
       <module name="simkernel" target="1.8" />
+      <module name="smartRacecar" target="1.5" />
     </bytecodeTargetLevel>
   </component>
 </project>

@@ -48,7 +48,7 @@ public class JobTracker implements MQTTListener
 	// they are tracked locally to send vehicles to the startpoint of jobs etc.
 	private ConcurrentMap<Long, Job> globalJobs;        // Map containing jobs mapped to their job ID's
 
-	private Job getJob(long jobId, JobType type) throws CheckedIndexOutOfBoundsException
+	public Job getJob(long jobId, JobType type) throws CheckedIndexOutOfBoundsException
 	{
 		switch (type)
 		{
@@ -146,7 +146,7 @@ public class JobTracker implements MQTTListener
 		}
 	}
 
-	private JobType findJobType(long jobId, long vehicleId) throws CheckedIndexOutOfBoundsException
+	public JobType findJobType(long jobId, long vehicleId) throws CheckedIndexOutOfBoundsException
 	{
 		if (this.localJobs.containsKey(jobId))
 		{
@@ -165,7 +165,19 @@ public class JobTracker implements MQTTListener
 
 		throw new CheckedIndexOutOfBoundsException("Tried to find type for job " + jobId + " (Vehicle: " + vehicleId + "), but no job matched the IDs.");
 	}
+	public JobType findJobType(long jobId) throws CheckedIndexOutOfBoundsException
+	{
+		if (this.localJobs.containsKey(jobId))
+		{
+				return JobType.LOCAL;
+		}
+		else if (this.globalJobs.containsKey(jobId))
+		{
+				return JobType.GLOBAL;
+		}
 
+		throw new CheckedIndexOutOfBoundsException("Tried to find type for job " + jobId +", but no job matched the Id.");
+	}
 	private void removeJob(long jobId, long vehicleId) throws CheckedIndexOutOfBoundsException
 	{
 		switch (this.findJobType(jobId, vehicleId))

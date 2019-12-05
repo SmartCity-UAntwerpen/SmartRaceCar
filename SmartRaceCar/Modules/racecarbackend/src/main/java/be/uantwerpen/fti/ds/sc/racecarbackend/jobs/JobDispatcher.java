@@ -130,14 +130,105 @@ public class JobDispatcher implements MQTTListener
 	 *  REST Endpoints
 	 *
 	 */
+	/**
+	 * Alert for future jobs, if possible a car will be positioned on the start-point.
+	 */
+	@RequestMapping(value="/job/alert/{startId}/{jobId}", method=RequestMethod.POST, produces=MediaType.TEXT_PLAIN)
+	public @ResponseBody ResponseEntity<String> jobAlert(@PathVariable long startId, @PathVariable long jobId)
+	{
+		this.log.info("Received Job alert for " + startId + " (JobID: " + jobId + ")");
+
+		if (this.jobTracker.exists(jobId))
+		{
+			String errorString = "A job with ID " + jobId + " already exists.";
+			this.log.error(errorString);
+			return new ResponseEntity<>(errorString, HttpStatus.SERVICE_UNAVAILABLE);
+		}
+
+		if (this.resourceManager.getNumAvailableCars() == 0)
+		{
+			this.log.info("There are currently no vehicles available, wait for actual execution");
+			return new ResponseEntity<>("no available cars", HttpStatus.SERVICE_UNAVAILABLE);
+		}
+
+
+
+		long vehicleId = -1;
+
+		try
+		{
+			vehicleId = this.resourceManager.getOptimalCar(startId);
+		}
+		catch (NoSuchElementException nsee)
+		{
+			String errorString = "An error occurred while determining the optimal car for a job.";
+			this.log.error(errorString, nsee);
+			return new ResponseEntity<>(errorString, HttpStatus.SERVICE_UNAVAILABLE);
+		}
+		catch (IOException ioe)
+		{
+			String errorString = "An IOException was thrown while trying to find the optimal car for a job.";
+			this.log.error(errorString, ioe);
+			return new ResponseEntity<>(errorString, HttpStatus.SERVICE_UNAVAILABLE);
+		}
+
+		// Check if starting waypoint exists
+		if (!this.waypointProvider.exists(startId))
+		{
+			String errorString = "Request job with non-existent start waypoint " + startId + ".";
+			this.log.error(errorString);
+
+			return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
+		}
+		Job job = new Job(jobId, locationRepository.getLocation(vehicleId), startId, vehicleId);
+		job.setPreparation(true);
+		if (!this.jobQueue.isEmpty(JobType.GLOBAL))
+		{
+			this.log.info("There are already jobs in the global queue, adding to global queue.");
+			this.jobQueue.enqueue(job, JobType.GLOBAL);
+			return new ResponseEntity<>("starting", HttpStatus.OK);
+		}else {
+			try {
+				this.scheduleJob(job, JobType.GLOBAL);
+			} catch (IOException ioe) {
+				String errorString = "Failed to schedule global job " + jobId;
+				this.log.error(errorString, ioe);
+				return new ResponseEntity<>(errorString, HttpStatus.SERVICE_UNAVAILABLE);
+			}
+		}
+		return new ResponseEntity<>("received", HttpStatus.OK);
+	}
 
 	@RequestMapping(value="/job/execute/{startId}/{endId}/{jobId}", method=RequestMethod.POST, produces=MediaType.TEXT_PLAIN)
-	public @ResponseBody ResponseEntity<String> executeJob(@PathVariable long startId, @PathVariable long endId, @PathVariable long jobId)
-	{
+	public @ResponseBody ResponseEntity<String> executeJob(@PathVariable long startId, @PathVariable long endId, @PathVariable long jobId) throws CheckedIndexOutOfBoundsException {
 		this.log.info("Received Job request for " + startId + " -> " + endId + " (JobID: " + jobId + ")");
 
 		if (this.jobTracker.exists(jobId))
 		{
+			Job existingJob = this.jobTracker.getJob(jobId,this.jobTracker.findJobType(jobId));
+			if (existingJob.getPreparation() ){
+			String debugString = "A job with ID " + jobId + " already exists as an alert";
+			this.log.debug(debugString);
+			// Check if end waypoint exists
+			if (!this.waypointProvider.exists(endId)) {
+				String errorString = "Request job with non-existent end waypoint " + endId + ".";
+				this.log.error(errorString);
+
+				return new ResponseEntity<>(errorString, HttpStatus.NOT_FOUND);
+			}
+
+			Job job = new Job(jobId, startId, endId, existingJob.getVehicleId());
+
+			try {
+				this.scheduleJob(job, JobType.GLOBAL);
+			} catch (IOException ioe) {
+				String errorString = "Failed to schedule global job " + jobId;
+				this.log.error(errorString, ioe);
+				return new ResponseEntity<>(errorString, HttpStatus.SERVICE_UNAVAILABLE);
+			}
+
+			return new ResponseEntity<>("starting", HttpStatus.OK);
+			}
 			String errorString = "A job with ID " + jobId + " already exists.";
 			this.log.error(errorString);
 			return new ResponseEntity<>(errorString, HttpStatus.SERVICE_UNAVAILABLE);

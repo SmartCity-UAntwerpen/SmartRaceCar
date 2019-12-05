@@ -11,7 +11,7 @@ class Job
 	private long vehicleId; // ID of the vehicle.
 	private int progress;
 	private boolean backboneNotified;	// Whether or not the backbone has been notified about us "almost" completing our job.
-
+	private boolean preparation;
 
 	/**
 	 * Create a job object.
@@ -30,6 +30,7 @@ class Job
 		this.vehicleId = vehicleId;
 		this.progress = 0;
 		this.backboneNotified = false;
+		this.preparation = false;
 	}
 
 	public long getJobId()
@@ -99,4 +100,14 @@ class Job
 	{
 		return this.backboneNotified;
 	}
+	public boolean getPreparation()
+	{
+		return this.preparation;
+	}
+	public void setPreparation(Boolean preparation)
+	{
+		this.preparation= preparation;
+	}
+
+
 }
