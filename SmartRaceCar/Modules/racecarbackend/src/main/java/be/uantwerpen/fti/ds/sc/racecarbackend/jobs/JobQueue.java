@@ -104,6 +104,8 @@ public class JobQueue implements MQTTListener
 		}
 	}
 
+
+
 	public long enqueue(Job job, JobType type) throws NoSuchElementException
 	{
 		switch (type)
@@ -130,7 +132,23 @@ public class JobQueue implements MQTTListener
 				throw new NoSuchElementException(errorString);
 		}
 	}
+	public void removeFromQueue(Job job,JobType type){
+		switch (type)
+		{
+			case GLOBAL:
+				this.globalJobs.remove(job);
 
+
+			case LOCAL:
+				this.localJobs.remove(job);
+
+
+			default:
+				String errorString = "Failed to check if " + type + " queue was empty.";
+				this.log.error(errorString);
+				throw new NoSuchElementException(errorString);
+		}
+	}
 	public Job dequeue(JobType type) throws NoSuchElementException
 	{
 		if (this.isEmpty(type))

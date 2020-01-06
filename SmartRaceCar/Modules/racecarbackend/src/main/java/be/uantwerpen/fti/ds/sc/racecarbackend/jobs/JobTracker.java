@@ -25,8 +25,10 @@ import javax.ws.rs.ProcessingException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import java.util.Iterator;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.Timer;
+import java.util.concurrent.*;
+
+import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 
 @Controller
 public class JobTracker implements MQTTListener
@@ -47,7 +49,7 @@ public class JobTracker implements MQTTListener
 	// Local jobs are jobs not present in the backbone,
 	// they are tracked locally to send vehicles to the startpoint of jobs etc.
 	private ConcurrentMap<Long, Job> globalJobs;        // Map containing jobs mapped to their job ID's
-
+	private long alertUnlockDelay = 10; //seconds until the vehicle locked because of an alert gets released
 	public Job getJob(long jobId, JobType type) throws CheckedIndexOutOfBoundsException
 	{
 		switch (type)
@@ -178,7 +180,7 @@ public class JobTracker implements MQTTListener
 
 		throw new CheckedIndexOutOfBoundsException("Tried to find type for job " + jobId +", but no job matched the Id.");
 	}
-	private void removeJob(long jobId, long vehicleId) throws CheckedIndexOutOfBoundsException
+	public void removeJob(long jobId, long vehicleId) throws CheckedIndexOutOfBoundsException
 	{
 		switch (this.findJobType(jobId, vehicleId))
 		{
@@ -192,11 +194,44 @@ public class JobTracker implements MQTTListener
 		}
 	}
 
-	private void completeJob(long jobId, long vehicleId) throws WebApplicationException
-	{
-		this.log.debug("Completing job, setting vehicle " + vehicleId + " to unoccupied.");
-		this.vehicleManager.setOccupied(vehicleId, false);
+	private Runnable delayComplete(final long jobId, final long vehicleId){
+		Runnable delayedRunnable = new Runnable(){
+			public void run(){
+				completeJob(jobId,vehicleId,true);
+			}
+		};
+		return delayedRunnable;
+	}
 
+	private void completeJob(long jobId, long vehicleId, boolean delayedCompletion) throws WebApplicationException
+	{
+		//if the job was an alerted job then we lock the car for 10 more seconds then we release the car again and remove the job
+		try {
+			Job job = this.getJob(jobId,JobType.LOCAL);
+			if (job!=null) {
+				if (job.getAlert() && !delayedCompletion) {
+					this.log.debug("delaying completion due to job being an alert, keeping car locked for 30 more seconds max : "	+	this.vehicleManager.isOccupied(vehicleId));
+
+					final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+					executorService.schedule(delayComplete(jobId, vehicleId), alertUnlockDelay, TimeUnit.SECONDS);
+					return;
+				}
+			}else{
+				if(delayedCompletion){
+					this.log.debug("delayed completion no longer necessary due to job completion");
+					return;
+				}
+			}
+
+		} catch (CheckedIndexOutOfBoundsException e) {
+			e.printStackTrace();
+		}
+		if(delayedCompletion){
+			this.log.debug("releasing car due to delayed time exceeded");
+		}else {
+			this.log.debug("Completing job, setting vehicle " + vehicleId + " to unoccupied.");
+		}
+		this.vehicleManager.setOccupied(vehicleId, false);
 		BackboneAspect backboneAspect = (BackboneAspect) this.configuration.get(AspectType.BACKBONE);
 
 		try
@@ -253,7 +288,7 @@ public class JobTracker implements MQTTListener
 		{
 			case MqttMessages.Messages.Core.DONE:
 				this.log.info("Vehicle " + vehicleId + " completed job " + jobId + ".");
-				this.completeJob(jobId, vehicleId);
+				this.completeJob(jobId, vehicleId,false);
 				break;
 
 			case MqttMessages.Messages.Core.ERROR:
@@ -354,7 +389,9 @@ public class JobTracker implements MQTTListener
 
 		this.log.info("Initialized JobTracker.");
 	}
-
+	public long getAlertUnlockDelay(){
+		return alertUnlockDelay;
+	}
 	public void addGlobalJob(long jobId, long vehicleId, long startId, long endId)
 	{
 		this.log.info("Adding new Global Job for tracking (Job ID: " + jobId + ", " + startId + " -> " + endId + ", Vehicle: " + vehicleId + ").");
@@ -362,10 +399,13 @@ public class JobTracker implements MQTTListener
 		this.globalJobs.put(jobId, job);
 	}
 
-	public void addLocalJob(long jobId, long vehicleId, long startId, long endId)
+	public void addLocalJob(long jobId, long vehicleId, long startId, long endId, boolean alert)
 	{
 		this.log.info("Adding new Local Job for tracking (Job ID: " + jobId + ", " + startId + " -> " + endId + ", Vehicle: " + vehicleId + ").");
 		Job job = new Job(jobId, startId, endId, vehicleId);
+		if (alert) {
+			job.setAlert(alert);
+		}
 		this.localJobs.put(jobId, job);
 	}
 
