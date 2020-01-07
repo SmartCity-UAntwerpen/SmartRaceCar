@@ -73,7 +73,42 @@ public class ResourceManager
 
 		return numAvailableCars;
 	}
+	public long getVehicleLocation(long vehicleId) {
+		long vehiclePosition = this.locationRepository.getLocation(vehicleId);
+		return vehiclePosition;
+	}
 
+	/**
+	 *  Builds upon getOptimalCar method, takes the ETA into consideration, if the optimal car doesnt have too wait for too long ( determined by the maxWaitingTime )
+	 * @param waypointId,eta
+	 * @return
+	 */
+	public long getOptimalCarWithinETA(long waypointId,long eta) throws NoSuchElementException, IOException
+	{
+		long maxWaitingTime = 5; //5 seconds
+		long optimalVehicleId = getOptimalCar(waypointId);
+		float cost = 1000;
+		if (!this.occupationRepository.isOccupied(optimalVehicleId))
+		{
+			long vehiclePosition = this.locationRepository.getLocation(optimalVehicleId);
+			cost = this.costCache.calculateCost(vehiclePosition, waypointId);
+		}
+		if(cost+maxWaitingTime > eta ) {
+			return optimalVehicleId;
+		}else{
+			return -1;
+		}
+	}
+
+
+	public float getJobCost(long startId,long endId){
+		try {
+			return this.costCache.calculateCost(startId,endId);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return 10;
+	}
 	/**
 	 *  Determine which car is closest to (has the lowest cost) to get to a certain point.
 	 * @param waypointId

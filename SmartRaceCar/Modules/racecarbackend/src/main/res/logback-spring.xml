@@ -19,7 +19,7 @@
     </appender>
 
     <appender name="gelf" class="biz.paluch.logging.gelf.logback.GelfLogbackAppender">
-        <host>udp:192.168.99.100</host>
+        <host>udp:143.129.39.127</host>
         <port>12201</port>
         <version>1.1</version>
         <facility>java-test</facility>
