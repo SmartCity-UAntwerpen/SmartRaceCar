@@ -7,13 +7,13 @@ source "/opt/ros/$ROS_DISTRO/setup.bash"
 exec "$@"
 
 
-sudo apt-get update -y
-sudo apt-get upgrade -y
-sudo apt-get install build-essential -y
+sudo apt-get update -y --force-yes
+sudo apt-get upgrade -y --force-yes
+sudo apt-get install build-essential -y --force-yes
 gcc -v
 make -v
 
-sudo apt-get install ros-indigo-navigation -y
+sudo apt-get install ros-indigo-navigation -y --force-yes
 
 cd /home/docker/ROS/WS_Race
 catkin_make
@@ -33,3 +33,5 @@ cd ..
 catkin_make
 
 source devel/setup.bash
+
+$SHELL

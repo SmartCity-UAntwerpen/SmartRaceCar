@@ -6,6 +6,7 @@ import be.uantwerpen.fti.ds.sc.simkernel.Communication.*;
 import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -43,6 +44,8 @@ class SimKernel implements MessageListener
 	public SimKernel(long simID, String propertyPath) throws InterruptedException, IOException
 	{
 		this.log = LoggerFactory.getLogger(SimKernel.class);
+		MDC.put("simID", ""+simID);
+
 		this.calculatedCosts = new HashMap<>();
 
 		this.loadConfig(propertyPath);

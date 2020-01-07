@@ -1,0 +1,11 @@
+FROM astridvanneste/core_simkernel_rosserver
+
+
+# Variables
+ENV CORE=core.jar
+ENV SIMKERNEL=simkernel.jar
+
+# Adding Core.jar and SimKernel.jar
+
+ADD $CORE /home/docker/Core.jar
+ADD $SIMKERNEL /home/docker/SimKernel.jar

@@ -15,3 +15,5 @@ cd /home/docker
 
 nohup java -jar SimKernel.jar ${SIM_ID} ${PROPERTY_PATH} &
 java -jar Core.jar ${START_POINT} ${PROPERTY_PATH}
+
+$SHELL

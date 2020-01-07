@@ -18,8 +18,35 @@
         </encoder>
     </appender>
 
+    <appender name="gelf" class="biz.paluch.logging.gelf.logback.GelfLogbackAppender">
+        <host>udp:192.168.99.100</host>
+        <port>12201</port>
+        <version>1.1</version>
+        <facility>java-test</facility>
+        <extractStackTrace>true</extractStackTrace>
+        <filterStackTrace>true</filterStackTrace>
+        <mdcProfiling>true</mdcProfiling>
+        <timestampPattern>yyyy-MM-dd HH:mm:ss,SSSS</timestampPattern>
+        <maximumMessageSize>8192</maximumMessageSize>
+
+        <!-- This are static fields -->
+        <additionalFields>origin=RacecarSimkernel,vehicleType=Racecar</additionalFields>
+        <!-- Optional: Specify field types -->
+        <additionalFieldTypes>origin=String,vehicleType=String</additionalFieldTypes>
+
+        <!-- This are fields using MDC -->
+        <mdcFields>simID</mdcFields>
+        <dynamicMdcFields>mdc.*,(mdc|MDC)fields</dynamicMdcFields>
+        <includeFullMdc>true</includeFullMdc>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+    </appender>
+
     <root level="debug">
         <appender-ref ref="STDOUT" />
+        <appender-ref ref="gelf" />
+
         <appender-ref ref="FILE" />
     </root>
 </configuration>

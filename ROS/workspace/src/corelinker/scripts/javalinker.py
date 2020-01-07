@@ -46,7 +46,7 @@ navplan_tolerance = 0.5
 navplan_speed = 3.0
 initial_pose_run = 5.0
 
-navstack_speed = 4.0
+navstack_speed = 1.5
 
 current_location = 0
 

@@ -46,3 +46,5 @@ echo -e "${BLUE}corelinker was launched.${NC}"
 echo -e "${BLUE}launching racecar core...${NC}"
 sleep 3
 sudo -u ubuntu java -jar ~/Git/SmartRacecar/SmartRaceCar/release/Core.jar $LOCATION 5006 5005
+<node name="keyboard" type="keyboard.py" pkg="race" output="screen" launch-prefix="xterm -e"/>
+<node name="talker" type="talker.py" pkg="race" output="screen"/>

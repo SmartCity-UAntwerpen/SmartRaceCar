@@ -9,6 +9,7 @@ import be.uantwerpen.fti.ds.sc.core.Communication.GeneralVehicleCommunicator;
 import com.github.lalyos.jfiglet.FigletFont;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.io.IOException;
 
@@ -53,7 +54,6 @@ class Core implements TCPListener
 		System.out.println("------------------------------------------------------------------");
 
 		this.log = LoggerFactory.getLogger(Core.class);
-
 		// LOAD SETTINGS
 		this.loadConfig(propertyPath);
 
@@ -93,6 +93,7 @@ class Core implements TCPListener
 		this.navigator = new Navigator(this.configuration, vehicleCommunicator, backendCommunicator);
 
 		this.ID = this.backendCommunicator.register(startPoint);
+		MDC.put("dockerID", ""+this.ID);
 
 		this.navigator.start(this.ID);
 		this.navigator.sendStartPoint(startPoint);
