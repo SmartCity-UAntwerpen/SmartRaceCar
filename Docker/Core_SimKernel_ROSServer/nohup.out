@@ -4,3 +4,4 @@ Error: Unable to access jarfile SimKernel.jar
 Error: Unable to access jarfile SimKernel.jar
 Error: Unable to access jarfile SimKernel.jar
 Error: Unable to access jarfile SimKernel.jar
+Need 2 arguments to run. Required arguments: simulation ID (long), property path (string)

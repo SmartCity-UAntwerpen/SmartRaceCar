@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
 docker login
-docker build -t jaimievranckx/racecar_docker -f DockerfileDebug .
+docker build -t smartracecar/latest -f DockerfileDebug .
 docker push jaimievranckx/
+
+$SHELL

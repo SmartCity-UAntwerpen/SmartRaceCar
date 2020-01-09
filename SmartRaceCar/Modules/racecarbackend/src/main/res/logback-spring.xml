@@ -19,7 +19,7 @@
     </appender>
 
     <appender name="gelf" class="biz.paluch.logging.gelf.logback.GelfLogbackAppender">
-        <host>udp:143.129.39.127</host>
+        <host>udp:192.168.99.100</host>
         <port>12201</port>
         <version>1.1</version>
         <facility>java-test</facility>
@@ -30,21 +30,22 @@
         <maximumMessageSize>8192</maximumMessageSize>
 
         <!-- This are static fields -->
-        <additionalFields>origin=RacecarBackend,vehicleType=Racecar</additionalFields>
+        <additionalFields>origin=racecarBackend,vehicleType=Racecar</additionalFields>
         <!-- Optional: Specify field types -->
         <additionalFieldTypes>origin=String,vehicleType=String</additionalFieldTypes>
 
         <!-- This are fields using MDC -->
-        <mdcFields>mdcField1,mdcField2</mdcFields>
+        <mdcFields></mdcFields>
         <dynamicMdcFields>mdc.*,(mdc|MDC)fields</dynamicMdcFields>
         <includeFullMdc>true</includeFullMdc>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>INFO</level>
         </filter>
     </appender>
+
     <root level="debug">
-        <appender-ref ref="gelf" />
         <appender-ref ref="STDOUT" />
         <appender-ref ref="FILE" level="info"/>
+        <appender-ref ref="gelf" />
     </root>
 </configuration>
