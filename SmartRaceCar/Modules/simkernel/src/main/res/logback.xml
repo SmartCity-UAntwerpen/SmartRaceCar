@@ -19,7 +19,7 @@
     </appender>
 
     <appender name="gelf" class="biz.paluch.logging.gelf.logback.GelfLogbackAppender">
-        <host>udp:smartcity.ddns.net</host>
+        <host>udp:172.10.0.5</host>
         <port>12201</port>
         <version>1.1</version>
         <facility>java-test</facility>
@@ -39,7 +39,7 @@
         <dynamicMdcFields>mdc.*,(mdc|MDC)fields</dynamicMdcFields>
         <includeFullMdc>true</includeFullMdc>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>INFO</level>
+            <level>WARN</level>
         </filter>
     </appender>
 
